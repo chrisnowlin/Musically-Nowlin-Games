@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+"""
+Round 2 Consolidation: Further reduce 89 games by combining related games
+"""
+
+import json
+
+def consolidate_round2():
+    """Perform second round of consolidation"""
+    
+    consolidated_games = []
+    
+    # Category 1: Pitch & Melody (14 → 5 games)
+    consolidated_games.extend([
+        # Combine all pitch identification (2 → 1)
+        {"id": "pitch-001", "title": "Pitch & Interval Master", "desc": "Comprehensive pitch and interval training including octaves, micro-intervals, bends, vibrato, glissando, portamento, envelopes, harmonics, relative pitch, and absolute pitch", "modes": ["octave", "interval", "bend", "vibrato", "glissando", "portamento", "envelope", "harmonic", "relative", "absolute"], "difficulty": "progressive", "age": "5-12", "category": "Pitch & Melody"},
+        
+        # Combine all melody recognition (3 → 1)
+        {"id": "pitch-002", "title": "Melody Master", "desc": "Complete melody recognition and analysis including transformations (transposition, inversion, retrograde, augmentation, diminution, ornamentation), patterns (variations, combinations, echoes, sequences, modulations, fragmentations), and articulations (legato, staccato, dynamics)", "modes": ["transformations", "patterns", "articulations"], "difficulty": "progressive", "age": "5-12", "category": "Pitch & Melody"},
+        
+        # Combine all phrase analysis (3 → 1)
+        {"id": "pitch-003", "title": "Phrase Analyzer", "desc": "Complete phrase analysis including structure (boundaries, breathing, symmetry, climax, cadences), relationships (antecedent-consequent, parallel, contrast, repetition, variation), and transformations (elision, fragmentation, expansion, compression, sequencing)", "modes": ["structure", "relationships", "transformations"], "difficulty": "progressive", "age": "7-12", "category": "Pitch & Melody"},
+        
+        # Combine all scales & modes (3 → 1)
+        {"id": "pitch-004", "title": "Scale & Mode Master", "desc": "Complete scale and mode training including all major/minor scales, church modes (Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian), special scales (pentatonic, blues, whole tone, chromatic), and scale degree identification", "modes": ["major-minor", "modes", "special-scales", "scale-degrees"], "difficulty": "progressive", "age": "6-12", "category": "Pitch & Melody"},
+        
+        # Combine all contour analysis (3 → 1)
+        {"id": "pitch-005", "title": "Contour Master", "desc": "Complete contour analysis including transformations (inversion, retrograde, augmentation, diminution, fragmentation, sequencing), modifications (modulation, ornamentation, simplification, expansion, compression, transposition), and comprehensive analysis", "modes": ["transformations", "modifications", "analysis"], "difficulty": "progressive", "age": "7-12", "category": "Pitch & Melody"},
+    ])
+    
+    # Category 2: Rhythm & Timing (17 → 6 games)
+    consolidated_games.extend([
+        # Combine all basic rhythm (3 → 1)
+        {"id": "rhythm-001", "title": "Rhythm Master", "desc": "Complete rhythm training including pattern recognition (syllables, notation, clapping, tapping, subdivisions), transformations (syncopation, polyrhythm, hemiola, augmentation, diminution, inversion, retrograde), and pattern analysis (fragmentation, sequences, variations)", "modes": ["patterns", "transformations", "analysis"], "difficulty": "progressive", "age": "5-12", "category": "Rhythm & Timing"},
+        
+        # Combine all tempo (3 → 1)
+        {"id": "rhythm-002", "title": "Tempo & Pulse Master", "desc": "Complete tempo and pulse training including tempo changes (accelerando, ritardando, rubato, fermata, metric modulation), pulse/subdivisions (doubling, halving, triplets, swing vs straight), and tempo analysis", "modes": ["tempo-changes", "pulse-subdivisions", "analysis"], "difficulty": "progressive", "age": "6-12", "category": "Rhythm & Timing"},
+        
+        # Combine all meter (3 → 1)
+        {"id": "rhythm-003", "title": "Meter Master", "desc": "Complete meter training including all common meters (2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 9/8, 12/8), meter types (simple, compound, asymmetric), and meter features (modulation, accent patterns, downbeats)", "modes": ["meters", "types", "features"], "difficulty": "progressive", "age": "6-12", "category": "Rhythm & Timing"},
+        
+        # Combine all notation (4 → 1)
+        {"id": "rhythm-004", "title": "Rhythm Notation Master", "desc": "Complete rhythm notation training including all note/rest values (notes, rests, dots, ties), tuplets/grouping (triplets, tuplets, beaming, stems, flags), notation conversion (convert, complexity, clarity, accuracy), and speed reading", "modes": ["values", "tuplets", "conversion", "speed-reading"], "difficulty": "progressive", "age": "6-12", "category": "Rhythm & Timing"},
+        
+        # Combine all polyrhythm (4 → 1)
+        {"id": "rhythm-005", "title": "Polyrhythm Master", "desc": "Complete polyrhythm training including identification/performance (2v3, 3v4, 4v5, layers, alignment), analysis (complexity, structure), transformation (transform, combine, separate), and creation (create, sequence)", "modes": ["identification", "analysis", "transformation", "creation"], "difficulty": "progressive", "age": "8-12", "category": "Rhythm & Timing"},
+    ])
+    
+    # Category 3: Harmony & Intervals (10 → 4 games)
+    consolidated_games.extend([
+        # Combine all intervals (2 → 1)
+        {"id": "harmony-001", "title": "Interval Master", "desc": "Complete interval training including all intervals (unison, m2, M2, m3, M3, P4, tritone, P5, m6, M6, m7, M7, octave) and interval qualities (augmented, diminished)", "modes": ["all-intervals", "qualities"], "difficulty": "progressive", "age": "6-12", "category": "Harmony & Intervals"},
+        
+        # Combine all chords (3 → 1)
+        {"id": "harmony-002", "title": "Chord Master", "desc": "Complete chord training including triads (major, minor, augmented, diminished), seventh chords (dom7, maj7, min7, half-dim, full-dim), and extended chords (sus2, sus4, add9, 6th, 9th, extended)", "modes": ["triads", "sevenths", "extended"], "difficulty": "progressive", "age": "7-12", "category": "Harmony & Intervals"},
+        
+        # Combine all progressions (3 → 1)
+        {"id": "harmony-003", "title": "Harmonic Progression Master", "desc": "Complete harmonic progression training including common progressions (I-IV-V-I, I-vi-IV-V, ii-V-I, blues), harmonic features (cadences, modulations, sequences, pedal points, ostinatos), and harmonic rhythm analysis", "modes": ["progressions", "features", "rhythm"], "difficulty": "progressive", "age": "8-12", "category": "Harmony & Intervals"},
+        
+        # Combine consonance/dissonance (2 → 1)
+        {"id": "harmony-004", "title": "Consonance & Dissonance Master", "desc": "Complete consonance/dissonance training including consonance types (perfect, imperfect), dissonance (tension, resolution), and non-chord tones (suspensions, passing tones, neighbor tones, appoggiaturas, escape tones, anticipations)", "modes": ["consonance", "dissonance", "non-chord-tones"], "difficulty": "progressive", "age": "7-12", "category": "Harmony & Intervals"},
+    ])
+    
+    # Category 4: Timbre & Instruments (10 → 3 games)
+    consolidated_games.extend([
+        # Combine all instrument identification (5 → 1)
+        {"id": "timbre-001", "title": "Instrument Master", "desc": "Complete instrument identification including all families (strings, woodwinds, brass, percussion, keyboard, electronic, vocal), types (hybrid, ancient, world, orchestral, chamber, solo, ensemble), and specific instruments (violin, viola, cello, bass, guitar, harp, flute, oboe, clarinet, saxophone, trumpet, trombone, horn, tuba, piano, percussion)", "modes": ["families", "types", "specific-instruments"], "difficulty": "progressive", "age": "5-12", "category": "Timbre & Instruments"},
+        
+        # Combine all timbre characteristics (3 → 1)
+        {"id": "timbre-002", "title": "Timbre Analyzer", "desc": "Complete timbre analysis including quality (bright/dark, warm/cold, harsh/smooth, thin/rich, nasal/resonant), texture (metallic/mellow, piercing/soft, vibrant/dull, articulate/blurred), and presence analysis", "modes": ["quality", "texture", "presence"], "difficulty": "progressive", "age": "7-12", "category": "Timbre & Instruments"},
+        
+        # Combine all techniques (2 → 1)
+        {"id": "timbre-003", "title": "Technique Master", "desc": "Complete technique identification including string techniques (vibrato, tremolo, pizzicato, arco, glissando, portamento, harmonics) and articulation techniques (staccato, legato, mute)", "modes": ["string-techniques", "articulation"], "difficulty": "progressive", "age": "6-12", "category": "Timbre & Instruments"},
+    ])
+    
+    # Category 5: Dynamics & Expression (8 → 3 games)
+    consolidated_games.extend([
+        # Combine all dynamics (4 → 1)
+        {"id": "dynamics-001", "title": "Dynamics Master", "desc": "Complete dynamics training including all levels (ppp, pp, p, mp, mf, f, ff, fff), relative dynamics, dynamic changes (crescendo, decrescendo, sudden changes, accents, sforzando, subito, swell, diminuendo, hairpins), and dynamic pulse analysis", "modes": ["levels", "relative", "changes", "pulse"], "difficulty": "progressive", "age": "6-12", "category": "Dynamics & Expression"},
+        
+        # Combine all expression (2 → 1)
+        {"id": "dynamics-002", "title": "Expression Master", "desc": "Complete expression training including articulation (legato, staccato, marcato, tenuto, portato, accents, breathing, phrasing) and interpretation (rubato, musical interpretation)", "modes": ["articulation", "interpretation"], "difficulty": "progressive", "age": "6-12", "category": "Dynamics & Expression"},
+        
+        # Combine all emotion (2 → 1)
+        {"id": "dynamics-003", "title": "Emotion Master", "desc": "Complete emotion training including emotion detection (happy, sad, angry, peaceful, excited, mysterious, romantic, dramatic, playful, contemplative) and complex emotional expression analysis", "modes": ["detection", "analysis"], "difficulty": "progressive", "age": "5-12", "category": "Dynamics & Expression"},
+    ])
+    
+    # Category 6: Music Theory (12 → 4 games)
+    consolidated_games.extend([
+        # Combine all note reading (4 → 1)
+        {"id": "theory-001", "title": "Note Reading Master", "desc": "Complete note reading training including all clefs (treble, bass, alto, tenor), grand staff with ledger lines, accidentals/enharmonics/octaves, and advanced reading with rhythm/articulation/dynamics/expression at speed", "modes": ["clefs", "grand-staff", "accidentals", "advanced"], "difficulty": "progressive", "age": "7-12", "category": "Music Theory"},
+        
+        # Combine all scale construction (2 → 1)
+        {"id": "theory-002", "title": "Scale Builder", "desc": "Complete scale construction including all scale types (major, minor, harmonic minor, melodic minor, pentatonic, blues, whole tone, chromatic, modes) and exotic/world music scales", "modes": ["all-scales", "exotic"], "difficulty": "progressive", "age": "7-12", "category": "Music Theory"},
+        
+        # Combine all chord construction (2 → 1)
+        {"id": "theory-003", "title": "Chord Builder", "desc": "Complete chord construction including all chord types (triads, 7th, 9th, 11th, 13th, suspended, added tone, altered, slash chords, polychords) and complex/extended structures", "modes": ["all-chords", "complex"], "difficulty": "progressive", "age": "7-12", "category": "Music Theory"},
+        
+        # Combine all key signatures (4 → 1)
+        {"id": "theory-004", "title": "Key Signature Master", "desc": "Complete key signature training including all major keys, all minor keys, key signature analysis, and key change/modulation detection", "modes": ["major", "minor", "analysis", "modulation"], "difficulty": "progressive", "age": "7-12", "category": "Music Theory"},
+    ])
+    
+    # Category 7: Composition & Creation (5 → 2 games)
+    consolidated_games.extend([
+        # Combine melody, rhythm, harmony composition (3 → 1)
+        {"id": "compose-001", "title": "Composition Studio", "desc": "Complete composition training including melody composition (start, continue, complete, transpose, invert, retrograde, augment, diminish, fragment, sequence), rhythm composition (all transformations, polyrhythms), and harmony composition (progressions, voicings, counterpoint, modulations, cadences, ostinatos, pedal points)", "modes": ["melody", "rhythm", "harmony"], "difficulty": "progressive", "age": "6-12", "category": "Composition & Creation"},
+        
+        # Combine orchestration and style (2 → 1)
+        {"id": "compose-002", "title": "Orchestration & Style Studio", "desc": "Complete orchestration and style training including instrument selection, texture creation, layering, dynamics, articulation, expression, and style adaptation", "modes": ["orchestration", "style"], "difficulty": "progressive", "age": "7-12", "category": "Composition & Creation"},
+    ])
+    
+    # Category 8: Listening & Analysis (4 → 2 games)
+    consolidated_games.extend([
+        # Combine form and style (2 → 1)
+        {"id": "listen-001", "title": "Form & Style Master", "desc": "Complete form and style training including all musical forms (binary, ternary, rondo, sonata, variations, fugue, canon, passacaglia, chaconne, suite) and all musical styles (Baroque, Classical, Romantic, Impressionist, Expressionist, Modernist, Jazz, Blues, Folk, Contemporary)", "modes": ["forms", "styles"], "difficulty": "progressive", "age": "7-12", "category": "Listening & Analysis"},
+        
+        # Combine composer and element analysis (2 → 1)
+        {"id": "listen-002", "title": "Musical Analysis Master", "desc": "Complete musical analysis including composer identification (Bach, Mozart, Beethoven, Chopin, Tchaikovsky, Debussy, Stravinsky, Gershwin, Ellington, contemporary) and element analysis (texture, density, range, register, balance, contrast, unity, development, structure, coherence)", "modes": ["composers", "elements"], "difficulty": "progressive", "age": "8-12", "category": "Listening & Analysis"},
+    ])
+    
+    # Category 9: Cross-Curricular (3 → 1 game)
+    consolidated_games.extend([
+        # Combine all cross-curricular (3 → 1)
+        {"id": "cross-001", "title": "Cross-Curricular Music Master", "desc": "Complete cross-curricular training including music & math (ratios, fractions, proportions, symmetry, patterns, sequences, Fibonacci, geometry, probability, statistics), music & language (phonemes, prosody, accents, intonation, stress, rhythm, syllables, alliteration, metaphors, narrative), and music & movement (gestures, dance, locomotion, balance, coordination, symmetry, asymmetry, spatial, temporal, expression)", "modes": ["math", "language", "movement"], "difficulty": "progressive", "age": "5-12", "category": "Cross-Curricular"},
+    ])
+    
+    # Category 10: Advanced Concepts (3 → 1 game)
+    consolidated_games.extend([
+        # Combine all advanced concepts (3 → 1)
+        {"id": "advanced-001", "title": "Advanced Music Analyzer", "desc": "Complete advanced music analysis including advanced harmony (chromatic, functional, non-functional, quartal, quintal, secundal, cluster, microtonal, spectral, atonal), advanced rhythm (isorhythm, mensural, proportional, graphic, aleatoric, stochastic, fractal, generative, algorithmic, experimental), and advanced form (sonata, rondo, fugal, cyclic, arch, sectional, developmental, minimalist, experimental, hybrid)", "modes": ["harmony", "rhythm", "form"], "difficulty": "hard", "age": "9-12", "category": "Advanced Concepts"},
+    ])
+    
+    # Category 11: Gamified Challenges (3 → 1 game)
+    consolidated_games.extend([
+        # Combine all challenges (3 → 1)
+        {"id": "challenge-001", "title": "Ultimate Music Challenge", "desc": "Complete gamified challenge training including speed challenges (identify all elements quickly), progressive challenges (progressive difficulty for all elements), and competitive challenges (compete in all element battles)", "modes": ["speed", "progressive", "competitive"], "difficulty": "progressive", "age": "7-12", "category": "Gamified Challenges"},
+    ])
+    
+    return consolidated_games
+
+def main():
+    """Generate round 2 consolidated games"""
+    
+    print("Round 2 Consolidation: Further reducing 89 games...")
+    print("=" * 70)
+    
+    consolidated = consolidate_round2()
+    
+    print(f"\n✅ Round 2 consolidation complete")
+    print(f"Round 1 games: 89")
+    print(f"Round 2 games: {len(consolidated)}")
+    print(f"Additional reduction: {89 - len(consolidated)} games ({((89 - len(consolidated)) / 89 * 100):.1f}%)")
+    print(f"Total reduction from original: {550 - len(consolidated)} games ({((550 - len(consolidated)) / 550 * 100):.1f}%)")
+    
+    # Save consolidated list
+    with open("games_consolidated_round2.json", "w") as f:
+        json.dump({"games": consolidated}, f, indent=2)
+    
+    print(f"\n✅ Saved to games_consolidated_round2.json")
+    
+    # Print summary by category
+    categories = {}
+    for game in consolidated:
+        cat = game['category']
+        categories[cat] = categories.get(cat, 0) + 1
+    
+    print("\n📊 Final game count by category:")
+    for cat, count in sorted(categories.items()):
+        print(f"  {cat}: {count}")
+    
+    print(f"\n🎯 TOTAL: {len(consolidated)} games")
+
+if __name__ == "__main__":
+    main()
+

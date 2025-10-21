@@ -1,0 +1,385 @@
+{
+  "games": [
+    {
+      "id": "pitch-001",
+      "title": "Pitch Explorer",
+      "desc": "Master the characteristics and qualities of musical pitch through exploration of octaves, pitch modifications (bends, vibrato, glissando, portamento), and timbral elements (envelopes, harmonics). Build foundational pitch perception skills.",
+      "unified_skill": "Perceiving and understanding pitch characteristics",
+      "modes": ["octaves", "pitch-modifications", "timbral-elements"],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-002",
+      "title": "Interval Trainer",
+      "desc": "Develop ear training skills through interval recognition, relative pitch (identifying intervals without reference), and absolute pitch (naming notes without reference). Build the foundation for all melodic and harmonic understanding.",
+      "unified_skill": "Recognizing distances between pitches",
+      "modes": ["intervals", "relative-pitch", "absolute-pitch"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-003",
+      "title": "Melody Master",
+      "desc": "Understand how melodies transform and evolve through transformations (transposition, inversion, retrograde, augmentation, diminution, ornamentation), pattern recognition (variations, sequences, modulations), and expressive articulations. Master melodic recognition in all its forms.",
+      "unified_skill": "Understanding melodic transformation and expression",
+      "modes": ["transformations", "patterns", "articulations"],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-004",
+      "title": "Phrase Analyzer",
+      "desc": "Learn how music creates sentences and paragraphs through phrase structure (boundaries, breathing, symmetry, climax, cadences), phrase relationships (antecedent-consequent, parallel, contrast), and phrase transformations (elision, fragmentation, expansion, compression). Understand musical syntax.",
+      "unified_skill": "Understanding musical phrasing and sentence structure",
+      "modes": ["structure", "relationships", "transformations"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-005",
+      "title": "Scale & Mode Master",
+      "desc": "Explore the tonal frameworks that organize music through major/minor scales, church modes (Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian), special scales (pentatonic, blues, whole tone, chromatic), and scale degree functions. Understand tonal organization.",
+      "unified_skill": "Understanding tonal systems and frameworks",
+      "modes": ["major-minor", "church-modes", "special-scales", "scale-degrees"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-006",
+      "title": "Contour Master",
+      "desc": "Master melodic shape and direction through contour transformations (inversion, retrograde, augmentation, diminution, fragmentation, sequencing), modifications (modulation, ornamentation, simplification, expansion, compression, transposition), and comprehensive shape analysis. Understand melodic geometry.",
+      "unified_skill": "Understanding melodic shape and direction",
+      "modes": ["transformations", "modifications", "analysis"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "rhythm-001",
+      "title": "Rhythm Master",
+      "desc": "Develop rhythmic literacy through pattern recognition (syllables, notation, clapping, tapping, subdivisions), transformations (syncopation, polyrhythm, hemiola, augmentation, diminution, inversion, retrograde), and pattern analysis. Master rhythmic patterns in all forms.",
+      "unified_skill": "Understanding rhythmic patterns and transformations",
+      "modes": ["patterns", "transformations", "analysis"],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-002",
+      "title": "Tempo & Pulse Master",
+      "desc": "Master musical speed and underlying beat through tempo recognition (Largo, Adagio, Andante, Moderato, Allegro, Presto, BPM estimation), tempo changes (accelerando, ritardando, rubato, fermata, metric modulation, sudden changes), pulse and subdivisions (doubling, halving, triplets, swing vs straight), and tempo analysis. Understand the heartbeat of music in all its forms.",
+      "unified_skill": "Understanding musical speed, pulse, and tempo changes",
+      "modes": ["tempo-recognition", "tempo-changes", "pulse-subdivisions", "analysis"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-006",
+      "title": "Beat & Pulse Trainer",
+      "desc": "Develop rock-solid internal timing through steady beat keeping (maintaining beat with metronome), beat tapping (tapping along with music at correct tempo), internal pulse (continuing beat without audio cues), subdivision practice (feeling subdivisions within the beat), and tempo stability (maintaining tempo without drifting). Build your internal metronome.",
+      "unified_skill": "Maintaining and internalizing steady beat",
+      "modes": ["steady-beat", "beat-tapping", "internal-pulse", "subdivisions", "tempo-stability"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-007",
+      "title": "Tempo Conducting Studio",
+      "desc": "Master tempo control and leadership through tempo setting (setting and maintaining target tempos), tempo conducting (conducting music at specified tempos), tempo transitions (smoothly transitioning between tempos), expressive timing (using tempo for musical expression), and ensemble coordination (keeping multiple parts in tempo). Take the baton and lead the tempo.",
+      "unified_skill": "Conducting and controlling tempo",
+      "modes": ["tempo-setting", "conducting", "transitions", "expressive-timing", "ensemble-coordination"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-003",
+      "title": "Meter Master",
+      "desc": "Master time signatures and metric organization through common meters (2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 9/8, 12/8), meter types (simple, compound, asymmetric), and metric features (modulation, accent patterns, downbeats). Understand how music organizes time.",
+      "unified_skill": "Understanding metric organization and time signatures",
+      "modes": ["meters", "types", "features"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-004",
+      "title": "Rhythm Notation Master",
+      "desc": "Develop fluency in reading and writing rhythm through note/rest values (notes, rests, dots, ties), tuplets and grouping (triplets, tuplets, beaming, stems, flags), notation conversion, and speed reading. Master rhythmic literacy.",
+      "unified_skill": "Reading and writing rhythmic notation",
+      "modes": ["values", "tuplets", "conversion", "speed-reading"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-005",
+      "title": "Polyrhythm Master",
+      "desc": "Master multiple simultaneous rhythms through identification and performance (2v3, 3v4, 4v5, layers, alignment), complexity analysis, transformation (transform, combine, separate), and creation. Understand rhythmic independence.",
+      "unified_skill": "Understanding and creating polyrhythms",
+      "modes": ["identification", "analysis", "transformation", "creation"],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "harmony-001",
+      "title": "Interval Master",
+      "desc": "Master the building blocks of harmony through all intervals (unison, m2, M2, m3, M3, P4, tritone, P5, m6, M6, m7, M7, octave) and interval qualities (augmented, diminished). Understand the distances that create melody and harmony.",
+      "unified_skill": "Understanding intervals and pitch distances",
+      "modes": ["all-intervals", "qualities"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-002",
+      "title": "Chord Master",
+      "desc": "Master vertical harmony structures through triads (major, minor, augmented, diminished), seventh chords (dom7, maj7, min7, half-dim, full-dim), and extended chords (sus2, sus4, add9, 6th, 9th, extended). Understand how notes stack to create harmony.",
+      "unified_skill": "Understanding chord structures and vertical harmony",
+      "modes": ["triads", "sevenths", "extended"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-003",
+      "title": "Harmonic Progression Master",
+      "desc": "Master chord sequences and harmonic movement through common progressions (I-IV-V-I, I-vi-IV-V, ii-V-I, blues), harmonic features (cadences, modulations, sequences, pedal points, ostinatos), and harmonic rhythm. Understand how harmony moves through time.",
+      "unified_skill": "Understanding harmonic movement and progression",
+      "modes": ["progressions", "features", "rhythm"],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-004",
+      "title": "Consonance & Dissonance Master",
+      "desc": "Master harmonic tension and resolution through consonance types (perfect, imperfect), dissonance (tension, resolution), and non-chord tones (suspensions, passing tones, neighbor tones, appoggiaturas, escape tones, anticipations). Understand harmonic tension.",
+      "unified_skill": "Understanding harmonic tension and resolution",
+      "modes": ["consonance", "dissonance", "non-chord-tones"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "timbre-001",
+      "title": "Instrument Master",
+      "desc": "Master instrument identification through instrument families (strings, woodwinds, brass, percussion, keyboard, electronic, vocal), instrument types (hybrid, ancient, world, orchestral, chamber, solo, ensemble), and specific instruments. Understand the orchestra and beyond.",
+      "unified_skill": "Identifying musical instruments",
+      "modes": ["families", "types", "specific-instruments"],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-002",
+      "title": "Timbre Analyzer",
+      "desc": "Master sound quality characteristics through timbre quality (bright/dark, warm/cold, harsh/smooth, thin/rich, nasal/resonant), texture (metallic/mellow, piercing/soft, vibrant/dull, articulate/blurred), and presence analysis. Understand the color of sound.",
+      "unified_skill": "Understanding sound quality and timbre",
+      "modes": ["quality", "texture", "presence"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-003",
+      "title": "Performance Technique Explorer",
+      "desc": "Master how musicians create different sounds through string techniques (vibrato, tremolo, pizzicato, arco, glissando, portamento, harmonics), wind techniques (tonguing, flutter, multiphonics), percussion techniques (rolls, dampening, mallets), and universal articulations (staccato, legato, mute). Understand performance techniques across all instruments.",
+      "unified_skill": "Understanding performance techniques and articulations",
+      "modes": ["string-techniques", "wind-techniques", "percussion-techniques", "articulations"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "dynamics-001",
+      "title": "Dynamics Master",
+      "desc": "Master volume and intensity through dynamic levels (ppp, pp, p, mp, mf, f, ff, fff), relative dynamics, dynamic changes (crescendo, decrescendo, sudden changes, accents, sforzando, subito, swell, diminuendo, hairpins), and dynamic pulse. Understand musical volume.",
+      "unified_skill": "Understanding musical volume and intensity",
+      "modes": ["levels", "relative", "changes", "pulse"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-002",
+      "title": "Expression Master",
+      "desc": "Master musical expression and interpretation through articulation (legato, staccato, marcato, tenuto, portato, accents, breathing, phrasing) and interpretation (rubato, musical interpretation). Understand how musicians bring music to life.",
+      "unified_skill": "Understanding musical expression and interpretation",
+      "modes": ["articulation", "interpretation"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-003",
+      "title": "Emotion Master",
+      "desc": "Master emotional content in music through emotion detection (happy, sad, angry, peaceful, excited, mysterious, romantic, dramatic, playful, contemplative) and complex emotional expression analysis. Understand the feelings music conveys.",
+      "unified_skill": "Understanding emotional content in music",
+      "modes": ["detection", "analysis"],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "theory-001",
+      "title": "Note Reading Master",
+      "desc": "Master reading musical notation through all clefs (treble, bass, alto, tenor), grand staff with ledger lines, accidentals/enharmonics/octaves, and advanced reading with rhythm/articulation/dynamics/expression at speed. Develop fluent music reading.",
+      "unified_skill": "Reading musical notation fluently",
+      "modes": ["clefs", "grand-staff", "accidentals", "advanced"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-002",
+      "title": "Scale Builder",
+      "desc": "Master scale construction through all scale types (major, minor, harmonic minor, melodic minor, pentatonic, blues, whole tone, chromatic, modes) and exotic/world music scales. Build the frameworks of tonality.",
+      "unified_skill": "Constructing scale structures",
+      "modes": ["common-scales", "exotic-scales"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-003",
+      "title": "Chord Builder",
+      "desc": "Master chord construction through all chord types (triads, 7th, 9th, 11th, 13th, suspended, added tone, altered, slash chords, polychords) and complex/extended structures. Build the vocabulary of harmony.",
+      "unified_skill": "Constructing chord structures",
+      "modes": ["basic-chords", "complex-chords"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-004",
+      "title": "Key Signature Master",
+      "desc": "Master key signatures and tonality through all major keys, all minor keys, key signature analysis, and key change/modulation detection. Understand the tonal centers of music.",
+      "unified_skill": "Understanding key signatures and tonality",
+      "modes": ["major", "minor", "analysis", "modulation"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "compose-001",
+      "title": "Composition Studio",
+      "desc": "Master creating original music through melody composition (start, continue, complete, transpose, invert, retrograde, augment, diminish, fragment, sequence), rhythm composition (all transformations, polyrhythms), and harmony composition (progressions, voicings, counterpoint, modulations, cadences, ostinatos, pedal points). Become a composer.",
+      "unified_skill": "Composing original music",
+      "modes": ["melody", "rhythm", "harmony"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "compose-002",
+      "title": "Orchestration & Style Studio",
+      "desc": "Master arranging and styling music through orchestration (instrument selection, texture creation, layering, dynamics, articulation, expression) and style adaptation (adapting music to different genres and periods). Become an arranger.",
+      "unified_skill": "Arranging and styling music",
+      "modes": ["orchestration", "style"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "listen-001",
+      "title": "Musical Form Explorer",
+      "desc": "Master structural analysis of music through all musical forms (binary, ternary, rondo, sonata, theme & variations, fugue, canon, passacaglia, chaconne, suite). Understand how music is organized into large-scale structures.",
+      "unified_skill": "Understanding musical form and structure",
+      "modes": ["simple-forms", "complex-forms", "contrapuntal-forms"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "listen-002",
+      "title": "Musical Style Detective",
+      "desc": "Master style identification through all musical periods and genres (Baroque, Classical, Romantic, Impressionist, Expressionist, Modernist, Jazz, Blues, Folk, Contemporary). Understand the historical and cultural contexts of music.",
+      "unified_skill": "Identifying musical styles and periods",
+      "modes": ["classical-periods", "popular-genres", "world-music"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "listen-003",
+      "title": "Composer Detective",
+      "desc": "Master composer identification through recognizing works by major composers (Bach, Mozart, Beethoven, Chopin, Tchaikovsky, Debussy, Stravinsky, Gershwin, Ellington, contemporary). Understand individual compositional voices and styles.",
+      "unified_skill": "Identifying composers and their styles",
+      "modes": ["baroque-classical", "romantic-modern", "jazz-contemporary"],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "listen-004",
+      "title": "Musical Elements Analyzer",
+      "desc": "Master analytical listening through examining musical elements (texture, density, range, register, balance, contrast, unity, development, structure, coherence). Develop deep listening skills for understanding how music works.",
+      "unified_skill": "Analyzing musical elements and structure",
+      "modes": ["texture-density", "range-register", "unity-development"],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "cross-001",
+      "title": "Music & Math Explorer",
+      "desc": "Discover mathematical patterns in music through ratios and fractions (intervals, rhythms), geometric patterns (symmetry, transformations), and sequences (Fibonacci, patterns, probability, statistics). Understand the mathematical foundations of music.",
+      "unified_skill": "Understanding mathematical patterns in music",
+      "modes": ["ratios-fractions", "geometry-symmetry", "sequences-patterns"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Cross-Curricular"
+    },
+    {
+      "id": "cross-002",
+      "title": "Music & Language Lab",
+      "desc": "Explore linguistic connections in music through phonemes and prosody (sound patterns, intonation), rhythm and stress (syllables, accents, meter), and narrative structure (phrasing, metaphors, storytelling). Understand music as a language.",
+      "unified_skill": "Understanding linguistic patterns in music",
+      "modes": ["phonemes-prosody", "rhythm-stress", "narrative-structure"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Cross-Curricular"
+    },
+    {
+      "id": "cross-003",
+      "title": "Music & Movement Studio",
+      "desc": "Connect music to physical movement through gestures and dance (matching movement to music), spatial relationships (balance, coordination, symmetry, asymmetry), and expressive movement (temporal relationships, emotional expression). Understand music kinesthetically.",
+      "unified_skill": "Understanding music through movement",
+      "modes": ["gestures-dance", "spatial-relationships", "expressive-movement"],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Cross-Curricular"
+    },
+    {
+      "id": "advanced-001",
+      "title": "Advanced Music Analyzer",
+      "desc": "Master advanced analytical techniques through advanced harmony (chromatic, functional, non-functional, quartal, quintal, secundal, cluster, microtonal, spectral, atonal), advanced rhythm (isorhythm, mensural, proportional, graphic, aleatoric, stochastic, fractal, generative, algorithmic, experimental), and advanced form (sonata, rondo, fugal, cyclic, arch, sectional, developmental, minimalist, experimental, hybrid). Understand contemporary and experimental music.",
+      "unified_skill": "Analyzing advanced and contemporary music",
+      "modes": ["advanced-harmony", "advanced-rhythm", "advanced-form"],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Advanced Concepts"
+    },
+    {
+      "id": "challenge-001",
+      "title": "Musical Skills Arena",
+      "desc": "Test and refine all your musical skills through speed challenges (rapid identification across all musical elements), progressive mastery (adaptive difficulty across all skills), and competitive play (compete with others in musical knowledge). A capstone experience bringing together all musical learning.",
+      "unified_skill": "Demonstrating comprehensive musical mastery",
+      "modes": ["speed-challenges", "progressive-mastery", "competitive-play"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Gamified Challenges"
+    }
+  ]
+}
+

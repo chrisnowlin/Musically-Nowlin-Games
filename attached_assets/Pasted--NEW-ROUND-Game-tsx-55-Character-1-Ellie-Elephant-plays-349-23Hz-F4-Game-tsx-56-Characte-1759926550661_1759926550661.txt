@@ -1,0 +1,73 @@
+=== NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 349.23Hz (F4)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 261.63Hz (C4)
+Game.tsx:57 Question: Which played the LOWER sound?
+Game.tsx:58 Correct answer: Character 2
+Game.tsx:59 Verification: Char1 > Char2
+Game.tsx:69 Playing sounds: Char1=349.23Hz, Char2=261.63Hz
+Game.tsx:111 === ANSWER SUBMITTED ===
+Game.tsx:112 User selected: Character 2
+Game.tsx:113 Correct answer: Character 2
+Game.tsx:114 Result: CORRECT ✓
+Game.tsx:54 === NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 329.63Hz (E4)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 261.63Hz (C4)
+Game.tsx:57 Question: Which played the HIGHER sound?
+Game.tsx:58 Correct answer: Character 1
+Game.tsx:59 Verification: Char1 > Char2
+Game.tsx:69 Playing sounds: Char1=329.63Hz, Char2=261.63Hz
+Game.tsx:111 === ANSWER SUBMITTED ===
+Game.tsx:112 User selected: Character 1
+Game.tsx:113 Correct answer: Character 1
+Game.tsx:114 Result: CORRECT ✓
+Game.tsx:54 === NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 329.63Hz (E4)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 783.99Hz (G5)
+Game.tsx:57 Question: Which played the HIGHER sound?
+Game.tsx:58 Correct answer: Character 2
+Game.tsx:59 Verification: Char1 < Char2
+Game.tsx:69 Playing sounds: Char1=329.63Hz, Char2=783.99Hz
+Game.tsx:111 === ANSWER SUBMITTED ===
+Game.tsx:112 User selected: Character 2
+Game.tsx:113 Correct answer: Character 2
+Game.tsx:114 Result: CORRECT ✓
+Game.tsx:54 === NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 880Hz (A5)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 523.25Hz (C5)
+Game.tsx:57 Question: Which played the LOWER sound?
+Game.tsx:58 Correct answer: Character 2
+Game.tsx:59 Verification: Char1 > Char2
+Game.tsx:69 Playing sounds: Char1=880Hz, Char2=523.25Hz
+Game.tsx:111 === ANSWER SUBMITTED ===
+Game.tsx:112 User selected: Character 2
+Game.tsx:113 Correct answer: Character 2
+Game.tsx:114 Result: CORRECT ✓
+Game.tsx:54 === NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 523.25Hz (C5)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 329.63Hz (E4)
+Game.tsx:57 Question: Which played the HIGHER sound?
+Game.tsx:58 Correct answer: Character 1
+Game.tsx:59 Verification: Char1 > Char2
+Game.tsx:69 Playing sounds: Char1=523.25Hz, Char2=329.63Hz
+Game.tsx:111 === ANSWER SUBMITTED ===
+Game.tsx:112 User selected: Character 1
+Game.tsx:113 Correct answer: Character 1
+Game.tsx:114 Result: CORRECT ✓
+Game.tsx:54 === NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 523.25Hz (C5)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 698.46Hz (F5)
+Game.tsx:57 Question: Which played the HIGHER sound?
+Game.tsx:58 Correct answer: Character 2
+Game.tsx:59 Verification: Char1 < Char2
+Game.tsx:69 Playing sounds: Char1=523.25Hz, Char2=698.46Hz
+Game.tsx:111 === ANSWER SUBMITTED ===
+Game.tsx:112 User selected: Character 2
+Game.tsx:113 Correct answer: Character 2
+Game.tsx:114 Result: CORRECT ✓
+Game.tsx:54 === NEW ROUND ===
+Game.tsx:55 Character 1 (Ellie Elephant) plays: 698.46Hz (F5)
+Game.tsx:56 Character 2 (Gary Giraffe) plays: 329.63Hz (E4)
+Game.tsx:57 Question: Which played the LOWER sound?
+Game.tsx:58 Correct answer: Character 2
+Game.tsx:59 Verification: Char1 > Char2
+Game.tsx:69 Playing sounds: Char1=698.46Hz, Char2=329.63Hz

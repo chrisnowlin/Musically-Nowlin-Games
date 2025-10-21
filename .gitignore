@@ -1,0 +1,84 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+server/public
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+*~
+
+# Playwright
+playwright-report/
+test-results/
+.playwright-mcp/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+vite.config.ts.*
+*.tar.gz
+
+# Screenshots from debugging (root level)
+*.png
+!client/public/**/*.png
+
+# Audio files - ignoring the full Philharmonia sample library (too large)
+# But keeping client/public/audio/ which contains only the samples we actually use
+client/public/sounds/
+
+# Generated game databases (keeping only source files)
+games_database_full.json
+philharmonia-library-report.json
+
+# Development and local state
+.local/
+.claude/settings.local.json
+
+# Development scripts (keep locally but don't commit)
+debug-*.js
+download-*.js
+explore-*.js
+extract-*.js
+generate-*.js
+verify_routes.js
+
+# Test reports and implementation documentation (keep locally)
+*_REPORT.md
+*_SUMMARY.md
+*_IMPLEMENTATION*.md
+*_TEST*.md
+*_TESTING*.md
+AGENTS.md
+WARP.md
+QUICK_START.md
+*_VARIATIONS.md
+*_GUIDE.md
+*_RECOMMENDATIONS.md
+*_STRATEGY.md
+*_POC.md
+*_COMPLETE.md
+*_PROGRESS.md
+*_COMPARISON.md

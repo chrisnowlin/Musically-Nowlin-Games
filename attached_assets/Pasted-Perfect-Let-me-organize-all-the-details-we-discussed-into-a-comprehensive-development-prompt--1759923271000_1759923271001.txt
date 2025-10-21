@@ -1,0 +1,63 @@
+Perfect! Let me organize all the details we discussed into a comprehensive development prompt:
+
+-----
+
+## Web App Development Prompt: High vs Low Sound Music Game
+
+### Project Overview
+
+Create an educational music web app for elementary school students (Kindergarten through 5th grade) that teaches the concept of high sounds versus low sounds through an interactive game.
+
+### Core Concept
+
+- Two animal characters each play a sound
+- Students identify which character played the higher or lower sound based on a question prompt
+- The animal characters should be consistent throughout the game but hold different standard orchestra instruments
+
+### Technical Requirements
+
+**Sound System:**
+
+- Two-octave pitch range for sound selection
+- Fixed pool of notes/pitches (no difficulty progression)
+- Random selection from the pitch pool
+- Standard orchestra instrument sounds
+- Visual instruments displayed do not need to match the actual pitch/instrument sound being played
+
+**Game Flow:**
+
+1. Two animal characters appear, each holding an instrument
+1. Both characters play their sounds sequentially
+1. A random question prompt asks either “Which character played the higher sound?” OR “Which character played the lower sound?”
+1. Student clicks/taps on the correct character
+1. Feedback appears (green for correct, red for incorrect)
+1. Score updates if correct
+1. Game continues with new round
+
+**User Interface:**
+
+- Mobile-first design optimized for iPads and touch-capacitive TVs
+- Large touch targets suitable for elementary-age children
+- Responsive design that works across different screen sizes
+- Touch sensitivity optimized for various devices
+
+**Feedback & Scoring:**
+
+- Simple visual feedback: Green indicator for correct answers, Red indicator for incorrect answers
+- Running total score counter showing total correct answers (not consecutive streak)
+- Reset button to clear score between sessions
+- Keep feedback basic for initial version (can enhance later)
+
+### Design Priorities
+
+1. Child-friendly, engaging visuals
+1. Clear, large interactive elements
+1. Intuitive gameplay requiring minimal instruction
+1. Consistent difficulty level across all uses
+
+### Development Notes
+
+- This is an initial draft/MVP - feedback system and additional features can be enhanced in future iterations
+- Focus on core functionality: sound comparison, random prompts, basic scoring, and touch-friendly interface
+
+-----

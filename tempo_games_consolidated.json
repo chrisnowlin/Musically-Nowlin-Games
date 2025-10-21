@@ -1,0 +1,61 @@
+{
+  "games": [
+    {
+      "id": "rhythm-002",
+      "title": "Tempo & Pulse Master",
+      "desc": "Master musical speed and underlying beat through tempo recognition (Largo, Adagio, Andante, Moderato, Allegro, Presto, BPM estimation), tempo changes (accelerando, ritardando, rubato, fermata, metric modulation, sudden changes), pulse and subdivisions (doubling, halving, triplets, swing vs straight), and tempo analysis. Understand the heartbeat of music in all its forms.",
+      "unified_skill": "Understanding musical speed, pulse, and tempo changes",
+      "modes": ["tempo-recognition", "tempo-changes", "pulse-subdivisions", "analysis"],
+      "sub_modes": {
+        "tempo-recognition": ["tempo-categories", "tempo-comparison", "tempo-matching", "bpm-estimation"],
+        "tempo-changes": ["accelerando", "ritardando", "sudden-changes", "rubato", "fermata", "metric-modulation"],
+        "pulse-subdivisions": ["doubling", "halving", "triplets", "swing-straight"],
+        "analysis": ["tempo-stability", "tempo-consistency"]
+      },
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing",
+      "replaces": ["tempo-001 through tempo-020"],
+      "note": "Expanded from original to include comprehensive tempo recognition and change detection"
+    },
+    {
+      "id": "rhythm-006",
+      "title": "Beat & Pulse Trainer",
+      "desc": "Develop rock-solid internal timing through steady beat keeping (maintaining beat with metronome), beat tapping (tapping along with music at correct tempo), internal pulse (continuing beat without audio cues), subdivision practice (feeling subdivisions within the beat), and tempo stability (maintaining tempo without drifting). Build your internal metronome.",
+      "unified_skill": "Maintaining and internalizing steady beat",
+      "modes": ["steady-beat", "beat-tapping", "internal-pulse", "subdivisions", "tempo-stability"],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing",
+      "replaces": ["tempo-021 through tempo-030"],
+      "note": "New game focused on active beat maintenance and internalization"
+    },
+    {
+      "id": "rhythm-007",
+      "title": "Tempo Conducting Studio",
+      "desc": "Master tempo control and leadership through tempo setting (setting and maintaining target tempos), tempo conducting (conducting music at specified tempos), tempo transitions (smoothly transitioning between tempos), expressive timing (using tempo for musical expression), and ensemble coordination (keeping multiple parts in tempo). Take the baton and lead the tempo.",
+      "unified_skill": "Conducting and controlling tempo",
+      "modes": ["tempo-setting", "conducting", "transitions", "expressive-timing", "ensemble-coordination"],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Rhythm & Timing",
+      "replaces": ["tempo-031 through tempo-040"],
+      "note": "New game focused on active tempo control and leadership"
+    }
+  ],
+  "summary": {
+    "original_games": 40,
+    "consolidated_games": 3,
+    "reduction": "92.5%",
+    "strategy": "Merged tempo recognition and change detection into existing Tempo & Pulse Master, created two new specialized games for beat training and conducting",
+    "total_rhythm_timing_games": 7,
+    "notes": [
+      "Tempo & Pulse Master expanded with 10 new sub-modes",
+      "Beat & Pulse Trainer is new game for active practice",
+      "Tempo Conducting Studio is new game for leadership skills",
+      "All games have strong pedagogical cohesion",
+      "Total modes across 3 games: 19 modes"
+    ]
+  }
+}
+

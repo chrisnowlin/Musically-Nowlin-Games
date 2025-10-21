@@ -1,0 +1,1315 @@
+{
+  "games": [
+    {
+      "id": "pitch-001",
+      "title": "Pitch Master",
+      "desc": "Comprehensive pitch identification including octaves, intervals, bends, vibrato, glissando, portamento, envelopes, and harmonics",
+      "modes": [
+        "octave",
+        "interval",
+        "bend",
+        "vibrato",
+        "glissando",
+        "portamento",
+        "envelope",
+        "harmonic"
+      ],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-002",
+      "title": "Relative & Absolute Pitch Trainer",
+      "desc": "Train both relative and absolute pitch recognition with progressive difficulty",
+      "modes": [
+        "relative",
+        "absolute"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-003",
+      "title": "Melody Transformer",
+      "desc": "Recognize and match melodies with transformations: transposition, inversion, retrograde, augmentation, diminution, ornamentation",
+      "modes": [
+        "transposition",
+        "inversion",
+        "retrograde",
+        "augmentation",
+        "diminution",
+        "ornamentation"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-004",
+      "title": "Melody Pattern Detective",
+      "desc": "Identify melody patterns including variations, combinations, echoes, sequences, modulations, and fragmentations",
+      "modes": [
+        "variation",
+        "combination",
+        "echo",
+        "sequence",
+        "modulation",
+        "fragmentation"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-005",
+      "title": "Melody Articulation Studio",
+      "desc": "Distinguish and match melodies with different articulations and dynamics",
+      "modes": [
+        "legato",
+        "staccato",
+        "dynamics"
+      ],
+      "difficulty": "medium",
+      "age": "5-10",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-006",
+      "title": "Phrase Structure Analyzer",
+      "desc": "Identify phrase boundaries, breathing points, symmetry, climax points, and cadences",
+      "modes": [
+        "boundary",
+        "breathing",
+        "symmetry",
+        "climax",
+        "cadence"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-007",
+      "title": "Phrase Relationship Explorer",
+      "desc": "Recognize phrase relationships: antecedent-consequent, parallel, contrast, repetition, variation",
+      "modes": [
+        "antecedent-consequent",
+        "parallel",
+        "contrast",
+        "repetition",
+        "variation"
+      ],
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-008",
+      "title": "Phrase Transformation Lab",
+      "desc": "Identify phrase transformations: elision, fragmentation, expansion, compression, sequencing",
+      "modes": [
+        "elision",
+        "fragmentation",
+        "expansion",
+        "compression",
+        "sequencing"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-009",
+      "title": "Scale & Mode Explorer",
+      "desc": "Identify all major scales, minor scales (natural, harmonic, melodic), and church modes",
+      "modes": [
+        "major",
+        "minor",
+        "dorian",
+        "phrygian",
+        "lydian",
+        "mixolydian",
+        "aeolian",
+        "locrian"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-010",
+      "title": "Special Scales Detective",
+      "desc": "Recognize pentatonic, blues, whole tone, and chromatic scales",
+      "modes": [
+        "pentatonic",
+        "blues",
+        "whole-tone",
+        "chromatic"
+      ],
+      "difficulty": "medium",
+      "age": "6-10",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-011",
+      "title": "Scale Degree Master",
+      "desc": "Identify and name scale degrees in various contexts",
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-012",
+      "title": "Contour Transformer",
+      "desc": "Match and identify contour transformations: inversion, retrograde, augmentation, diminution, fragmentation, sequencing",
+      "modes": [
+        "inversion",
+        "retrograde",
+        "augmentation",
+        "diminution",
+        "fragmentation",
+        "sequencing"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-013",
+      "title": "Contour Modifier",
+      "desc": "Recognize modified contours: modulation, ornamentation, simplification, expansion, compression, transposition",
+      "modes": [
+        "modulation",
+        "ornamentation",
+        "simplification",
+        "expansion",
+        "compression",
+        "transposition"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "pitch-014",
+      "title": "Contour Analyzer Pro",
+      "desc": "Comprehensive contour analysis and description including complex transformations",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Pitch & Melody"
+    },
+    {
+      "id": "rhythm-001",
+      "title": "Rhythm Pattern Master",
+      "desc": "Comprehensive rhythm pattern recognition including syllables, notation, clapping, tapping, and subdivisions",
+      "modes": [
+        "syllables",
+        "notation",
+        "clapping",
+        "tapping",
+        "subdivisions"
+      ],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-002",
+      "title": "Rhythm Transformer",
+      "desc": "Identify rhythm transformations: syncopation, polyrhythm, hemiola, augmentation, diminution, inversion, retrograde",
+      "modes": [
+        "syncopation",
+        "polyrhythm",
+        "hemiola",
+        "augmentation",
+        "diminution",
+        "inversion",
+        "retrograde"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-003",
+      "title": "Rhythm Pattern Detective",
+      "desc": "Recognize rhythm patterns: fragmentation, sequences, variations",
+      "modes": [
+        "fragmentation",
+        "sequences",
+        "variations"
+      ],
+      "difficulty": "medium",
+      "age": "6-10",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-004",
+      "title": "Tempo Change Detector",
+      "desc": "Identify tempo changes: accelerando, ritardando, rubato, fermata, metric modulation",
+      "modes": [
+        "accelerando",
+        "ritardando",
+        "rubato",
+        "fermata",
+        "metric-modulation"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-005",
+      "title": "Pulse & Subdivision Master",
+      "desc": "Identify pulse, subdivisions, doubling, halving, triplets, swing vs straight",
+      "modes": [
+        "pulse",
+        "subdivisions",
+        "doubling",
+        "halving",
+        "triplets",
+        "swing"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-006",
+      "title": "Tempo Analyzer",
+      "desc": "Analyze tempo stability and count tempo changes",
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-007",
+      "title": "Meter Master",
+      "desc": "Identify all common meters: 2/4, 3/4, 4/4, 5/4, 6/8, 7/8, 9/8, 12/8",
+      "modes": [
+        "2/4",
+        "3/4",
+        "4/4",
+        "5/4",
+        "6/8",
+        "7/8",
+        "9/8",
+        "12/8"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-008",
+      "title": "Meter Type Identifier",
+      "desc": "Distinguish meter types: simple, compound, asymmetric",
+      "modes": [
+        "simple",
+        "compound",
+        "asymmetric"
+      ],
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-009",
+      "title": "Meter Features Detector",
+      "desc": "Identify meter features: modulation, accent patterns, downbeats",
+      "modes": [
+        "modulation",
+        "accents",
+        "downbeats"
+      ],
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-010",
+      "title": "Rhythm Notation Master",
+      "desc": "Match and identify all note and rest values with symbols",
+      "modes": [
+        "notes",
+        "rests",
+        "dots",
+        "ties"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-011",
+      "title": "Tuplet & Grouping Expert",
+      "desc": "Recognize triplets, tuplets, beam grouping, stem direction, flags",
+      "modes": [
+        "triplets",
+        "tuplets",
+        "beaming",
+        "stems",
+        "flags"
+      ],
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-012",
+      "title": "Notation Converter",
+      "desc": "Convert between notation and rhythm, analyze complexity and clarity",
+      "modes": [
+        "convert",
+        "complexity",
+        "clarity",
+        "accuracy"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-013",
+      "title": "Notation Speed Reader",
+      "desc": "Read rhythm notation quickly and accurately",
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-014",
+      "title": "Polyrhythm Master",
+      "desc": "Identify and perform polyrhythms: 2v3, 3v4, 4v5, and complex patterns",
+      "modes": [
+        "2v3",
+        "3v4",
+        "4v5",
+        "layers",
+        "alignment"
+      ],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-015",
+      "title": "Polyrhythm Analyzer",
+      "desc": "Analyze polyrhythm complexity and structure",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-016",
+      "title": "Polyrhythm Transformer",
+      "desc": "Transform, combine, and separate polyrhythmic patterns",
+      "modes": [
+        "transform",
+        "combine",
+        "separate"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "rhythm-017",
+      "title": "Polyrhythm Creator",
+      "desc": "Create and sequence original polyrhythmic patterns",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Rhythm & Timing"
+    },
+    {
+      "id": "harmony-001",
+      "title": "Interval Master",
+      "desc": "Identify all intervals: unison, m2, M2, m3, M3, P4, tritone, P5, m6, M6, m7, M7, octave",
+      "modes": [
+        "all-intervals"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-002",
+      "title": "Interval Quality Detective",
+      "desc": "Distinguish augmented and diminished intervals",
+      "modes": [
+        "augmented",
+        "diminished"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-003",
+      "title": "Triad Master",
+      "desc": "Identify all triads: major, minor, augmented, diminished",
+      "modes": [
+        "major",
+        "minor",
+        "augmented",
+        "diminished"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-004",
+      "title": "Seventh Chord Expert",
+      "desc": "Identify seventh chords: dominant 7th, major 7th, minor 7th, half-diminished, fully-diminished",
+      "modes": [
+        "dom7",
+        "maj7",
+        "min7",
+        "half-dim",
+        "full-dim"
+      ],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-005",
+      "title": "Extended Chord Identifier",
+      "desc": "Recognize sus2, sus4, add9, 6th, 9th, and extended chords",
+      "modes": [
+        "sus2",
+        "sus4",
+        "add9",
+        "6th",
+        "9th",
+        "extended"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-006",
+      "title": "Chord Progression Master",
+      "desc": "Identify common progressions: I-IV-V-I, I-vi-IV-V, ii-V-I, I-IV-I-V",
+      "modes": [
+        "I-IV-V-I",
+        "I-vi-IV-V",
+        "ii-V-I",
+        "blues"
+      ],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-007",
+      "title": "Harmonic Feature Detector",
+      "desc": "Identify cadences, modulations, sequences, pedal points, ostinatos",
+      "modes": [
+        "cadences",
+        "modulations",
+        "sequences",
+        "pedal",
+        "ostinato"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-008",
+      "title": "Harmonic Rhythm Analyzer",
+      "desc": "Analyze harmonic rhythm and progression patterns",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-009",
+      "title": "Consonance & Dissonance Master",
+      "desc": "Distinguish perfect consonance, imperfect consonance, and dissonance with tension/resolution",
+      "modes": [
+        "perfect",
+        "imperfect",
+        "dissonance",
+        "tension",
+        "resolution"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "harmony-010",
+      "title": "Non-Chord Tone Expert",
+      "desc": "Identify suspensions, passing tones, neighbor tones, appoggiaturas, escape tones, anticipations",
+      "modes": [
+        "suspension",
+        "passing",
+        "neighbor",
+        "appoggiatura",
+        "escape",
+        "anticipation"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Harmony & Intervals"
+    },
+    {
+      "id": "timbre-001",
+      "title": "Instrument Family Master",
+      "desc": "Identify all instrument families: strings, woodwinds, brass, percussion, keyboard, electronic, vocal",
+      "modes": [
+        "strings",
+        "woodwinds",
+        "brass",
+        "percussion",
+        "keyboard",
+        "electronic",
+        "vocal"
+      ],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-002",
+      "title": "Instrument Type Explorer",
+      "desc": "Distinguish hybrid, ancient, world, orchestral, chamber, solo, and ensemble instruments",
+      "modes": [
+        "hybrid",
+        "ancient",
+        "world",
+        "orchestral",
+        "chamber",
+        "solo",
+        "ensemble"
+      ],
+      "difficulty": "medium",
+      "age": "6-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-003",
+      "title": "String Instrument Identifier",
+      "desc": "Identify violin, viola, cello, bass, guitar, harp",
+      "modes": [
+        "violin",
+        "viola",
+        "cello",
+        "bass",
+        "guitar",
+        "harp"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-004",
+      "title": "Wind Instrument Identifier",
+      "desc": "Identify flute, oboe, clarinet, saxophone, trumpet, trombone, French horn, tuba",
+      "modes": [
+        "flute",
+        "oboe",
+        "clarinet",
+        "saxophone",
+        "trumpet",
+        "trombone",
+        "horn",
+        "tuba"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-005",
+      "title": "Keyboard & Percussion Identifier",
+      "desc": "Identify piano and various percussion instruments",
+      "modes": [
+        "piano",
+        "percussion"
+      ],
+      "difficulty": "medium",
+      "age": "5-10",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-006",
+      "title": "Timbre Quality Analyzer",
+      "desc": "Distinguish bright/dark, warm/cold, harsh/smooth, thin/rich, nasal/resonant",
+      "modes": [
+        "bright-dark",
+        "warm-cold",
+        "harsh-smooth",
+        "thin-rich",
+        "nasal-resonant"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-007",
+      "title": "Timbre Texture Detector",
+      "desc": "Identify metallic/mellow, piercing/soft, vibrant/dull, articulate/blurred",
+      "modes": [
+        "metallic-mellow",
+        "piercing-soft",
+        "vibrant-dull",
+        "articulate-blurred"
+      ],
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-008",
+      "title": "Timbre Presence Analyzer",
+      "desc": "Analyze overall timbre presence and characteristics",
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-009",
+      "title": "String Technique Detector",
+      "desc": "Identify vibrato, tremolo, pizzicato, arco, glissando, portamento, harmonics",
+      "modes": [
+        "vibrato",
+        "tremolo",
+        "pizzicato",
+        "arco",
+        "glissando",
+        "portamento",
+        "harmonics"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "timbre-010",
+      "title": "Articulation Technique Master",
+      "desc": "Identify staccato, legato, mute techniques",
+      "modes": [
+        "staccato",
+        "legato",
+        "mute"
+      ],
+      "difficulty": "medium",
+      "age": "6-10",
+      "category": "Timbre & Instruments"
+    },
+    {
+      "id": "dynamics-001",
+      "title": "Dynamic Level Master",
+      "desc": "Identify all dynamic levels: ppp, pp, p, mp, mf, f, ff, fff",
+      "modes": [
+        "ppp",
+        "pp",
+        "p",
+        "mp",
+        "mf",
+        "f",
+        "ff",
+        "fff"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-002",
+      "title": "Relative Dynamics Analyzer",
+      "desc": "Analyze relative dynamics and gradients",
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-003",
+      "title": "Dynamic Change Detector",
+      "desc": "Identify crescendo, decrescendo, sudden changes, accents, sforzando, subito, swell, diminuendo, hairpins",
+      "modes": [
+        "crescendo",
+        "decrescendo",
+        "sudden",
+        "accent",
+        "sforzando",
+        "subito",
+        "swell",
+        "diminuendo",
+        "hairpin"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-004",
+      "title": "Dynamic Pulse Analyzer",
+      "desc": "Analyze dynamic pulsing and patterns",
+      "difficulty": "medium",
+      "age": "7-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-005",
+      "title": "Articulation Master",
+      "desc": "Identify legato, staccato, marcato, tenuto, portato, accents, breathing, phrasing",
+      "modes": [
+        "legato",
+        "staccato",
+        "marcato",
+        "tenuto",
+        "portato",
+        "accent",
+        "breathing",
+        "phrasing"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-006",
+      "title": "Expression Analyzer",
+      "desc": "Analyze rubato and musical interpretation",
+      "modes": [
+        "rubato",
+        "interpretation"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-007",
+      "title": "Emotion Detector",
+      "desc": "Identify emotional qualities: happy, sad, angry, peaceful, excited, mysterious, romantic, dramatic, playful, contemplative",
+      "modes": [
+        "happy",
+        "sad",
+        "angry",
+        "peaceful",
+        "excited",
+        "mysterious",
+        "romantic",
+        "dramatic",
+        "playful",
+        "contemplative"
+      ],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "dynamics-008",
+      "title": "Emotional Expression Analyzer",
+      "desc": "Analyze complex emotional expression in music",
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Dynamics & Expression"
+    },
+    {
+      "id": "theory-001",
+      "title": "Clef Master",
+      "desc": "Read notes in treble, bass, alto, and tenor clefs",
+      "modes": [
+        "treble",
+        "bass",
+        "alto",
+        "tenor"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-002",
+      "title": "Grand Staff Reader",
+      "desc": "Read notes on grand staff with ledger lines",
+      "modes": [
+        "grand-staff",
+        "ledger-lines"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-003",
+      "title": "Note Reading Master",
+      "desc": "Read notes with accidentals, enharmonics, octave designations",
+      "modes": [
+        "accidentals",
+        "enharmonics",
+        "octaves"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-004",
+      "title": "Advanced Note Reader",
+      "desc": "Read notes with rhythm, articulation, dynamics, expression, and complex combinations at speed",
+      "modes": [
+        "rhythm",
+        "articulation",
+        "dynamics",
+        "expression",
+        "speed"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-005",
+      "title": "Scale Constructor",
+      "desc": "Build major, minor, harmonic minor, melodic minor, pentatonic, blues, whole tone, chromatic, and modal scales",
+      "modes": [
+        "major",
+        "minor",
+        "harmonic-minor",
+        "melodic-minor",
+        "pentatonic",
+        "blues",
+        "whole-tone",
+        "chromatic",
+        "modes"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-006",
+      "title": "Exotic Scale Builder",
+      "desc": "Build exotic and world music scales",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-007",
+      "title": "Chord Constructor",
+      "desc": "Build triads, 7th chords, 9th, 11th, 13th, suspended, added tone, altered, slash chords, polychords",
+      "modes": [
+        "triads",
+        "7th",
+        "9th",
+        "11th",
+        "13th",
+        "suspended",
+        "added",
+        "altered",
+        "slash",
+        "polychords"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-008",
+      "title": "Advanced Chord Builder",
+      "desc": "Build complex and extended chord structures",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-009",
+      "title": "Major Key Master",
+      "desc": "Identify all major keys: C, G, D, A, E, B, F#, C#, F, Bb, Eb, Ab, Db, Gb, Cb",
+      "modes": [
+        "all-major-keys"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-010",
+      "title": "Minor Key Master",
+      "desc": "Identify all minor keys and their relationships",
+      "modes": [
+        "all-minor-keys"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-011",
+      "title": "Key Signature Analyzer",
+      "desc": "Analyze key signatures and relationships",
+      "difficulty": "medium",
+      "age": "8-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "theory-012",
+      "title": "Key Change Detector",
+      "desc": "Identify modulations and key changes",
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Music Theory"
+    },
+    {
+      "id": "compose-001",
+      "title": "Melody Composer",
+      "desc": "Compose melodies: start, continue, complete, transpose, invert, retrograde, augment, diminish, fragment, sequence",
+      "modes": [
+        "start",
+        "continue",
+        "complete",
+        "transpose",
+        "invert",
+        "retrograde",
+        "augment",
+        "diminish",
+        "fragment",
+        "sequence"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "compose-002",
+      "title": "Rhythm Composer",
+      "desc": "Compose rhythms with all transformations and create polyrhythms",
+      "modes": [
+        "start",
+        "continue",
+        "complete",
+        "augment",
+        "diminish",
+        "invert",
+        "retrograde",
+        "fragment",
+        "sequence",
+        "polyrhythm"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "compose-003",
+      "title": "Harmony Composer",
+      "desc": "Compose harmonies: start, continue, complete, create progressions, voicings, counterpoint, modulations, cadences, ostinatos, pedal points",
+      "modes": [
+        "start",
+        "continue",
+        "complete",
+        "progressions",
+        "voicings",
+        "counterpoint",
+        "modulations",
+        "cadences",
+        "ostinatos",
+        "pedal"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "compose-004",
+      "title": "Orchestration Studio",
+      "desc": "Orchestrate music: start, continue, complete, select instruments, create textures, layer sounds, assign dynamics, articulation, expression",
+      "modes": [
+        "start",
+        "continue",
+        "complete",
+        "instruments",
+        "textures",
+        "layers",
+        "dynamics",
+        "articulation",
+        "expression"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "compose-005",
+      "title": "Style Adapter",
+      "desc": "Adapt compositions to different musical styles",
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Composition & Creation"
+    },
+    {
+      "id": "listen-001",
+      "title": "Musical Form Master",
+      "desc": "Identify binary, ternary, rondo, sonata, theme & variations, fugue, canon, passacaglia, chaconne, suite forms",
+      "modes": [
+        "binary",
+        "ternary",
+        "rondo",
+        "sonata",
+        "variations",
+        "fugue",
+        "canon",
+        "passacaglia",
+        "chaconne",
+        "suite"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "listen-002",
+      "title": "Musical Style Identifier",
+      "desc": "Identify Baroque, Classical, Romantic, Impressionist, Expressionist, Modernist, Jazz, Blues, Folk, Contemporary styles",
+      "modes": [
+        "baroque",
+        "classical",
+        "romantic",
+        "impressionist",
+        "expressionist",
+        "modernist",
+        "jazz",
+        "blues",
+        "folk",
+        "contemporary"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "listen-003",
+      "title": "Composer Identifier",
+      "desc": "Identify works by major composers: Bach, Mozart, Beethoven, Chopin, Tchaikovsky, Debussy, Stravinsky, Gershwin, Ellington, and contemporary composers",
+      "modes": [
+        "bach",
+        "mozart",
+        "beethoven",
+        "chopin",
+        "tchaikovsky",
+        "debussy",
+        "stravinsky",
+        "gershwin",
+        "ellington",
+        "contemporary"
+      ],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "listen-004",
+      "title": "Musical Element Analyzer",
+      "desc": "Analyze texture, density, range, register, balance, contrast, unity, development, structure, coherence",
+      "modes": [
+        "texture",
+        "density",
+        "range",
+        "register",
+        "balance",
+        "contrast",
+        "unity",
+        "development",
+        "structure",
+        "coherence"
+      ],
+      "difficulty": "progressive",
+      "age": "8-12",
+      "category": "Listening & Analysis"
+    },
+    {
+      "id": "cross-001",
+      "title": "Music Math Master",
+      "desc": "Explore ratios, fractions, proportions, symmetry, patterns, sequences, Fibonacci, geometry, probability, statistics in music",
+      "modes": [
+        "ratios",
+        "fractions",
+        "proportions",
+        "symmetry",
+        "patterns",
+        "sequences",
+        "fibonacci",
+        "geometry",
+        "probability",
+        "statistics"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Cross-Curricular"
+    },
+    {
+      "id": "cross-002",
+      "title": "Music Language Explorer",
+      "desc": "Match phonemes, analyze prosody, identify accents, intonation, stress patterns, rhythm, syllables, alliteration, metaphors, narrative",
+      "modes": [
+        "phonemes",
+        "prosody",
+        "accents",
+        "intonation",
+        "stress",
+        "rhythm",
+        "syllables",
+        "alliteration",
+        "metaphors",
+        "narrative"
+      ],
+      "difficulty": "progressive",
+      "age": "6-12",
+      "category": "Cross-Curricular"
+    },
+    {
+      "id": "cross-003",
+      "title": "Music Movement Studio",
+      "desc": "Match gestures, dance patterns, locomotion, balance, coordination, symmetry, asymmetry, spatial relationships, temporal relationships, expressive movement",
+      "modes": [
+        "gestures",
+        "dance",
+        "locomotion",
+        "balance",
+        "coordination",
+        "symmetry",
+        "asymmetry",
+        "spatial",
+        "temporal",
+        "expression"
+      ],
+      "difficulty": "progressive",
+      "age": "5-12",
+      "category": "Cross-Curricular"
+    },
+    {
+      "id": "advanced-001",
+      "title": "Advanced Harmony Analyzer",
+      "desc": "Analyze chromatic, functional, non-functional, quartal, quintal, secundal, cluster, microtonal, spectral, atonal harmony",
+      "modes": [
+        "chromatic",
+        "functional",
+        "non-functional",
+        "quartal",
+        "quintal",
+        "secundal",
+        "cluster",
+        "microtonal",
+        "spectral",
+        "atonal"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Advanced Concepts"
+    },
+    {
+      "id": "advanced-002",
+      "title": "Advanced Rhythm Analyzer",
+      "desc": "Analyze isorhythm, mensural rhythm, proportional notation, graphic notation, aleatoric, stochastic, fractal, generative, algorithmic, experimental rhythm",
+      "modes": [
+        "isorhythm",
+        "mensural",
+        "proportional",
+        "graphic",
+        "aleatoric",
+        "stochastic",
+        "fractal",
+        "generative",
+        "algorithmic",
+        "experimental"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Advanced Concepts"
+    },
+    {
+      "id": "advanced-003",
+      "title": "Advanced Form Analyzer",
+      "desc": "Analyze sonata, rondo, fugal, cyclic, arch, sectional, developmental, minimalist, experimental, hybrid forms",
+      "modes": [
+        "sonata",
+        "rondo",
+        "fugal",
+        "cyclic",
+        "arch",
+        "sectional",
+        "developmental",
+        "minimalist",
+        "experimental",
+        "hybrid"
+      ],
+      "difficulty": "hard",
+      "age": "9-12",
+      "category": "Advanced Concepts"
+    },
+    {
+      "id": "challenge-001",
+      "title": "Speed Challenge Master",
+      "desc": "Identify pitches, intervals, chords, rhythms, tempos, instruments, notes, melodies, harmonies, forms quickly",
+      "modes": [
+        "pitch",
+        "interval",
+        "chord",
+        "rhythm",
+        "tempo",
+        "instrument",
+        "note",
+        "melody",
+        "harmony",
+        "form"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Gamified Challenges"
+    },
+    {
+      "id": "challenge-002",
+      "title": "Progressive Master Challenge",
+      "desc": "Progressive difficulty training for pitch, intervals, chords, rhythms, tempos, instruments, notes, melodies, harmonies, forms",
+      "modes": [
+        "pitch",
+        "interval",
+        "chord",
+        "rhythm",
+        "tempo",
+        "instrument",
+        "note",
+        "melody",
+        "harmony",
+        "form"
+      ],
+      "difficulty": "progressive",
+      "age": "7-12",
+      "category": "Gamified Challenges"
+    },
+    {
+      "id": "challenge-003",
+      "title": "Competitive Battle Arena",
+      "desc": "Compete in pitch, interval, chord, rhythm, tempo, instrument, note, melody, harmony, form battles",
+      "modes": [
+        "pitch",
+        "interval",
+        "chord",
+        "rhythm",
+        "tempo",
+        "instrument",
+        "note",
+        "melody",
+        "harmony",
+        "form"
+      ],
+      "difficulty": "hard",
+      "age": "8-12",
+      "category": "Gamified Challenges"
+    }
+  ]
+}
