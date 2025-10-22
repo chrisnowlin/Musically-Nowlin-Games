@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Clef, GameConfig } from '../StaffWarsGame';
+import { useResponsiveLayout } from '@/hooks/useViewport';
 
 interface SetupScreenProps {
   onStartGame: (config: GameConfig) => void;
@@ -25,6 +26,7 @@ const RANGE_PRESETS: { label: string; minNote: string; maxNote: string }[] = [
 export default function SetupScreen({ onStartGame, highScores }: SetupScreenProps) {
   const [selectedClef, setSelectedClef] = useState<Clef>('treble');
   const [selectedRange, setSelectedRange] = useState(1); // Index into RANGE_PRESETS
+  const layout = useResponsiveLayout();
 
   const handleStart = () => {
     const preset = RANGE_PRESETS[selectedRange];
@@ -36,27 +38,64 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4">
-      <Card className="bg-slate-800 border-slate-700">
-        <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-bold text-white mb-2">
+    <div
+      className="w-full mx-auto overflow-y-auto"
+      style={{
+        maxWidth: `${layout.maxContentWidth}px`,
+        padding: `${layout.padding}px`,
+        maxHeight: '100vh'
+      }}
+    >
+      <Card
+        className="bg-slate-800 border-slate-700"
+        style={{
+          padding: `${layout.padding}px`
+        }}
+      >
+        <CardHeader className="text-center" style={{ padding: `${layout.padding}px` }}>
+          <CardTitle
+            className="font-bold text-white"
+            style={{
+              fontSize: `${layout.getFontSize('4xl')}px`,
+              marginBottom: `${layout.padding / 2}px`
+            }}
+          >
             🎵 Staff Wars
           </CardTitle>
-          <CardDescription className="text-lg text-slate-300">
+          <CardDescription
+            className="text-slate-300"
+            style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+          >
             Learn to read music notation with speed and accuracy!
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-8">
+        <CardContent
+          style={{
+            padding: `${layout.padding}px`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: `${layout.gridGap * 2}px`
+          }}
+        >
           {/* Clef Selection */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-white">Select Clef</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap}px` }}>
+            <h3
+              className="font-semibold text-white"
+              style={{ fontSize: `${layout.getFontSize('xl')}px` }}
+            >
+              Select Clef
+            </h3>
             <RadioGroup value={selectedClef} onValueChange={(v) => setSelectedClef(v as Clef)}>
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 2}px` }}>
                 {CLEF_OPTIONS.map((option) => (
-                  <div key={option.value} className="flex items-center space-x-3">
+                  <div key={option.value} className="flex items-center" style={{ gap: `${layout.gridGap / 2}px` }}>
                     <RadioGroupItem value={option.value} id={option.value} />
-                    <Label htmlFor={option.value} className="text-white cursor-pointer text-lg">
+                    <Label
+                      htmlFor={option.value}
+                      className="text-white cursor-pointer touch-target"
+                      style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+                    >
                       {option.label}
                     </Label>
                   </div>
@@ -66,14 +105,23 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
           </div>
 
           {/* Range Selection */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-white">Select Difficulty</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap}px` }}>
+            <h3
+              className="font-semibold text-white"
+              style={{ fontSize: `${layout.getFontSize('xl')}px` }}
+            >
+              Select Difficulty
+            </h3>
             <RadioGroup value={String(selectedRange)} onValueChange={(v) => setSelectedRange(parseInt(v))}>
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 2}px` }}>
                 {RANGE_PRESETS.map((preset, idx) => (
-                  <div key={idx} className="flex items-center space-x-3">
+                  <div key={idx} className="flex items-center" style={{ gap: `${layout.gridGap / 2}px` }}>
                     <RadioGroupItem value={String(idx)} id={`range-${idx}`} />
-                    <Label htmlFor={`range-${idx}`} className="text-white cursor-pointer text-lg">
+                    <Label
+                      htmlFor={`range-${idx}`}
+                      className="text-white cursor-pointer touch-target"
+                      style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+                    >
                       {preset.label}
                     </Label>
                   </div>
@@ -84,11 +132,28 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
 
           {/* High Scores */}
           {highScores.length > 0 && (
-            <div className="space-y-3 bg-slate-700 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-white">🏆 High Scores</h3>
-              <div className="space-y-2">
+            <div
+              className="bg-slate-700 rounded-lg"
+              style={{
+                padding: `${layout.padding}px`,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: `${layout.gridGap}px`
+              }}
+            >
+              <h3
+                className="font-semibold text-white"
+                style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+              >
+                🏆 High Scores
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 2}px` }}>
                 {highScores.map((score, idx) => (
-                  <div key={idx} className="flex justify-between text-white">
+                  <div
+                    key={idx}
+                    className="flex justify-between text-white"
+                    style={{ fontSize: `${layout.getFontSize('base')}px` }}
+                  >
                     <span>#{idx + 1}</span>
                     <span className="font-bold">{score}</span>
                   </div>
@@ -100,15 +165,28 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
           {/* Start Button */}
           <Button
             onClick={handleStart}
-            className="w-full h-14 text-xl font-bold bg-green-600 hover:bg-green-700 text-white"
+            className="w-full font-bold bg-green-600 hover:bg-green-700 text-white touch-target"
+            style={{
+              height: `${Math.max(layout.padding * 2, 56)}px`,
+              fontSize: `${layout.getFontSize('xl')}px`,
+              padding: `${layout.padding}px`
+            }}
           >
             Start Game
           </Button>
 
           {/* Instructions */}
-          <div className="bg-slate-700 p-4 rounded-lg text-sm text-slate-200">
-            <p className="font-semibold mb-2">How to Play:</p>
-            <ul className="list-disc list-inside space-y-1">
+          <div
+            className="bg-slate-700 rounded-lg text-slate-200"
+            style={{
+              padding: `${layout.padding}px`,
+              fontSize: `${layout.getFontSize('sm')}px`
+            }}
+          >
+            <p className="font-semibold" style={{ marginBottom: `${layout.padding / 2}px` }}>
+              How to Play:
+            </p>
+            <ul className="list-disc list-inside" style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 4}px` }}>
               <li>Notes scroll from right to left</li>
               <li>Tap the note name button before it reaches the clef</li>
               <li>You have 3 lives - lose them all and it's game over</li>
