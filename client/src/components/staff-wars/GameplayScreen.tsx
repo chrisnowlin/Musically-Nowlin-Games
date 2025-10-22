@@ -4,6 +4,7 @@ import { Volume2, VolumeX, Pause } from 'lucide-react';
 import { Clef, GameConfig } from '../StaffWarsGame';
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/lib/audioService';
+import { useResponsiveLayout } from '@/hooks/useViewport';
 
 interface GameplayScreenProps {
   config: GameConfig;
@@ -53,6 +54,7 @@ export default function GameplayScreen({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentNote, setCurrentNote] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const layout = useResponsiveLayout();
 
   // Initialize audio on first interaction
   useEffect(() => {
@@ -151,53 +153,103 @@ export default function GameplayScreen({
   };
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="w-full min-h-screen max-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-900 to-slate-800">
       {/* HUD */}
-      <div className="bg-slate-800/80 border-b border-slate-700 p-4 flex justify-between items-center" role="region" aria-label="Game status">
-        <div className="flex gap-8">
+      <div
+        className="bg-slate-800/80 border-b border-slate-700 flex justify-between items-center flex-shrink-0"
+        style={{ padding: `${layout.padding}px` }}
+        role="region"
+        aria-label="Game status"
+      >
+        <div className="flex" style={{ gap: `${layout.gridGap * 2}px` }}>
           <div className="text-white">
-            <p className="text-sm text-slate-400">Score</p>
-            <p className="text-3xl font-bold" aria-live="polite" aria-label={`Score: ${score}`}>{score}</p>
+            <p
+              className="text-slate-400"
+              style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+            >
+              Score
+            </p>
+            <p
+              className="font-bold"
+              style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+              aria-live="polite"
+              aria-label={`Score: ${score}`}
+            >
+              {score}
+            </p>
           </div>
           <div className="text-white">
-            <p className="text-sm text-slate-400">Level</p>
-            <p className="text-3xl font-bold" aria-live="polite" aria-label={`Level: ${level}`}>{level}</p>
+            <p
+              className="text-slate-400"
+              style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+            >
+              Level
+            </p>
+            <p
+              className="font-bold"
+              style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+              aria-live="polite"
+              aria-label={`Level: ${level}`}
+            >
+              {level}
+            </p>
           </div>
           <div className="text-white">
-            <p className="text-sm text-slate-400">Lives</p>
-            <p className="text-3xl font-bold text-red-400" aria-live="polite" aria-label={`Lives remaining: ${lives}`}>
+            <p
+              className="text-slate-400"
+              style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+            >
+              Lives
+            </p>
+            <p
+              className="font-bold text-red-400"
+              style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+              aria-live="polite"
+              aria-label={`Lives remaining: ${lives}`}
+            >
               {'❤️'.repeat(lives)}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex" style={{ gap: `${layout.gridGap / 2}px` }}>
           <Button
             onClick={onToggleSFX}
             variant="outline"
             size="icon"
-            className="h-10 w-10"
+            className="touch-target"
+            style={{
+              height: `${Math.max(layout.padding * 2, 44)}px`,
+              width: `${Math.max(layout.padding * 2, 44)}px`
+            }}
             aria-label={sfxEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
             aria-pressed={sfxEnabled}
             title={sfxEnabled ? 'Mute (M)' : 'Unmute (M)'}
           >
-            {sfxEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            {sfxEnabled ? <Volume2 size={layout.device.isMobile ? 18 : 20} /> : <VolumeX size={layout.device.isMobile ? 18 : 20} />}
           </Button>
           <Button
             onClick={onPause}
             variant="outline"
             size="icon"
-            className="h-10 w-10"
+            className="touch-target"
+            style={{
+              height: `${Math.max(layout.padding * 2, 44)}px`,
+              width: `${Math.max(layout.padding * 2, 44)}px`
+            }}
             aria-label="Pause game"
             title="Pause (Space)"
           >
-            <Pause size={20} />
+            <Pause size={layout.device.isMobile ? 18 : 20} />
           </Button>
         </div>
       </div>
 
       {/* Game Canvas */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div
+        className="flex-1 flex items-center justify-center overflow-hidden"
+        style={{ padding: `${layout.padding}px` }}
+      >
         <StaffCanvas
           ref={canvasRef}
           config={config}
@@ -212,8 +264,17 @@ export default function GameplayScreen({
       </div>
 
       {/* Note Buttons */}
-      <div className="bg-slate-800/80 border-t border-slate-700 p-4">
-        <div className="flex justify-center gap-2 flex-wrap max-w-4xl mx-auto">
+      <div
+        className="bg-slate-800/80 border-t border-slate-700 flex-shrink-0"
+        style={{ padding: `${layout.padding}px` }}
+      >
+        <div
+          className="flex justify-center flex-wrap mx-auto"
+          style={{
+            gap: `${layout.gridGap / 2}px`,
+            maxWidth: `${layout.maxContentWidth}px`
+          }}
+        >
           {NOTE_NAMES.map((note) => (
             <Button
               key={note}
@@ -221,11 +282,17 @@ export default function GameplayScreen({
               disabled={!currentNote || isPaused}
               aria-label={`Note ${note}${currentNote === note ? ' - current note' : ''}`}
               aria-pressed={currentNote === note}
-              className={`h-12 w-12 text-lg font-bold min-w-12 ${
+              className={`font-bold touch-target ${
                 currentNote === note
                   ? 'bg-yellow-500 hover:bg-yellow-600 text-black ring-2 ring-yellow-300'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
+              style={{
+                height: `${Math.max(layout.padding * 2, 48)}px`,
+                width: `${Math.max(layout.padding * 2, 48)}px`,
+                minWidth: `${Math.max(layout.padding * 2, 48)}px`,
+                fontSize: `${layout.getFontSize('lg')}px`
+              }}
               title={`Press ${note} or click to answer`}
             >
               {note}

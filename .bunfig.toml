@@ -1,0 +1,59 @@
+# Bun 1.3 Configuration for Musically Nowlin Games
+
+[install]
+# Use exact versions from package.json for reproducible builds
+exact = true
+
+# Enable frozen lockfile in CI environments
+# frozen = true
+
+# Install peer dependencies automatically
+peer = true
+
+# Cache directory (default: ~/.bun/install/cache)
+# cache = ".bun-cache"
+
+[install.scopes]
+# Configure scoped registries if needed
+# "@mycompany" = "https://registry.mycompany.com"
+
+[test]
+# Test configuration
+coverage = true
+preload = ["./client/src/test/setup.ts"]
+
+[run]
+# Enable bun's native implementations for better performance
+bun = true
+
+# Shell to use for scripts
+shell = "/bin/bash"
+
+[define]
+# Define compile-time constants
+# "process.env.NODE_ENV" = "production"
+
+[loader]
+# Custom loaders for file types
+".svg" = "file"
+".png" = "file"
+".jpg" = "file"
+".jpeg" = "file"
+".gif" = "file"
+".webp" = "file"
+".mp3" = "file"
+".wav" = "file"
+".ogg" = "file"
+
+[build]
+# Build configuration for bun build command
+target = "browser"
+format = "esm"
+splitting = true
+minify = true
+sourcemap = "linked"
+
+[dev]
+# Development server configuration
+# port = 5174
+# hot = true

@@ -6,6 +6,8 @@ import SetupScreen from './staff-wars/SetupScreen';
 import GameplayScreen from './staff-wars/GameplayScreen';
 import GameOverScreen from './staff-wars/GameOverScreen';
 import PauseOverlay from './staff-wars/PauseOverlay';
+import { ResponsiveGameLayout } from '@/components/ResponsiveGameLayout';
+import { useResponsiveLayout } from '@/hooks/useViewport';
 
 export type Clef = 'treble' | 'bass' | 'alto' | 'grand';
 export type GameStatus = 'setup' | 'playing' | 'paused' | 'gameOver';
@@ -92,6 +94,7 @@ export default function StaffWarsGame() {
   const [, setLocation] = useLocation();
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const gameLoopRef = useRef<number | null>(null);
+  const layout = useResponsiveLayout();
 
   // Load high scores on mount
   useEffect(() => {
@@ -164,12 +167,19 @@ export default function StaffWarsGame() {
   }, []);
 
   return (
-    <div className="w-full h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center relative">
+    <div className="w-full min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center relative">
       <button
         onClick={() => setLocation("/")}
-        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        className="absolute z-50 flex items-center text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all touch-target"
+        style={{
+          top: `${layout.padding}px`,
+          left: `${layout.padding}px`,
+          gap: `${layout.gridGap / 4}px`,
+          padding: `${layout.padding * 0.5}px ${layout.padding}px`,
+          fontSize: `${layout.getFontSize('sm')}px`
+        }}
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={layout.device.isMobile ? 20 : 24} />
         Main Menu
       </button>
 

@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Vite configuration optimized for Bun 1.3
 export default defineConfig({
   plugins: [react()],
   base: "/Musically-Nowlin-Games/",
@@ -17,6 +18,21 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
+    // Optimizations for Bun
+    target: "esnext",
+    minify: "esbuild",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+          "radix-vendor": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+          ],
+        },
+      },
+    },
   },
   server: {
     port: 5174,
@@ -25,5 +41,12 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
-  }
+    // Bun has faster HMR
+    hmr: true,
+  },
+  // Optimize dependency pre-bundling with Bun
+  optimizeDeps: {
+    include: ["react", "react-dom", "wouter", "vexflow"],
+    exclude: [],
+  },
 });
