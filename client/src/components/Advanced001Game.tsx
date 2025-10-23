@@ -1,9 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Play, Volume2, HelpCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { generateRound, validateAnswer, calculateScore, GameRound } from "@/lib/gameLogic/advanced-001Logic";
 import { sampleAudioService } from "@/lib/sampleAudioService";
 import { Button } from "@/components/ui/button";
+import { getAdvanced001Mode } from "@/lib/gameLogic/advanced-001Modes";
+
+const LS_KEYS = {
+  lastMode: "advanced-001:lastMode",
+  highScores: "advanced-001:highScores",
+  roundsPlayed: "advanced-001:roundsPlayed",
+  achievements: "advanced-001:achievements",
+} as const;
+
 
 interface GameState {
   currentMode: string;
@@ -15,6 +24,12 @@ interface GameState {
   lastAnswerCorrect: boolean;
   timeStarted: number;
   gameStarted: boolean;
+  // Progress & difficulty
+  level: number;
+  correctStreak: number;
+  highScores: Record<string, number>;
+  roundsPlayed: Record<string, number>;
+  achievements: Record<string, string[]>;
 }
 
 export const Advanced001Game: React.FC = () => {
@@ -30,7 +45,34 @@ export const Advanced001Game: React.FC = () => {
     lastAnswerCorrect: false,
     timeStarted: 0,
     gameStarted: false,
+    level: 1,
+    correctStreak: 0,
+    highScores: {},
+    roundsPlayed: {},
+    achievements: {},
   });
+
+  // Load persisted progress on mount
+  useEffect(() => {
+    try {
+      const lastMode = localStorage.getItem(LS_KEYS.lastMode);
+      const highScoresRaw = localStorage.getItem(LS_KEYS.highScores);
+      const roundsPlayedRaw = localStorage.getItem(LS_KEYS.roundsPlayed);
+      const achievementsRaw = localStorage.getItem(LS_KEYS.achievements);
+      setGameState((prev) => ({
+        ...prev,
+        currentMode: lastMode || prev.currentMode,
+        highScores: highScoresRaw ? JSON.parse(highScoresRaw) : {},
+        roundsPlayed: roundsPlayedRaw ? JSON.parse(roundsPlayedRaw) : {},
+        achievements: achievementsRaw ? JSON.parse(achievementsRaw) : {},
+      }));
+    } catch {}
+  }, []);
+
+  const getDifficultyForLevel = useCallback((modeId: string, level: number) => {
+    const curve = getAdvanced001Mode(modeId)?.difficultyCurve ?? ((l: number) => ({ difficulty: Math.min(5, Math.max(1, l)) }));
+    return curve(level).difficulty;
+  }, []);
 
   const modes = [
     { id: "advanced-harmony", label: "Advanced Harmony", emoji: "🎹" },
@@ -44,7 +86,9 @@ export const Advanced001Game: React.FC = () => {
   }, []);
 
   const startGame = useCallback(() => {
-    const newRound = generateRound(gameState.currentMode, 1);
+    const startLevel = 1;
+    const difficulty = getDifficultyForLevel(gameState.currentMode, startLevel);
+    const newRound = generateRound(gameState.currentMode, difficulty);
     setGameState(prev => ({
       ...prev,
       gameStarted: true,
@@ -53,8 +97,10 @@ export const Advanced001Game: React.FC = () => {
       currentRound: newRound,
       showResult: false,
       timeStarted: Date.now(),
+      level: startLevel,
+      correctStreak: 0,
     }));
-  }, [gameState.currentMode]);
+  }, [gameState.currentMode, getDifficultyForLevel]);
 
   const playExample = useCallback(async () => {
     if (!gameState.currentRound || !audioInitialized) return;
@@ -88,15 +134,42 @@ export const Advanced001Game: React.FC = () => {
 
     const correct = validateAnswer(selectedOption, gameState.currentRound.answer);
     const timeSpent = Date.now() - gameState.timeStarted;
-    const points = calculateScore(correct, timeSpent, 1);
+    const difficulty = getDifficultyForLevel(gameState.currentMode, gameState.level);
+    const points = calculateScore(correct, timeSpent, difficulty);
+
+    // Update progress maps
+    const mode = gameState.currentMode;
+    const updatedRounds = { ...gameState.roundsPlayed, [mode]: (gameState.roundsPlayed[mode] ?? 0) + 1 };
+    const newScore = gameState.score + points;
+    const updatedHighScores = { ...gameState.highScores, [mode]: Math.max(newScore, gameState.highScores[mode] ?? 0) };
+
+    const prevAchievements = gameState.achievements[mode] ?? [];
+    const willUnlock: string[] = [];
+    if (correct && !prevAchievements.includes("first_correct")) willUnlock.push("first_correct");
+    const newStreak = correct ? gameState.correctStreak + 1 : 0;
+    if (newStreak >= 3 && !prevAchievements.includes("three_in_a_row")) willUnlock.push("three_in_a_row");
+    const updatedAchievements = willUnlock.length
+      ? { ...gameState.achievements, [mode]: [...prevAchievements, ...willUnlock] }
+      : gameState.achievements;
+
+    // Persist
+    try {
+      localStorage.setItem(LS_KEYS.roundsPlayed, JSON.stringify(updatedRounds));
+      localStorage.setItem(LS_KEYS.highScores, JSON.stringify(updatedHighScores));
+      localStorage.setItem(LS_KEYS.achievements, JSON.stringify(updatedAchievements));
+    } catch {}
 
     setGameState(prev => ({
       ...prev,
-      score: prev.score + points,
+      score: newScore,
       showResult: true,
       lastAnswerCorrect: correct,
+      roundsPlayed: updatedRounds,
+      highScores: updatedHighScores,
+      achievements: updatedAchievements,
+      correctStreak: newStreak,
     }));
-  }, [gameState.currentRound, gameState.showResult, gameState.timeStarted]);
+  }, [gameState.currentRound, gameState.showResult, gameState.timeStarted, gameState.currentMode, gameState.level, gameState.roundsPlayed, gameState.highScores, gameState.achievements, gameState.correctStreak, getDifficultyForLevel]);
 
   const nextRound = useCallback(() => {
     if (gameState.round >= gameState.totalRounds) {
@@ -105,17 +178,22 @@ export const Advanced001Game: React.FC = () => {
       return;
     }
 
-    const newRound = generateRound(gameState.currentMode, 1);
+    const nextLevel = Math.min(5, Math.max(1, gameState.level + (gameState.lastAnswerCorrect ? 1 : -1)));
+    const difficulty = getDifficultyForLevel(gameState.currentMode, nextLevel);
+    const newRound = generateRound(gameState.currentMode, difficulty);
+
     setGameState(prev => ({
       ...prev,
       round: prev.round + 1,
       currentRound: newRound,
       showResult: false,
       timeStarted: Date.now(),
+      level: nextLevel,
     }));
-  }, [gameState.round, gameState.totalRounds, gameState.currentMode]);
+  }, [gameState.round, gameState.totalRounds, gameState.currentMode, gameState.level, gameState.lastAnswerCorrect, getDifficultyForLevel]);
 
   const handleModeChange = (mode: string) => {
+    try { localStorage.setItem(LS_KEYS.lastMode, mode); } catch {}
     setGameState(prev => ({
       ...prev,
       currentMode: mode,
@@ -124,6 +202,8 @@ export const Advanced001Game: React.FC = () => {
       gameStarted: false,
       currentRound: null,
       showResult: false,
+      level: 1,
+      correctStreak: 0,
     }));
   };
 
@@ -224,16 +304,36 @@ export const Advanced001Game: React.FC = () => {
             </Button>
           </div>
 
-          {/* Stats from previous session */}
-          {gameState.score > 0 && (
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="font-bold text-lg mb-4">Previous Session</h3>
-              <div className="text-center">
-                <p className="text-gray-600">Final Score</p>
-                <p className="text-4xl font-bold text-purple-600">{gameState.score}</p>
+          {/* Statistics */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h3 className="font-bold text-lg mb-4">Statistics ({selectedMode?.label})</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-gray-600">High Score</p>
+                <p className="text-2xl font-bold text-purple-600">{gameState.highScores[gameState.currentMode] ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Rounds Played</p>
+                <p className="text-2xl font-bold text-purple-600">{gameState.roundsPlayed[gameState.currentMode] ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Level</p>
+                <p className="text-2xl font-bold text-purple-600">{gameState.level}</p>
               </div>
             </div>
-          )}
+            <div className="mt-4">
+              <p className="text-gray-700 font-semibold mb-2">Achievements</p>
+              <div className="flex flex-wrap gap-2">
+                {(gameState.achievements[gameState.currentMode] ?? []).length > 0 ? (
+                  (gameState.achievements[gameState.currentMode] ?? []).map(a => (
+                    <span key={a} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">{a.replaceAll('_',' ')}</span>
+                  ))
+                ) : (
+                  <span className="text-gray-500">None yet</span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

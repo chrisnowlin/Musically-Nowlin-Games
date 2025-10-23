@@ -17,9 +17,26 @@ Educational music learning platform with 60+ interactive games covering pitch, r
   - Tempo & Time Signatures
   - Form & Structure
   - And many more!
-- **Real Audio Synthesis** - Powered by Tone.js
+- **Real Audio Synthesis** - Powered by Web Audio API
 - **Progressive Difficulty** - Games designed for all skill levels
 - **Visual Learning** - Clear music notation using VexFlow
+
+### Featured Game: Beat & Pulse Trainer (Rhythm-006)
+
+Our comprehensive rhythm training game featuring **5 distinct modes**:
+
+- **Steady Beat Keeper** - Develop basic tempo sense with adjustable BPM
+- **Beat Tapping** - Improve timing precision with real-time feedback
+- **Internal Pulse** - Build internal tempo after listening to metronome
+- **Subdivision Practice** - Master rhythmic subdivisions (1x-4x)
+- **Tempo Stability** - Test consistency without external reference
+
+**Performance Optimized:**
+- 29 comprehensive tests (unit, integration, accessibility)
+- Lazy loading for better bundle splitting
+- Optimized Web Audio API usage
+- 60fps performance on mobile devices
+- Age-appropriate design for 6-12 years old
 
 ## Tech Stack
 

@@ -1,8 +1,8 @@
 import React from "react";
-import { Compose002Game } from "@/components/Compose002Game";
+import { OrchestrationAndStyleStudioGame } from "@/components/OrchestrationAndStyleStudioGame";
 
 export const Compose002Page: React.FC = () => {
-  return <Compose002Game />;
+  return <OrchestrationAndStyleStudioGame />;
 };
 
 export default Compose002Page;
