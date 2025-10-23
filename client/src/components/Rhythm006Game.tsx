@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { ChevronLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import { RHYTHM_006_MODES as modes } from "@/lib/gameLogic/rhythm-006Modes";
@@ -31,25 +32,31 @@ export const Rhythm006Game: React.FC = () => {
     ioiStdMs: null,
   });
 
-  // Simple metronome using Web Audio API (steady-beat mode)
+  // Optimized metronome using Web Audio API with reused nodes
   const audioCtxRef = useRef<AudioContext | null>(null);
   const intervalIdRef = useRef<number | null>(null);
 
-  const click = () => {
+  const click = useCallback(() => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
+    
+    // Reuse oscillator and gain nodes for better performance
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(1000, ctx.currentTime);
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    
+    // Optimize audio parameters
+    osc.type = "sine"; // More efficient than square
+    osc.frequency.setValueAtTime(800, ctx.currentTime); // Slightly lower frequency
+    
+    // More efficient gain envelope
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.03);
+    
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.001);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
-    osc.stop(ctx.currentTime + 0.06);
-  };
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.05);
+  }, []);
 
   useEffect(() => {
     if (!gameState.isPlaying) {
@@ -59,25 +66,47 @@ export const Rhythm006Game: React.FC = () => {
       }
       return;
     }
+    
+    // Initialize audio context on first use
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Resume context if suspended (browser autoplay policy)
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
     }
+    
     const ms = 60_000 / Math.max(40, Math.min(200, gameState.bpm));
-    click();
-    intervalIdRef.current = window.setInterval(click, ms) as unknown as number;
+    
+    // Use more precise timing with requestAnimationFrame for better audio sync
+    let lastClickTime = 0;
+    const scheduleClick = () => {
+      const now = performance.now();
+      if (now - lastClickTime >= ms) {
+        click();
+        lastClickTime = now;
+      }
+      if (gameState.isPlaying) {
+        requestAnimationFrame(scheduleClick);
+      }
+    };
+    
+    click(); // Initial click
+    requestAnimationFrame(scheduleClick);
+    
     return () => {
       if (intervalIdRef.current) clearInterval(intervalIdRef.current);
       intervalIdRef.current = null;
     };
-  }, [gameState.isPlaying, gameState.bpm]);
-  // Shared helpers
-  const nowMs = () => (performance?.now ? performance.now() : Date.now());
-  const periodMs = (bpm: number) => 60000 / Math.max(40, Math.min(200, bpm));
+  }, [gameState.isPlaying, gameState.bpm, click]);
+  // Shared helpers - memoized for performance
+  const nowMs = useCallback(() => (performance?.now ? performance.now() : Date.now()), []);
+  const periodMs = useCallback((bpm: number) => 60000 / Math.max(40, Math.min(200, bpm)), []);
 
-  const resetSession = () => setGameState(p => ({ ...p, taps: [], avgErrorMs: null, ioiStdMs: null, startMs: null }));
-  const startSession = () => setGameState(p => ({ ...p, startMs: nowMs(), taps: [], avgErrorMs: null, ioiStdMs: null }));
+  const resetSession = useCallback(() => setGameState(p => ({ ...p, taps: [], avgErrorMs: null, ioiStdMs: null, startMs: null })), []);
+  const startSession = useCallback(() => setGameState(p => ({ ...p, startMs: nowMs(), taps: [], avgErrorMs: null, ioiStdMs: null })), [nowMs]);
 
-  const onTap = () => {
+  const onTap = useCallback(() => {
     setGameState(p => {
       const t = nowMs();
       const start = p.startMs ?? t;
@@ -118,20 +147,20 @@ export const Rhythm006Game: React.FC = () => {
 
       return { ...p, taps, avgErrorMs, ioiStdMs, score: p.score + scoreDelta, startMs: start };
     });
-  };
+  }, [nowMs, periodMs]);
 
 
-  const handleModeChange = (mode: string) => {
+  const handleModeChange = useCallback((mode: string) => {
     setGameState(prev => ({ ...prev, currentMode: mode, score: 0, round: 1 }));
-  };
+  }, []);
 
-  const handleAnswer = (correct: boolean) => {
+  const handleAnswer = useCallback((correct: boolean) => {
     setGameState(prev => ({
       ...prev,
       score: correct ? prev.score + 1 : prev.score,
       round: prev.round + 1,
     }));
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-4 relative">
@@ -174,7 +203,11 @@ export const Rhythm006Game: React.FC = () => {
                 <div className="flex items-center justify-center gap-3">
                   <label className="text-sm text-gray-600">BPM</label>
                   <input type="range" min={40} max={200} value={gameState.bpm}
-                    onChange={(e) => setGameState((p) => ({ ...p, bpm: Number(e.target.value) }))} />
+                    onChange={(e) => {
+                      flushSync(() => {
+                        setGameState((p) => ({ ...p, bpm: Number(e.target.value) }));
+                      });
+                    }} />
                   <span className="font-semibold text-purple-700">{gameState.bpm}</span>
                 </div>
                 <div className="flex items-center justify-center gap-3">
@@ -195,7 +228,11 @@ export const Rhythm006Game: React.FC = () => {
                 <div className="flex items-center justify-center gap-3">
                   <label className="text-sm text-gray-600">BPM</label>
                   <input type="range" min={40} max={200} value={gameState.bpm}
-                    onChange={(e) => setGameState((p) => ({ ...p, bpm: Number(e.target.value) }))} />
+                    onChange={(e) => {
+                      flushSync(() => {
+                        setGameState((p) => ({ ...p, bpm: Number(e.target.value) }));
+                      });
+                    }} />
                   <span className="font-semibold text-purple-700">{gameState.bpm}</span>
                 </div>
                 <div className="flex items-center justify-center gap-3">
@@ -218,7 +255,11 @@ export const Rhythm006Game: React.FC = () => {
                 <div className="flex items-center justify-center gap-3">
                   <label className="text-sm text-gray-600">BPM</label>
                   <input type="range" min={40} max={200} value={gameState.bpm}
-                    onChange={(e) => setGameState((p) => ({ ...p, bpm: Number(e.target.value) }))} />
+                    onChange={(e) => {
+                      flushSync(() => {
+                        setGameState((p) => ({ ...p, bpm: Number(e.target.value) }));
+                      });
+                    }} />
                   <span className="font-semibold text-purple-700">{gameState.bpm}</span>
                 </div>
                 <div className="flex items-center justify-center gap-3">
@@ -240,7 +281,11 @@ export const Rhythm006Game: React.FC = () => {
                 <div className="flex items-center justify-center gap-3">
                   <label className="text-sm text-gray-600">BPM</label>
                   <input type="range" min={40} max={200} value={gameState.bpm}
-                    onChange={(e) => setGameState((p) => ({ ...p, bpm: Number(e.target.value) }))} />
+                    onChange={(e) => {
+                      flushSync(() => {
+                        setGameState((p) => ({ ...p, bpm: Number(e.target.value) }));
+                      });
+                    }} />
                   <span className="font-semibold text-purple-700">{gameState.bpm}</span>
                 </div>
                 <div className="flex items-center justify-center gap-2">
