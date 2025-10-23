@@ -1,23 +1,24 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, Play, Volume2, RotateCcw } from "lucide-react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { ChevronLeft, Play, Volume2, RotateCcw, CheckCircle, XCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { 
+  generateRound, 
+  validateComposition, 
+  calculateScore, 
+  getDifficultyProgression,
+  NOTES, 
+  RHYTHM_NOTES, 
+  CHORDS,
+  type GameRound,
+  type Composition,
+  type ValidationResult
+} from "@/lib/gameLogic/compose-001Logic";
+import { 
+  getAllModes, 
+  getModeDefinition
+} from "@/lib/gameLogic/compose-001Modes";
 
 type Mode = "melody" | "rhythm" | "harmony";
-
-interface Note {
-  name: string;
-  frequency: number;
-}
-
-interface RhythmNote {
-  duration: string;
-  symbol: string;
-}
-
-interface Chord {
-  name: string;
-  notes: string[];
-}
 
 interface GameState {
   currentMode: Mode;
@@ -27,61 +28,11 @@ interface GameState {
   selectedRhythm: string[];
   selectedChords: string[];
   volume: number;
-  currentChallenge: string;
+  currentRound: GameRound | null;
+  gameStarted: boolean;
+  feedback: ValidationResult | null;
+  startTime: number;
 }
-
-const NOTES: Note[] = [
-  { name: "C", frequency: 261.63 },
-  { name: "D", frequency: 293.66 },
-  { name: "E", frequency: 329.63 },
-  { name: "F", frequency: 349.23 },
-  { name: "G", frequency: 392.00 },
-  { name: "A", frequency: 440.00 },
-  { name: "B", frequency: 493.88 },
-  { name: "C2", frequency: 523.25 },
-];
-
-const RHYTHM_NOTES: RhythmNote[] = [
-  { duration: "whole", symbol: "𝅝" },
-  { duration: "half", symbol: "𝅗𝅥" },
-  { duration: "quarter", symbol: "♩" },
-  { duration: "eighth", symbol: "♪" },
-  { duration: "sixteenth", symbol: "𝅘𝅥𝅯" },
-  { duration: "rest", symbol: "𝄽" },
-];
-
-const CHORDS: Chord[] = [
-  { name: "C Major", notes: ["C", "E", "G"] },
-  { name: "D Minor", notes: ["D", "F", "A"] },
-  { name: "E Minor", notes: ["E", "G", "B"] },
-  { name: "F Major", notes: ["F", "A", "C2"] },
-  { name: "G Major", notes: ["G", "B", "D"] },
-  { name: "A Minor", notes: ["A", "C", "E"] },
-];
-
-const MELODY_CHALLENGES = [
-  "Create an ascending melody using at least 4 notes",
-  "Create a melody that goes up and down",
-  "Create a simple 3-note melody",
-  "Create a melody using all 5 notes",
-  "Create a melody that repeats a pattern",
-];
-
-const RHYTHM_CHALLENGES = [
-  "Create a 4-beat rhythm pattern",
-  "Create a rhythm with at least one rest",
-  "Create a pattern with quarter and eighth notes",
-  "Create a simple steady beat pattern",
-  "Create a complex rhythm with mixed durations",
-];
-
-const HARMONY_CHALLENGES = [
-  "Create a 3-chord progression",
-  "Start with C Major and add two more chords",
-  "Create a progression using major and minor chords",
-  "Build a simple I-IV-V progression",
-  "Create a progression that sounds complete",
-];
 
 export const Compose001Game: React.FC = () => {
   const [, setLocation] = useLocation();
@@ -93,10 +44,14 @@ export const Compose001Game: React.FC = () => {
     selectedRhythm: [],
     selectedChords: [],
     volume: 50,
-    currentChallenge: MELODY_CHALLENGES[0],
+    currentRound: null,
+    gameStarted: false,
+    feedback: null,
+    startTime: Date.now(),
   });
 
   const audioContext = React.useRef<AudioContext | null>(null);
+  const modes = getAllModes();
 
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -104,6 +59,24 @@ export const Compose001Game: React.FC = () => {
       audioContext.current?.close();
     };
   }, []);
+
+  useEffect(() => {
+    // Generate initial round when game starts or mode changes
+    if (!gameState.currentRound || gameState.currentRound.mode !== gameState.currentMode) {
+      const difficulty = getDifficultyProgression(gameState.round);
+      const newRound = generateRound(gameState.currentMode, difficulty);
+      setGameState(prev => ({
+        ...prev,
+        currentRound: newRound,
+        gameStarted: true,
+        feedback: null,
+        startTime: Date.now(),
+        selectedNotes: [],
+        selectedRhythm: [],
+        selectedChords: [],
+      }));
+    }
+  }, [gameState.currentMode, gameState.round, gameState.currentRound]);
 
   const playNote = useCallback((frequency: number, duration: number = 0.5) => {
     if (!audioContext.current) return;
@@ -138,34 +111,29 @@ export const Compose001Game: React.FC = () => {
     });
   }, [gameState.selectedNotes, playNote]);
 
-  const playChord = useCallback((chord: Chord) => {
-    chord.notes.forEach(noteName => {
-      const note = NOTES.find(n => n.name === noteName);
-      if (note) {
-        playNote(note.frequency, 1.0);
-      }
-    });
+  const playChord = useCallback((chordName: string) => {
+    const chord = CHORDS.find(c => c.name === chordName);
+    if (chord) {
+      chord.notes.forEach(noteName => {
+        const note = NOTES.find(n => n.name === noteName);
+        if (note) {
+          playNote(note.frequency, 1.0);
+        }
+      });
+    }
   }, [playNote]);
 
   const playProgression = useCallback(() => {
     if (gameState.selectedChords.length === 0) return;
 
     gameState.selectedChords.forEach((chordName, index) => {
-      const chord = CHORDS.find(c => c.name === chordName);
-      if (chord) {
-        setTimeout(() => {
-          playChord(chord);
-        }, index * 1200);
-      }
+      setTimeout(() => {
+        playChord(chordName);
+      }, index * 1200);
     });
   }, [gameState.selectedChords, playChord]);
 
   const handleModeChange = (mode: Mode) => {
-    let challenge = "";
-    if (mode === "melody") challenge = MELODY_CHALLENGES[Math.floor(Math.random() * MELODY_CHALLENGES.length)];
-    if (mode === "rhythm") challenge = RHYTHM_CHALLENGES[Math.floor(Math.random() * RHYTHM_CHALLENGES.length)];
-    if (mode === "harmony") challenge = HARMONY_CHALLENGES[Math.floor(Math.random() * HARMONY_CHALLENGES.length)];
-
     setGameState(prev => ({
       ...prev,
       currentMode: mode,
@@ -174,7 +142,7 @@ export const Compose001Game: React.FC = () => {
       selectedNotes: [],
       selectedRhythm: [],
       selectedChords: [],
-      currentChallenge: challenge,
+      feedback: null,
     }));
   };
 
@@ -192,6 +160,13 @@ export const Compose001Game: React.FC = () => {
     }));
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent, action: () => void) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      action();
+    }
+  };
+
   const handleRhythmSelect = (symbol: string) => {
     if (gameState.selectedRhythm.length >= 8) return; // Max 8 rhythm notes
 
@@ -204,10 +179,7 @@ export const Compose001Game: React.FC = () => {
   const handleChordSelect = (chordName: string) => {
     if (gameState.selectedChords.length >= 6) return; // Max 6 chords
 
-    const chord = CHORDS.find(c => c.name === chordName);
-    if (chord) {
-      playChord(chord);
-    }
+    playChord(chordName);
 
     setGameState(prev => ({
       ...prev,
@@ -221,35 +193,48 @@ export const Compose001Game: React.FC = () => {
       selectedNotes: [],
       selectedRhythm: [],
       selectedChords: [],
+      feedback: null,
     }));
   };
 
   const handleSubmit = () => {
-    // Simple validation - award points for completing the composition
-    let meetsChallenge = false;
+    if (!gameState.currentRound) return;
 
-    if (gameState.currentMode === "melody") {
-      meetsChallenge = gameState.selectedNotes.length >= 3;
-    } else if (gameState.currentMode === "rhythm") {
-      meetsChallenge = gameState.selectedRhythm.length >= 3;
-    } else if (gameState.currentMode === "harmony") {
-      meetsChallenge = gameState.selectedChords.length >= 2;
+    const timeSpent = Date.now() - gameState.startTime;
+    let composition: Composition;
+
+    switch (gameState.currentMode) {
+      case "melody":
+        composition = {
+          type: "melody",
+          notes: gameState.selectedNotes,
+        };
+        break;
+      case "rhythm":
+        composition = {
+          type: "rhythm",
+          rhythm: gameState.selectedRhythm,
+        };
+        break;
+      case "harmony":
+        composition = {
+          type: "harmony",
+          chords: gameState.selectedChords,
+        };
+        break;
     }
 
-    // Get new challenge for next round
-    let newChallenge = "";
-    if (gameState.currentMode === "melody") newChallenge = MELODY_CHALLENGES[gameState.round % MELODY_CHALLENGES.length];
-    if (gameState.currentMode === "rhythm") newChallenge = RHYTHM_CHALLENGES[gameState.round % RHYTHM_CHALLENGES.length];
-    if (gameState.currentMode === "harmony") newChallenge = HARMONY_CHALLENGES[gameState.round % HARMONY_CHALLENGES.length];
+    const validationResult = validateComposition(composition, gameState.currentRound, timeSpent);
+    const roundScore = calculateScore(validationResult, gameState.currentRound.difficulty);
 
     setGameState(prev => ({
       ...prev,
-      score: meetsChallenge ? prev.score + 10 : prev.score,
+      score: prev.score + roundScore,
       round: prev.round + 1,
       selectedNotes: [],
       selectedRhythm: [],
       selectedChords: [],
-      currentChallenge: newChallenge,
+      feedback: validationResult,
     }));
   };
 
@@ -257,7 +242,7 @@ export const Compose001Game: React.FC = () => {
     <div>
       <div className="bg-blue-50 rounded-lg p-6 mb-6">
         <p className="text-lg font-semibold text-blue-900 mb-2">Challenge:</p>
-        <p className="text-blue-700">{gameState.currentChallenge}</p>
+        <p className="text-blue-700">{gameState.currentRound?.challenge.text || "Loading challenge..."}</p>
       </div>
 
       <div className="bg-white rounded-lg p-6 mb-4">
@@ -277,18 +262,26 @@ export const Compose001Game: React.FC = () => {
         </div>
 
         <h3 className="font-bold mb-3 text-gray-700">Select Notes:</h3>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2" role="group" aria-label="Musical notes for composition">
           {NOTES.map(note => (
             <button
               key={note.name}
               onClick={() => handleNoteSelect(note.name)}
-              className="bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-bold shadow-md transition-all"
+              onKeyDown={(e) => handleKeyDown(e, () => handleNoteSelect(note.name))}
+              className="bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-bold shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
               disabled={gameState.selectedNotes.length >= 8}
+              aria-label={`Note ${note.name}, frequency ${note.frequency} Hz`}
+              aria-describedby={gameState.selectedNotes.length >= 8 ? "max-notes-reached" : undefined}
             >
               {note.name}
             </button>
           ))}
         </div>
+        {gameState.selectedNotes.length >= 8 && (
+          <p id="max-notes-reached" className="sr-only">
+            Maximum number of notes reached. Clear your melody to add more notes.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -320,7 +313,7 @@ export const Compose001Game: React.FC = () => {
     <div>
       <div className="bg-orange-50 rounded-lg p-6 mb-6">
         <p className="text-lg font-semibold text-orange-900 mb-2">Challenge:</p>
-        <p className="text-orange-700">{gameState.currentChallenge}</p>
+        <p className="text-orange-700">{gameState.currentRound?.challenge.text || "Loading challenge..."}</p>
       </div>
 
       <div className="bg-white rounded-lg p-6 mb-4">
@@ -340,19 +333,27 @@ export const Compose001Game: React.FC = () => {
         </div>
 
         <h3 className="font-bold mb-3 text-gray-700">Select Rhythm Notes:</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3" role="group" aria-label="Rhythm notes for composition">
           {RHYTHM_NOTES.map(rhythm => (
             <button
               key={rhythm.duration}
               onClick={() => handleRhythmSelect(rhythm.symbol)}
-              className="bg-gradient-to-b from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-6 rounded-lg shadow-md transition-all"
+              onKeyDown={(e) => handleKeyDown(e, () => handleRhythmSelect(rhythm.symbol))}
+              className="bg-gradient-to-b from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-6 rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
               disabled={gameState.selectedRhythm.length >= 8}
+              aria-label={`Rhythm note: ${rhythm.duration}, ${rhythm.beats} beats`}
+              aria-describedby={gameState.selectedRhythm.length >= 8 ? "max-rhythm-reached" : undefined}
             >
-              <div className="text-4xl mb-2">{rhythm.symbol}</div>
+              <div className="text-4xl mb-2" aria-hidden="true">{rhythm.symbol}</div>
               <div className="text-sm font-semibold capitalize">{rhythm.duration}</div>
             </button>
           ))}
         </div>
+        {gameState.selectedRhythm.length >= 8 && (
+          <p id="max-rhythm-reached" className="sr-only">
+            Maximum number of rhythm notes reached. Clear your rhythm to add more notes.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -377,7 +378,7 @@ export const Compose001Game: React.FC = () => {
     <div>
       <div className="bg-green-50 rounded-lg p-6 mb-6">
         <p className="text-lg font-semibold text-green-900 mb-2">Challenge:</p>
-        <p className="text-green-700">{gameState.currentChallenge}</p>
+        <p className="text-green-700">{gameState.currentRound?.challenge.text || "Loading challenge..."}</p>
       </div>
 
       <div className="bg-white rounded-lg p-6 mb-4">
@@ -400,19 +401,27 @@ export const Compose001Game: React.FC = () => {
         </div>
 
         <h3 className="font-bold mb-3 text-gray-700">Select Chords:</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3" role="group" aria-label="Chords for harmony composition">
           {CHORDS.map(chord => (
             <button
               key={chord.name}
               onClick={() => handleChordSelect(chord.name)}
-              className="bg-gradient-to-b from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-4 rounded-lg shadow-md transition-all"
+              onKeyDown={(e) => handleKeyDown(e, () => handleChordSelect(chord.name))}
+              className="bg-gradient-to-b from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-4 rounded-lg shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
               disabled={gameState.selectedChords.length >= 6}
+              aria-label={`Chord: ${chord.name}, notes: ${chord.notes.join(", ")}`}
+              aria-describedby={gameState.selectedChords.length >= 6 ? "max-chords-reached" : undefined}
             >
               <div className="font-bold text-lg">{chord.name}</div>
               <div className="text-sm opacity-75">{chord.notes.join(" - ")}</div>
             </button>
           ))}
         </div>
+        {gameState.selectedChords.length >= 6 && (
+          <p id="max-chords-reached" className="sr-only">
+            Maximum number of chords reached. Clear your progression to add more chords.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -440,6 +449,59 @@ export const Compose001Game: React.FC = () => {
     </div>
   );
 
+  const renderFeedback = () => {
+    if (!gameState.feedback) return null;
+
+    const { valid, score, feedback, details } = gameState.feedback;
+
+    return (
+      <div className={`rounded-lg p-6 mb-6 ${valid ? 'bg-green-50' : 'bg-red-50'}`}>
+        <div className="flex items-center gap-3 mb-4">
+          {valid ? (
+            <CheckCircle size={24} className="text-green-600" />
+          ) : (
+            <XCircle size={24} className="text-red-600" />
+          )}
+          <h3 className={`text-lg font-semibold ${valid ? 'text-green-900' : 'text-red-900'}`}>
+            {feedback}
+          </h3>
+        </div>
+        
+        <div className={`mb-3 ${valid ? 'text-green-700' : 'text-red-700'}`}>
+          Score: {score} points
+        </div>
+
+        {details && (
+          <div className="space-y-2">
+            {details.metRequirements.length > 0 && (
+              <div>
+                <p className="font-semibold text-green-800">✓ Requirements met:</p>
+                <ul className="list-disc list-inside text-sm text-green-700">
+                  {details.metRequirements.map((req, index) => (
+                    <li key={index}>{req}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {details.missedRequirements.length > 0 && (
+              <div>
+                <p className="font-semibold text-red-800">✗ Requirements missed:</p>
+                <ul className="list-disc list-inside text-sm text-red-700">
+                  {details.missedRequirements.map((req, index) => (
+                    <li key={index}>{req}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const currentModeDef = useMemo(() => getModeDefinition(gameState.currentMode), [gameState.currentMode]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-4 relative">
       <button
@@ -449,42 +511,30 @@ export const Compose001Game: React.FC = () => {
         <ChevronLeft size={24} />
         Main Menu
       </button>
+      
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-purple-900">Composition Studio</h1>
         <div className="text-xl font-bold text-purple-700">Score: {gameState.score}</div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2 justify-center">
-        <button
-          onClick={() => handleModeChange("melody")}
-          className={
-            gameState.currentMode === "melody"
-              ? "px-6 py-3 rounded-lg font-semibold bg-purple-600 text-white shadow-lg"
-              : "px-6 py-3 rounded-lg font-semibold bg-white text-purple-600 hover:bg-purple-100"
-          }
-        >
-          MELODY
-        </button>
-        <button
-          onClick={() => handleModeChange("rhythm")}
-          className={
-            gameState.currentMode === "rhythm"
-              ? "px-6 py-3 rounded-lg font-semibold bg-purple-600 text-white shadow-lg"
-              : "px-6 py-3 rounded-lg font-semibold bg-white text-purple-600 hover:bg-purple-100"
-          }
-        >
-          RHYTHM
-        </button>
-        <button
-          onClick={() => handleModeChange("harmony")}
-          className={
-            gameState.currentMode === "harmony"
-              ? "px-6 py-3 rounded-lg font-semibold bg-purple-600 text-white shadow-lg"
-              : "px-6 py-3 rounded-lg font-semibold bg-white text-purple-600 hover:bg-purple-100"
-          }
-        >
-          HARMONY
-        </button>
+      <div className="mb-6 flex flex-wrap gap-2 justify-center" role="tablist" aria-label="Game modes">
+        {modes.map(mode => (
+          <button
+            key={mode.id}
+            onClick={() => handleModeChange(mode.id as Mode)}
+            onKeyDown={(e) => handleKeyDown(e, () => handleModeChange(mode.id as Mode))}
+            role="tab"
+            aria-selected={gameState.currentMode === mode.id}
+            aria-controls={`${mode.id}-panel`}
+            className={
+              gameState.currentMode === mode.id
+                ? "px-6 py-3 rounded-lg font-semibold bg-purple-600 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+                : "px-6 py-3 rounded-lg font-semibold bg-white text-purple-600 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+            }
+          >
+            <span aria-hidden="true">{mode.icon}</span> {mode.name.toUpperCase()}
+          </button>
+        ))}
       </div>
 
       <div className="max-w-3xl mx-auto mb-6">
@@ -503,17 +553,30 @@ export const Compose001Game: React.FC = () => {
           </div>
         </div>
 
+        <div aria-live="polite" aria-atomic="true">
+          {renderFeedback()}
+        </div>
+
         <div className="bg-white rounded-lg shadow-lg p-8 mb-4">
           <div className="text-center mb-6">
             <p className="text-gray-600 mb-2">Round {gameState.round}</p>
             <p className="text-lg font-semibold text-purple-700">
-              Mode: {gameState.currentMode.toUpperCase()}
+              Mode: {currentModeDef?.name.toUpperCase()}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Difficulty: {gameState.currentRound?.difficulty || 1}
             </p>
           </div>
 
-          {gameState.currentMode === "melody" && renderMelodyMode()}
-          {gameState.currentMode === "rhythm" && renderRhythmMode()}
-          {gameState.currentMode === "harmony" && renderHarmonyMode()}
+          <div 
+            role="tabpanel" 
+            id={`${gameState.currentMode}-panel`}
+            aria-labelledby={`${gameState.currentMode}-tab`}
+          >
+            {gameState.currentMode === "melody" && renderMelodyMode()}
+            {gameState.currentMode === "rhythm" && renderRhythmMode()}
+            {gameState.currentMode === "harmony" && renderHarmonyMode()}
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
