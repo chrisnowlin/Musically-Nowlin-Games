@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, VolumeX, Play, Pause, RotateCcw, Trophy, Target, Zap } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, RotateCcw, Trophy, Target, Zap, ChevronLeft } from 'lucide-react';
 import { 
   Pitch001Game, 
   Pitch001Round, 
@@ -12,6 +12,7 @@ import {
   getPitch001ModeConfig 
 } from '@/lib/gameLogic/pitch-001Logic';
 import { pitch001Modes } from '@/lib/gameLogic/pitch-001Modes';
+import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
 
 interface PitchIntervalMasterGameProps {
   modeId: string;
@@ -413,120 +414,172 @@ export const PitchIntervalMasterGame: React.FC<PitchIntervalMasterGameProps> = (
 
   if (!modeConfig) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8 text-center">
-          <p className="text-lg text-muted-foreground">Mode not found</p>
-          <Button onClick={onBackToMenu} className="mt-4">
-            Back to Menu
-          </Button>
-        </CardContent>
-      </Card>
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
+        <div className={`${playfulComponents.card.base} ${playfulComponents.card.available} w-full max-w-2xl`}>
+          <div className="p-8 text-center">
+            <p className={`${playfulTypography.body.large} text-gray-600 dark:text-gray-400`}>Mode not found</p>
+            <Button 
+              onClick={onBackToMenu} 
+              className={`${playfulComponents.button.primary} mt-4 transform ${playfulAnimations.hover.scale}`}
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back to Menu
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
   if (!gameStarted) {
+    const decorativeOrbs = generateDecorativeOrbs();
+    
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-            <span className="text-3xl">{modeConfig.icon}</span>
-            {modeConfig.name}
-          </CardTitle>
-          <Badge variant="secondary" className="w-fit mx-auto">
-            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-          </Badge>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center">
-            <p className="text-lg mb-4">{modeConfig.description}</p>
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="font-medium mb-2">How to Play:</p>
-              <p className="text-sm">{modeConfig.instructions[difficulty]}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              <span className="text-sm">10 Rounds</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm">Points: {difficulty === 'easy' ? '10' : difficulty === 'medium' ? '20' : '30'} per correct answer</span>
-            </div>
-          </div>
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col p-4 relative overflow-hidden`}>
+        {decorativeOrbs.map((orb) => (
+          <div key={orb.key} className={orb.className} />
+        ))}
 
-          <div className="flex gap-4">
-            <Button onClick={startGame} className="flex-1" size="lg">
-              <Play className="h-5 w-5 mr-2" />
-              Start Game
-            </Button>
-            <Button onClick={onBackToMenu} variant="outline">
-              Back
-            </Button>
+        <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-4xl mx-auto w-full">
+          <div className={`${playfulComponents.card.base} ${playfulComponents.card.available} w-full max-w-2xl`}>
+            <div className="text-center p-8 space-y-6">
+              <div className="space-y-4">
+                <div className={`${playfulComponents.iconContainer.large} ${playfulColors.accents.purple.bg} mx-auto w-24 h-24`}>
+                  <span className="text-5xl">{modeConfig.icon}</span>
+                </div>
+                <h2 className={`${playfulTypography.headings.h2} text-gray-800 dark:text-gray-200`}>
+                  {modeConfig.name}
+                </h2>
+                <span className={playfulComponents.badge.purple}>
+                  {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <p className={`${playfulTypography.body.large} text-gray-700 dark:text-gray-300`}>
+                  {modeConfig.description}
+                </p>
+                <div className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm ${playfulShapes.rounded.container} p-6 ${playfulShapes.shadows.card}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <Target className="w-6 h-6 text-orange-600" />
+                    <span className={playfulTypography.headings.h4}>How to Play:</span>
+                  </div>
+                  <p className={`${playfulTypography.body.medium} text-gray-600 dark:text-gray-400`}>
+                    {modeConfig.instructions[difficulty]}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-around bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm p-4 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Target className="h-6 w-6 text-blue-600" />
+                  <span className={`${playfulTypography.body.medium} text-gray-700 dark:text-gray-300`}>10 Rounds</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-6 w-6 text-yellow-500" />
+                  <span className={`${playfulTypography.body.medium} text-gray-700 dark:text-gray-300`}>
+                    {difficulty === 'easy' ? '10' : difficulty === 'medium' ? '20' : '30'} points each
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button 
+                  onClick={startGame} 
+                  className={`${playfulComponents.button.success} flex-1 transform ${playfulAnimations.hover.scale}`}
+                  size="lg"
+                >
+                  <Play className="h-5 w-5 mr-2" />
+                  Start Game
+                </Button>
+                <Button 
+                  onClick={onBackToMenu} 
+                  className={`${playfulComponents.button.secondary} transform ${playfulAnimations.hover.scale}`}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
+  const decorativeOrbs = generateDecorativeOrbs();
+  
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <span className="text-2xl">{modeConfig.icon}</span>
-            {modeConfig.name}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">
-              Round {gameState.roundNumber}/{gameState.totalRounds}
-            </Badge>
-            <Badge variant="secondary">
-              Score: {gameState.score}
-            </Badge>
-            {gameState.streak > 0 && (
-              <Badge variant="default" className="bg-orange-500">
-                <Zap className="h-3 w-3 mr-1" />
-                {gameState.streak} Streak
-              </Badge>
-            )}
-          </div>
-        </div>
-        <Progress 
-          value={(gameState.roundNumber / gameState.totalRounds) * 100} 
-          className="w-full"
-        />
-      </CardHeader>
+    <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col p-4 relative overflow-hidden`}>
+      {decorativeOrbs.map((orb) => (
+        <div key={orb.key} className={orb.className} />
+      ))}
 
-      <CardContent className="space-y-6">
+      <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-6xl mx-auto w-full space-y-6">
+        {/* Header */}
+        <div className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm ${playfulShapes.rounded.container} ${playfulShapes.shadows.card} p-6 w-full max-w-4xl`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`${playfulComponents.iconContainer.medium} ${playfulColors.accents.purple.bg}`}>
+                <span className="text-2xl">{modeConfig.icon}</span>
+              </div>
+              <div>
+                <h2 className={`${playfulTypography.headings.h3} text-gray-800 dark:text-gray-200`}>
+                  {modeConfig.name}
+                </h2>
+                <p className={`${playfulTypography.body.small} text-gray-600 dark:text-gray-400`}>
+                  {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Difficulty
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={playfulComponents.badge.purple}>
+                Round {gameState.roundNumber}/{gameState.totalRounds}
+              </span>
+              <span className={playfulComponents.badge.green}>
+                Score: {gameState.score}
+              </span>
+              {gameState.streak > 0 && (
+                <span className={`${playfulComponents.badge.orange} flex items-center gap-1`}>
+                  <Zap className="h-3 w-3" />
+                  {gameState.streak} Streak
+                </span>
+              )}
+            </div>
+          </div>
+          <Progress 
+            value={(gameState.roundNumber / gameState.totalRounds) * 100} 
+            className="h-3 w-full"
+          />
+        </div>
+
         {gameState.currentRound && (
-          <>
-            <div className="text-center">
-              <h3 className="text-xl font-semibold mb-4">
-                {gameState.currentRound.question}
-              </h3>
-              
-              {/* Audio Controls */}
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <Button
-                  onClick={() => playAudio(gameState.currentRound!.audioData)}
-                  disabled={isPlaying}
-                  variant="outline"
-                  size="lg"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-5 w-5 mr-2" />
-                  ) : (
-                    <Play className="h-5 w-5 mr-2" />
-                  )}
-                  {isPlaying ? 'Playing...' : 'Play Sound'}
-                </Button>
+          <div className={`${playfulComponents.card.base} ${playfulComponents.card.available} w-full max-w-4xl`}>
+            <div className="p-8 space-y-8">
+              <div className="text-center space-y-6">
+                <h3 className={`${playfulTypography.headings.h3} text-gray-800 dark:text-gray-200`}>
+                  {gameState.currentRound.question}
+                </h3>
                 
-                <div className="flex items-center gap-2">
+                {/* Audio Controls */}
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    onClick={() => playAudio(gameState.currentRound!.audioData)}
+                    disabled={isPlaying}
+                    className={`${playfulComponents.button.primary} transform ${playfulAnimations.hover.scale}`}
+                    size="lg"
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-5 w-5 mr-2" />
+                    ) : (
+                      <Play className="h-5 w-5 mr-2" />
+                    )}
+                    {isPlaying ? 'Playing...' : 'Play Sound'}
+                  </Button>
+                  
                   <Button
                     onClick={() => setIsMuted(!isMuted)}
-                    variant="ghost"
+                    className={`${playfulComponents.button.secondary} transform ${playfulAnimations.hover.scale}`}
                     size="sm"
                   >
                     {isMuted ? (
@@ -536,65 +589,86 @@ export const PitchIntervalMasterGame: React.FC<PitchIntervalMasterGameProps> = (
                     )}
                   </Button>
                 </div>
-              </div>
 
-              {/* Answer Options */}
-              <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-                {gameState.currentRound.options.map((option, index) => (
-                  <Button
-                    key={index}
-                    onClick={() => handleAnswerSelect(option)}
-                    disabled={gameState.showResult}
-                    variant={
-                      gameState.showResult
-                        ? option === gameState.currentRound!.answer
-                          ? 'default'
-                          : option === gameState.selectedAnswer
-                          ? 'destructive'
-                          : 'outline'
-                        : 'outline'
-                    }
-                    className="h-16 text-lg"
-                  >
-                    {option}
-                  </Button>
-                ))}
-              </div>
+                {/* Answer Options */}
+                <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+                  {gameState.currentRound.options.map((option, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => handleAnswerSelect(option)}
+                      disabled={gameState.showResult}
+                      className={`h-16 text-lg transform ${playfulAnimations.hover.scale} ${
+                        gameState.showResult
+                          ? option === gameState.currentRound!.answer
+                            ? playfulComponents.button.success
+                            : option === gameState.selectedAnswer
+                            ? playfulComponents.button.error
+                            : playfulComponents.button.secondary
+                          : playfulComponents.button.secondary
+                      }`}
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
 
-              {/* Result Display */}
-              {gameState.showResult && (
-                <div className="mt-6 space-y-4">
-                  <div className={`text-lg font-semibold ${
-                    gameState.isCorrect ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {gameState.isCorrect ? '✓ Correct!' : '✗ Incorrect'}
-                  </div>
-                  
-                  <div className="bg-muted p-4 rounded-lg">
-                    <p className="text-sm">{gameState.currentRound.explanation}</p>
-                  </div>
+                {/* Result Display */}
+                {gameState.showResult && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className={`text-2xl font-bold flex items-center justify-center gap-2 ${
+                      gameState.isCorrect ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {gameState.isCorrect ? (
+                        <>
+                          <Trophy className="h-8 w-8" />
+                          Correct!
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="h-8 w-8" />
+                          Try Again!
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm ${playfulShapes.rounded.container} p-6 ${playfulShapes.shadows.card}`}>
+                      <p className={`${playfulTypography.body.medium} text-gray-700 dark:text-gray-300`}>
+                        {gameState.currentRound.explanation}
+                      </p>
+                    </div>
 
-                  <div className="flex items-center justify-center gap-4">
-                    <Button onClick={handleNextRound}>
+                    <Button 
+                      onClick={handleNextRound}
+                      className={`${playfulComponents.button.success} transform ${playfulAnimations.hover.scale}`}
+                      size="lg"
+                    >
                       {gameState.roundNumber >= gameState.totalRounds ? 'Finish Game' : 'Next Round'}
                     </Button>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </>
+          </div>
         )}
 
-        <div className="flex justify-between pt-4 border-t">
-          <Button onClick={resetGame} variant="outline">
+        {/* Bottom Controls */}
+        <div className="flex justify-between gap-4 w-full max-w-4xl">
+          <Button 
+            onClick={resetGame} 
+            className={`${playfulComponents.button.secondary} transform ${playfulAnimations.hover.scale}`}
+          >
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset Game
           </Button>
-          <Button onClick={onBackToMenu} variant="outline">
+          <Button 
+            onClick={onBackToMenu} 
+            className={`${playfulComponents.button.secondary} transform ${playfulAnimations.hover.scale}`}
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
             Back to Menu
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

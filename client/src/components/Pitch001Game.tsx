@@ -1,86 +1,132 @@
 import React, { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { PitchIntervalMasterGame } from "./PitchIntervalMasterGame";
 import { useLocation } from "wouter";
-
-interface GameState {
-  currentMode: string;
-  score: number;
-  round: number;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { pitch001Modes } from "@/lib/gameLogic/pitch-001Modes";
+import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { ChevronLeft, Play, HelpCircle, Volume2, VolumeX } from "lucide-react";
 
 export const Pitch001Game: React.FC = () => {
-  const [, setLocation] = useLocation();
-  const [gameState, setGameState] = useState<GameState>({
-    currentMode: "octaves",
-    score: 0,
-    round: 1,
-  });
+  const [, navigate] = useLocation();
+  const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
-  const modes = ["octaves", "pitch-modifications", "timbral-elements"];
-
-  const handleModeChange = (mode: string) => {
-    setGameState(prev => ({ ...prev, currentMode: mode, score: 0, round: 1 }));
+  const handleGameComplete = (score: number, totalRounds: number) => {
+    console.log(`Pitch & Interval Master completed! Score: ${score}/${totalRounds}`);
+    setSelectedMode(null);
   };
 
-  const handleAnswer = (correct: boolean) => {
-    setGameState(prev => ({
-      ...prev,
-      score: correct ? prev.score + 1 : prev.score,
-      round: prev.round + 1,
-    }));
+  const handleBackToMenu = () => {
+    setSelectedMode(null);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-4 relative">
-      <div className="flex items-center justify-between mb-6">
+  const handleBackToGames = () => {
+    navigate('/games');
+  };
+
+  // Mode selection screen
+  if (!selectedMode) {
+    const decorativeOrbs = generateDecorativeOrbs();
+    
+    return (
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col p-4 relative overflow-hidden`}>
         <button
-          onClick={() => setLocation("/")}
+          onClick={handleBackToGames}
           className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
         >
           <ChevronLeft size={24} />
-          Main Menu
+          Back to Games
         </button>
-        <h1 className="text-3xl font-bold text-purple-900">Pitch Explorer</h1>
-        <div className="text-xl font-bold text-purple-700">Score: {gameState.score}</div>
-      </div>
 
-      {modes.length > 1 && (
-        <div className="mb-6 flex flex-wrap gap-2 justify-center">
-          {modes.map(mode => (
-            <button
-              key={mode}
-              onClick={() => handleModeChange(mode)}
-              className={gameState.currentMode === mode ? "px-4 py-2 rounded-lg font-semibold bg-purple-600 text-white shadow-lg" : "px-4 py-2 rounded-lg font-semibold bg-white text-purple-600 hover:bg-purple-100"}
-            >
-              {mode.replace(/-/g, " ").toUpperCase()}
-            </button>
-          ))}
-        </div>
-      )}
+        {decorativeOrbs.map((orb) => (
+          <div key={orb.key} className={orb.className} />
+        ))}
 
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-          <div className="text-center mb-6">
-            <p className="text-gray-600 mb-2">Round {gameState.round}</p>
-            <p className="text-lg font-semibold text-purple-700">Mode: {gameState.currentMode.replace(/-/g, " ").toUpperCase()}</p>
+        <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-6xl mx-auto w-full space-y-8">
+          <div className="text-center space-y-4">
+            <h1 className={`${playfulTypography.headings.hero} ${playfulColors.gradients.title}`}>
+              Pitch Explorer
+            </h1>
+            <p className={`${playfulTypography.body.large} text-gray-700 dark:text-gray-300`}>
+              Master pitch recognition and intervals through fun musical challenges!
+            </p>
           </div>
-                    <div className="bg-purple-50 rounded-lg p-8 text-center mb-6">
-            <p className="text-gray-600 mb-4">{gameState.currentMode} mode</p>
-            <p className="text-sm text-gray-500">Practice and master this skill.</p>
-            <div className="mt-4 flex gap-4 justify-center">
-              <button onClick={() => handleAnswer(true)} className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600">Correct</button>
-              <button onClick={() => handleAnswer(false)} className="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600">Incorrect</button>
+
+          {/* Difficulty Selection */}
+          <div className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm ${playfulShapes.rounded.container} p-6 ${playfulShapes.shadows.card} space-y-4`}>
+            <div className="flex items-center gap-3 text-lg">
+              <HelpCircle className="w-6 h-6 text-orange-600" />
+              <span className={playfulTypography.body.medium}>Select Difficulty:</span>
+            </div>
+            <div className="flex justify-center gap-4">
+              {(['easy', 'medium', 'hard'] as const).map(level => (
+                <Button
+                  key={level}
+                  onClick={() => setDifficulty(level)}
+                  size="lg"
+                  className={`${
+                    difficulty === level 
+                      ? playfulComponents.button.primary 
+                      : `${playfulComponents.button.secondary} opacity-75`
+                  } transform ${playfulAnimations.hover.scale}`}
+                >
+                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                </Button>
+              ))}
             </div>
           </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="font-bold text-lg mb-4">Stats</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div><p className="text-gray-600">Round</p><p className="text-2xl font-bold text-purple-600">{gameState.round}</p></div>
-            <div><p className="text-gray-600">Score</p><p className="text-2xl font-bold text-purple-600">{gameState.score}</p></div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+            {pitch001Modes.map((mode, index) => (
+              <div
+                key={mode.id}
+                className={`${playfulComponents.card.base} ${playfulComponents.card.available} ${playfulComponents.card.hover} cursor-pointer`}
+                style={{ animationDelay: `${index * 100}ms` }}
+                onClick={() => setSelectedMode(mode.id)}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className={`${playfulComponents.iconContainer.large} ${playfulColors.accents.purple.bg} mb-4`}>
+                    <span className="text-4xl">{mode.icon}</span>
+                  </div>
+                  <CardTitle className={`${playfulTypography.headings.h4} text-gray-800 dark:text-gray-200`}>
+                    {mode.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-center space-y-4">
+                  <p className={`${playfulTypography.body.small} text-gray-600 dark:text-gray-400`}>
+                    {mode.description}
+                  </p>
+                  <div className="flex justify-center gap-2 flex-wrap">
+                    <span className={playfulComponents.badge.purple}>
+                      {mode.ageGroup}
+                    </span>
+                    <span className={playfulComponents.badge.green}>
+                      {difficulty}
+                    </span>
+                  </div>
+                  <Button 
+                    className={`${playfulComponents.button.success} w-full transform ${playfulAnimations.hover.scale}`}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Start {mode.name}
+                  </Button>
+                </CardContent>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-    </div>
+    );
+  }
+
+  // Game screen
+  return (
+    <PitchIntervalMasterGame
+      modeId={selectedMode}
+      difficulty={difficulty}
+      onGameComplete={handleGameComplete}
+      onBackToMenu={handleBackToMenu}
+    />
   );
 };

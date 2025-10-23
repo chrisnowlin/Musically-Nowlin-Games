@@ -12,6 +12,7 @@ import {
   type GameMode 
 } from '@/lib/gameLogic/theory-002Modes';
 import { Theory002Logic, type GameRound, type Theory002State } from '@/lib/gameLogic/theory-002Logic';
+import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations } from '@/theme/playful';
 
 interface ScaleBuilderGameProps {
   onGameComplete?: (score: number, totalPossible: number) => void;
@@ -204,43 +205,55 @@ const ScaleBuilderGame: React.FC<ScaleBuilderGameProps> = ({ onGameComplete, onB
   // Mode selection screen
   if (!selectedMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">Scale Builder</h1>
-            <p className="text-lg text-gray-600">Master scale identification and construction</p>
-            {onBack && (
-              <Button onClick={onBack} variant="outline" className="mt-4">
-                Back to Games
-              </Button>
-            )}
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            {THEORY_MODES.map(mode => (
-              <Card key={mode.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <div className="text-4xl mb-4">{mode.icon}</div>
-                    <h3 className="text-xl font-semibold mb-2">{mode.name}</h3>
-                    <p className="text-gray-600 mb-4">{mode.description}</p>
-                    <div className="flex justify-center gap-2 mb-4">
-                      <Badge variant="secondary">{mode.ageRange}</Badge>
-                      <Badge variant="outline">{mode.difficulty}</Badge>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-4">{mode.instructions}</p>
-                    <Button 
-                      onClick={() => startGame(mode)}
-                      className="w-full"
-                      style={{ backgroundColor: mode.color.replace('bg-', '').replace('-500', '') }}
-                    >
-                      Start {mode.name}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      <div className="flex flex-col items-center justify-center space-y-8 w-full max-w-4xl">
+        <div className="text-center space-y-4">
+          <h2 className={`${playfulTypography.headings.h2} text-gray-800 dark:text-gray-200`}>
+            Scale Builder
+          </h2>
+          <p className={`${playfulTypography.body.large} text-gray-700 dark:text-gray-300`}>
+            Master scale identification and construction
+          </p>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-8 w-full max-w-3xl">
+          {THEORY_MODES.map((mode, index) => (
+            <div
+              key={mode.id}
+              className={`${playfulComponents.card.base} ${playfulComponents.card.available} ${playfulComponents.card.hover} cursor-pointer`}
+              style={{ animationDelay: `${index * 150}ms` }}
+              onClick={() => startGame(mode)}
+            >
+              <CardContent className="p-8 text-center space-y-6">
+                <div className={`${playfulComponents.iconContainer.large} ${mode.color.replace('bg-', '').replace('-500', '/30')} mb-4`}>
+                  <span className="text-5xl">{mode.icon}</span>
+                </div>
+                <h3 className={`${playfulTypography.headings.h4} text-gray-800 dark:text-gray-200`}>
+                  {mode.name}
+                </h3>
+                <p className={`${playfulTypography.body.small} text-gray-600 dark:text-gray-400`}>
+                  {mode.description}
+                </p>
+                <div className="flex justify-center gap-2 flex-wrap">
+                  <span className={playfulComponents.badge.purple}>
+                    {mode.ageRange}
+                  </span>
+                  <span className={playfulComponents.badge.orange}>
+                    {mode.difficulty}
+                  </span>
+                </div>
+                <p className={`${playfulTypography.body.small} text-gray-500 dark:text-gray-500 italic`}>
+                  {mode.instructions}
+                </p>
+                <Button 
+                  onClick={() => startGame(mode)}
+                  className={`${playfulComponents.button.success} w-full transform ${playfulAnimations.hover.scale}`}
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Start {mode.name}
+                </Button>
+              </CardContent>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -255,47 +268,52 @@ const ScaleBuilderGame: React.FC<ScaleBuilderGameProps> = ({ onGameComplete, onB
   const progress = (gameState.currentRound / gameState.totalRounds) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-2xl font-bold">{selectedMode.name}</h2>
-              <p className="text-gray-600">Round {gameState.currentRound + 1} of {gameState.totalRounds}</p>
+    <div className="flex flex-col items-center justify-center w-full max-w-4xl space-y-6">
+      {/* Header */}
+      <div className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm ${playfulShapes.rounded.container} ${playfulShapes.shadows.card} p-6 w-full`}>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className={`${playfulTypography.headings.h3} text-gray-800 dark:text-gray-200`}>
+              {selectedMode.name}
+            </h2>
+            <p className={`${playfulTypography.body.small} text-gray-600 dark:text-gray-400`}>
+              Round {gameState.currentRound + 1} of {gameState.totalRounds}
+            </p>
+          </div>
+          <div className="flex gap-6">
+            <div className="text-center">
+              <p className={`${playfulTypography.body.small} text-gray-500`}>Score</p>
+              <p className={`${playfulTypography.headings.h4} ${playfulColors.status.success}`}>
+                {gameState.score}
+              </p>
             </div>
-            <div className="flex gap-4">
-              <div className="text-center">
-                <p className="text-sm text-gray-500">Score</p>
-                <p className="text-xl font-bold">{gameState.score}</p>
+            <div className="text-center">
+              <p className={`${playfulTypography.body.small} text-gray-500`}>Lives</p>
+              <div className="flex gap-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-6 h-6 rounded-full ${
+                      i < gameState.lives ? 'bg-red-500' : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
               </div>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">Lives</p>
-                <div className="flex gap-1">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-6 h-6 rounded-full ${
-                        i < gameState.lives ? 'bg-red-500' : 'bg-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">Time</p>
-                <p className="text-xl font-bold flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {timeRemaining}s
-                </p>
-              </div>
+            </div>
+            <div className="text-center">
+              <p className={`${playfulTypography.body.small} text-gray-500`}>Time</p>
+              <p className={`${playfulTypography.headings.h4} ${playfulColors.status.warning} flex items-center gap-1`}>
+                <Clock className="w-4 h-4" />
+                {timeRemaining}s
+              </p>
             </div>
           </div>
-          <Progress value={progress} className="h-2" />
         </div>
+        <Progress value={progress} className="h-3" />
+      </div>
 
-        {/* Question */}
-        <Card className="mb-6">
+      {/* Question */}
+      <Card className="mb-6 w-full">
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-semibold">{currentRound.question}</h3>
@@ -460,7 +478,6 @@ const ScaleBuilderGame: React.FC<ScaleBuilderGameProps> = ({ onGameComplete, onB
             </div>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 };
