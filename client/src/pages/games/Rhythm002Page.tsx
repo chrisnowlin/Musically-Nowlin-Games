@@ -1,8 +1,15 @@
 import React from "react";
-import { Rhythm002Game } from "@/components/Rhythm002Game";
+import TempoPulseMasterGame from "@/components/TempoPulseMasterGame";
+import { useLocation } from "wouter";
 
 export const Rhythm002Page: React.FC = () => {
-  return <Rhythm002Game />;
+  const [, setLocation] = useLocation();
+
+  const handleBack = () => {
+    setLocation("/");
+  };
+
+  return <TempoPulseMasterGame onBack={handleBack} />;
 };
 
 export default Rhythm002Page;

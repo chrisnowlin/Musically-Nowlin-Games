@@ -481,6 +481,17 @@ export const games: GameConfig[] = [
     ageRange: "6-12 years",
   },
   {
+    id: "rhythm-002",
+    title: "Tempo & Pulse Master",
+    description: "Master tempo recognition and rhythmic subdivisions through tempo changes, pulse subdivisions, and rhythm analysis.",
+    route: "/games/rhythm-002",
+    status: "available",
+    icon: Drum,
+    color: "bg-orange-500",
+    difficulty: "medium",
+    ageRange: "6-12 years",
+  },
+  {
     id: "rhythm-003",
     title: "Meter Master",
     description: "Master time signatures and metric organization through common meters, compound meters, and mixed meters.",

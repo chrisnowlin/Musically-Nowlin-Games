@@ -127,6 +127,7 @@ function Router() {
       <Route path="/games/pitch-004" component={Pitch004Page} />
       <Route path="/games/pitch-005" component={Pitch005Page} />
       <Route path="/games/pitch-006" component={Pitch006Page} />
+      <Route path="/games/rhythm-002" component={Rhythm002Page} />
       <Route path="/games/rhythm-003" component={Rhythm003Page} />
       <Route path="/games/rhythm-004" component={Rhythm004Page} />
       <Route path="/games/rhythm-005" component={Rhythm005Page} />
