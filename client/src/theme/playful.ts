@@ -321,3 +321,25 @@ export function getButtonClasses(variant: "primary" | "secondary" | "disabled" |
   return playfulComponents.button[variant];
 }
 
+// ============================================================================
+// DEFAULT EXPORT
+// ============================================================================
+
+const playfulTheme = {
+  colors: playfulColors,
+  typography: playfulTypography,
+  shapes: playfulShapes,
+  animations: playfulAnimations,
+  components: playfulComponents,
+  layout: playfulLayout,
+  decorativeOrbs,
+  generateDecorativeOrbs,
+  cn,
+  getGameColorClass,
+  getAnimationDelay,
+  getCardClasses,
+  getButtonClasses,
+};
+
+export default playfulTheme;
+
