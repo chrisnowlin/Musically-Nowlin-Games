@@ -1,8 +1,8 @@
 import React from "react";
-import { Cross001Game } from "@/components/Cross001Game";
+import { CrossCurricularMusicMasterGame } from "@/components/CrossCurricularMusicMasterGame";
 
 export const Cross001Page: React.FC = () => {
-  return <Cross001Game />;
+  return <CrossCurricularMusicMasterGame />;
 };
 
 export default Cross001Page;

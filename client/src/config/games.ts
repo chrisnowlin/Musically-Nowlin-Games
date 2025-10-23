@@ -1,4 +1,4 @@
-import { Music2, Drum, Piano, Mic, Gamepad2, Brain } from "lucide-react";
+import { Music2, Drum, Piano, Mic, Gamepad2, Brain, Calculator } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export type GameStatus = "available" | "coming-soon" | "locked";
@@ -679,6 +679,17 @@ export const games: GameConfig[] = [
     ageRange: "8-12 years",
   },
   {
+    id: "cross-001",
+    title: "Cross-Curricular Music Master",
+    description: "Explore connections between music and math, language, and movement through multi-mode learning.",
+    route: "/games/cross-001",
+    status: "available",
+    icon: Calculator,
+    color: "bg-green-600",
+    difficulty: "medium",
+    ageRange: "7-12 years",
+  },
+  {
     id: "compose-002",
     title: "Orchestration & Style Studio",
     description: "Master orchestration, style analysis, and arrangement techniques.",
@@ -733,17 +744,7 @@ export const games: GameConfig[] = [
     difficulty: "medium",
     ageRange: "7-12 years",
   },
-  {
-    id: "cross-001",
-    title: "Music & Math Explorer",
-    description: "Master ratios, patterns, and sequences in music.",
-    route: "/games/cross-001",
-    status: "available",
-    icon: Music2,
-    color: "bg-indigo-600",
-    difficulty: "medium",
-    ageRange: "7-12 years",
-  },
+
   {
     id: "cross-002",
     title: "Music & Language Lab",
