@@ -81,7 +81,7 @@ export const ResponsiveGameLayout: React.FC<ResponsiveGameLayoutProps> = ({
         min-h-screen
         max-h-screen
         overflow-hidden
-        ${playfulTheme.gradients.background}
+        ${playfulTheme.colors.gradients.background}
         ${className}
       `}
       style={{
