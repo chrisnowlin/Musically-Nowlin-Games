@@ -21,7 +21,7 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
       {/* No overlay background - show game canvas behind */}
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <Card
-          className="bg-slate-800 border-slate-700 w-full"
+          className="bg-slate-800/90 border-slate-700 w-full backdrop-blur-sm"
           style={{
             maxWidth: `${Math.min(layout.maxContentWidth, 448)}px`,
             padding: `${layout.padding}px`
