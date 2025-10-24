@@ -18,8 +18,8 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
 
   return (
     <>
-      {/* Overlay Background */}
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      {/* No overlay background - show game canvas behind */}
+      <div className="fixed inset-0 flex items-center justify-center z-50">
         <Card
           className="bg-slate-800 border-slate-700 w-full"
           style={{
