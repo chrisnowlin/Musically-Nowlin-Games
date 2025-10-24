@@ -138,8 +138,8 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
                    fontSize: `${layout.getFontSize('lg')}px`
                  }}
                >
-                 <X size={layout.device.isMobile ? 16 : 20} />
-                 Quit to Menu
+                  <X size={layout.device.isMobile ? 16 : 20} />
+                  Quit to Menu
                </Button>
             </div>
           </CardContent>
