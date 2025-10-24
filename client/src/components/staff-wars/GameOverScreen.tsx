@@ -139,7 +139,7 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
                  }}
                >
                  <X size={layout.device.isMobile ? 16 : 20} />
-                 Setup
+                 Quit to Menu
                </Button>
             </div>
           </CardContent>
