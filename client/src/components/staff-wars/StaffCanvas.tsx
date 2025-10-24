@@ -52,12 +52,20 @@ function drawStaffLines(ctx: CanvasRenderingContext2D, x: number, y: number, wid
     ctx.stroke();
   }
 
-  // Draw clef symbol (larger)
+  // Draw clef symbol (1.8x scale = 108px, normal weight)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 60px Arial';
-  ctx.textAlign = 'center';
+  ctx.font = '108px Arial';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
   const clefSymbol = clef === 'treble' ? '𝄞' : clef === 'bass' ? '𝄢' : '𝄡';
-  ctx.fillText(clefSymbol, x + 30, y + 30);
+  
+  // Position clef on correct staff line
+  // For treble clef: the curl wraps around G line (2nd from bottom = line 3)
+  // The baseline of the character should align so the curl is on that line
+  // Staff lines: line 0=y, line 1=y+15, line 2=y+30, line 3=y+45, line 4=y+60
+  // Treble clef: position baseline at y+65 so the curl sits on line 3 (y+45)
+  const clefY = clef === 'treble' ? y + 65 : clef === 'bass' ? y + 65 : y + 50;
+  ctx.fillText(clefSymbol, x + 10, clefY);
 }
 
 function drawSpaceship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean = false) {

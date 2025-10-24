@@ -5,9 +5,9 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Vite configuration optimized for Bun 1.3
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: "/Musically-Nowlin-Games/",
+  base: command === 'build' ? "/Musically-Nowlin-Games/" : "/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
@@ -49,4 +49,4 @@ export default defineConfig({
     include: ["react", "react-dom", "wouter", "vexflow"],
     exclude: [],
   },
-});
+}));

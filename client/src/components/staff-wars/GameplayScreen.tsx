@@ -26,13 +26,12 @@ interface GameplayScreenProps {
 
 const NOTE_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
-const SPEED_CURVE = [
-  { correctAnswers: 0, pxPerSecond: 50 },
-  { correctAnswers: 5, pxPerSecond: 75 },
-  { correctAnswers: 10, pxPerSecond: 100 },
-  { correctAnswers: 15, pxPerSecond: 125 },
-  { correctAnswers: 20, pxPerSecond: 150 },
-];
+// Calculate speed based on level with 12% increase per level
+const calculateSpeed = (level: number): number => {
+  const baseSpeed = 50;
+  const speedIncrease = 0.12; // 12% increase per level
+  return Math.round(baseSpeed * Math.pow(1 + speedIncrease, level - 1));
+};
 
 export default function GameplayScreen({
   config,
@@ -105,19 +104,18 @@ export default function GameplayScreen({
       const newScore = score + 1;
       onUpdateScore(newScore);
 
-      // Update level based on speed curve
-      let newLevel = 1;
-      for (let i = SPEED_CURVE.length - 1; i >= 0; i--) {
-        if (newScore >= SPEED_CURVE[i].correctAnswers) {
-          newLevel = i + 1;
-          break;
-        }
-      }
+      // Calculate new level (every 10 correct answers)
+      const newLevel = Math.floor(newScore / 10) + 1;
 
       if (newLevel !== level) {
         onUpdateLevel(newLevel);
-        const speedCurve = SPEED_CURVE[Math.min(newLevel - 1, SPEED_CURVE.length - 1)];
-        onUpdateSpeed(speedCurve.pxPerSecond);
+        const newSpeed = calculateSpeed(newLevel);
+        onUpdateSpeed(newSpeed);
+        
+        // Play level-up sound effect
+        if (sfxEnabled) {
+          audioService.playLevelUpSound();
+        }
       }
 
       setCurrentNote(null);
@@ -152,104 +150,127 @@ export default function GameplayScreen({
     }
   };
 
+  const handleLevelUp = () => {
+    // Level-up visual feedback is handled in StaffCanvas
+    // This callback can be used for additional effects if needed
+  };
+
   return (
     <div className="w-full min-h-screen max-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-900 to-slate-800">
-      {/* HUD */}
-      <div
-        className="bg-slate-800/80 border-b border-slate-700 flex justify-between items-center flex-shrink-0"
-        style={{ padding: `${layout.padding}px` }}
-        role="region"
-        aria-label="Game status"
+      {/* Space-themed container */}
+      <div 
+        className="flex-1 flex flex-col m-4 rounded-2xl border-2 border-blue-900/50 bg-slate-900/90 backdrop-blur-sm shadow-2xl shadow-blue-900/30"
+        style={{ padding: `${layout.padding * 1.5}px` }}
       >
-        <div className="flex" style={{ gap: `${layout.gridGap * 2}px` }}>
-          <div className="text-white">
-            <p
-              className="text-slate-400"
-              style={{ fontSize: `${layout.getFontSize('xs')}px` }}
-            >
-              Score
-            </p>
-            <p
-              className="font-bold"
-              style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
-              aria-live="polite"
-              aria-label={`Score: ${score}`}
-            >
-              {score}
-            </p>
+        {/* HUD */}
+        <div
+          className="bg-slate-800/80 border border-slate-700 rounded-lg flex justify-between items-center flex-shrink-0 mb-4"
+          style={{ padding: `${layout.padding}px` }}
+          role="region"
+          aria-label="Game status"
+        >
+          <div className="flex" style={{ gap: `${layout.gridGap * 2}px` }}>
+            <div className="text-white">
+              <p
+                className="text-slate-400"
+                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+              >
+                Score
+              </p>
+              <p
+                className="font-bold"
+                style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+                aria-live="polite"
+                aria-label={`Score: ${score}`}
+              >
+                {score}
+              </p>
+            </div>
+            <div className="text-white">
+              <p
+                className="text-slate-400"
+                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+              >
+                Level
+              </p>
+              <p
+                className="font-bold text-yellow-400"
+                style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+                aria-live="polite"
+                aria-label={`Level: ${level}`}
+              >
+                {level}
+              </p>
+              <div className="w-full bg-slate-700 rounded-full h-2 mt-1">
+                <div 
+                  className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((score % 10) / 10) * 100}%` }}
+                  aria-label={`Progress to next level: ${score % 10}/10`}
+                />
+              </div>
+              <p
+                className="text-slate-500 text-xs mt-1"
+                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+              >
+                {score % 10}/10 to next level
+              </p>
+            </div>
+            <div className="text-white">
+              <p
+                className="text-slate-400"
+                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+              >
+                Lives
+              </p>
+              <p
+                className="font-bold text-red-400"
+                style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+                aria-live="polite"
+                aria-label={`Lives remaining: ${lives}`}
+              >
+                {'❤️'.repeat(lives)}
+              </p>
+            </div>
           </div>
-          <div className="text-white">
-            <p
-              className="text-slate-400"
-              style={{ fontSize: `${layout.getFontSize('xs')}px` }}
+
+          <div className="flex" style={{ gap: `${layout.gridGap / 2}px` }}>
+            <Button
+              onClick={onToggleSFX}
+              variant="outline"
+              size="icon"
+              className="touch-target"
+              style={{
+                height: `${Math.max(layout.padding * 2, 44)}px`,
+                width: `${Math.max(layout.padding * 2, 44)}px`
+              }}
+              aria-label={sfxEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
+              aria-pressed={sfxEnabled}
+              title={sfxEnabled ? 'Mute (M)' : 'Unmute (M)'}
             >
-              Level
-            </p>
-            <p
-              className="font-bold"
-              style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
-              aria-live="polite"
-              aria-label={`Level: ${level}`}
+              {sfxEnabled ? <Volume2 size={layout.device.isMobile ? 18 : 20} /> : <VolumeX size={layout.device.isMobile ? 18 : 20} />}
+            </Button>
+            <Button
+              onClick={onPause}
+              variant="outline"
+              size="icon"
+              className="touch-target"
+              style={{
+                height: `${Math.max(layout.padding * 2, 44)}px`,
+                width: `${Math.max(layout.padding * 2, 44)}px`
+              }}
+              aria-label="Pause game"
+              title="Pause (Space)"
             >
-              {level}
-            </p>
-          </div>
-          <div className="text-white">
-            <p
-              className="text-slate-400"
-              style={{ fontSize: `${layout.getFontSize('xs')}px` }}
-            >
-              Lives
-            </p>
-            <p
-              className="font-bold text-red-400"
-              style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
-              aria-live="polite"
-              aria-label={`Lives remaining: ${lives}`}
-            >
-              {'❤️'.repeat(lives)}
-            </p>
+              <Pause size={layout.device.isMobile ? 18 : 20} />
+            </Button>
           </div>
         </div>
 
-        <div className="flex" style={{ gap: `${layout.gridGap / 2}px` }}>
-          <Button
-            onClick={onToggleSFX}
-            variant="outline"
-            size="icon"
-            className="touch-target"
-            style={{
-              height: `${Math.max(layout.padding * 2, 44)}px`,
-              width: `${Math.max(layout.padding * 2, 44)}px`
-            }}
-            aria-label={sfxEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
-            aria-pressed={sfxEnabled}
-            title={sfxEnabled ? 'Mute (M)' : 'Unmute (M)'}
-          >
-            {sfxEnabled ? <Volume2 size={layout.device.isMobile ? 18 : 20} /> : <VolumeX size={layout.device.isMobile ? 18 : 20} />}
-          </Button>
-          <Button
-            onClick={onPause}
-            variant="outline"
-            size="icon"
-            className="touch-target"
-            style={{
-              height: `${Math.max(layout.padding * 2, 44)}px`,
-              width: `${Math.max(layout.padding * 2, 44)}px`
-            }}
-            aria-label="Pause game"
-            title="Pause (Space)"
-          >
-            <Pause size={layout.device.isMobile ? 18 : 20} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Game Canvas */}
-      <div
-        className="flex-1 flex items-center justify-center overflow-hidden"
-        style={{ padding: `${layout.padding}px` }}
-      >
+        {/* Game Canvas */}
+        <div
+          className="flex-1 flex items-center justify-center overflow-hidden rounded-lg border border-slate-700/50 bg-slate-950/50"
+          style={{ padding: `${layout.padding}px` }}
+        >
         <StaffCanvas
           ref={canvasRef}
           config={config}
@@ -261,43 +282,44 @@ export default function GameplayScreen({
           feedback={feedback}
           gameLoopRef={gameLoopRef}
         />
-      </div>
+        </div>
 
-      {/* Note Buttons */}
-      <div
-        className="bg-slate-800/80 border-t border-slate-700 flex-shrink-0"
-        style={{ padding: `${layout.padding}px` }}
-      >
+        {/* Note Buttons */}
         <div
-          className="flex justify-center flex-wrap mx-auto"
-          style={{
-            gap: `${layout.gridGap / 2}px`,
-            maxWidth: `${layout.maxContentWidth}px`
-          }}
+          className="bg-slate-800/80 border-t border-slate-700 rounded-lg flex-shrink-0 mt-4"
+          style={{ padding: `${layout.padding}px` }}
         >
-          {NOTE_NAMES.map((note) => (
-            <Button
-              key={note}
-              onClick={() => handleNoteAnswer(note)}
-              disabled={!currentNote || isPaused}
-              aria-label={`Note ${note}${currentNote === note ? ' - current note' : ''}`}
-              aria-pressed={currentNote === note}
-              className={`font-bold touch-target ${
-                currentNote === note
-                  ? 'bg-yellow-500 hover:bg-yellow-600 text-black ring-2 ring-yellow-300'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-              style={{
-                height: `${Math.max(layout.padding * 2, 48)}px`,
-                width: `${Math.max(layout.padding * 2, 48)}px`,
-                minWidth: `${Math.max(layout.padding * 2, 48)}px`,
-                fontSize: `${layout.getFontSize('lg')}px`
-              }}
-              title={`Press ${note} or click to answer`}
-            >
-              {note}
-            </Button>
-          ))}
+          <div
+            className="flex justify-center flex-wrap mx-auto"
+            style={{
+              gap: `${layout.gridGap / 2}px`,
+              maxWidth: `${layout.maxContentWidth}px`
+            }}
+          >
+            {NOTE_NAMES.map((note) => (
+              <Button
+                key={note}
+                onClick={() => handleNoteAnswer(note)}
+                disabled={!currentNote || isPaused}
+                aria-label={`Note ${note}${currentNote === note ? ' - current note' : ''}`}
+                aria-pressed={currentNote === note}
+                className={`font-bold touch-target ${
+                  currentNote === note
+                    ? 'bg-yellow-500 hover:bg-yellow-600 text-black ring-2 ring-yellow-300'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+                style={{
+                  height: `${Math.max(layout.padding * 2, 48)}px`,
+                  width: `${Math.max(layout.padding * 2, 48)}px`,
+                  minWidth: `${Math.max(layout.padding * 2, 48)}px`,
+                  fontSize: `${layout.getFontSize('lg')}px`
+                }}
+                title={`Press ${note} or click to answer`}
+              >
+                {note}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
