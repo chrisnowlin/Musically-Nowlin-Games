@@ -153,8 +153,13 @@ export default function StaffWarsGame() {
     dispatch({ type: 'RETURN_TO_SETUP' });
   };
 
-  const handleQuitToMenu = () => {
-    setLocation("/");
+  const handleQuitToSetup = () => {
+    dispatch({ type: 'RETURN_TO_SETUP' });
+  };
+
+  const handlePlayAgain = () => {
+    // Start new game immediately with same config
+    dispatch({ type: 'START_GAME', config: state.config });
   };
 
   const handleToggleSFX = () => {
@@ -224,8 +229,8 @@ export default function StaffWarsGame() {
         <GameOverScreen
           score={state.score}
           highScores={state.highScores}
-          onRestart={handleReturnToSetup}
-          onQuit={handleQuitToMenu}
+          onRestart={handlePlayAgain}
+          onQuit={handleQuitToSetup}
         />
       )}
     </div>

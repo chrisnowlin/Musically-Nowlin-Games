@@ -120,27 +120,27 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: `${layout.gridGap}px` }}>
-              <Button
-                onClick={onRestart}
-                className="flex-1 font-bold bg-blue-600 hover:bg-blue-700 text-white touch-target"
-                style={{
-                  height: `${Math.max(layout.padding * 2, 48)}px`,
-                  fontSize: `${layout.getFontSize('lg')}px`
-                }}
-              >
-                Play Again
-              </Button>
-              <Button
-                onClick={onQuit}
-                className="flex-1 font-bold bg-slate-600 hover:bg-slate-700 text-white touch-target"
-                style={{
-                  height: `${Math.max(layout.padding * 2, 48)}px`,
-                  fontSize: `${layout.getFontSize('lg')}px`
-                }}
-              >
-                <X size={layout.device.isMobile ? 16 : 20} />
-                Quit to Menu
-              </Button>
+               <Button
+                 onClick={onRestart}
+                 className="flex-1 font-bold bg-blue-600 hover:bg-blue-700 text-white touch-target"
+                 style={{
+                   height: `${Math.max(layout.padding * 2, 48)}px`,
+                   fontSize: `${layout.getFontSize('lg')}px`
+                 }}
+               >
+                 Play Again
+               </Button>
+               <Button
+                 onClick={onQuit}
+                 className="flex-1 font-bold bg-slate-600 hover:bg-slate-700 text-white touch-target"
+                 style={{
+                   height: `${Math.max(layout.padding * 2, 48)}px`,
+                   fontSize: `${layout.getFontSize('lg')}px`
+                 }}
+               >
+                 <X size={layout.device.isMobile ? 16 : 20} />
+                 Setup
+               </Button>
             </div>
           </CardContent>
         </Card>
