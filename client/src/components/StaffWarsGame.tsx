@@ -153,6 +153,10 @@ export default function StaffWarsGame() {
     dispatch({ type: 'RETURN_TO_SETUP' });
   };
 
+  const handleQuitToMenu = () => {
+    setLocation("/");
+  };
+
   const handleToggleSFX = () => {
     dispatch({ type: 'TOGGLE_SFX' });
   };
@@ -221,6 +225,7 @@ export default function StaffWarsGame() {
           score={state.score}
           highScores={state.highScores}
           onRestart={handleReturnToSetup}
+          onQuit={handleQuitToMenu}
         />
       )}
     </div>
