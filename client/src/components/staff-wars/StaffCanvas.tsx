@@ -283,7 +283,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
         }
 
         const spaceshipX = canvasRef.current.offsetWidth / 2; // Center horizontally
-        const spaceshipY = staffDataRef.current.staffY + 180; // Position further below the staff
+        const spaceshipY = staffDataRef.current.staffY + 120; // Position below the staff
 
         if (feedback === 'correct') {
           // Create laser beam (from top of spaceship pointing upward)
@@ -383,7 +383,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
         const spaceshipFlashing = currentTime - spaceshipFlashRef.current < 300;
         if (staffData) {
           const spaceshipX = canvas.offsetWidth / 2; // Center horizontally
-          const spaceshipY = staffData.staffY + 180; // Position further below the staff
+          const spaceshipY = staffData.staffY + 120; // Position below the staff
           drawSpaceship(ctx, spaceshipX, spaceshipY, spaceshipFlashing);
         }
 
