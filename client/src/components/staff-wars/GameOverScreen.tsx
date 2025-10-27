@@ -18,21 +18,21 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
 
   return (
     <>
-      {/* No overlay background - show game canvas behind */}
-      <div className="fixed inset-0 flex items-center justify-center z-50">
+      {/* Overlay Background */}
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
         <Card
-          className="bg-slate-800/90 border-slate-700 w-full backdrop-blur-sm"
+          className="bg-slate-800 border-slate-700 w-full max-h-full overflow-y-auto my-auto"
           style={{
             maxWidth: `${Math.min(layout.maxContentWidth, 448)}px`,
-            padding: `${layout.padding}px`
+            padding: `${layout.padding * 0.75}px`
           }}
         >
-          <CardHeader className="text-center" style={{ padding: `${layout.padding}px` }}>
+          <CardHeader className="text-center" style={{ padding: `${layout.padding * 0.75}px`, paddingBottom: `${layout.padding * 0.5}px` }}>
             <CardTitle
               className="font-bold text-white"
               style={{
-                fontSize: `${layout.getFontSize('4xl')}px`,
-                marginBottom: `${layout.padding}px`
+                fontSize: `${layout.getFontSize('3xl')}px`,
+                marginBottom: 0
               }}
             >
               {isNewHighScore ? '🎉 New High Score!' : '🎮 Game Over'}
@@ -41,10 +41,11 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
 
           <CardContent
             style={{
-              padding: `${layout.padding}px`,
+              padding: `${layout.padding * 0.75}px`,
+              paddingTop: `${layout.padding * 0.5}px`,
               display: 'flex',
               flexDirection: 'column',
-              gap: `${layout.gridGap * 1.5}px`
+              gap: `${layout.gridGap * 1.25}px`
             }}
           >
             {/* Final Score */}
@@ -52,15 +53,15 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
               <p
                 className="text-slate-300"
                 style={{
-                  fontSize: `${layout.getFontSize('lg')}px`,
-                  marginBottom: `${layout.padding / 2}px`
+                  fontSize: `${layout.getFontSize('base')}px`,
+                  marginBottom: `${layout.padding * 0.25}px`
                 }}
               >
                 Final Score
               </p>
               <p
                 className="font-bold text-green-400"
-                style={{ fontSize: `${layout.getFontSize('4xl') * 1.5}px` }}
+                style={{ fontSize: `${layout.getFontSize('4xl')}px` }}
               >
                 {score}
               </p>
@@ -70,14 +71,14 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
             {rank <= 5 && (
               <div
                 className="text-center bg-slate-700 rounded-lg"
-                style={{ padding: `${layout.padding}px` }}
+                style={{ padding: `${layout.padding * 0.75}px` }}
               >
-                <p className="text-slate-300" style={{ fontSize: `${layout.getFontSize('base')}px` }}>
+                <p className="text-slate-300" style={{ fontSize: `${layout.getFontSize('sm')}px` }}>
                   You ranked
                 </p>
                 <p
                   className="font-bold text-yellow-400"
-                  style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+                  style={{ fontSize: `${layout.getFontSize('2xl')}px` }}
                 >
                   #{rank}
                 </p>
@@ -89,24 +90,24 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
               <div
                 className="bg-slate-700 rounded-lg"
                 style={{
-                  padding: `${layout.padding}px`,
+                  padding: `${layout.padding * 0.75}px`,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: `${layout.gridGap}px`
+                  gap: `${layout.gridGap * 0.75}px`
                 }}
               >
                 <h3
                   className="font-semibold text-white"
-                  style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+                  style={{ fontSize: `${layout.getFontSize('base')}px` }}
                 >
                   🏆 Top Scores
                 </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 2}px` }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap * 0.5}px` }}>
                   {highScores.slice(0, 5).map((s, idx) => (
                     <div
                       key={idx}
                       className="flex justify-between text-white"
-                      style={{ fontSize: `${layout.getFontSize('base')}px` }}
+                      style={{ fontSize: `${layout.getFontSize('sm')}px` }}
                     >
                       <span>#{idx + 1}</span>
                       <span className={s === score ? 'font-bold text-green-400' : ''}>
@@ -119,13 +120,13 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
             )}
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: `${layout.gridGap}px` }}>
+            <div style={{ display: 'flex', gap: `${layout.gridGap * 0.75}px` }}>
                <Button
                  onClick={onRestart}
                  className="flex-1 font-bold bg-blue-600 hover:bg-blue-700 text-white touch-target"
                  style={{
-                   height: `${Math.max(layout.padding * 2, 48)}px`,
-                   fontSize: `${layout.getFontSize('lg')}px`
+                   height: `${Math.max(layout.padding * 2, 44)}px`,
+                   fontSize: `${layout.getFontSize('base')}px`
                  }}
                >
                  Play Again
@@ -134,11 +135,11 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
                  onClick={onQuit}
                  className="flex-1 font-bold bg-slate-600 hover:bg-slate-700 text-white touch-target"
                  style={{
-                   height: `${Math.max(layout.padding * 2, 48)}px`,
-                   fontSize: `${layout.getFontSize('lg')}px`
+                   height: `${Math.max(layout.padding * 2, 44)}px`,
+                   fontSize: `${layout.getFontSize('base')}px`
                  }}
                >
-                  <X size={layout.device.isMobile ? 16 : 20} />
+                  <X size={layout.device.isMobile ? 14 : 18} />
                   Quit to Menu
                </Button>
             </div>

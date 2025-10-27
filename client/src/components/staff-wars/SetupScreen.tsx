@@ -39,32 +39,31 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
 
   return (
     <div
-      className="w-full mx-auto overflow-y-auto"
+      className="w-full mx-auto h-screen flex items-center justify-center overflow-hidden"
       style={{
         maxWidth: `${layout.maxContentWidth}px`,
-        padding: `${layout.padding}px`,
-        maxHeight: '100vh'
+        padding: `${layout.padding}px`
       }}
     >
       <Card
-        className="bg-slate-800 border-slate-700"
+        className="bg-slate-800 border-slate-700 max-h-full overflow-y-auto"
         style={{
-          padding: `${layout.padding}px`
+          padding: `${layout.padding * 0.75}px`
         }}
       >
-        <CardHeader className="text-center" style={{ padding: `${layout.padding}px` }}>
+        <CardHeader className="text-center" style={{ padding: `${layout.padding * 0.75}px`, paddingBottom: `${layout.padding * 0.5}px` }}>
           <CardTitle
             className="font-bold text-white"
             style={{
-              fontSize: `${layout.getFontSize('4xl')}px`,
-              marginBottom: `${layout.padding / 2}px`
+              fontSize: `${layout.getFontSize('3xl')}px`,
+              marginBottom: `${layout.padding * 0.25}px`
             }}
           >
             🎵 Staff Wars
           </CardTitle>
           <CardDescription
             className="text-slate-300"
-            style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+            style={{ fontSize: `${layout.getFontSize('base')}px` }}
           >
             Learn to read music notation with speed and accuracy!
           </CardDescription>
@@ -72,17 +71,18 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
 
         <CardContent
           style={{
-            padding: `${layout.padding}px`,
+            padding: `${layout.padding * 0.75}px`,
+            paddingTop: `${layout.padding * 0.5}px`,
             display: 'flex',
             flexDirection: 'column',
-            gap: `${layout.gridGap * 2}px`
+            gap: `${layout.gridGap * 1.5}px`
           }}
         >
           {/* Clef Selection */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap}px` }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap * 0.75}px` }}>
             <h3
               className="font-semibold text-white"
-              style={{ fontSize: `${layout.getFontSize('xl')}px` }}
+              style={{ fontSize: `${layout.getFontSize('lg')}px` }}
             >
               Select Clef
             </h3>
@@ -94,7 +94,7 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
                     <Label
                       htmlFor={option.value}
                       className="text-white cursor-pointer touch-target"
-                      style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+                      style={{ fontSize: `${layout.getFontSize('base')}px` }}
                     >
                       {option.label}
                     </Label>
@@ -105,10 +105,10 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
           </div>
 
           {/* Range Selection */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap}px` }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap * 0.75}px` }}>
             <h3
               className="font-semibold text-white"
-              style={{ fontSize: `${layout.getFontSize('xl')}px` }}
+              style={{ fontSize: `${layout.getFontSize('lg')}px` }}
             >
               Select Difficulty
             </h3>
@@ -120,7 +120,7 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
                     <Label
                       htmlFor={`range-${idx}`}
                       className="text-white cursor-pointer touch-target"
-                      style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+                      style={{ fontSize: `${layout.getFontSize('base')}px` }}
                     >
                       {preset.label}
                     </Label>
@@ -167,9 +167,9 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
             onClick={handleStart}
             className="w-full font-bold bg-green-600 hover:bg-green-700 text-white touch-target"
             style={{
-              height: `${Math.max(layout.padding * 2, 56)}px`,
-              fontSize: `${layout.getFontSize('xl')}px`,
-              padding: `${layout.padding}px`
+              height: `${Math.max(layout.padding * 2, 48)}px`,
+              fontSize: `${layout.getFontSize('lg')}px`,
+              padding: `${layout.padding * 0.75}px`
             }}
           >
             Start Game
@@ -179,14 +179,14 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
           <div
             className="bg-slate-700 rounded-lg text-slate-200"
             style={{
-              padding: `${layout.padding}px`,
-              fontSize: `${layout.getFontSize('sm')}px`
+              padding: `${layout.padding * 0.75}px`,
+              fontSize: `${layout.getFontSize('xs')}px`
             }}
           >
-            <p className="font-semibold" style={{ marginBottom: `${layout.padding / 2}px` }}>
+            <p className="font-semibold" style={{ marginBottom: `${layout.padding * 0.25}px` }}>
               How to Play:
             </p>
-            <ul className="list-disc list-inside" style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 4}px` }}>
+            <ul className="list-disc list-inside" style={{ display: 'flex', flexDirection: 'column', gap: `${layout.gridGap / 8}px` }}>
               <li>Notes scroll from right to left</li>
               <li>Tap the note name button before it reaches the clef</li>
               <li>You have 3 lives - lose them all and it's game over</li>
