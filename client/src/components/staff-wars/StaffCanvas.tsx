@@ -191,6 +191,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
     const starsRef = useRef<Array<{x: number, y: number, size: number, brightness: number}>>([]);
     const lastFeedbackRef = useRef<'correct' | 'incorrect' | null>(null);
     const feedbackRef = useRef<'correct' | 'incorrect' | null>(null);
+    const lastNotePositionRef = useRef<{ x: number; y: number } | null>(null);
     const onNoteSpawnedRef = useRef(onNoteSpawned);
     const onNoteTimeoutRef = useRef(onNoteTimeout);
 
@@ -244,9 +245,13 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
     };
 
     // Clear the moving note when currentNote becomes null (note was answered)
+    // Add a small delay to allow feedback animation to capture note position
     useEffect(() => {
       if (currentNote === null && movingNoteRef.current) {
-        movingNoteRef.current = null;
+        const timer = setTimeout(() => {
+          movingNoteRef.current = null;
+        }, 50); // 50ms delay to ensure feedback effect captures the note position
+        return () => clearTimeout(timer);
       }
     }, [currentNote]);
 
@@ -257,9 +262,26 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
 
     // Trigger effects when feedback changes
     useEffect(() => {
-      if (feedback && feedback !== lastFeedbackRef.current && movingNoteRef.current && staffDataRef.current && canvasRef.current) {
-        const noteX = movingNoteRef.current.x;
-        const noteY = getNotePosition(staffDataRef.current, movingNoteRef.current.name);
+      if (feedback && feedback !== lastFeedbackRef.current && staffDataRef.current && canvasRef.current) {
+        // Get note position from current note or last stored position
+        let noteX: number;
+        let noteY: number;
+
+        if (movingNoteRef.current) {
+          noteX = movingNoteRef.current.x;
+          noteY = getNotePosition(staffDataRef.current, movingNoteRef.current.name);
+          // Store position for use even after note is cleared
+          lastNotePositionRef.current = { x: noteX, y: noteY };
+        } else if (lastNotePositionRef.current) {
+          // Use stored position if note was already cleared
+          noteX = lastNotePositionRef.current.x;
+          noteY = lastNotePositionRef.current.y;
+        } else {
+          // No position available, skip effects
+          lastFeedbackRef.current = feedback;
+          return;
+        }
+
         const spaceshipX = canvasRef.current.offsetWidth / 2; // Center horizontally
         const spaceshipY = staffDataRef.current.staffY + 180; // Position further below the staff
 
