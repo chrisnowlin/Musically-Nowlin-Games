@@ -40,6 +40,7 @@ import AnimalOrchestraConductorGamePage from "@/pages/games/AnimalOrchestraCondu
 import PitchPerfectPathGamePage from "@/pages/games/PitchPerfectPathGamePage";
 import WorldMusicExplorerGamePage from "@/pages/games/WorldMusicExplorerGamePage";
 import StaffWarsGamePage from "@/pages/games/StaffWarsGamePage";
+import StaffRunnerGamePage from "@/pages/games/StaffRunnerGamePage";
 import Rhythm006Page from "@/pages/games/Rhythm006Page";
 import Rhythm007Page from "@/pages/games/Rhythm007Page";
 import Rhythm002Page from "@/pages/games/Rhythm002Page";
@@ -161,6 +162,7 @@ function Router() {
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-wars" component={StaffWarsGamePage} />
+      <Route path="/games/staff-runner" component={StaffRunnerGamePage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
       <Route component={NotFound} />
     </Switch>

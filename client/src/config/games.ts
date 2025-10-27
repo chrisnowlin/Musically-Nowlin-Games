@@ -800,6 +800,17 @@ export const games: GameConfig[] = [
     difficulty: "hard",
     ageRange: "8-12 years",
   },
+  {
+    id: "staff-runner",
+    title: "Staff Runner",
+    description: "Run along the musical staff and collect notes while avoiding obstacles!",
+    route: "/games/staff-runner",
+    status: "available",
+    icon: Music2,
+    color: "bg-teal-500",
+    difficulty: "medium",
+    ageRange: "6-10 years",
+  },
 
 
 ];
