@@ -161,16 +161,16 @@ export default function GameplayScreen({
       <div
         className="flex-1 flex flex-col rounded-2xl border-2 border-blue-900/50 bg-slate-900/90 backdrop-blur-sm shadow-2xl shadow-blue-900/30"
         style={{
-          padding: `${layout.padding}px`,
-          margin: `${layout.padding}px`,
-          maxHeight: `calc(100vh - ${layout.padding * 2}px)`,
+          padding: `${layout.padding * 0.5}px`,
+          margin: `${layout.padding * 0.5}px`,
+          maxHeight: `calc(100vh - ${layout.padding}px)`,
           minHeight: 0
         }}
       >
         {/* HUD */}
         <div
           className="bg-slate-800/80 border border-slate-700 rounded-lg flex justify-between items-center flex-shrink-0"
-          style={{ padding: `${layout.padding * 0.75}px`, marginBottom: `${layout.padding * 0.75}px` }}
+          style={{ padding: `${layout.padding * 0.5}px`, marginBottom: `${layout.padding * 0.5}px` }}
           role="region"
           aria-label="Game status"
         >
@@ -274,7 +274,7 @@ export default function GameplayScreen({
         {/* Game Canvas */}
         <div
           className="flex-1 flex items-center justify-center overflow-hidden rounded-lg border border-slate-700/50 bg-slate-950/50"
-          style={{ padding: `${layout.padding * 0.5}px`, minHeight: 0 }}
+          style={{ padding: `${layout.padding * 0.25}px`, minHeight: 0 }}
         >
         <StaffCanvas
           ref={canvasRef}
@@ -292,7 +292,7 @@ export default function GameplayScreen({
         {/* Note Buttons */}
         <div
           className="bg-slate-800/80 border-t border-slate-700 rounded-lg flex-shrink-0"
-          style={{ padding: `${layout.padding * 0.75}px`, marginTop: `${layout.padding * 0.75}px` }}
+          style={{ padding: `${layout.padding * 0.5}px`, marginTop: `${layout.padding * 0.5}px` }}
         >
           <div
             className="flex justify-center flex-wrap mx-auto"
