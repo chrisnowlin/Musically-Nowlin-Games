@@ -209,7 +209,7 @@ export function renderNote(
   } else if (feedback === 'incorrect') {
     noteColor = '#ef4444'; // Red
   } else {
-    noteColor = '#93c5fd'; // Light blue
+    noteColor = '#fbbf24'; // Yellow
   }
 
   // Draw whole note as a thick-stroked oval (creates filled ring with transparent center)
