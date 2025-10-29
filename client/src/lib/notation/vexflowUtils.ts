@@ -39,7 +39,7 @@ function drawStaff(ctx: CanvasRenderingContext2D, x: number, y: number, width: n
   ctx.lineWidth = 2;
 
   // Draw 5 staff lines with increased spacing
-  const lineSpacing = 22;
+  const lineSpacing = 15;
   for (let i = 0; i < 5; i++) {
     const lineY = y + i * lineSpacing;
     ctx.beginPath();
@@ -48,26 +48,26 @@ function drawStaff(ctx: CanvasRenderingContext2D, x: number, y: number, width: n
     ctx.stroke();
   }
 
-  // Draw clef symbol (larger size for better visibility)
+  // Draw clef symbol (1.8x scale = 108px, normal weight)
   ctx.fillStyle = '#ffffff';
-  ctx.font = '152px Arial';
+  ctx.font = '108px Arial';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   const clefSymbol = clef === 'treble' ? '𝄞' : clef === 'bass' ? '𝄢' : '𝄡';
-
+  
   // Position clef on correct staff line
   // For treble clef: the curl wraps around G line (2nd from bottom = line 3)
   // The baseline of the character should align so the curl is on that line
-  // Staff lines: line 0=y, line 1=y+22, line 2=y+44, line 3=y+66, line 4=y+88
-  // Treble clef: position baseline at y+95 so the curl sits on line 3 (y+66)
-  const clefY = clef === 'treble' ? y + 95 : clef === 'bass' ? y + 95 : y + 70;
+  // Staff lines: line 0=y, line 1=y+15, line 2=y+30, line 3=y+45, line 4=y+60
+  // Treble clef: position baseline at y+65 so the curl sits on line 3 (y+45)
+  const clefY = clef === 'treble' ? y + 65 : clef === 'bass' ? y + 65 : y + 50;
   ctx.fillText(clefSymbol, x + 10, clefY);
 }
 
 export function getNotePosition(staffData: StaffData, noteName: string): number {
   // Map each note to its position relative to the middle line (0 = middle line)
   // Positive numbers go DOWN (lower on staff), negative go UP (higher on staff)
-  // Each step is 11 pixels (half the distance between staff lines - 22px spacing / 2)
+  // Each step is 7.5 pixels (half the distance between staff lines - 15px spacing / 2)
 
   const treblePositions: Record<string, number> = {
     // Treble clef - Lines: E4, G4, B4, D5, F5 | Spaces: F4, A4, C5, E5
@@ -137,11 +137,11 @@ export function getNotePosition(staffData: StaffData, noteName: string): number 
   // Get position offset for this note
   const offset = positionMap[noteName];
   if (offset === undefined) {
-    return staffData.staffY + 44; // Default to middle line if note not found
+    return staffData.staffY + 30; // Default to middle line if note not found
   }
 
-  // Calculate Y position: middle line + (offset * 11 pixels per step)
-  return staffData.staffY + 44 + (offset * 11);
+  // Calculate Y position: middle line + (offset * 7.5 pixels per step)
+  return staffData.staffY + 30 + (offset * 7.5);
 }
 
 export function renderNote(
@@ -153,18 +153,18 @@ export function renderNote(
   staffData?: StaffData
 ): void {
   // Draw a note head at the specified position (larger)
-  const radius = 16;
+  const radius = 12;
 
   // Draw ledger lines if note is outside the staff
   if (staffData) {
-    const staffY = staffData.staffY + 44; // Middle line position
+    const staffY = staffData.staffY + 30; // Middle line position
     const relativeY = y - staffY;
-    const lineSpacing = 22; // Updated to match new staff line spacing
+    const lineSpacing = 15; // Updated to match new staff line spacing
 
     // Determine if we need ledger lines above or below the staff
-    // Staff lines are at: -44, -22, 0, +22, +44 relative to middle line
-    const topStaffLine = -44;
-    const bottomStaffLine = 44;
+    // Staff lines are at: -30, -15, 0, +15, +30 relative to middle line
+    const topStaffLine = -30;
+    const bottomStaffLine = 30;
 
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
@@ -174,12 +174,12 @@ export function renderNote(
       // Start from first ledger line above staff and work up
       for (let ledgerY = topStaffLine - lineSpacing; ledgerY >= relativeY; ledgerY -= lineSpacing) {
         // Only draw ledger line if it's at the note position or for lines, not spaces
-        const needsLine = Math.abs(ledgerY - relativeY) < 5.5;
+        const needsLine = Math.abs(ledgerY - relativeY) < 3.75;
         if (needsLine) {
           const absoluteY = staffY + ledgerY;
           ctx.beginPath();
-          ctx.moveTo(x - 25, absoluteY);
-          ctx.lineTo(x + 25, absoluteY);
+          ctx.moveTo(x - 20, absoluteY);
+          ctx.lineTo(x + 20, absoluteY);
           ctx.stroke();
         }
       }
@@ -190,12 +190,12 @@ export function renderNote(
       // Start from first ledger line below staff and work down
       for (let ledgerY = bottomStaffLine + lineSpacing; ledgerY <= relativeY; ledgerY += lineSpacing) {
         // Only draw ledger line if it's at the note position or for lines, not spaces
-        const needsLine = Math.abs(ledgerY - relativeY) < 5.5;
+        const needsLine = Math.abs(ledgerY - relativeY) < 3.75;
         if (needsLine) {
           const absoluteY = staffY + ledgerY;
           ctx.beginPath();
-          ctx.moveTo(x - 25, absoluteY);
-          ctx.lineTo(x + 25, absoluteY);
+          ctx.moveTo(x - 20, absoluteY);
+          ctx.lineTo(x + 20, absoluteY);
           ctx.stroke();
         }
       }
@@ -214,7 +214,7 @@ export function renderNote(
 
   // Draw whole note as a thick-stroked oval (creates filled ring with transparent center)
   ctx.strokeStyle = noteColor;
-  ctx.lineWidth = 8; // Thick stroke creates the filled "ring" effect
+  ctx.lineWidth = 6; // Thick stroke creates the filled "ring" effect
   ctx.beginPath();
   ctx.ellipse(x, y, radius * 0.75, radius * 0.9, -0.3, 0, Math.PI * 2);
   ctx.stroke();

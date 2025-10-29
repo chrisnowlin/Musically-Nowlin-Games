@@ -43,7 +43,7 @@ function drawStaffLines(ctx: CanvasRenderingContext2D, x: number, y: number, wid
   ctx.lineWidth = 2;
 
   // Draw 5 staff lines with increased spacing
-  const lineSpacing = 22;
+  const lineSpacing = 15;
   for (let i = 0; i < 5; i++) {
     const lineY = y + i * lineSpacing;
     ctx.beginPath();
@@ -52,19 +52,19 @@ function drawStaffLines(ctx: CanvasRenderingContext2D, x: number, y: number, wid
     ctx.stroke();
   }
 
-  // Draw clef symbol (larger size for better visibility)
+  // Draw clef symbol (1.8x scale = 108px, normal weight)
   ctx.fillStyle = '#ffffff';
-  ctx.font = '152px Arial';
+  ctx.font = '108px Arial';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   const clefSymbol = clef === 'treble' ? '𝄞' : clef === 'bass' ? '𝄢' : '𝄡';
-
+  
   // Position clef on correct staff line
   // For treble clef: the curl wraps around G line (2nd from bottom = line 3)
   // The baseline of the character should align so the curl is on that line
-  // Staff lines: line 0=y, line 1=y+22, line 2=y+44, line 3=y+66, line 4=y+88
-  // Treble clef: position baseline at y+95 so the curl sits on line 3 (y+66)
-  const clefY = clef === 'treble' ? y + 95 : clef === 'bass' ? y + 95 : y + 70;
+  // Staff lines: line 0=y, line 1=y+15, line 2=y+30, line 3=y+45, line 4=y+60
+  // Treble clef: position baseline at y+65 so the curl sits on line 3 (y+45)
+  const clefY = clef === 'treble' ? y + 65 : clef === 'bass' ? y + 65 : y + 50;
   ctx.fillText(clefSymbol, x + 10, clefY);
 }
 
