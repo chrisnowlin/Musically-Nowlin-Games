@@ -245,13 +245,20 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
     };
 
     // Clear the moving note when currentNote becomes null (note was answered)
-    // Add a small delay to allow feedback animation to capture note position
+    // Clear immediately to allow new note spawning, but store position for feedback
     useEffect(() => {
       if (currentNote === null && movingNoteRef.current) {
-        const timer = setTimeout(() => {
-          movingNoteRef.current = null;
-        }, 50); // 50ms delay to ensure feedback effect captures the note position
-        return () => clearTimeout(timer);
+        // Store the current position for feedback effects before clearing
+        if (staffDataRef.current && canvasRef.current) {
+          const noteX = movingNoteRef.current.x;
+          const noteY = getNotePosition(staffDataRef.current, movingNoteRef.current.name);
+          lastNotePositionRef.current = { x: noteX, y: noteY };
+        }
+        
+        // Clear the note immediately to allow spawning new notes
+        movingNoteRef.current = null;
+        // Also clear the last note reference to allow the same note to spawn again
+        lastNoteRef.current = null;
       }
     }, [currentNote]);
 
