@@ -117,7 +117,7 @@ export default function ToneColorMatchGame() {
     if (gameStarted && !gameState.targetMelody) {
       generateNewQuestion();
     }
-  }, [gameStarted]);
+  }, [gameStarted, generateNewQuestion]);
 
   const playMelody = useCallback(async (melody: Melody, instrument: Instrument) => {
     const masterVolume = gameState.volume / 100;
@@ -179,9 +179,17 @@ export default function ToneColorMatchGame() {
 
     for (let i = 0; i < 3; i++) {
       // Pick instruments from the same register for consistency
-      const randomInstrument = INSTRUMENTS.filter(inst =>
+      const sameRegisterInstrumentsForWrong = INSTRUMENTS.filter(inst =>
         getInstrumentRegister(inst) === targetRegister
-      )[Math.floor(Math.random() * INSTRUMENTS.filter(inst => getInstrumentRegister(inst) === targetRegister).length)];
+      );
+
+      // Ensure we have instruments available before selecting
+      if (sameRegisterInstrumentsForWrong.length === 0) continue;
+
+      const randomInstrument = sameRegisterInstrumentsForWrong[Math.floor(Math.random() * sameRegisterInstrumentsForWrong.length)];
+
+      // Ensure we have melodies available before selecting
+      if (otherMelodies.length === 0) continue;
 
       const randomMelody = otherMelodies[Math.floor(Math.random() * otherMelodies.length)];
       wrongOptions.push({

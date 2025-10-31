@@ -164,11 +164,16 @@ export default function ComposeYourSongGame() {
   }, [gameState.composition]);
 
   const handlePlaySaved = useCallback(async (compositionIndex: number) => {
+    const composition = gameState.savedCompositions[compositionIndex];
+    if (!composition) return; // Guard against invalid index
+
     setGameState(prev => ({ ...prev, isPlaying: true }));
 
-    const composition = gameState.savedCompositions[compositionIndex];
     for (const noteIndex of composition) {
-      await playNote(NOTES[noteIndex].frequency, 0.5);
+      const note = NOTES[noteIndex];
+      if (note) { // Guard against invalid note index
+        await playNote(note.frequency, 0.5);
+      }
     }
 
     setGameState(prev => ({ ...prev, isPlaying: false }));

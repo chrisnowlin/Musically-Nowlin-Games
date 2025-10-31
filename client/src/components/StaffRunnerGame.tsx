@@ -115,32 +115,29 @@ export default function StaffRunnerGame() {
 
     const currentTime = Date.now();
 
-    setGameState(prev => {
-      const newDistance = prev.distance + prev.speed * 0.016; // 60 FPS
-      const newLevel = Math.floor(newDistance / 500) + 1;
-      const newSpeed = 2 + (newLevel - 1) * 0.3; // Gradual speed increase
+    // Calculate new state values
+    const newDistance = gameState.distance + gameState.speed * 0.016; // 60 FPS
+    const newLevel = Math.floor(newDistance / 500) + 1;
+    const newSpeed = 2 + (newLevel - 1) * 0.3; // Gradual speed increase
+    const isStunned = currentTime < gameState.stunEndTime;
 
-      // Check if stun period is over
-      const isStunned = currentTime < prev.stunEndTime;
-      
-      return {
-        ...prev,
-        distance: newDistance,
-        level: newLevel,
-        speed: newSpeed,
-        isStunned,
-      };
-    });
+    setGameState(prev => ({
+      ...prev,
+      distance: newDistance,
+      level: newLevel,
+      speed: newSpeed,
+      isStunned,
+    }));
 
-    // Update notes position
+    // Update notes position using the calculated speed (not stale gameState)
     setNotes(prevNotes => {
       const updatedNotes = prevNotes.map(note => ({
         ...note,
-        x: note.x - gameState.speed,
+        x: note.x - newSpeed,
       })).filter(note => note.x > -50); // Remove notes that have scrolled off screen
 
       // Generate new notes at intervals
-      if (currentTime - lastNoteTimeRef.current > 3000 / gameState.speed) { // Adjust interval based on speed
+      if (currentTime - lastNoteTimeRef.current > 3000 / newSpeed) { // Adjust interval based on speed
         lastNoteTimeRef.current = currentTime;
         return [...updatedNotes, generateNote()];
       }
@@ -151,11 +148,11 @@ export default function StaffRunnerGame() {
     // Update active note
     setNotes(currentNotes => {
       const characterX = 100; // Character's fixed X position
-      const activeNote = currentNotes.find(note => 
+      const activeNote = currentNotes.find(note =>
         Math.abs(note.x - characterX) < 50 && !note.isActive
       );
 
-      if (activeNote && !gameState.isStunned) {
+      if (activeNote && !isStunned) {
         setActiveNote(activeNote);
         // Announce active note for screen readers
         setScreenReaderAnnouncement(`Active note: ${activeNote.name}. Use note buttons or keyboard keys C through B to answer.`);
@@ -172,7 +169,7 @@ export default function StaffRunnerGame() {
     });
 
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState.status, gameState.speed, gameState.isStunned, generateNote]);
+  }, [gameState.status, gameState.distance, gameState.speed, gameState.stunEndTime, generateNote]);
 
   // Start game loop when playing
   useEffect(() => {

@@ -56,17 +56,20 @@ function generateRhythmPattern(difficulty: number): RhythmPattern {
 
 function validateRhythmEcho(pattern: number[], userTaps: number[]): boolean {
   if (pattern.length !== userTaps.length) return false;
-  
+
+  // Empty patterns match
+  if (pattern.length === 0) return true;
+
   // Normalize both patterns to start at 0
   const normalizedPattern = pattern.map(t => t - pattern[0]);
   const normalizedTaps = userTaps.map(t => t - userTaps[0]);
-  
+
   // Check each tap is within tolerance
   for (let i = 0; i < normalizedPattern.length; i++) {
     const diff = Math.abs(normalizedPattern[i] - normalizedTaps[i]);
     if (diff > TOLERANCE_MS) return false;
   }
-  
+
   return true;
 }
 
