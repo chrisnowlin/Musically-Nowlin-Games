@@ -209,17 +209,17 @@ export default function Game() {
       <GameSection variant="header">
         <div className="text-center">
           {/* Animated Stars */}
-          <div className="flex justify-center gap-4 mb-4">
-            <Star className={`${layout.device.isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-yellow-500 animate-bounce`} style={{ animationDelay: "0ms" }} />
-            <Star className={`${layout.device.isMobile ? 'w-8 h-8' : 'w-10 h-10'} text-pink-500 animate-bounce`} style={{ animationDelay: "150ms" }} />
-            <Star className={`${layout.device.isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-purple-500 animate-bounce`} style={{ animationDelay: "300ms" }} />
+          <div className="flex justify-center gap-3 mb-2">
+            <Star className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-6 h-6'} text-yellow-500 animate-bounce`} style={{ animationDelay: "0ms" }} />
+            <Star className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-8 h-8'} text-pink-500 animate-bounce`} style={{ animationDelay: "150ms" }} />
+            <Star className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-6 h-6'} text-purple-500 animate-bounce`} style={{ animationDelay: "300ms" }} />
           </div>
 
           <h1
             className={`text-center ${playfulColors.gradients.title}`}
             style={{
-              fontSize: `${layout.getFontSize('4xl')}px`,
-              marginBottom: `${layout.padding}px`
+              fontSize: `${layout.getFontSize('3xl')}px`,
+              marginBottom: `${layout.padding * 0.5}px`
             }}
           >
             High or Low?
@@ -241,14 +241,14 @@ export default function Game() {
           {!gameStarted ? (
             // Start game screen
             <div className="text-center">
-              <div className={`${layout.device.isMobile ? 'mb-6' : 'mb-8'}`}>
-                <div className="relative inline-block mb-6">
-                  <Music2 className={`${layout.device.isMobile ? 'w-16 h-16' : 'w-24 h-24'} mx-auto text-purple-600 animate-pulse`} />
-                  <Sparkles className={`${layout.device.isMobile ? 'w-6 h-6' : 'w-8 h-8'} text-yellow-400 absolute -top-2 -right-2 animate-spin`} />
+              <div className={`${layout.device.isMobile ? 'mb-4' : 'mb-6'}`}>
+                <div className="relative inline-block mb-4">
+                  <Music2 className={`${layout.device.isMobile ? 'w-12 h-12' : 'w-20 h-20'} mx-auto text-purple-600 animate-pulse`} />
+                  <Sparkles className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-yellow-400 absolute -top-2 -right-2 animate-spin`} />
                 </div>
                 <h2
                   className={`${playfulColors.gradients.title} mb-4`}
-                  style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
+                  style={{ fontSize: `${layout.getFontSize('2xl')}px` }}
                 >
                   Welcome to the Music Game!
                 </h2>
@@ -265,11 +265,11 @@ export default function Game() {
                 data-testid="button-start-game"
                 className={`${playfulShapes.rounded.button} ${playfulColors.gradients.buttonSuccess} ${playfulShapes.shadows.button} font-fredoka`}
                 style={{
-                  fontSize: `${layout.getFontSize('lg')}px`,
-                  padding: `${layout.padding}px ${layout.padding * 1.5}px`
+                  fontSize: `${layout.getFontSize('base')}px`,
+                  padding: `${layout.padding * 0.6}px ${layout.padding}px`
                 }}
               >
-                <Play className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'} mr-2`} />
+                <Play className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-1`} />
                 Let's Play!
               </Button>
             </div>
@@ -281,16 +281,16 @@ export default function Game() {
               className="w-full"
               style={{
                 maxWidth: `${layout.maxContentWidth}px`,
-                marginBottom: `${layout.padding}px`
+                marginBottom: `${layout.padding * 0.6}px`
               }}
             >
               <div
                 className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm ${playfulShapes.rounded.container} ${playfulShapes.shadows.card} text-center ${playfulShapes.borders.thick} border-purple-300 dark:border-purple-700`}
-                style={{ padding: `${layout.padding}px` }}
+                style={{ padding: `${layout.padding * 0.6}px` }}
               >
                 <h2
                   className="text-foreground"
-                  style={{ fontSize: `${layout.getFontSize('2xl')}px` }}
+                  style={{ fontSize: `${layout.getFontSize('xl')}px` }}
                 >
                   Which animal played the{" "}
                   <span className={gameState.currentRound.question === "higher" ? "text-blue-600 font-bold" : "text-orange-600 font-bold"}>
@@ -299,7 +299,7 @@ export default function Game() {
                   sound?
                 </h2>
                 {/* Persistent status message area - always takes up space */}
-                <div className="mt-3 min-h-[2rem] flex items-center justify-center">
+                <div className="mt-2 min-h-[1.5rem] flex items-center justify-center">
                   <p
                     className={`transition-opacity duration-300 ${
                       !gameState.isPlaying && !canAnswer && !gameState.feedback
@@ -329,8 +329,8 @@ export default function Game() {
               className="w-full flex flex-col items-center justify-center"
               style={{
                 maxWidth: `${layout.maxContentWidth}px`,
-                marginBottom: `${layout.padding}px`,
-                gap: `${layout.gridGap / 2}px`
+                marginBottom: `${layout.padding * 0.6}px`,
+                gap: `${layout.gridGap / 3}px`
               }}
             >
               {/* Multi-purpose button: Play Again / Feedback / Loading */}
@@ -349,9 +349,9 @@ export default function Game() {
                   }
                 `}
                 style={{
-                  fontSize: `${layout.getFontSize('lg')}px`,
-                  padding: `${layout.padding * 0.8}px ${layout.padding * 1.2}px`,
-                  minWidth: layout.device.isMobile ? 'auto' : '16rem'
+                  fontSize: `${layout.getFontSize('base')}px`,
+                  padding: `${layout.padding * 0.5}px ${layout.padding * 0.8}px`,
+                  minWidth: layout.device.isMobile ? 'auto' : '14rem'
                 }}
                 disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
               >
@@ -367,7 +367,7 @@ export default function Game() {
                 ) : (
                   // Show play button
                   <>
-                    <Play className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+                    <Play className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     <span style={{ fontSize: `${layout.getFontSize('base')}px` }}>Play Sounds Again</span>
                   </>
                 )}
@@ -417,7 +417,7 @@ export default function Game() {
         <div className="text-center mx-auto" style={{ maxWidth: `${layout.maxContentWidth}px` }}>
           <div
             className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-lg border-4 border-purple-300 dark:border-purple-700"
-            style={{ padding: `${layout.padding * 0.75}px ${layout.padding}px` }}
+            style={{ padding: `${layout.padding * 0.5}px ${layout.padding * 0.8}px` }}
           >
             <div className="flex items-center justify-center gap-2 text-purple-800 dark:text-purple-200">
               <HelpCircle className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />

@@ -75,11 +75,11 @@ export const useResponsiveLayout = () => {
 
   // Calculate safe padding that scales with viewport
   const getSafePadding = () => {
-    if (width < BREAKPOINTS.xs) return 8; // Very small devices
-    if (width < BREAKPOINTS.sm) return 12; // Small mobile
-    if (width < BREAKPOINTS.md) return 16; // Mobile
-    if (width < BREAKPOINTS.lg) return 24; // Tablet
-    return 32; // Desktop
+    if (width < BREAKPOINTS.xs) return 4; // Very small devices
+    if (width < BREAKPOINTS.sm) return 8; // Small mobile
+    if (width < BREAKPOINTS.md) return 12; // Mobile
+    if (width < BREAKPOINTS.lg) return 16; // Tablet
+    return 20; // Desktop
   };
 
   // Calculate max content width that fits viewport
@@ -90,11 +90,11 @@ export const useResponsiveLayout = () => {
 
   // Calculate optimal gap size for grids
   const getGridGap = () => {
-    if (width < BREAKPOINTS.sm) return 8; // 0.5rem
-    if (width < BREAKPOINTS.md) return 12; // 0.75rem
-    if (width < BREAKPOINTS.lg) return 16; // 1rem
-    if (width < BREAKPOINTS.xl) return 24; // 1.5rem
-    return 32; // 2rem
+    if (width < BREAKPOINTS.sm) return 6; // 0.375rem
+    if (width < BREAKPOINTS.md) return 8; // 0.5rem
+    if (width < BREAKPOINTS.lg) return 12; // 0.75rem
+    if (width < BREAKPOINTS.xl) return 16; // 1rem
+    return 20; // 1.25rem
   };
 
   // Calculate if viewport is in portrait or landscape
@@ -103,8 +103,8 @@ export const useResponsiveLayout = () => {
 
   // Calculate available content height (minus typical header/footer)
   const getAvailableHeight = () => {
-    const headerHeight = device.isMobile ? 60 : 80;
-    const footerHeight = device.isMobile ? 40 : 60;
+    const headerHeight = device.isMobile ? 50 : 60;
+    const footerHeight = device.isMobile ? 35 : 45;
     return height - headerHeight - footerHeight;
   };
 

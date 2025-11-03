@@ -53,22 +53,22 @@ export const ResponsiveGameLayout: React.FC<ResponsiveGameLayoutProps> = ({
   const decorativeOrbs = showDecorations && !layout.device.isSmallMobile ? [
     {
       key: 'orb-1',
-      className: `absolute top-[5%] left-[5%] ${layout.device.isMobile ? 'w-16 h-16' : 'w-32 h-32'} bg-purple-200/30 rounded-full blur-2xl animate-pulse`,
+      className: `absolute top-[5%] left-[5%] ${layout.device.isMobile ? 'w-12 h-12' : 'w-20 h-20'} bg-purple-200/30 rounded-full blur-2xl animate-pulse`,
       style: { animationDelay: '0s', animationDuration: '4s' },
     },
     {
       key: 'orb-2',
-      className: `absolute top-[10%] right-[8%] ${layout.device.isMobile ? 'w-20 h-20' : 'w-40 h-40'} bg-pink-200/30 rounded-full blur-2xl animate-pulse`,
+      className: `absolute top-[10%] right-[8%] ${layout.device.isMobile ? 'w-16 h-16' : 'w-24 h-24'} bg-pink-200/30 rounded-full blur-2xl animate-pulse`,
       style: { animationDelay: '1s', animationDuration: '5s' },
     },
     {
       key: 'orb-3',
-      className: `absolute bottom-[15%] left-[10%] ${layout.device.isMobile ? 'w-24 h-24' : 'w-48 h-48'} bg-yellow-200/30 rounded-full blur-2xl animate-pulse`,
+      className: `absolute bottom-[15%] left-[10%] ${layout.device.isMobile ? 'w-20 h-20' : 'w-32 h-32'} bg-yellow-200/30 rounded-full blur-2xl animate-pulse`,
       style: { animationDelay: '2s', animationDuration: '6s' },
     },
     {
       key: 'orb-4',
-      className: `absolute bottom-[20%] right-[5%] ${layout.device.isMobile ? 'w-28 h-28' : 'w-56 h-56'} bg-blue-200/30 rounded-full blur-2xl animate-pulse`,
+      className: `absolute bottom-[20%] right-[5%] ${layout.device.isMobile ? 'w-24 h-24' : 'w-40 h-40'} bg-blue-200/30 rounded-full blur-2xl animate-pulse`,
       style: { animationDelay: '0.5s', animationDuration: '5.5s' },
     },
   ] : [];
@@ -167,9 +167,9 @@ export const GameSection: React.FC<GameSectionProps> = ({
   };
 
   const spacing = {
-    header: layout.device.isMobile ? 'mb-3' : 'mb-4',
-    main: layout.device.isMobile ? 'my-3' : 'my-4',
-    footer: layout.device.isMobile ? 'mt-3' : 'mt-4',
+    header: layout.device.isMobile ? 'mb-2' : 'mb-3',
+    main: layout.device.isMobile ? 'my-2' : 'my-3',
+    footer: layout.device.isMobile ? 'mt-2' : 'mt-3',
   };
 
   return (
