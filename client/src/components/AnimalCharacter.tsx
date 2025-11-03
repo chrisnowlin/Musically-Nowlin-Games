@@ -51,7 +51,7 @@ export default function AnimalCharacter({
       data-testid={`button-character-${position}`}
       className={cn(
         "group relative flex flex-col items-center justify-center",
-        "min-h-[clamp(8rem,18vw,20rem)] p-[clamp(0.5rem,1vw,1.5rem)]",
+        "min-h-[clamp(6rem,14vw,16rem)] p-[clamp(0.25rem,0.5vw,0.75rem)]",
         "bg-white dark:bg-gray-800",
         playfulShapes.rounded.card,
         playfulShapes.shadows.card,
@@ -103,12 +103,12 @@ export default function AnimalCharacter({
       )}
 
       {/* Character name */}
-      <h3 className={`${playfulTypography.headings.h3} mb-2 text-foreground`}>
+      <h3 className={`${playfulTypography.headings.h3} mb-1 text-foreground`}>
         {character.name}
       </h3>
 
       {/* Character Image from Sprite Sheet */}
-      <div className="mb-3 relative overflow-hidden w-[clamp(5rem,14vw,16rem)] h-[clamp(5rem,14vw,16rem)]">
+      <div className="mb-2 relative overflow-hidden w-[clamp(4rem,10vw,12rem)] h-[clamp(4rem,10vw,12rem)]">
         <img
           src={character.id === "elephant" ? elephantSprites : giraffeSprites}
           alt={character.name}

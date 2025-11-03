@@ -167,9 +167,9 @@ export const GameSection: React.FC<GameSectionProps> = ({
   };
 
   const spacing = {
-    header: layout.device.isMobile ? 'mb-2' : 'mb-3',
-    main: layout.device.isMobile ? 'my-2' : 'my-3',
-    footer: layout.device.isMobile ? 'mt-2' : 'mt-3',
+    header: layout.device.isMobile ? 'mb-1' : 'mb-2',
+    main: layout.device.isMobile ? 'my-1' : 'my-2',
+    footer: layout.device.isMobile ? 'mt-1' : 'mt-2',
   };
 
   return (
