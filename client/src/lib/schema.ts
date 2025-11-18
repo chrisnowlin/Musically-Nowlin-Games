@@ -7,12 +7,10 @@ export type AnimalCharacter = {
 };
 
 export type GameRound = {
-  character1: AnimalCharacter;
-  character2: AnimalCharacter;
-  pitch1: number; // Hz frequency
-  pitch2: number; // Hz frequency
+  characters: AnimalCharacter[];
+  pitches: number[]; // Hz frequencies
   question: "higher" | "lower";
-  correctAnswer: 1 | 2;
+  correctAnswer: number; // 1-based index of correct character
 };
 
 export type GameState = {
@@ -23,7 +21,7 @@ export type GameState = {
   feedback: {
     show: boolean;
     isCorrect: boolean;
-    selectedCharacter: 1 | 2 | null;
+    selectedCharacter: number | null; // 1-based index
   } | null;
 };
 
@@ -50,5 +48,8 @@ export const MUSICAL_NOTES = [
 export const ANIMAL_CHARACTERS: AnimalCharacter[] = [
   { id: "elephant", name: "Ellie Elephant", color: "chart-2", instrument: "Trumpet" },
   { id: "giraffe", name: "Gary Giraffe", color: "chart-3", instrument: "Violin" },
+  { id: "monkey", name: "Milo Monkey", color: "chart-4", instrument: "Flute" },
+  { id: "bird", name: "Bella Bird", color: "chart-5", instrument: "Clarinet" },
+  { id: "lion", name: "Leo Lion", color: "chart-6", instrument: "Oboe" },
 ];
 

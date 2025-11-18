@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Bird body - more rounded and stylized -->
+  <ellipse cx="100" cy="110" rx="40" ry="50" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+  
+  <!-- Bird head -->
+  <circle cx="100" cy="70" r="35" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+  
+  <!-- Bird chest/breast - lighter color -->
+  <ellipse cx="100" cy="100" rx="25" ry="35" fill="#7BB3F0"/>
+  
+  <!-- Bird beak - triangular -->
+  <path d="M 65 75 L 50 80 L 65 85 Z" fill="#FFA500" stroke="#FF8C00" stroke-width="1"/>
+  
+  <!-- Bird eye -->
+  <circle cx="85" cy="65" r="8" fill="#000"/>
+  <circle cx="87" cy="63" r="3" fill="#FFF"/>
+  
+  <!-- Bird wing - more detailed -->
+  <path d="M 70 100 Q 50 90, 45 110 Q 40 130, 60 120 Q 75 115, 85 105" fill="#2E5C8A" stroke="#1A3A5A" stroke-width="2"/>
+  <path d="M 70 100 Q 60 95, 55 105 Q 50 115, 65 110" fill="#5A9FD4"/>
+  
+  <!-- Bird tail feathers - fan shape -->
+  <path d="M 60 140 Q 30 150, 20 160 Q 15 165, 18 170 Q 25 168, 35 165" fill="#2E5C8A" stroke="#1A3A5A" stroke-width="2"/>
+  <path d="M 65 145 Q 40 155, 30 165 Q 25 170, 28 175 Q 35 173, 45 170" fill="#4A90E2" stroke="#2E5C8A" stroke-width="1"/>
+  <path d="M 70 150 Q 50 160, 40 170 Q 35 175, 38 180 Q 45 178, 55 175" fill="#5A9FD4" stroke="#4A90E2" stroke-width="1"/>
+  
+  <!-- Bird legs -->
+  <line x1="85" y1="155" x2="85" y2="175" stroke="#FFA500" stroke-width="5" stroke-linecap="round"/>
+  <line x1="115" y1="155" x2="115" y2="175" stroke="#FFA500" stroke-width="5" stroke-linecap="round"/>
+  
+  <!-- Bird feet/claws -->
+  <path d="M 85 175 L 80 180 L 82 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 85 175 L 88 180 L 86 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 115 175 L 110 180 L 112 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 115 175 L 118 180 L 116 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Decorative wing pattern -->
+  <ellipse cx="75" cy="105" rx="8" ry="12" fill="#7BB3F0" opacity="0.6"/>
+</svg>

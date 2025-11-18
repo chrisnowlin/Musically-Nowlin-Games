@@ -4,10 +4,13 @@ import { cn } from "@/lib/utils";
 import { playfulShapes, playfulTypography } from "@/theme/playful";
 import elephantSprites from "@assets/Gemini_Generated_Image_t2nuj7t2nuj7t2nu_1759934375606.png";
 import giraffeSprites from "@assets/Gemini_Generated_Image_k46rk9k46rk9k46r_1759934375607.png";
+import monkeySvg from "@assets/monkey.svg";
+import birdSvg from "@assets/bird.svg";
+import lionSvg from "@assets/lion.svg";
 
 interface AnimalCharacterProps {
   character: CharacterType;
-  position: 1 | 2;
+  position: number; // 1-based position (1-5)
   isPlaying: boolean;
   isSelected: boolean;
   isCorrect: boolean | null;
@@ -24,24 +27,48 @@ export default function AnimalCharacter({
   disabled,
   onClick,
 }: AnimalCharacterProps) {
-  // Get the sprite position for the 3x3 grid
+  // Get sprite/image based on character ID
+  const getCharacterImage = () => {
+    const imageMap: Record<string, string> = {
+      elephant: elephantSprites,
+      giraffe: giraffeSprites,
+      monkey: monkeySvg,
+      bird: birdSvg,
+      lion: lionSvg,
+    };
+    return imageMap[character.id] || elephantSprites;
+  };
+
+  // Check if the character uses an SVG (new placeholder images) or a sprite sheet (PNG)
+  const isSvg = (): boolean => {
+    const svgAnimals = ['monkey', 'bird', 'lion'];
+    return svgAnimals.includes(character.id);
+  };
+
+  // Get the sprite position for the 3x3 grid (only for PNG sprite sheets)
   const getSpriteStyle = () => {
+    // Only apply sprite positioning for PNG sprite sheets, not SVGs
+    if (isSvg()) {
+      return {};
+    }
+    
     // Sprite sheet is 3x3 grid
     // Row 1: violin, flute, trumpet
     // Row 2: harp, drum, trombone  
     // Row 3: clarinet, french horn, cymbals
     
-    if (character.instrument === "Trumpet") {
-      // Trumpet is at row 0, col 2 (third in first row)
-      return {
-        transform: "translate(-66.67%, 0)", // Move 2/3 to the left
-      };
-    } else {
-      // Violin is at row 0, col 0 (first in first row)
-      return {
-        transform: "translate(0, 0)",
-      };
-    }
+    const instrumentMap: Record<string, { x: number; y: number }> = {
+      "Trumpet": { x: -66.67, y: 0 }, // row 0, col 2
+      "Violin": { x: 0, y: 0 }, // row 0, col 0
+      "Flute": { x: -33.33, y: 0 }, // row 0, col 1
+      "Clarinet": { x: 0, y: -66.67 }, // row 2, col 0
+      "Oboe": { x: -33.33, y: -33.33 }, // row 1, col 1 (approximate)
+    };
+    
+    const spritePos = instrumentMap[character.instrument] || { x: 0, y: 0 };
+    return {
+      transform: `translate(${spritePos.x}%, ${spritePos.y}%)`,
+    };
   };
 
   return (
@@ -108,17 +135,29 @@ export default function AnimalCharacter({
         {character.name}
       </h3>
 
-      {/* Character Image from Sprite Sheet */}
+      {/* Character Image */}
       <div className="mb-2 relative overflow-hidden w-[clamp(4rem,10vw,12rem)] h-[clamp(4rem,10vw,12rem)]">
-        <img
-          src={character.id === "elephant" ? elephantSprites : giraffeSprites}
-          alt={character.name}
-          className="absolute w-[300%] h-[300%] max-w-none object-cover"
-          style={{
-            ...getSpriteStyle(),
-            imageRendering: "auto"
-          }}
-        />
+        {isSvg() ? (
+          // SVG images - display directly without sprite positioning
+          <div className="w-full h-full flex items-center justify-center">
+            <img
+              src={getCharacterImage()}
+              alt={character.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ) : (
+          // PNG sprite sheets - use sprite positioning
+          <img
+            src={getCharacterImage()}
+            alt={character.name}
+            className="absolute w-[300%] h-[300%] max-w-none object-cover"
+            style={{
+              ...getSpriteStyle(),
+              imageRendering: "auto"
+            }}
+          />
+        )}
       </div>
     </button>
   );

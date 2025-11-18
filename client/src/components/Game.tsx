@@ -19,7 +19,8 @@ export default function Game() {
     feedback: null,
   });
 
-  const [playingCharacter, setPlayingCharacter] = useState<1 | 2 | null>(null);
+  const [numAnimals, setNumAnimals] = useState<number>(2); // Default to 2 animals
+  const [playingCharacter, setPlayingCharacter] = useState<number | null>(null);
   const [canAnswer, setCanAnswer] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [isLoadingNextRound, setIsLoadingNextRound] = useState(false);
@@ -44,18 +45,17 @@ export default function Game() {
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
     setCanAnswer(false);
 
-    // Play first character's sound
-    setPlayingCharacter(1);
-    await audioService.playNote(round.pitch1, 1.5);
-    setPlayingCharacter(null);
-
-    // Small pause between sounds
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Play second character's sound
-    setPlayingCharacter(2);
-    await audioService.playNote(round.pitch2, 1.5);
-    setPlayingCharacter(null);
+    // Play each character's sound in sequence
+    for (let i = 0; i < round.characters.length; i++) {
+      setPlayingCharacter(i + 1);
+      await audioService.playNote(round.pitches[i], 1.5);
+      setPlayingCharacter(null);
+      
+      // Small pause between sounds (except after the last one)
+      if (i < round.characters.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
 
     setGameState(prev => ({ ...prev, isPlaying: false }));
     setCanAnswer(true);
@@ -77,7 +77,7 @@ export default function Game() {
       autoPlayTimeoutRef.current = null;
     }
     
-    const newRound = generateRound();
+    const newRound = generateRound(numAnimals);
     setGameState(prev => ({
       ...prev,
       currentRound: newRound,
@@ -90,10 +90,10 @@ export default function Game() {
       playSounds(newRound);
       autoPlayTimeoutRef.current = null;
     }, 500);
-  }, [playSounds]);
+  }, [playSounds, numAnimals]);
 
   // Handle character selection (answer)
-  const handleCharacterClick = useCallback((characterPosition: 1 | 2) => {
+  const handleCharacterClick = useCallback((characterPosition: number) => {
     if (!canAnswer || !gameState.currentRound || gameState.feedback) return;
 
     const isCorrect = validateAnswer(characterPosition, gameState.currentRound.correctAnswer);
@@ -169,6 +169,14 @@ export default function Game() {
     setIsLoadingNextRound(false);
   }, []);
 
+  // Reset game when numAnimals changes
+  useEffect(() => {
+    if (gameStarted) {
+      resetGame();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numAnimals]);
+
   // Start the game for the first time (initializes audio context)
   const handleStartGame = useCallback(async () => {
     await audioService.initialize();
@@ -195,7 +203,10 @@ export default function Game() {
         data-testid="aria-announcements"
       >
         {gameState.currentRound && !gameState.isPlaying && canAnswer && (
-          `Question: Which animal played the ${gameState.currentRound.question} sound? ${gameState.currentRound.character1.name} and ${gameState.currentRound.character2.name} are ready for your answer.`
+          `Question: Which animal played the ${numAnimals > 2 
+            ? (gameState.currentRound.question === "higher" ? "highest" : "lowest")
+            : (gameState.currentRound.question === "higher" ? "higher" : "lower")
+          } sound? ${gameState.currentRound.characters.map(c => c.name).join(', ')} are ready for your answer.`
         )}
         {gameState.feedback && (
           gameState.feedback.isCorrect
@@ -253,12 +264,46 @@ export default function Game() {
                   Welcome to the Music Game!
                 </h2>
                 <p
-                  className="text-gray-700 dark:text-gray-300 max-w-md mx-auto"
+                  className="text-gray-700 dark:text-gray-300 max-w-md mx-auto mb-6"
                   style={{ fontSize: `${layout.getFontSize('lg')}px` }}
                 >
                   🎵 Learn to identify higher and lower sounds with our friendly animal musicians! 🎵
                 </p>
               </div>
+              
+              {/* Mode Selection Menu */}
+              <div className="mb-6">
+                <h3
+                  className={`${playfulColors.gradients.title} mb-4`}
+                  style={{ fontSize: `${layout.getFontSize('xl')}px` }}
+                >
+                  Choose Number of Animals:
+                </h3>
+                <div className="flex flex-wrap justify-center gap-3 max-w-md mx-auto">
+                  {[2, 3, 4, 5].map((count) => (
+                    <Button
+                      key={count}
+                      onClick={() => setNumAnimals(count)}
+                      variant={numAnimals === count ? "default" : "outline"}
+                      className={`
+                        ${playfulShapes.rounded.button} font-fredoka
+                        ${numAnimals === count 
+                          ? `${playfulColors.gradients.buttonPrimary} ${playfulShapes.shadows.button}` 
+                          : "border-2 border-purple-300 dark:border-purple-700 hover:border-purple-400"
+                        }
+                      `}
+                      style={{
+                        fontSize: `${layout.getFontSize('base')}px`,
+                        padding: `${layout.padding * 0.4}px ${layout.padding * 0.8}px`,
+                        minWidth: '4rem'
+                      }}
+                    >
+                      {count} Animals
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
               <Button
                 onClick={handleStartGame}
                 size="lg"
@@ -294,7 +339,10 @@ export default function Game() {
                 >
                   Which animal played the{" "}
                   <span className={gameState.currentRound.question === "higher" ? "text-blue-600 font-bold" : "text-orange-600 font-bold"}>
-                    {gameState.currentRound.question === "higher" ? "HIGHER" : "LOWER"}
+                    {numAnimals > 2 
+                      ? (gameState.currentRound.question === "higher" ? "HIGHEST" : "LOWEST")
+                      : (gameState.currentRound.question === "higher" ? "HIGHER" : "LOWER")
+                    }
                   </span>{" "}
                   sound?
                 </h2>
@@ -308,7 +356,7 @@ export default function Game() {
                     }`}
                     style={{ fontSize: `${layout.getFontSize('base')}px` }}
                   >
-                    🎵 Listen carefully to both sounds... 🎵
+                    🎵 Listen carefully to all {gameState.currentRound.characters.length} sounds... 🎵
                   </p>
                   <p
                     className={`text-green-600 dark:text-green-400 font-semibold transition-opacity duration-300 ${
@@ -376,35 +424,28 @@ export default function Game() {
 
             {/* Character grid */}
             <div
-              className="w-full flex items-center justify-center gap-[clamp(1rem,2vw,2rem)]"
+              className="w-full flex flex-wrap items-center justify-center gap-[clamp(0.75rem,1.5vw,1.5rem)]"
               style={{ maxWidth: `${layout.maxContentWidth}px` }}
             >
-              <AnimalCharacter
-                character={gameState.currentRound.character1}
-                position={1}
-                isPlaying={playingCharacter === 1}
-                isSelected={gameState.feedback?.selectedCharacter === 1}
-                isCorrect={
-                  gameState.feedback?.selectedCharacter === 1
-                    ? gameState.feedback.isCorrect
-                    : null
-                }
-                disabled={!canAnswer || gameState.feedback !== null}
-                onClick={() => handleCharacterClick(1)}
-              />
-              <AnimalCharacter
-                character={gameState.currentRound.character2}
-                position={2}
-                isPlaying={playingCharacter === 2}
-                isSelected={gameState.feedback?.selectedCharacter === 2}
-                isCorrect={
-                  gameState.feedback?.selectedCharacter === 2
-                    ? gameState.feedback.isCorrect
-                    : null
-                }
-                disabled={!canAnswer || gameState.feedback !== null}
-                onClick={() => handleCharacterClick(2)}
-              />
+              {gameState.currentRound.characters.map((character, index) => {
+                const position = index + 1;
+                return (
+                  <AnimalCharacter
+                    key={character.id}
+                    character={character}
+                    position={position}
+                    isPlaying={playingCharacter === position}
+                    isSelected={gameState.feedback?.selectedCharacter === position}
+                    isCorrect={
+                      gameState.feedback?.selectedCharacter === position
+                        ? gameState.feedback.isCorrect
+                        : null
+                    }
+                    disabled={!canAnswer || gameState.feedback !== null}
+                    onClick={() => handleCharacterClick(position)}
+                  />
+                );
+              })}
             </div>
           </>
         )}
@@ -425,7 +466,7 @@ export default function Game() {
                   className="font-semibold"
                   style={{ fontSize: `${layout.getFontSize('sm')}px` }}
                 >
-                  🎵 Listen to both animals play their sounds, then tap the one that matches the question! 🎵
+                  🎵 Listen to all the animals play their sounds, then tap the one that matches the question! 🎵
                 </p>
               </div>
             </div>

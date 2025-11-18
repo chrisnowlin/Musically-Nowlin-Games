@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Lion body -->
+  <ellipse cx="100" cy="130" rx="50" ry="55" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
+  
+  <!-- Lion head -->
+  <circle cx="100" cy="70" r="40" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
+  
+  <!-- Lion mane -->
+  <circle cx="100" cy="70" r="50" fill="#FFD700" opacity="0.8"/>
+  <path d="M 50 60 Q 45 40, 60 30 Q 75 25, 90 35 Q 85 30, 70 25 Q 55 20, 50 35 Z" fill="#FFD700"/>
+  <path d="M 150 60 Q 155 40, 140 30 Q 125 25, 110 35 Q 115 30, 130 25 Q 145 20, 150 35 Z" fill="#FFD700"/>
+  <path d="M 100 20 Q 90 15, 80 25 Q 85 20, 95 18 Q 105 20, 120 25 Q 110 15, 100 20 Z" fill="#FFD700"/>
+  
+  <!-- Lion face -->
+  <circle cx="85" cy="65" r="5" fill="#000"/>
+  <circle cx="115" cy="65" r="5" fill="#000"/>
+  <ellipse cx="100" cy="80" rx="8" ry="6" fill="#000"/>
+  
+  <!-- Lion ears -->
+  <path d="M 70 50 L 65 35 L 75 45 Z" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
+  <path d="M 130 50 L 135 35 L 125 45 Z" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
+  
+  <!-- Lion front legs -->
+  <ellipse cx="75" cy="160" rx="12" ry="35" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
+  <ellipse cx="125" cy="160" rx="12" ry="35" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
+  
+  <!-- Lion back legs -->
+  <ellipse cx="85" cy="175" rx="10" ry="20" fill="#B8860B"/>
+  <ellipse cx="115" cy="175" rx="10" ry="20" fill="#B8860B"/>
+  
+  <!-- Lion tail -->
+  <path d="M 50 140 Q 30 120, 20 100 Q 15 85, 25 75" stroke="#DAA520" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <circle cx="22" cy="78" r="5" fill="#DAA520"/>
+</svg>
+
