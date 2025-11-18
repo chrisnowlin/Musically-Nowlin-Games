@@ -51,7 +51,8 @@ export default function AnimalCharacter({
       data-testid={`button-character-${position}`}
       className={cn(
         "group relative flex flex-col items-center justify-center",
-        "min-h-[clamp(6rem,14vw,16rem)] p-[clamp(0.25rem,0.5vw,0.75rem)]",
+        "w-fit min-w-[clamp(6rem,14vw,16rem)] aspect-square p-[clamp(0.25rem,0.5vw,0.75rem)]",
+        "mx-auto",
         "bg-white dark:bg-gray-800",
         playfulShapes.rounded.card,
         playfulShapes.shadows.card,

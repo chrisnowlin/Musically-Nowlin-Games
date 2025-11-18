@@ -7,7 +7,7 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import { Play, HelpCircle, Music2, Loader2, Star, Sparkles } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes } from "@/theme/playful";
-import { ResponsiveGameLayout, GameSection, ResponsiveGrid } from "@/components/ResponsiveGameLayout";
+import { ResponsiveGameLayout, GameSection } from "@/components/ResponsiveGameLayout";
 import { useResponsiveLayout } from "@/hooks/useViewport";
 
 export default function Game() {
@@ -375,9 +375,8 @@ export default function Game() {
             </div>
 
             {/* Character grid */}
-            <ResponsiveGrid
-              columns={2}
-              className="w-full"
+            <div
+              className="w-full flex items-center justify-center gap-[clamp(1rem,2vw,2rem)]"
               style={{ maxWidth: `${layout.maxContentWidth}px` }}
             >
               <AnimalCharacter
@@ -406,7 +405,7 @@ export default function Game() {
                 disabled={!canAnswer || gameState.feedback !== null}
                 onClick={() => handleCharacterClick(2)}
               />
-            </ResponsiveGrid>
+            </div>
           </>
         )}
         </div>
