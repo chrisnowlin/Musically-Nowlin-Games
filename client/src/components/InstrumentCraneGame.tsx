@@ -7,10 +7,17 @@ import { useGameCleanup } from "@/hooks/useGameCleanup";
 import { audioService } from "@/lib/audioService";
 
 // Instrument definitions
+import { 
+  ViolinIcon, CelloIcon, FluteIcon, TrumpetIcon, FrenchHornIcon, 
+  ClarinetIcon, OboeIcon, SaxophoneIcon, BassoonIcon, ViolaIcon,
+  TromboneIcon, TubaIcon, DoubleBassIcon, SnareDrumIcon, BassDrumIcon,
+  TriangleIcon, TambourineIcon, TimpaniIcon, XylophoneIcon, GlockenspielIcon, HarpIcon 
+} from '@/components/icons/InstrumentIcons';
+
 interface Instrument {
   id: string;
   name: string;
-  icon: string;
+  Icon: React.FC<{ className?: string }>;
   audioPath: string;
   color: string;
 }
@@ -19,147 +26,147 @@ const INSTRUMENTS: Instrument[] = [
   {
     id: 'violin',
     name: 'Violin',
-    icon: '🎻',
+    Icon: ViolinIcon,
     audioPath: '/audio/strings/violin/violin_A4_05_forte_arco-normal.mp3',
     color: 'bg-amber-500'
   },
   {
     id: 'cello',
     name: 'Cello',
-    icon: '🪕',
+    Icon: CelloIcon,
     audioPath: '/audio/strings/cello/cello_C3_1_forte_arco-normal.mp3',
     color: 'bg-orange-800'
   },
   {
     id: 'flute',
     name: 'Flute',
-    icon: '🎼',
+    Icon: FluteIcon,
     audioPath: '/audio/woodwinds/flute/flute_A5_1_forte_normal.mp3',
     color: 'bg-slate-400'
   },
   {
     id: 'trumpet',
     name: 'Trumpet',
-    icon: '🎺',
+    Icon: TrumpetIcon,
     audioPath: '/audio/brass/trumpet/trumpet_C4_1_forte_normal.mp3',
     color: 'bg-yellow-500'
   },
   {
     id: 'french-horn',
     name: 'French Horn',
-    icon: '📯',
+    Icon: FrenchHornIcon,
     audioPath: '/audio/brass/french horn/french-horn_C3_1_mezzo-forte_normal.mp3',
     color: 'bg-amber-600'
   },
   {
     id: 'clarinet',
     name: 'Clarinet',
-    icon: '🎶',
+    Icon: ClarinetIcon,
     audioPath: '/audio/woodwinds/clarinet/clarinet_C4_1_forte_normal.mp3',
     color: 'bg-gray-800'
   },
   {
     id: 'oboe',
     name: 'Oboe',
-    icon: '🎵',
+    Icon: OboeIcon,
     audioPath: '/audio/woodwinds/oboe/oboe_C4_1_forte_normal.mp3',
     color: 'bg-stone-500'
   },
   {
     id: 'saxophone',
     name: 'Saxophone',
-    icon: '🎷',
+    Icon: SaxophoneIcon,
     audioPath: '/sounds/philharmonia/woodwinds/saxophone/saxophone_A3_1_forte_normal.mp3',
     color: 'bg-yellow-400'
   },
   {
     id: 'bassoon',
     name: 'Bassoon',
-    icon: '🪈',
+    Icon: BassoonIcon,
     audioPath: '/sounds/philharmonia/woodwinds/bassoon/bassoon_A2_1_forte_normal.mp3',
     color: 'bg-amber-900'
   },
   {
     id: 'viola',
     name: 'Viola',
-    icon: '🎻',
+    Icon: ViolaIcon,
     audioPath: '/sounds/philharmonia/strings/viola/viola_C4_1_fortissimo_arco-normal.mp3',
     color: 'bg-violet-500'
   },
   {
     id: 'trombone',
     name: 'Trombone',
-    icon: '📯',
+    Icon: TromboneIcon,
     audioPath: '/audio/brass/trombone/trombone_A3_1_forte_normal.mp3',
     color: 'bg-yellow-600'
   },
   {
     id: 'tuba',
     name: 'Tuba',
-    icon: '🎺',
+    Icon: TubaIcon,
     audioPath: '/audio/brass/tuba/tuba_A2_1_forte_normal.mp3',
     color: 'bg-zinc-600'
   },
   {
     id: 'double-bass',
     name: 'Double Bass',
-    icon: '🎸',
+    Icon: DoubleBassIcon,
     audioPath: '/audio/strings/double-bass/double-bass_A2_1_forte_arco-normal.mp3',
     color: 'bg-amber-800'
   },
   {
     id: 'snare-drum',
     name: 'Snare Drum',
-    icon: '🥁',
+    Icon: SnareDrumIcon,
     audioPath: '/audio/percussion/snare-drum/snare-drum__025_forte_with-snares.mp3',
     color: 'bg-red-500'
   },
   {
     id: 'bass-drum',
     name: 'Bass Drum',
-    icon: '🪘',
+    Icon: BassDrumIcon,
     audioPath: '/audio/percussion/bass-drum/bass-drum__1_fortissimo_struck-singly.mp3',
     color: 'bg-red-800'
   },
   {
     id: 'triangle',
     name: 'Triangle',
-    icon: '🔺',
+    Icon: TriangleIcon,
     audioPath: '/audio/percussion/triangle/triangle__long_piano_struck-singly.mp3',
     color: 'bg-slate-300'
   },
   {
     id: 'tambourine',
     name: 'Tambourine',
-    icon: '🪇',
+    Icon: TambourineIcon,
     audioPath: '/audio/percussion/tambourine/tambourine__025_forte_hand.mp3',
     color: 'bg-orange-400'
   },
   {
     id: 'timpani',
     name: 'Timpani',
-    icon: '🥁',
+    Icon: TimpaniIcon,
     audioPath: '/audio/percussion/timpani/timpani_C2_forte_hits_normal.mp3',
     color: 'bg-rose-700'
   },
   {
     id: 'xylophone',
     name: 'Xylophone',
-    icon: '🎹',
+    Icon: XylophoneIcon,
     audioPath: '/audio/percussion/xylophone/xylophone_C5_forte.mp3',
     color: 'bg-pink-400'
   },
   {
     id: 'glockenspiel',
     name: 'Glockenspiel',
-    icon: '✨',
+    Icon: GlockenspielIcon,
     audioPath: '/audio/percussion/glockenspiel/glockenspiel_C6_forte.mp3',
     color: 'bg-cyan-300'
   },
   {
     id: 'harp',
     name: 'Harp',
-    icon: '🎵',
+    Icon: HarpIcon,
     audioPath: '/audio/strings/harp/harp_C3_forte.mp3',
     color: 'bg-emerald-400'
   }
@@ -530,17 +537,21 @@ export default function InstrumentCraneGame() {
                   </svg>
 
                   {/* Caught Item */}
-                  {caughtTargetId && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-8 animate-in zoom-in duration-300 z-30">
-                      <div className={`
-                        w-16 h-16 rounded-full border-4 border-white/50 shadow-xl
-                        flex items-center justify-center text-4xl
-                        ${targets.find(t => t.id === caughtTargetId)?.instrument.color.replace('bg-', 'bg-').replace('500', '400')}
-                      `}>
-                        {targets.find(t => t.id === caughtTargetId)?.instrument.icon}
+                  {caughtTargetId && (() => {
+                    const caughtInst = targets.find(t => t.id === caughtTargetId)?.instrument;
+                    const CaughtIcon = caughtInst?.Icon;
+                    return (
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-8 animate-in zoom-in duration-300 z-30">
+                        <div className={`
+                          w-16 h-16 rounded-full border-4 border-white/50 shadow-xl
+                          flex items-center justify-center
+                          ${caughtInst?.color.replace('bg-', 'bg-').replace('500', '400')}
+                        `}>
+                          {CaughtIcon && <CaughtIcon className="w-10 h-10 drop-shadow-md text-white" />}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                </div>
             </div>
 
@@ -567,7 +578,7 @@ export default function InstrumentCraneGame() {
                       {/* Capsule / Bubble Appearance */}
                       <div className={`
                         w-24 h-24 rounded-full ${target.instrument.color} 
-                        flex items-center justify-center text-5xl shadow-[0_10px_20px_rgba(0,0,0,0.4)]
+                        flex items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.4)]
                         border-4 border-white/30 relative overflow-hidden
                         group transition-transform duration-300 hover:scale-110 hover:-translate-y-3
                         ${craneState === 'idle' ? 'hover:ring-4 hover:ring-yellow-400 hover:ring-offset-4 hover:ring-offset-transparent' : ''}
@@ -576,9 +587,9 @@ export default function InstrumentCraneGame() {
                          <div className="absolute top-3 right-4 w-8 h-5 bg-white/50 rounded-full transform rotate-[30deg] blur-[2px]"></div>
                          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-black/20 rounded-b-full"></div>
                          
-                         <span className="drop-shadow-lg relative z-10 group-hover:scale-110 transition-transform">
-                           {target.instrument.icon}
-                         </span>
+                         <div className="drop-shadow-lg relative z-10 group-hover:scale-110 transition-transform">
+                           <target.instrument.Icon className="w-16 h-16 text-white/90" />
+                         </div>
                       </div>
                       <div className="text-center mt-2">
                          <span className="font-black text-xs bg-black/50 text-white px-2 py-1 rounded-full backdrop-blur-md">
