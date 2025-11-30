@@ -18,6 +18,17 @@ export interface GameConfig {
 
 export const games: GameConfig[] = [
   {
+    id: "instrument-crane",
+    title: "Instrument Crane Game",
+    description: "Listen to the sound and control the crane to pick up the correct instrument!",
+    route: "/games/instrument-crane",
+    status: "available",
+    icon: Gamepad2,
+    color: "bg-blue-500",
+    difficulty: "easy",
+    ageRange: "5-9 years",
+  },
+  {
     id: "pitch-match",
     title: "High or Low?",
     description: "Learn to identify higher and lower pitched sounds with friendly animal musicians!",

@@ -66,7 +66,7 @@ export default function LandingVariation2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {games
-              .filter(game => game.id === "staff-wars" || game.id === "pitch-match")
+              .filter(game => game.id === "staff-wars" || game.id === "pitch-match" || game.id === "fast-or-slow-race" || game.id === "dynamics-001" || game.id === "finish-the-tune" || game.id === "instrument-crane")
               .sort((a, b) => a.title.localeCompare(b.title))
               .map((game, index) => {
             const Icon = game.icon;
@@ -123,12 +123,6 @@ export default function LandingVariation2() {
                       {game.title}
                     </h2>
 
-                    {/* Age Badge */}
-                    {game.ageRange && (
-                      <div className="inline-block bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full font-nunito text-sm font-semibold mb-3">
-                        Ages {game.ageRange}
-                      </div>
-                    )}
 
                     {/* Description */}
                     <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">
@@ -195,7 +189,7 @@ export default function LandingVariation2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {games
-              .filter(game => game.id !== "staff-wars" && game.id !== "pitch-match")
+              .filter(game => game.id !== "staff-wars" && game.id !== "pitch-match" && game.id !== "fast-or-slow-race" && game.id !== "dynamics-001" && game.id !== "finish-the-tune" && game.id !== "instrument-crane")
               .sort((a, b) => a.title.localeCompare(b.title))
               .map((game, index) => {
             const Icon = game.icon;
@@ -252,12 +246,6 @@ export default function LandingVariation2() {
                       {game.title}
                     </h2>
 
-                    {/* Age Badge */}
-                    {game.ageRange && (
-                      <div className="inline-block bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full font-nunito text-sm font-semibold mb-3">
-                        Ages {game.ageRange}
-                      </div>
-                    )}
 
                     {/* Description */}
                     <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">

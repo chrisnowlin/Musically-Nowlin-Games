@@ -138,12 +138,13 @@ export class AudioService {
   }
 
   /**
-   * Play a note with given frequency
+   * Play a note with given frequency and optional wave type
    * @param frequency - Frequency in Hz (20-20000)
    * @param duration - Duration in seconds (0.01-30)
+   * @param type - Oscillator type (sine, square, sawtooth, triangle)
    * @throws AudioError if parameters are invalid or audio fails
    */
-  async playNote(frequency: number, duration: number = 1.5): Promise<void> {
+  async playNote(frequency: number, duration: number = 1.5, type: OscillatorType = 'sine'): Promise<void> {
     // Validate inputs
     const validFreq = validateFrequency(frequency);
     const validDuration = validateDuration(duration);
@@ -157,7 +158,7 @@ export class AudioService {
       const lowShelf = this.audioContext!.createBiquadFilter();
 
       // Oscillator settings
-      oscillator.type = 'sine';
+      oscillator.type = type;
       oscillator.frequency.setValueAtTime(validFreq, this.audioContext!.currentTime);
 
       // Subtle low-frequency boost using a lowshelf filter
@@ -200,6 +201,62 @@ export class AudioService {
       throw new AudioError(`Failed to play note: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
+  // ... (keep existing methods)
+
+  /**
+   * Play a short UI click sound
+   */
+  async playClickSound(): Promise<void> {
+    try {
+      await this.playNote(800, 0.05, 'sine');
+    } catch (e) { console.warn(e); }
+  }
+
+  /**
+   * Play a mechanical motor sound for crane movement
+   */
+  async playCraneMoveSound(): Promise<void> {
+    try {
+       // Low frequency sawtooth for motor buzz
+       await this.playNote(100, 0.2, 'sawtooth');
+    } catch (e) { console.warn(e); }
+  }
+
+  /**
+   * Play a sliding sound for crane dropping
+   */
+  async playCraneDropSound(): Promise<void> {
+    try {
+      await this.ensureAudioContext();
+      const oscillator = this.audioContext!.createOscillator();
+      const gainNode = this.audioContext!.createGain();
+      
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(300, this.audioContext!.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext!.currentTime + 0.6);
+      
+      gainNode.gain.setValueAtTime(0.2, this.audioContext!.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0, this.audioContext!.currentTime + 0.6);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(this.masterGain!);
+      
+      oscillator.start();
+      oscillator.stop(this.audioContext!.currentTime + 0.6);
+    } catch (e) { console.warn(e); }
+  }
+
+  /**
+   * Play a metallic clank for grabbing
+   */
+  async playCraneGrabSound(): Promise<void> {
+    try {
+      // Short high pitch metallic ping
+      await this.playNote(1200, 0.1, 'square');
+    } catch (e) { console.warn(e); }
+  }
+
 
   /**
    * Play two notes sequentially

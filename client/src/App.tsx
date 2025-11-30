@@ -40,6 +40,7 @@ const PitchLadderJumpGamePage = lazy(() => import("@/pages/games/PitchLadderJump
 const ScaleClimberGamePage = lazy(() => import("@/pages/games/ScaleClimberGamePage"));
 const MusicalOppositesGamePage = lazy(() => import("@/pages/games/MusicalOppositesGamePage"));
 const FinishTheTuneGamePage = lazy(() => import("@/pages/games/FinishTheTuneGamePage"));
+const InstrumentCraneGamePage = lazy(() => import("@/pages/games/InstrumentCraneGamePage"));
 const InstrumentDetectiveGamePage = lazy(() => import("@/pages/games/InstrumentDetectiveGamePage"));
 const MusicalSimonSaysGamePage = lazy(() => import("@/pages/games/MusicalSimonSaysGamePage"));
 const BeatKeeperChallengeGamePage = lazy(() => import("@/pages/games/BeatKeeperChallengeGamePage"));
@@ -118,6 +119,7 @@ function Router() {
       <Route path="/games/scale-climber" component={ScaleClimberGamePage} />
       <Route path="/games/musical-opposites" component={MusicalOppositesGamePage} />
       <Route path="/games/finish-the-tune" component={FinishTheTuneGamePage} />
+      <Route path="/games/instrument-crane" component={InstrumentCraneGamePage} />
       <Route path="/games/instrument-detective" component={InstrumentDetectiveGamePage} />
       <Route path="/games/musical-simon-says" component={MusicalSimonSaysGamePage} />
       <Route path="/games/beat-keeper-challenge" component={BeatKeeperChallengeGamePage} />

@@ -45,9 +45,11 @@ vite.config.ts.*
 *.png
 !client/public/**/*.png
 
-# Audio files - ignoring the full Philharmonia sample library (too large)
-# But keeping client/public/audio/ which contains only the samples we actually use
+# Audio files - ignoring all audio sample files (too large for git)
+# These should be downloaded separately using scripts/extract-soundfont-samples.cjs
+# or from the Philharmonia Orchestra website
 client/public/sounds/
+client/public/audio/**/*.mp3
 
 # Generated game databases (keeping only source files)
 games_database_full.json

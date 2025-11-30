@@ -47,6 +47,23 @@ export interface GameStats {
   achievements: string[];
 }
 
+// Musical phrases for variety
+const MUSICAL_PHRASES = [
+  { name: "Ascending Scale", notes: [262, 294, 330, 349, 392] },      // C D E F G
+  { name: "Descending Scale", notes: [392, 349, 330, 294, 262] },     // G F E D C
+  { name: "Major Arpeggio", notes: [262, 330, 392, 523] },            // C E G C
+  { name: "Minor Arpeggio", notes: [220, 262, 330, 440] },            // A C E A
+  { name: "Twinkle Start", notes: [262, 262, 392, 392] },             // C C G G
+  { name: "Fifth Jump", notes: [262, 392, 523, 392] },                // C G C G
+  { name: "Step Up", notes: [262, 294, 262, 294] },                   // C D C D
+  { name: "Triad", notes: [262, 330, 392, 330] }                      // C E G E
+];
+
+function getRandomPhrase(): number[] {
+  const phrase = MUSICAL_PHRASES[Math.floor(Math.random() * MUSICAL_PHRASES.length)];
+  return phrase.notes;
+}
+
 // Question generation functions for each mode
 export function generateLevelsRound(difficulty: number): GameRound {
   const difficultyConfig = getDifficultyForMode('levels', difficulty);
@@ -86,7 +103,7 @@ export function generateLevelsRound(difficulty: number): GameRound {
     audioConfig: {
       type: 'single',
       dynamicLevel: correctDynamic,
-      notes: [262, 294, 330, 349], // C, D, E, F
+      notes: getRandomPhrase(),
       duration: 2.0
     },
     explanation: `The correct answer is ${correctDynamic.toUpperCase()} (${DYNAMIC_LEVELS[correctDynamic as keyof typeof DYNAMIC_LEVELS].description}).`
@@ -123,7 +140,7 @@ export function generateRelativeRound(difficulty: number): GameRound {
       type: 'comparison',
       volume1,
       volume2,
-      notes: [262, 330, 392, 523], // C, E, G, C
+      notes: getRandomPhrase(),
       duration: 1.5
     },
     explanation: correctAnswer === 0 ? 'The first phrase was louder than the second.' : 'The second phrase was louder than the first.'
@@ -151,12 +168,35 @@ export function generateChangesRound(difficulty: number): GameRound {
       direction: isCrescendo ? 'crescendo' : 'diminuendo',
       volume1: isCrescendo ? 0.2 : 0.7,
       volume2: isCrescendo ? 0.7 : 0.2,
-      notes: [262, 330, 392, 523], // C, E, G, C
+      notes: getRandomPhrase(),
       duration
     },
     explanation: isCrescendo ? 'The music gradually got louder (crescendo).' : 'The music gradually got softer (diminuendo).'
   };
 }
+
+const ARTICULATION_INFO: Record<string, { definition: string, hint: string }> = {
+  staccato: {
+    definition: "Staccato notes are performed short and detached from each other.",
+    hint: "Listen for the short, 'bouncy' quality with silence between the notes."
+  },
+  legato: {
+    definition: "Legato notes are played smoothly and connected to each other.",
+    hint: "The notes should flow continuously without any silence in between."
+  },
+  accent: {
+    definition: "An accent indicates that a note should be played with more force or emphasis.",
+    hint: "Listen for specific notes that 'pop' out or sound suddenly louder than the others."
+  },
+  tenuto: {
+    definition: "Tenuto indicates holding a note for its full length, often with a slight stress.",
+    hint: "The notes feel heavy and deliberate, held slightly longer than usual but not detached."
+  },
+  marcato: {
+    definition: "Marcato indicates a note played loudly with a strong accent.",
+    hint: "It sounds punchy, forceful, and distinct, often described as 'marked'."
+  }
+};
 
 export function generatePulseRound(difficulty: number): GameRound {
   const difficultyConfig = getDifficultyForMode('pulse', difficulty);
@@ -196,10 +236,10 @@ export function generatePulseRound(difficulty: number): GameRound {
     audioConfig: {
       type: 'articulation',
       articulation: correctArticulation,
-      notes: [262, 330, 392, 523], // C, E, G, C
+      notes: getRandomPhrase(),
       duration: 0.3
     },
-    explanation: `The correct answer is ${correctArticulation.charAt(0).toUpperCase() + correctArticulation.slice(1)}.`
+    explanation: `The correct answer is ${correctArticulation.charAt(0).toUpperCase() + correctArticulation.slice(1)}. ${ARTICULATION_INFO[correctArticulation].definition} ${ARTICULATION_INFO[correctArticulation].hint}`
   };
 }
 
@@ -225,20 +265,29 @@ export function validateAnswer(userAnswer: number, correctAnswer: number): boole
 }
 
 // Score calculation
-export function calculateScore(correct: boolean, timeSpent: number, difficulty: number): number {
-  if (!correct) return 0;
-  
-  const baseScore = 100 * difficulty;
-  
-  // Only give time and difficulty bonuses for reasonable response times (under 30 seconds)
-  if (timeSpent > 30000) {
-    return baseScore; // No bonuses for very slow responses
+export interface ScoreBreakdown {
+  baseScore: number;
+  difficultyMultiplier: number;
+  total: number;
+}
+
+export function getScoreBreakdown(correct: boolean, timeSpent: number, difficulty: number): ScoreBreakdown {
+  if (!correct) {
+    return { baseScore: 0, difficultyMultiplier: 1, total: 0 };
   }
+
+  const baseScore = 100;
   
-  const timeBonus = Math.max(0, 50 - Math.floor(timeSpent / 1000));
-  const difficultyBonus = difficulty * 20;
+  // Simple multiplier matches difficulty level (1x, 2x, 3x)
+  const difficultyMultiplier = difficulty;
   
-  return Math.round(baseScore + timeBonus + difficultyBonus);
+  const total = Math.round(baseScore * difficultyMultiplier);
+  
+  return { baseScore, difficultyMultiplier, total };
+}
+
+export function calculateScore(correct: boolean, timeSpent: number, difficulty: number): number {
+  return getScoreBreakdown(correct, timeSpent, difficulty).total;
 }
 
 // Difficulty progression
@@ -340,25 +389,28 @@ export function getAudioParameters(config: AudioConfig): {
       }));
       
     case 'comparison':
-      return [
-        {
-          frequency: notes[0],
-          duration,
-          volume: config.volume1 || 0.5
-        },
-        {
-          frequency: notes[0],
-          duration,
-          volume: config.volume2 || 0.5
-        }
-      ];
-      
-    case 'progression':
+      // Return the sequence for the FIRST phrase
+      // The component handles the second phrase logic currently, 
+      // but it expects 'parameters' to be the first phrase.
       return notes.map(note => ({
         frequency: note,
         duration,
-        volume: config.volume1 || 0.5,
-        articulation: config.direction
+        volume: config.volume1 || 0.5
+      }));
+      
+    case 'progression':
+      // Return notes with calculated volumes for crescendo/diminuendo
+      // If we have 4 notes, and volume goes from v1 to v2
+      const count = notes.length;
+      const v1 = config.volume1 || 0.5;
+      const v2 = config.volume2 || 0.5;
+      const step = (v2 - v1) / (count - 1 || 1);
+      
+      return notes.map((note, index) => ({
+        frequency: note,
+        duration,
+        volume: v1 + (step * index),
+        articulation: config.articulation // Passing direction as articulation if needed
       }));
       
     case 'articulation':

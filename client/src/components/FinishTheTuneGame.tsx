@@ -1,13 +1,18 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import {Play, HelpCircle, Star, Sparkles, Volume2, Music, ChevronLeft} from "lucide-react";
+import { Play, HelpCircle, Star, Sparkles, Volume2, Music, ChevronLeft, Pause } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import { useAudioService } from "@/hooks/useAudioService";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import AudioErrorFallback from "@/components/AudioErrorFallback";
+
+interface NoteEvent {
+  freq: number;
+  duration: number;
+}
 
 interface GameState {
   score: number;
@@ -17,21 +22,27 @@ interface GameState {
   volume: number;
   currentQuestion: Question | null;
   hasPlayedMelody: boolean;
+  activeNoteIndex: number; // Track which note is playing (0-indexed relative to current sequence)
+  playingSequenceId: string | null; // 'start' or 'option-index'
+  shuffledOptions: NoteEvent[][]; // Stable shuffled options
+  selectedOptionIndex: number | null; // Track selected option for UI feedback
 }
 
 interface Question {
-  melodyStart: number[];
-  correctEnding: number[];
-  wrongEndings: number[][];
+  melodyStart: NoteEvent[];
+  correctEnding: NoteEvent[];
+  wrongEndings: NoteEvent[][];
   description: string;
+  hint: string;
 }
 
 interface MelodyPattern {
-  start: number[];
+  start: NoteEvent[];
   endings: {
-    correct: number[];
+    correct: NoteEvent[];
     name: string;
   };
+  hint: string;
 }
 
 // Note frequencies (C major scale)
@@ -46,33 +57,98 @@ const NOTES = {
   C2: 523,
 };
 
-// Common melodic patterns
+const NOTE_FREQS = Object.values(NOTES).sort((a, b) => a - b);
+
+// Helper to create notes with duration (default 0.4s)
+const n = (freq: number, duration: number = 0.4): NoteEvent => ({ freq, duration });
+
+// Common melodic patterns focused on RESOLUTION to C (Tonic) with RHYTHM
 const MELODY_PATTERNS: MelodyPattern[] = [
   {
-    start: [NOTES.C, NOTES.D, NOTES.E],
-    endings: { correct: [NOTES.F, NOTES.G], name: "Ascending Scale" },
+    start: [n(NOTES.G, 0.4), n(NOTES.F, 0.4), n(NOTES.E, 0.6), n(NOTES.D, 0.2)],
+    endings: { correct: [n(NOTES.C, 0.8)], name: "Walking Home" },
+    hint: "The music is walking down the stairs. What is the last step?"
   },
   {
-    start: [NOTES.G, NOTES.F, NOTES.E],
-    endings: { correct: [NOTES.D, NOTES.C], name: "Descending to C" },
+    start: [n(NOTES.C, 0.3), n(NOTES.E, 0.3), n(NOTES.G, 0.6)],
+    endings: { correct: [n(NOTES.C2, 0.8)], name: "Jump to the Top" },
+    hint: "We are jumping up the chord. Finish the jump to the high C!"
   },
   {
-    start: [NOTES.C, NOTES.E, NOTES.G],
-    endings: { correct: [NOTES.C2], name: "Chord Arpeggio" },
+    start: [n(NOTES.C, 0.4), n(NOTES.G, 0.4), n(NOTES.G, 0.8)],
+    endings: { correct: [n(NOTES.C, 0.8)], name: "There and Back" },
+    hint: "We went far away to G. Now let's come back Home to C."
   },
   {
-    start: [NOTES.E, NOTES.D, NOTES.C],
-    endings: { correct: [NOTES.D, NOTES.E], name: "Turn Pattern" },
+    start: [n(NOTES.E, 0.3), n(NOTES.D, 0.3), n(NOTES.C, 0.3), n(NOTES.D, 0.3)],
+    endings: { correct: [n(NOTES.C, 1.0)], name: "Wiggle Home" },
+    hint: "The melody is wiggling around the bottom. End on the lowest note."
   },
   {
-    start: [NOTES.C, NOTES.G, NOTES.A],
-    endings: { correct: [NOTES.G, NOTES.C], name: "Fifth Resolution" },
+    start: [n(NOTES.C, 0.4), n(NOTES.C, 0.4), n(NOTES.G, 0.4), n(NOTES.G, 0.4), n(NOTES.A, 0.4), n(NOTES.A, 0.4)],
+    endings: { correct: [n(NOTES.G, 0.8)], name: "Twinkle Pause" },
+    hint: "Twinkle Twinkle Little Star... how does the phrase end?"
   },
   {
-    start: [NOTES.D, NOTES.E, NOTES.F],
-    endings: { correct: [NOTES.E, NOTES.D], name: "Stepwise Return" },
+    start: [n(NOTES.D, 0.4), n(NOTES.E, 0.4), n(NOTES.F, 0.6), n(NOTES.D, 0.2)],
+    endings: { correct: [n(NOTES.C, 0.8)], name: "Step Down Home" },
+    hint: "We are hovering above home. Take one step down to finish."
   },
+  {
+    start: [n(NOTES.C2, 0.2), n(NOTES.B, 0.2), n(NOTES.A, 0.2), n(NOTES.G, 0.6)],
+    endings: { correct: [n(NOTES.F, 0.2), n(NOTES.E, 0.2), n(NOTES.D, 0.2), n(NOTES.C, 0.8)], name: "The Long Fall" },
+    hint: "Slide all the way down the slide to the bottom!"
+  },
+  {
+    start: [n(NOTES.G, 0.3), n(NOTES.G, 0.3), n(NOTES.E, 0.6)],
+    endings: { correct: [n(NOTES.D, 0.3), n(NOTES.D, 0.3), n(NOTES.C, 0.8)], name: "Skipping Home" },
+    hint: "We are skipping down. Find the last skip to C."
+  }
 ];
+
+// Component to visualize notes
+const MelodyVisualizer = ({ notes, activeIndex, isPlaying, className = "", showTonic = true }: { notes: NoteEvent[], activeIndex: number, isPlaying: boolean, className?: string, showTonic?: boolean }) => {
+  return (
+    <div className={`flex items-end justify-center gap-1 bg-white/50 dark:bg-black/20 rounded-xl backdrop-blur-sm relative ${className}`}>
+      {/* Tonic Line Indicator */}
+      {showTonic && (
+        <div className="absolute bottom-[20%] left-0 w-full h-0.5 bg-green-400/30 border-t border-dashed border-green-500/50 pointer-events-none" title="Home Note Level"></div>
+      )}
+      
+      {notes.map((note, index) => {
+        const noteIndex = NOTE_FREQS.indexOf(note.freq);
+        const heightPercent = noteIndex === -1 ? 0 : 20 + (noteIndex / (NOTE_FREQS.length - 1)) * 80;
+        const isActive = isPlaying && index === activeIndex;
+        const isTonic = showTonic && (note.freq === NOTES.C || note.freq === NOTES.C2);
+        
+        const widthClass = note.duration <= 0.25 ? 'flex-[1]' : note.duration <= 0.45 ? 'flex-[2]' : 'flex-[3]';
+
+        return (
+          <div key={index} className={`${widthClass} flex flex-col items-center justify-end h-full gap-1 group relative`}>
+             {/* Note Head */}
+            <div 
+              className={`
+                rounded-full border-2 transition-all duration-200 shadow-sm z-10
+                ${isActive 
+                  ? 'bg-purple-500 border-purple-600 scale-125 shadow-purple-400/50 shadow-lg translate-y-[-4px]' 
+                  : isTonic 
+                    ? 'bg-green-400 border-green-500 dark:bg-green-600' 
+                    : 'bg-blue-300 border-blue-400 dark:bg-blue-600 dark:border-blue-500'
+                }
+                ${className.includes('h-16') ? 'w-4 h-4 md:w-5 md:h-5 border-[1.5px]' : 'w-6 h-6 md:w-8 md:h-8'} 
+              `}
+              style={{ 
+                marginBottom: `${heightPercent * 0.8}px`,
+              }}
+            ></div>
+            {/* Rhythm Bar */}
+            <div className={`h-1 bg-gray-300 dark:bg-gray-600 rounded-full mt-1 ${note.duration > 0.4 ? 'w-full' : 'w-1/2'}`} style={{ opacity: 0.5 }}></div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default function FinishTheTuneGame() {
   const [, setLocation] = useLocation();
@@ -84,6 +160,10 @@ export default function FinishTheTuneGame() {
     volume: 70,
     currentQuestion: null,
     hasPlayedMelody: false,
+    activeNoteIndex: -1,
+    playingSequenceId: null,
+    shuffledOptions: [],
+    selectedOptionIndex: null
   });
 
   const [gameStarted, setGameStarted] = useState(false);
@@ -109,29 +189,51 @@ export default function FinishTheTuneGame() {
     generateNewQuestion();
   };
 
-  const playMelody = useCallback(async (notes: number[]) => {
-    const noteDuration = 400; // 0.4 seconds in ms
-    for (const freq of notes) {
-      await audio.playNote(freq, noteDuration, gameState.volume / 100);
+  const playMelody = useCallback(async (notes: NoteEvent[], sequenceId: string) => {
+    setGameState(prev => ({ ...prev, isPlaying: true, activeNoteIndex: -1, playingSequenceId: sequenceId }));
+
+    for (let i = 0; i < notes.length; i++) {
+      // Update active note index
+      setGameState(prev => ({ ...prev, activeNoteIndex: i }));
+      
+      // Play note with dynamics for volume control
+      await audio.playNoteWithDynamics(notes[i].freq, notes[i].duration, gameState.volume / 100);
+      
+      // Small gap? playNoteWithDynamics awaits duration, so we are good.
     }
+
+    setGameState(prev => ({ ...prev, isPlaying: false, activeNoteIndex: -1, playingSequenceId: null }));
   }, [gameState.volume, audio]);
 
-  const generateWrongEndings = useCallback((correctEnding: number[]): number[][] => {
+  const generateWrongEndings = useCallback((correctEnding: NoteEvent[]): NoteEvent[][] => {
     const allNotes = Object.values(NOTES);
-    const wrongEndings: number[][] = [];
+    const wrongEndings: NoteEvent[][] = [];
 
     // Generate 3 wrong endings
     for (let i = 0; i < 3; i++) {
-      const wrongEnding: number[] = [];
+      const wrongEnding: NoteEvent[] = [];
+      // Use same length as correct ending
       for (let j = 0; j < correctEnding.length; j++) {
-        let randomNote;
+        let randomNoteFreq;
+        // Try to pick a note that isn't the correct one at this position
+        // AND crucial: ensure the last note is NOT the Tonic (C or C2) if the correct one is
+        let attempts = 0;
+        const isLastNote = j === correctEnding.length - 1;
+        
         do {
-          randomNote = allNotes[Math.floor(Math.random() * allNotes.length)];
+          randomNoteFreq = allNotes[Math.floor(Math.random() * allNotes.length)];
+          attempts++;
         } while (
-          wrongEnding.includes(randomNote) ||
-          (j === correctEnding.length - 1 && randomNote === correctEnding[j])
+           attempts < 20 && 
+           (
+             // Avoid exact duplicate of correct note at this position
+             (randomNoteFreq === correctEnding[j].freq) ||
+             // If it's the last note, avoid resolving to C/C2 (unless correct ending doesn't, but our correct endings do)
+             (isLastNote && (randomNoteFreq === NOTES.C || randomNoteFreq === NOTES.C2))
+           )
         );
-        wrongEnding.push(randomNote);
+        // Preserve the rhythm (duration) of the correct ending
+        wrongEnding.push({ freq: randomNoteFreq, duration: correctEnding[j].duration });
       }
       wrongEndings.push(wrongEnding);
     }
@@ -142,6 +244,7 @@ export default function FinishTheTuneGame() {
   const generateNewQuestion = useCallback(() => {
     const pattern = MELODY_PATTERNS[Math.floor(Math.random() * MELODY_PATTERNS.length)];
     const wrongEndings = generateWrongEndings(pattern.endings.correct);
+    const options = [...wrongEndings, pattern.endings.correct].sort(() => Math.random() - 0.5);
 
     setGameState(prev => ({
       ...prev,
@@ -150,35 +253,35 @@ export default function FinishTheTuneGame() {
         correctEnding: pattern.endings.correct,
         wrongEndings,
         description: pattern.endings.name,
+        hint: pattern.hint
       },
       feedback: null,
       hasPlayedMelody: false,
+      activeNoteIndex: -1,
+      playingSequenceId: null,
+      shuffledOptions: options
     }));
   }, [generateWrongEndings]);
 
   const handlePlayMelodyStart = useCallback(async () => {
     if (!gameState.currentQuestion || gameState.isPlaying) return;
 
-    setGameState(prev => ({ ...prev, isPlaying: true, hasPlayedMelody: true }));
-
-    await playMelody(gameState.currentQuestion.melodyStart);
-
-    setGameState(prev => ({ ...prev, isPlaying: false }));
+    setGameState(prev => ({ ...prev, hasPlayedMelody: true }));
+    await playMelody(gameState.currentQuestion.melodyStart, 'start');
   }, [gameState.currentQuestion, gameState.isPlaying, playMelody]);
 
-  const handlePlayEnding = useCallback(async (ending: number[]) => {
-    if (gameState.isPlaying) return;
+  const handlePlayEnding = useCallback(async (ending: NoteEvent[], index: number) => {
+    if (gameState.isPlaying || !gameState.currentQuestion) return;
 
-    setGameState(prev => ({ ...prev, isPlaying: true }));
-
-    // Play the start + this ending
-    await playMelody([...gameState.currentQuestion!.melodyStart, ...ending]);
-
-    setGameState(prev => ({ ...prev, isPlaying: false }));
+    // Play the ending sequence (optionally play the start first, but users might prefer just hearing the option to compare)
+    // Let's play ONLY the ending to let them focus on the resolution, or play Start + Ending?
+    // Start + Ending is better for context "Finish the Tune".
+    const fullSequence = [...gameState.currentQuestion.melodyStart, ...ending];
+    await playMelody(fullSequence, `option-${index}`);
   }, [gameState.isPlaying, gameState.currentQuestion, playMelody]);
 
-  const handleSelectEnding = useCallback((selectedEnding: number[]) => {
-    if (!gameState.currentQuestion || !gameState.hasPlayedMelody) return;
+  const handleSelectEnding = useCallback((selectedEnding: NoteEvent[], index: number) => {
+    if (!gameState.currentQuestion || !gameState.hasPlayedMelody || gameState.feedback) return;
 
     const isCorrect = JSON.stringify(selectedEnding) === JSON.stringify(gameState.currentQuestion.correctEnding);
 
@@ -187,6 +290,7 @@ export default function FinishTheTuneGame() {
       score: isCorrect ? prev.score + 1 : prev.score,
       totalQuestions: prev.totalQuestions + 1,
       feedback: { show: true, isCorrect },
+      selectedOptionIndex: index
     }));
 
     if (isCorrect) {
@@ -196,8 +300,12 @@ export default function FinishTheTuneGame() {
     }
 
     setGameTimeout(() => {
-      setGameState(prev => ({ ...prev, feedback: null }));
-      generateNewQuestion();
+      setGameState(prev => ({ ...prev, feedback: null, selectedOptionIndex: null }));
+      if (isCorrect) {
+         generateNewQuestion();
+      } else {
+         generateNewQuestion();
+      }
     }, 2500);
   }, [gameState.currentQuestion, gameState.hasPlayedMelody, generateNewQuestion, setGameTimeout]);
 
@@ -218,9 +326,9 @@ export default function FinishTheTuneGame() {
           <div key={orb.key} className={orb.className} />
         ))}
 
-        <div className="text-center space-y-8 z-10 max-w-2xl">
+        <div className="text-center space-y-8 z-10 max-w-2xl animate-in fade-in zoom-in duration-500">
           <div className="space-y-4">
-            <h1 className={`${playfulTypography.headings.hero} ${playfulColors.gradients.title}`}>
+            <h1 className={`${playfulTypography.headings.hero} ${playfulColors.gradients.title} drop-shadow-lg`}>
               🎼 Finish the Tune
             </h1>
             <p className={`${playfulTypography.body.large} text-gray-700 dark:text-gray-300`}>
@@ -233,22 +341,22 @@ export default function FinishTheTuneGame() {
               <HelpCircle className="w-6 h-6 text-green-600" />
               <span className={playfulTypography.body.medium}>How to Play:</span>
             </div>
-            <ul className="text-left space-y-3 text-base">
-              <li className="flex items-start gap-2">
+            <ul className="text-left space-y-3 text-base text-gray-700 dark:text-gray-300">
+              <li className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg">
                 <span className="text-2xl">🎵</span>
-                <span>Listen to the incomplete melody</span>
+                <span className="pt-1">Listen to the incomplete melody</span>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-3 bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg">
                 <span className="text-2xl">👂</span>
-                <span>Preview each possible ending</span>
+                <span className="pt-1">Preview each possible ending</span>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-3 bg-pink-50 dark:bg-pink-900/30 p-2 rounded-lg">
                 <span className="text-2xl">✨</span>
-                <span>Choose the ending that sounds most complete</span>
+                <span className="pt-1">Choose the ending that sounds most complete</span>
               </li>
-              <li className="flex items-start gap-2">
+              <li className="flex items-start gap-3 bg-yellow-50 dark:bg-yellow-900/30 p-2 rounded-lg">
                 <span className="text-2xl">⭐</span>
-                <span>Score points for recognizing musical resolution!</span>
+                <span className="pt-1">Score points for recognizing musical resolution!</span>
               </li>
             </ul>
           </div>
@@ -256,9 +364,9 @@ export default function FinishTheTuneGame() {
           <Button
             onClick={handleStartGame}
             size="lg"
-            className={`${playfulComponents.button.primary} transform ${playfulAnimations.hover.scale}`}
+            className={`${playfulComponents.button.primary} transform ${playfulAnimations.hover.scale} px-12 py-8 text-2xl shadow-xl`}
           >
-            <Play className="w-8 h-8 mr-3" />
+            <Play className="w-10 h-10 mr-3 fill-current" />
             Start Playing!
           </Button>
         </div>
@@ -272,180 +380,220 @@ export default function FinishTheTuneGame() {
         <div key={orb.key} className={orb.className} />
       ))}
 
-      <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-4xl mx-auto w-full space-y-8 py-8">
-        <ScoreDisplay score={gameState.score} total={gameState.totalQuestions} />
+      {/* Header */}
+      <div className="w-full max-w-4xl mx-auto flex items-center justify-between mb-6 relative z-10">
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 text-purple-700 hover:text-purple-900 font-bold bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all"
+          >
+            <ChevronLeft size={20} />
+            Exit
+          </button>
 
-        <div className="text-center space-y-4 w-full">
-          <h2 className={`${playfulTypography.headings.h2} text-gray-800 dark:text-gray-200`}>
-            Finish the Tune
-          </h2>
+          <div className="flex items-center gap-4 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm border border-purple-100">
+             <div className="flex flex-col items-center px-4">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Score</span>
+                <span className="text-xl font-bold text-purple-600">{gameState.score}/{gameState.totalQuestions}</span>
+             </div>
+          </div>
 
-          {/* Volume Control */}
-          <div className="flex items-center justify-center gap-4 px-4">
-            <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm">
+            <Volume2 className="w-5 h-5 text-gray-600" />
             <input
               type="range"
               min="0"
               max="100"
               value={gameState.volume}
               onChange={(e) => setGameState(prev => ({ ...prev, volume: parseInt(e.target.value) }))}
-              className="flex-1 max-w-xs"
+              className="w-24 accent-purple-500"
               disabled={gameState.isPlaying}
             />
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400 w-12">
-              {gameState.volume}%
-            </span>
           </div>
-        </div>
+      </div>
 
-        {/* Play Melody Start */}
-        <div className={`${playfulShapes.rounded.container} bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-8 ${playfulShapes.shadows.card} text-center space-y-4 w-full max-w-2xl`}>
-          <h3 className={`${playfulTypography.headings.h3} text-green-600 dark:text-green-400`}>
-            🎵 Listen to the Melody Start
-          </h3>
-          <Button
-            onClick={handlePlayMelodyStart}
-            disabled={gameState.isPlaying}
-            size="lg"
-            className={`${playfulComponents.button.primary} w-64 h-20 text-xl transform ${playfulAnimations.hover.scale}`}
-          >
-            <Music className="w-8 h-8 mr-3" />
-            {gameState.hasPlayedMelody ? "Play Start Again" : "Play Melody Start"}
-          </Button>
-          {!gameState.hasPlayedMelody && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-              Listen first, then choose the best ending below
-            </p>
-          )}
-        </div>
-
-        {/* Ending Options */}
-        {gameState.hasPlayedMelody && gameState.currentQuestion && !gameState.feedback && (
-          <div className={`${playfulShapes.rounded.container} bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-8 ${playfulShapes.shadows.card} w-full max-w-2xl`}>
-            <h3 className={`${playfulTypography.headings.h3} mb-6 text-center text-purple-600 dark:text-purple-400`}>
-              🎼 Choose the Best Ending
+      <div className="flex-1 flex flex-col items-center justify-start z-10 max-w-4xl mx-auto w-full space-y-6">
+        
+        {/* Main Game Area */}
+        <div className="w-full max-w-2xl space-y-6">
+          
+          {/* Question Card */}
+          <div className={`${playfulShapes.rounded.container} bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-6 md:p-8 ${playfulShapes.shadows.card} text-center relative overflow-hidden`}>
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-blue-500" />
+            
+            <h3 className={`${playfulTypography.headings.h3} text-gray-800 dark:text-gray-200 mb-2`}>
+              Can you finish this tune?
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...gameState.currentQuestion.wrongEndings, gameState.currentQuestion.correctEnding]
-                .sort(() => Math.random() - 0.5)
-                .map((ending, index) => (
-                  <div
-                    key={index}
-                    className={`${playfulShapes.rounded.container} bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 border-2 border-gray-200 dark:border-gray-700 space-y-3`}
-                  >
-                    <div className="text-center font-semibold text-gray-700 dark:text-gray-300">
-                      Option {index + 1}
-                    </div>
-                    <div className="flex gap-2 justify-center">
-                      <Button
-                        onClick={() => handlePlayEnding(ending)}
-                        disabled={gameState.isPlaying}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Preview
-                      </Button>
-                      <Button
-                        onClick={() => handleSelectEnding(ending)}
-                        disabled={gameState.isPlaying}
-                        className={`${playfulComponents.button.secondary} flex-1`}
-                      >
-                        <Star className="w-4 h-4 mr-2" />
-                        Choose This
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-            </div>
-            <p className="text-sm text-center text-gray-600 dark:text-gray-400 mt-4 italic">
-              Click "Preview" to hear each option with the melody start
+            
+            <p className="text-sm text-purple-600 dark:text-purple-400 font-medium mb-6">
+              <Sparkles className="inline w-4 h-4 mr-1" />
+              Hint: {gameState.currentQuestion?.hint}
             </p>
-          </div>
-        )}
 
-        {/* Feedback */}
-        {gameState.feedback?.show && (
-          <div className={`text-center p-6 ${playfulShapes.rounded.container} ${
-            gameState.feedback.isCorrect ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'
-          } ${playfulShapes.shadows.card} max-w-2xl w-full`}>
-            <p className={playfulTypography.headings.h3}>
-              {gameState.feedback.isCorrect ? (
-                <>
-                  <Star className="inline w-8 h-8 mr-2 text-yellow-500" />
-                  Perfect! You found the right ending!
-                  <Sparkles className="inline w-8 h-8 ml-2 text-yellow-500" />
-                </>
+            {/* Visualizer */}
+            <div className="mb-8">
+               <MelodyVisualizer 
+                 notes={
+                   gameState.playingSequenceId === 'start' 
+                     ? gameState.currentQuestion!.melodyStart 
+                     : gameState.playingSequenceId?.startsWith('option') 
+                       ? [...gameState.currentQuestion!.melodyStart, ...gameState.shuffledOptions[parseInt(gameState.playingSequenceId.split('-')[1])]]
+                       : gameState.currentQuestion!.melodyStart // Default view
+                 } 
+                 activeIndex={gameState.activeNoteIndex} 
+                 isPlaying={gameState.isPlaying} 
+               />
+            </div>
+
+            <Button
+              onClick={handlePlayMelodyStart}
+              disabled={gameState.isPlaying}
+              size="lg"
+              className={`
+                ${playfulComponents.button.primary} 
+                w-full max-w-sm h-16 text-xl 
+                transform transition-all duration-200
+                ${gameState.isPlaying && gameState.playingSequenceId === 'start' ? 'scale-95 opacity-90' : 'hover:scale-105 shadow-lg'}
+              `}
+            >
+              {gameState.isPlaying && gameState.playingSequenceId === 'start' ? (
+                <div className="flex items-center gap-2">
+                   <Pause className="w-6 h-6 animate-pulse" />
+                   Playing...
+                </div>
               ) : (
-                <>
-                  Not quite! The correct ending creates better musical resolution. Try the next one!
-                </>
+                <div className="flex items-center gap-2">
+                   <Music className="w-6 h-6" />
+                   {gameState.hasPlayedMelody ? "Listen Again" : "Listen to Melody"}
+                </div>
               )}
-            </p>
-            {gameState.feedback.isCorrect && gameState.currentQuestion && (
-              <p className="text-sm mt-2 text-gray-700 dark:text-gray-300">
-                Pattern: {gameState.currentQuestion.description}
-              </p>
-            )}
+            </Button>
           </div>
-        )}
+
+          {/* Options Area */}
+          {gameState.hasPlayedMelody && gameState.currentQuestion && !gameState.feedback && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-4">
+              <div className="text-center text-gray-600 dark:text-gray-300 font-medium mb-2">
+                Which ending sounds best?
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {gameState.shuffledOptions.map((ending, index) => {
+                    const endingKey = `option-${index}`;
+                    const isPlayingThis = gameState.isPlaying && gameState.playingSequenceId === endingKey;
+                    const isSelected = gameState.selectedOptionIndex === index;
+                    const isCorrect = gameState.feedback?.isCorrect && isSelected;
+                    const isWrong = gameState.feedback?.show && !gameState.feedback.isCorrect && isSelected;
+                    const isDisabled = gameState.isPlaying || (gameState.feedback?.show === true);
+
+                    return (
+                      <div
+                        key={endingKey}
+                        className={`
+                          relative overflow-hidden
+                          ${playfulShapes.rounded.container} 
+                          border-4 transition-all duration-300
+                          ${isCorrect 
+                            ? 'bg-green-100 border-green-500 scale-105 shadow-green-200 shadow-xl' 
+                            : isWrong 
+                              ? 'bg-red-100 border-red-500 scale-95 opacity-90' 
+                              : 'bg-white/80 dark:bg-gray-800/80 border-transparent hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-lg'
+                          }
+                          p-4 flex flex-col gap-4
+                        `}
+                      >
+                         {/* Result Icon Overlay */}
+                         {isCorrect && (
+                           <div className="absolute top-2 right-2 animate-bounce z-20">
+                             <Star className="w-8 h-8 text-green-600 fill-green-600" />
+                           </div>
+                         )}
+                         {isWrong && (
+                           <div className="absolute top-2 right-2 animate-pulse z-20">
+                             <div className="text-2xl">❌</div>
+                           </div>
+                         )}
+
+                        <div className="text-center font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                           {isCorrect ? "Correct!" : isWrong ? "Try Again" : `Option ${index + 1}`}
+                        </div>
+
+                        {/* Mini Visualizer */}
+                        <MelodyVisualizer 
+                          notes={ending} 
+                          activeIndex={isPlayingThis ? gameState.activeNoteIndex - gameState.currentQuestion!.melodyStart.length : -1}
+                          isPlaying={isPlayingThis}
+                          className="h-16 w-full"
+                          showTonic={false}
+                        />
+
+                        <div className="flex gap-2 justify-center mt-auto">
+                          <Button
+                            onClick={() => handlePlayEnding(ending, index)}
+                            disabled={isDisabled}
+                            variant="outline"
+                            size="sm"
+                            className={`flex-1 h-10 ${isPlayingThis ? 'bg-purple-50 text-purple-700 border-purple-200' : ''}`}
+                          >
+                            {isPlayingThis ? <Volume2 className="w-4 h-4 animate-pulse mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                            Preview
+                          </Button>
+                          
+                          <Button
+                            onClick={() => handleSelectEnding(ending, index)}
+                            disabled={isDisabled}
+                            className={`
+                              flex-1 h-10
+                              ${isCorrect ? 'bg-green-600 hover:bg-green-700' : isWrong ? 'bg-red-500 hover:bg-red-600' : playfulComponents.button.secondary}
+                            `}
+                          >
+                            {isCorrect ? "Success!" : "Select"}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* Removed Overlay Feedback - Inline is used now */}
+
+        </div>
 
         {/* Educational Guide Toggle */}
-        <Button
-          onClick={() => setShowGuide(!showGuide)}
-          variant="outline"
-          size="sm"
-        >
-          <HelpCircle className="w-4 h-4 mr-2" />
-          {showGuide ? "Hide" : "Show"} Learning Guide
-        </Button>
+        <div className="w-full max-w-2xl flex justify-center pt-4">
+          <Button
+            onClick={() => setShowGuide(!showGuide)}
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-purple-600 hover:bg-purple-50"
+          >
+            <HelpCircle className="w-4 h-4 mr-2" />
+            {showGuide ? "Hide Guide" : "How does this work?"}
+          </Button>
+        </div>
 
         {showGuide && (
-          <div className={`${playfulShapes.rounded.container} bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-6 ${playfulShapes.shadows.card} max-w-2xl w-full`}>
-            <h3 className={`${playfulTypography.headings.h3} mb-4 text-center text-green-600 dark:text-green-400`}>
-              🎼 Understanding Melodic Resolution
+          <div className={`${playfulShapes.rounded.container} bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-8 ${playfulShapes.shadows.card} max-w-2xl w-full animate-in slide-in-from-bottom-10`}>
+            <h3 className={`${playfulTypography.headings.h3} mb-6 text-center text-purple-600 dark:text-purple-400 flex items-center justify-center gap-2`}>
+              <Music className="w-6 h-6" />
+              The Secret of Musical Endings
             </h3>
-            <div className="space-y-4 text-gray-700 dark:text-gray-300">
-              <div>
-                <h4 className="font-semibold mb-2">What is Musical Resolution?</h4>
-                <p className="text-sm">
-                  Resolution is when a melody feels "complete" or "finished." Just like a sentence needs punctuation, melodies need proper endings to sound satisfying!
-                </p>
+            
+            <div className="space-y-6 text-gray-700 dark:text-gray-300">
+              <div className="flex gap-4">
+                 <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center flex-shrink-0 text-2xl">⤵️</div>
+                 <div>
+                   <h4 className="font-bold text-lg text-gray-900 dark:text-white">Stepwise Motion</h4>
+                   <p className="leading-relaxed">
+                     Melodies often like to move in small steps. If a melody is going down (D, C, B...), it usually wants to keep going or return to a nearby safe note.
+                   </p>
+                 </div>
               </div>
-              <div>
-                <h4 className="font-semibold mb-2">Melodic Patterns</h4>
-                <p className="text-sm">
-                  Melodies often follow patterns. Common patterns include:
-                </p>
-                <ul className="text-sm space-y-1 list-disc list-inside mt-2">
-                  <li><strong>Ascending:</strong> Notes going up the scale</li>
-                  <li><strong>Descending:</strong> Notes going down the scale</li>
-                  <li><strong>Arpeggios:</strong> Notes from a chord played one at a time</li>
-                  <li><strong>Stepwise:</strong> Moving to the next note in the scale</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">The Home Note (Tonic)</h4>
-                <p className="text-sm">
-                  In a scale, there's usually one note that feels like "home" - often the first note of the scale. Melodies that end on or near this note sound more complete. In this game, that's the C note!
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Why Practice This?</h4>
-                <p className="text-sm">
-                  Learning to recognize complete melodies helps you:
-                </p>
-                <ul className="text-sm space-y-1 list-disc list-inside mt-2">
-                  <li>Understand song structure</li>
-                  <li>Compose your own melodies</li>
-                  <li>Predict where music is going</li>
-                  <li>Appreciate how composers create satisfying endings</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Tips for Success:</h4>
-                <ul className="text-sm space-y-1 list-disc list-inside">
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-800/30">
+                <h4 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2">Pro Tip:</h4>
+                <ul className="text-sm space-y-1 list-disc list-inside text-yellow-900 dark:text-yellow-100">
                   <li>Listen for which ending feels most "complete"</li>
                   <li>Notice if the ending returns to the starting note</li>
                   <li>Pay attention to the direction of the melody</li>
