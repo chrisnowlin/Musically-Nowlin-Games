@@ -243,7 +243,10 @@ export default function InstrumentCraneGame() {
       audioRef.current.currentTime = 0;
     }
     
-    // Ensure path is correct relative to base if needed, currently assuming root
+    // Play the sound 3 times so short clips are easier to hear
+    const PLAY_COUNT = 3;
+    let playNumber = 0;
+    
     const audio = new Audio(path);
     audioRef.current = audio;
     setIsPlayingAudio(true);
@@ -257,7 +260,18 @@ export default function InstrumentCraneGame() {
         });
     }
     
-    audio.onended = () => setIsPlayingAudio(false);
+    audio.onended = () => {
+      playNumber++;
+      if (playNumber < PLAY_COUNT) {
+        audio.currentTime = 0;
+        audio.play().catch(e => {
+          console.error(`Audio replay failed for ${path}:`, e);
+          setIsPlayingAudio(false);
+        });
+      } else {
+        setIsPlayingAudio(false);
+      }
+    };
   };
 
   // Crane Controls
