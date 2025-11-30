@@ -15,6 +15,13 @@ export interface GameRound {
 const MODES = ["major-minor", "church-modes", "special-scales", "scale-degrees"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for scale & mode mastery
+  // This function should generate questions based on the mode:
+  // - "major-minor": major and minor scale identification
+  // - "church-modes": church mode identification
+  // - "special-scales": special scales (pentatonic, blues, etc.)
+  // - "scale-degrees": scale degree identification
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

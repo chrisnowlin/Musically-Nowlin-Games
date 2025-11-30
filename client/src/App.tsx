@@ -1,92 +1,109 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
+import { Loader2 } from "lucide-react";
 
 // Get base path from Vite config for GitHub Pages
 const base = import.meta.env.BASE_URL;
+
+// Loading fallback component
+function GameLoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
+      <div className="text-center">
+        <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+        <p className="text-lg font-semibold text-purple-800">Loading game...</p>
+      </div>
+    </div>
+  );
+}
+
+// Eagerly load landing page (first page users see)
 import LandingPage from "@/pages/LandingPage";
-import PitchMatchGame from "@/pages/games/PitchMatchGame";
-import SameOrDifferentGamePage from "@/pages/games/SameOrDifferentGamePage";
-import RhythmEchoChallengeGamePage from "@/pages/games/RhythmEchoChallengeGamePage";
-import MelodyMemoryMatchGamePage from "@/pages/games/MelodyMemoryMatchGamePage";
-import FastOrSlowRaceGamePage from "@/pages/games/FastOrSlowRaceGamePage";
-import LoudOrQuietSafariGamePage from "@/pages/games/LoudOrQuietSafariGamePage";
-import HowManyNotesGamePage from "@/pages/games/HowManyNotesGamePage";
-import LongOrShortNotesGamePage from "@/pages/games/LongOrShortNotesGamePage";
-import HappyOrSadMelodiesGamePage from "@/pages/games/HappyOrSadMelodiesGamePage";
-import PitchLadderJumpGamePage from "@/pages/games/PitchLadderJumpGamePage";
-import ScaleClimberGamePage from "@/pages/games/ScaleClimberGamePage";
-import MusicalOppositesGamePage from "@/pages/games/MusicalOppositesGamePage";
-import FinishTheTuneGamePage from "@/pages/games/FinishTheTuneGamePage";
-import InstrumentDetectiveGamePage from "@/pages/games/InstrumentDetectiveGamePage";
-import MusicalSimonSaysGamePage from "@/pages/games/MusicalSimonSaysGamePage";
-import BeatKeeperChallengeGamePage from "@/pages/games/BeatKeeperChallengeGamePage";
-import SteadyOrBouncyBeatGamePage from "@/pages/games/SteadyOrBouncyBeatGamePage";
-import MusicalPatternDetectiveGamePage from "@/pages/games/MusicalPatternDetectiveGamePage";
-import NameThatAnimalTuneGamePage from "@/pages/games/NameThatAnimalTuneGamePage";
-import RhythmPuzzleBuilderGamePage from "@/pages/games/RhythmPuzzleBuilderGamePage";
-import HarmonyHelperGamePage from "@/pages/games/HarmonyHelperGamePage";
-import MusicalFreezeDanceGamePage from "@/pages/games/MusicalFreezeDanceGamePage";
-import ComposeYourSongGamePage from "@/pages/games/ComposeYourSongGamePage";
-import EchoLocationChallengeGamePage from "@/pages/games/EchoLocationChallengeGamePage";
-import MusicalStoryTimeGamePage from "@/pages/games/MusicalStoryTimeGamePage";
-import ToneColorMatchGamePage from "@/pages/games/ToneColorMatchGamePage";
-import MusicalMathGamePage from "@/pages/games/MusicalMathGamePage";
-import RestFinderGamePage from "@/pages/games/RestFinderGamePage";
-import AnimalOrchestraConductorGamePage from "@/pages/games/AnimalOrchestraConductorGamePage";
-import PitchPerfectPathGamePage from "@/pages/games/PitchPerfectPathGamePage";
-import WorldMusicExplorerGamePage from "@/pages/games/WorldMusicExplorerGamePage";
-import StaffWarsGamePage from "@/pages/games/StaffWarsGamePage";
-import StaffRunnerGamePage from "@/pages/games/StaffRunnerGamePage";
-import Rhythm006Page from "@/pages/games/Rhythm006Page";
-import Rhythm007Page from "@/pages/games/Rhythm007Page";
-import Rhythm002Page from "@/pages/games/Rhythm002Page";
-import Pitch001Page from "@/pages/games/Pitch001Page";
-import Pitch002Page from "@/pages/games/Pitch002Page";
-import Pitch003Page from "@/pages/games/Pitch003Page";
-import Pitch004Page from "@/pages/games/Pitch004Page";
-import Pitch005Page from "@/pages/games/Pitch005Page";
-import Pitch006Page from "@/pages/games/Pitch006Page";
-import Rhythm001Page from "@/pages/games/Rhythm001Page";
-import Rhythm003Page from "@/pages/games/Rhythm003Page";
-import Rhythm004Page from "@/pages/games/Rhythm004Page";
-import Rhythm005Page from "@/pages/games/Rhythm005Page";
-import Harmony001Page from "@/pages/games/Harmony001Page";
-import Harmony002Page from "@/pages/games/Harmony002Page";
-import Harmony003Page from "@/pages/games/Harmony003Page";
-import Harmony004Page from "@/pages/games/Harmony004Page";
-import Timbre001Page from "@/pages/games/Timbre001Page";
-import Timbre002Page from "@/pages/games/Timbre002Page";
-import Timbre003Page from "@/pages/games/Timbre003Page";
-import Dynamics001Page from "@/pages/games/Dynamics001Page";
-import Dynamics002Page from "@/pages/games/Dynamics002Page";
-import Dynamics003Page from "@/pages/games/Dynamics003Page";
-import Theory001Page from "@/pages/games/Theory001Page";
-import Theory002Page from "@/pages/games/Theory002Page";
-import Theory003Page from "@/pages/games/Theory003Page";
-import Theory004Page from "@/pages/games/Theory004Page";
-import Compose001Page from "@/pages/games/Compose001Page";
-import Compose002Page from "@/pages/games/Compose002Page";
-import Listen001Page from "@/pages/games/Listen001Page";
-import Listen002Page from "@/pages/games/Listen002Page";
-import Listen003Page from "@/pages/games/Listen003Page";
-import Listen004Page from "@/pages/games/Listen004Page";
-import Cross001Page from "@/pages/games/Cross001Page";
-import Cross002Page from "@/pages/games/Cross002Page";
-import Cross003Page from "@/pages/games/Cross003Page";
-import Advanced001Page from "@/pages/games/Advanced001Page";
-import Challenge001Page from "@/pages/games/Challenge001Page";
 
-
-
-import PlaceholderGame from "@/pages/games/PlaceholderGame";
+// Lazy load all game pages to reduce initial bundle size
+const PitchMatchGame = lazy(() => import("@/pages/games/PitchMatchGame"));
+const SameOrDifferentGamePage = lazy(() => import("@/pages/games/SameOrDifferentGamePage"));
+const RhythmEchoChallengeGamePage = lazy(() => import("@/pages/games/RhythmEchoChallengeGamePage"));
+const MelodyMemoryMatchGamePage = lazy(() => import("@/pages/games/MelodyMemoryMatchGamePage"));
+const FastOrSlowRaceGamePage = lazy(() => import("@/pages/games/FastOrSlowRaceGamePage"));
+const LoudOrQuietSafariGamePage = lazy(() => import("@/pages/games/LoudOrQuietSafariGamePage"));
+const HowManyNotesGamePage = lazy(() => import("@/pages/games/HowManyNotesGamePage"));
+const LongOrShortNotesGamePage = lazy(() => import("@/pages/games/LongOrShortNotesGamePage"));
+const HappyOrSadMelodiesGamePage = lazy(() => import("@/pages/games/HappyOrSadMelodiesGamePage"));
+const PitchLadderJumpGamePage = lazy(() => import("@/pages/games/PitchLadderJumpGamePage"));
+const ScaleClimberGamePage = lazy(() => import("@/pages/games/ScaleClimberGamePage"));
+const MusicalOppositesGamePage = lazy(() => import("@/pages/games/MusicalOppositesGamePage"));
+const FinishTheTuneGamePage = lazy(() => import("@/pages/games/FinishTheTuneGamePage"));
+const InstrumentDetectiveGamePage = lazy(() => import("@/pages/games/InstrumentDetectiveGamePage"));
+const MusicalSimonSaysGamePage = lazy(() => import("@/pages/games/MusicalSimonSaysGamePage"));
+const BeatKeeperChallengeGamePage = lazy(() => import("@/pages/games/BeatKeeperChallengeGamePage"));
+const SteadyOrBouncyBeatGamePage = lazy(() => import("@/pages/games/SteadyOrBouncyBeatGamePage"));
+const MusicalPatternDetectiveGamePage = lazy(() => import("@/pages/games/MusicalPatternDetectiveGamePage"));
+const NameThatAnimalTuneGamePage = lazy(() => import("@/pages/games/NameThatAnimalTuneGamePage"));
+const RhythmPuzzleBuilderGamePage = lazy(() => import("@/pages/games/RhythmPuzzleBuilderGamePage"));
+const HarmonyHelperGamePage = lazy(() => import("@/pages/games/HarmonyHelperGamePage"));
+const MusicalFreezeDanceGamePage = lazy(() => import("@/pages/games/MusicalFreezeDanceGamePage"));
+const ComposeYourSongGamePage = lazy(() => import("@/pages/games/ComposeYourSongGamePage"));
+const EchoLocationChallengeGamePage = lazy(() => import("@/pages/games/EchoLocationChallengeGamePage"));
+const MusicalStoryTimeGamePage = lazy(() => import("@/pages/games/MusicalStoryTimeGamePage"));
+const ToneColorMatchGamePage = lazy(() => import("@/pages/games/ToneColorMatchGamePage"));
+const MusicalMathGamePage = lazy(() => import("@/pages/games/MusicalMathGamePage"));
+const RestFinderGamePage = lazy(() => import("@/pages/games/RestFinderGamePage"));
+const AnimalOrchestraConductorGamePage = lazy(() => import("@/pages/games/AnimalOrchestraConductorGamePage"));
+const PitchPerfectPathGamePage = lazy(() => import("@/pages/games/PitchPerfectPathGamePage"));
+const WorldMusicExplorerGamePage = lazy(() => import("@/pages/games/WorldMusicExplorerGamePage"));
+const StaffWarsGamePage = lazy(() => import("@/pages/games/StaffWarsGamePage"));
+const StaffRunnerGamePage = lazy(() => import("@/pages/games/StaffRunnerGamePage"));
+const Rhythm006Page = lazy(() => import("@/pages/games/Rhythm006Page"));
+const Rhythm007Page = lazy(() => import("@/pages/games/Rhythm007Page"));
+const Rhythm002Page = lazy(() => import("@/pages/games/Rhythm002Page"));
+const Pitch001Page = lazy(() => import("@/pages/games/Pitch001Page"));
+const Pitch002Page = lazy(() => import("@/pages/games/Pitch002Page"));
+const Pitch003Page = lazy(() => import("@/pages/games/Pitch003Page"));
+const Pitch004Page = lazy(() => import("@/pages/games/Pitch004Page"));
+const Pitch005Page = lazy(() => import("@/pages/games/Pitch005Page"));
+const Pitch006Page = lazy(() => import("@/pages/games/Pitch006Page"));
+const Rhythm001Page = lazy(() => import("@/pages/games/Rhythm001Page"));
+const Rhythm003Page = lazy(() => import("@/pages/games/Rhythm003Page"));
+const Rhythm004Page = lazy(() => import("@/pages/games/Rhythm004Page"));
+const Rhythm005Page = lazy(() => import("@/pages/games/Rhythm005Page"));
+const Harmony001Page = lazy(() => import("@/pages/games/Harmony001Page"));
+const Harmony002Page = lazy(() => import("@/pages/games/Harmony002Page"));
+const Harmony003Page = lazy(() => import("@/pages/games/Harmony003Page"));
+const Harmony004Page = lazy(() => import("@/pages/games/Harmony004Page"));
+const Timbre001Page = lazy(() => import("@/pages/games/Timbre001Page"));
+const Timbre002Page = lazy(() => import("@/pages/games/Timbre002Page"));
+const Timbre003Page = lazy(() => import("@/pages/games/Timbre003Page"));
+const Dynamics001Page = lazy(() => import("@/pages/games/Dynamics001Page"));
+const Dynamics002Page = lazy(() => import("@/pages/games/Dynamics002Page"));
+const Dynamics003Page = lazy(() => import("@/pages/games/Dynamics003Page"));
+const Theory001Page = lazy(() => import("@/pages/games/Theory001Page"));
+const Theory002Page = lazy(() => import("@/pages/games/Theory002Page"));
+const Theory003Page = lazy(() => import("@/pages/games/Theory003Page"));
+const Theory004Page = lazy(() => import("@/pages/games/Theory004Page"));
+const Compose001Page = lazy(() => import("@/pages/games/Compose001Page"));
+const Compose002Page = lazy(() => import("@/pages/games/Compose002Page"));
+const Listen001Page = lazy(() => import("@/pages/games/Listen001Page"));
+const Listen002Page = lazy(() => import("@/pages/games/Listen002Page"));
+const Listen003Page = lazy(() => import("@/pages/games/Listen003Page"));
+const Listen004Page = lazy(() => import("@/pages/games/Listen004Page"));
+const Cross001Page = lazy(() => import("@/pages/games/Cross001Page"));
+const Cross002Page = lazy(() => import("@/pages/games/Cross002Page"));
+const Cross003Page = lazy(() => import("@/pages/games/Cross003Page"));
+const Advanced001Page = lazy(() => import("@/pages/games/Advanced001Page"));
+const Challenge001Page = lazy(() => import("@/pages/games/Challenge001Page"));
+const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
 
 function Router() {
   return (
-    <Switch>
+    <Suspense fallback={<GameLoadingFallback />}>
+      <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/games/pitch-match" component={PitchMatchGame} />
       <Route path="/games/same-or-different" component={SameOrDifferentGamePage} />
@@ -165,20 +182,23 @@ function Router() {
       <Route path="/games/staff-runner" component={StaffRunnerGamePage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </Suspense>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <WouterRouter base={base}>
-          <Router />
-        </WouterRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <WouterRouter base={base}>
+            <Router />
+          </WouterRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

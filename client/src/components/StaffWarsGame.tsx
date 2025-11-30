@@ -177,20 +177,22 @@ export default function StaffWarsGame() {
 
   return (
     <div className="w-full min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center relative">
-      <button
-        onClick={() => setLocation("/")}
-        className="absolute z-50 flex items-center text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all touch-target"
-        style={{
-          top: `${layout.padding}px`,
-          left: `${layout.padding}px`,
-          gap: `${layout.gridGap / 4}px`,
-          padding: `${layout.padding * 0.5}px ${layout.padding}px`,
-          fontSize: `${layout.getFontSize('sm')}px`
-        }}
-      >
-        <ChevronLeft size={layout.device.isMobile ? 20 : 24} />
-        Main Menu
-      </button>
+      {(state.status === 'setup' || state.status === 'gameOver') && (
+        <button
+          onClick={() => setLocation("/")}
+          className="absolute z-50 flex items-center text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all touch-target"
+          style={{
+            top: `${layout.padding}px`,
+            left: `${layout.padding}px`,
+            gap: `${layout.gridGap / 4}px`,
+            padding: `${layout.padding * 0.5}px ${layout.padding}px`,
+            fontSize: `${layout.getFontSize('sm')}px`
+          }}
+        >
+          <ChevronLeft size={layout.device.isMobile ? 20 : 24} />
+          Main Menu
+        </button>
+      )}
 
       {state.status === 'setup' && (
         <SetupScreen onStartGame={handleStartGame} highScores={state.highScores} />

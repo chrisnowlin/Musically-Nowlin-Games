@@ -1,35 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <!-- Lion body -->
-  <ellipse cx="100" cy="130" rx="50" ry="55" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
-  
-  <!-- Lion head -->
-  <circle cx="100" cy="70" r="40" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
-  
-  <!-- Lion mane -->
-  <circle cx="100" cy="70" r="50" fill="#FFD700" opacity="0.8"/>
-  <path d="M 50 60 Q 45 40, 60 30 Q 75 25, 90 35 Q 85 30, 70 25 Q 55 20, 50 35 Z" fill="#FFD700"/>
-  <path d="M 150 60 Q 155 40, 140 30 Q 125 25, 110 35 Q 115 30, 130 25 Q 145 20, 150 35 Z" fill="#FFD700"/>
-  <path d="M 100 20 Q 90 15, 80 25 Q 85 20, 95 18 Q 105 20, 120 25 Q 110 15, 100 20 Z" fill="#FFD700"/>
-  
-  <!-- Lion face -->
-  <circle cx="85" cy="65" r="5" fill="#000"/>
-  <circle cx="115" cy="65" r="5" fill="#000"/>
-  <ellipse cx="100" cy="80" rx="8" ry="6" fill="#000"/>
-  
-  <!-- Lion ears -->
-  <path d="M 70 50 L 65 35 L 75 45 Z" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
-  <path d="M 130 50 L 135 35 L 125 45 Z" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
-  
-  <!-- Lion front legs -->
-  <ellipse cx="75" cy="160" rx="12" ry="35" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
-  <ellipse cx="125" cy="160" rx="12" ry="35" fill="#DAA520" stroke="#B8860B" stroke-width="2"/>
-  
-  <!-- Lion back legs -->
-  <ellipse cx="85" cy="175" rx="10" ry="20" fill="#B8860B"/>
-  <ellipse cx="115" cy="175" rx="10" ry="20" fill="#B8860B"/>
-  
-  <!-- Lion tail -->
-  <path d="M 50 140 Q 30 120, 20 100 Q 15 85, 25 75" stroke="#DAA520" stroke-width="6" fill="none" stroke-linecap="round"/>
-  <circle cx="22" cy="78" r="5" fill="#DAA520"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+  <defs>
+    <radialGradient id="lionFur" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD54F" />
+      <stop offset="100%" stop-color="#FFCA28" />
+    </radialGradient>
+    <radialGradient id="maneColor" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF7043" />
+      <stop offset="100%" stop-color="#E64A19" />
+    </radialGradient>
+  </defs>
 
+  <!-- Legs -->
+  <rect x="110" y="280" width="25" height="80" rx="10" fill="#FFCA28" />
+  <rect x="165" y="280" width="25" height="80" rx="10" fill="#FFCA28" />
+  
+  <!-- Feet -->
+  <path d="M 105 360 Q 122 370 140 360 L 135 350 L 110 350 Z" fill="#E64A19" /> 
+  <ellipse cx="122" cy="360" rx="18" ry="8" fill="#FFCA28" />
+  <ellipse cx="177" cy="360" rx="18" ry="8" fill="#FFCA28" />
+
+  <!-- Tail -->
+  <path d="M 165 250 Q 230 300 240 200" stroke="#FFCA28" stroke-width="10" fill="none" stroke-linecap="round" />
+  <ellipse cx="240" cy="200" rx="10" ry="15" fill="#E64A19" />
+
+  <!-- Body -->
+  <rect x="100" y="160" width="100" height="130" rx="40" fill="url(#lionFur)" />
+  <ellipse cx="150" cy="210" rx="30" ry="50" fill="#FFE082" opacity="0.5" />
+
+  <!-- Arms -->
+  <path d="M 100 180 Q 60 220 80 240" stroke="#FFCA28" stroke-width="20" stroke-linecap="round" />
+  <path d="M 200 180 Q 240 220 220 240" stroke="#FFCA28" stroke-width="20" stroke-linecap="round" />
+
+  <!-- Microphone in hand -->
+  <rect x="210" y="210" width="15" height="40" fill="#424242" transform="rotate(-20 217 230)" />
+  <circle cx="225" cy="205" r="12" fill="#78909C" />
+  <circle cx="225" cy="205" r="14" stroke="#90A4AE" stroke-width="2" fill="none" />
+
+  <!-- Mane -->
+  <circle cx="150" cy="100" r="75" fill="url(#maneColor)" />
+  <!-- Mane Spikes (Simplified) -->
+  <path d="M 150 20 L 165 40 L 180 25 L 190 45 L 210 35 L 210 60 L 230 60 L 220 80 L 240 90 L 225 110 L 240 130 L 220 140 L 230 160 L 210 165 L 210 185 L 190 175 L 180 195 L 165 180 L 150 200 L 135 180 L 120 195 L 110 175 L 90 185 L 90 165 L 70 160 L 80 140 L 60 130 L 75 110 L 60 90 L 80 80 L 70 60 L 90 60 L 90 35 L 110 45 L 120 25 L 135 40 Z" fill="#E64A19" opacity="0.3" />
+
+  <!-- Ears -->
+  <circle cx="100" cy="70" r="15" fill="#FFCA28" />
+  <circle cx="200" cy="70" r="15" fill="#FFCA28" />
+
+  <!-- Head Face -->
+  <circle cx="150" cy="100" r="50" fill="url(#lionFur)" />
+  
+  <!-- Face Details -->
+  <circle cx="135" cy="90" r="6" fill="#FFF" />
+  <circle cx="135" cy="90" r="3" fill="#000" />
+  <circle cx="165" cy="90" r="6" fill="#FFF" />
+  <circle cx="165" cy="90" r="3" fill="#000" />
+  
+  <path d="M 140 110 Q 150 120 160 110 L 150 125 Z" fill="#5D4037" /> <!-- Nose -->
+  <path d="M 150 125 L 150 135 M 150 135 Q 140 145 130 135 M 150 135 Q 160 145 170 135" stroke="#5D4037" stroke-width="2" fill="none" stroke-linecap="round" />
+
+</svg>

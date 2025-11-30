@@ -77,7 +77,7 @@ export class SampleAudioService {
       this.loadingPromises.delete(name);
       return buffer;
     } catch (error) {
-      console.error(`Failed to load sample ${name} from ${url}:`, error);
+      // Sample failed to load, will use fallback
       this.loadingPromises.delete(name);
       return null;
     }
@@ -96,7 +96,6 @@ export class SampleAudioService {
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
 
-    console.log(`✅ Loaded sample: ${name} (${audioBuffer.duration.toFixed(2)}s)`);
     return audioBuffer;
   }
 
@@ -109,7 +108,6 @@ export class SampleAudioService {
     );
 
     await Promise.all(loadPromises);
-    console.log(`✅ Loaded ${samples.length} samples`);
   }
 
   /**
@@ -128,13 +126,11 @@ export class SampleAudioService {
     await this.ensureAudioContext();
 
     if (!this.audioContext || !this.masterGain) {
-      console.error('Audio context not available');
       return null;
     }
 
     const buffer = this.sampleBuffers.get(name);
     if (!buffer) {
-      console.warn(`Sample ${name} not loaded`);
       return null;
     }
 
@@ -231,7 +227,6 @@ export class SampleAudioService {
     await this.ensureAudioContext();
 
     if (!this.audioContext || !this.masterGain) {
-      console.error('Audio context not available');
       return;
     }
 

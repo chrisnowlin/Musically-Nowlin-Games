@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Music, BookOpen, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface MusicOption {
   melody: number[];
@@ -170,6 +173,15 @@ export default function MusicalStoryTimeGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -208,9 +220,9 @@ export default function MusicalStoryTimeGame() {
       oscillator.start(startTime);
       oscillator.stop(startTime + option.tempo);
 
-      await new Promise(resolve => setTimeout(resolve, option.tempo * 1000));
+      await new Promise(resolve => setGameTimeout(resolve, option.tempo * 1000));
     }
-  }, [gameState.volume]);
+  }, [gameState.volume, setGameTimeout]);
 
   const handlePlayOption = useCallback(async (optionIndex: 0 | 1) => {
     if (!gameState.currentScenario || gameState.isPlaying !== null || gameState.feedback) return;
@@ -263,13 +275,13 @@ export default function MusicalStoryTimeGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewScenario();
     }, 3500);
-  }, [gameState.currentScenario, gameState.feedback, gameState.hasPlayedBoth, generateNewScenario]);
+  }, [gameState.currentScenario, gameState.feedback, gameState.hasPlayedBoth, generateNewScenario, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     setGameStarted(true);
   };
 

@@ -38,11 +38,272 @@ interface LaserBeam {
   duration: number;
 }
 
-function drawStaffLines(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, clef: Clef) {
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
+function drawSpaceStation(ctx: CanvasRenderingContext2D, x: number, y: number, clef: Clef, time: number) {
+  ctx.save();
+  
+  const stationX = x + 50;
+  const stationY = y + 44; // Center of staff
 
-  // Draw 5 staff lines with increased spacing
+  // --- Force Field Emitter (Base) ---
+  // Draw this first so it's behind the station
+  ctx.save();
+  const emitterGlow = (Math.sin(time * 0.003) + 1) / 2;
+  ctx.fillStyle = `rgba(59, 130, 246, ${0.1 + emitterGlow * 0.1})`; // Faint blue
+  ctx.beginPath();
+  ctx.ellipse(stationX + 70, stationY, 10, 60, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // --- Rotating Radar Dish (Background) ---
+  ctx.save();
+  ctx.translate(stationX - 35, stationY - 65);
+  // Slower rotation for radar
+  ctx.rotate(time * 0.0005); 
+  
+  // Dish structure
+  ctx.fillStyle = '#334155'; // Slate-700
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 18, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#64748b'; // Slate-500
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Antenna spike
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, -12);
+  ctx.stroke();
+  
+  // Red tip light
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(0, -12, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // --- Solar Panels (Photovoltaic Arrays) ---
+  // Function to draw a detailed panel
+  const drawPanel = (offsetX: number, offsetY: number, rotation: number) => {
+    ctx.save();
+    ctx.translate(stationX + offsetX, stationY + offsetY);
+    ctx.rotate(rotation);
+    
+    // Panel frame
+    ctx.fillStyle = '#1e293b'; // Slate-800
+    ctx.strokeStyle = '#475569'; // Slate-600
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.rect(-25, -40, 50, 40);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Photovoltaic cells (Gradient)
+    const cellGrad = ctx.createLinearGradient(-20, -38, 20, -2);
+    cellGrad.addColorStop(0, '#1e3a8a'); // Dark Blue
+    cellGrad.addColorStop(0.5, '#3b82f6'); // Blue-500
+    cellGrad.addColorStop(1, '#1e3a8a'); // Dark Blue
+    
+    ctx.fillStyle = cellGrad;
+    ctx.beginPath();
+    ctx.rect(-22, -38, 44, 36);
+    ctx.fill();
+    
+    // Grid overlay
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    // Vertical lines
+    for (let i = -10; i <= 10; i += 10) {
+      ctx.moveTo(i, -38); ctx.lineTo(i, -2);
+    }
+    // Horizontal lines
+    for (let i = -26; i <= -14; i += 12) {
+      ctx.moveTo(-22, i); ctx.lineTo(22, i);
+    }
+    ctx.stroke();
+    
+    ctx.restore();
+  };
+
+  // Draw rotated panels
+  drawPanel(0, -80, 0);
+  drawPanel(0, 120, 0); // Bottom panel (offset by height)
+
+  // --- Connecting Struts ---
+  ctx.fillStyle = '#475569'; // Slate-600
+  // Vertical strut
+  ctx.beginPath();
+  ctx.rect(stationX - 8, stationY - 90, 16, 180);
+  ctx.fill();
+  
+  // Metallic shading on strut
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fillRect(stationX - 4, stationY - 90, 4, 180);
+
+  // --- Main Hub (Spherical Core) ---
+  // 3D Sphere Effect
+  const sphereGrad = ctx.createRadialGradient(
+    stationX - 15, stationY - 15, 5,  // Highlight offset
+    stationX, stationY, 55            // Outer radius
+  );
+  sphereGrad.addColorStop(0, '#64748b'); // Highlight (Slate-500)
+  sphereGrad.addColorStop(0.3, '#334155'); // Midtone (Slate-700)
+  sphereGrad.addColorStop(1, '#0f172a'); // Shadow (Slate-900)
+
+  ctx.fillStyle = sphereGrad;
+  ctx.beginPath();
+  ctx.arc(stationX, stationY, 50, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Rim/Edge Light
+  ctx.strokeStyle = '#475569'; // Slate-600
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // --- Equatorial Ring (Docking/Observation) ---
+  ctx.save();
+  ctx.translate(stationX, stationY);
+  ctx.rotate(-Math.PI / 12); // Slight tilt
+  
+  // Back part of ring
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 60, 15, 0, Math.PI, 0); // Bottom half roughly
+  ctx.fillStyle = '#1e293b';
+  ctx.fill();
+  
+  // Front part of ring (Tech glowing)
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 60, 15, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#0ea5e9'; // Sky-500
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#0ea5e9';
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  
+  // Windows on ring
+  ctx.fillStyle = '#e0f2fe'; // Sky-100 (Lights)
+  for(let i = -50; i <= 50; i+=20) {
+     if (Math.abs(i) > 55) continue;
+     ctx.beginPath();
+     ctx.rect(i, -2, 8, 4);
+     ctx.fill();
+  }
+  ctx.restore();
+
+  // --- Pulsing Beacon Lights ---
+  const pulse = (Math.sin(time * 0.005) + 1) / 2; // 0 to 1
+  
+  // Top Antenna Beacon
+  ctx.fillStyle = `rgba(239, 68, 68, ${0.6 + pulse * 0.4})`; 
+  ctx.shadowColor = '#ef4444';
+  ctx.shadowBlur = 15 * pulse;
+  ctx.beginPath();
+  ctx.arc(stationX, stationY - 125, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Bottom Antenna Beacon
+  ctx.beginPath();
+  ctx.arc(stationX, stationY + 125, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // --- Clef Symbol Hologram ---
+  ctx.save();
+  // Hologram visual effects (faint scanlines, blue tint)
+  ctx.fillStyle = 'rgba(224, 242, 254, 0.9)'; // Sky-100
+  ctx.shadowColor = '#38bdf8'; // Sky-400
+  ctx.shadowBlur = 20;
+  ctx.font = '140px Arial'; // Increased size for better staff alignment
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  const clefSymbol = clef === 'treble' ? '𝄞' : clef === 'bass' ? '𝄢' : '𝄡';
+  const clefYOffset = clef === 'treble' ? 20 : clef === 'bass' ? 0 : 5; 
+  
+  ctx.fillText(clefSymbol, stationX, stationY + clefYOffset);
+  
+  // Scanline overlay for hologram
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+  for(let i = stationY - 50; i < stationY + 50; i += 4) {
+    ctx.fillRect(stationX - 30, i, 60, 2);
+  }
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawStaffLines(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, clef: Clef, time: number) {
+  // Draw Danger Zone (Force Field Area)
+  const dangerZoneWidth = 150;
+  const gradient = ctx.createLinearGradient(x, 0, x + dangerZoneWidth, 0);
+  gradient.addColorStop(0, 'rgba(239, 68, 68, 0.1)'); // Very faint red
+  gradient.addColorStop(0.8, 'rgba(239, 68, 68, 0.05)');
+  gradient.addColorStop(1, 'rgba(239, 68, 68, 0)');   
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(x, y - 20, dangerZoneWidth, 130); // Cover staff height + padding
+
+  // Force Field Pattern (Hexagon-ish interference)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y - 20, dangerZoneWidth, 130);
+  ctx.clip();
+  
+  ctx.strokeStyle = 'rgba(239, 68, 68, 0.1)';
+  ctx.lineWidth = 1;
+  const hexSize = 30;
+  const offset = (time * 0.02) % hexSize;
+  
+  for (let hx = x; hx < x + dangerZoneWidth; hx += hexSize) {
+    for (let hy = y - 20 - offset; hy < y + 150; hy += hexSize) {
+       ctx.beginPath();
+       ctx.moveTo(hx, hy);
+       ctx.lineTo(hx + hexSize, hy + hexSize);
+       ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // Draw Danger Line (Holographic barrier)
+  // Multiple lines for energy effect
+  const barrierX = x + 120;
+  const barrierYTop = y - 30;
+  const barrierYBot = y + 120;
+  
+  // Inner core
+  ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(barrierX, barrierYTop);
+  ctx.lineTo(barrierX, barrierYBot);
+  ctx.stroke();
+  
+  // Outer glow
+  ctx.strokeStyle = 'rgba(239, 68, 68, 0.2)';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(barrierX, barrierYTop);
+  ctx.lineTo(barrierX, barrierYBot);
+  ctx.stroke();
+  
+  // Animated Scan line on barrier
+  const scanY = (time * 0.08) % 150;
+  ctx.strokeStyle = '#fca5a5'; // Red-300 (Bright)
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#ef4444';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(barrierX - 10, y - 30 + scanY);
+  ctx.lineTo(barrierX + 10, y - 30 + scanY);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Draw Staff Lines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Slightly more transparent
+  ctx.lineWidth = 1;
   const lineSpacing = 22;
   for (let i = 0; i < 5; i++) {
     const lineY = y + i * lineSpacing;
@@ -52,20 +313,8 @@ function drawStaffLines(ctx: CanvasRenderingContext2D, x: number, y: number, wid
     ctx.stroke();
   }
 
-  // Draw clef symbol (larger size for better visibility)
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '152px Arial';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  const clefSymbol = clef === 'treble' ? '𝄞' : clef === 'bass' ? '𝄢' : '𝄡';
-
-  // Position clef on correct staff line
-  // For treble clef: the curl wraps around G line (2nd from bottom = line 3)
-  // The baseline of the character should align so the curl is on that line
-  // Staff lines: line 0=y, line 1=y+22, line 2=y+44, line 3=y+66, line 4=y+88
-  // Treble clef: position baseline at y+95 so the curl sits on line 3 (y+66)
-  const clefY = clef === 'treble' ? y + 95 : clef === 'bass' ? y + 95 : y + 70;
-  ctx.fillText(clefSymbol, x + 10, clefY);
+  // Render the complex space station
+  drawSpaceStation(ctx, x, y, clef, time);
 }
 
 function drawSpaceship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean = false) {
@@ -74,44 +323,106 @@ function drawSpaceship(ctx: CanvasRenderingContext2D, x: number, y: number, flas
   // Flash effect for incorrect answers
   if (flash) {
     ctx.shadowColor = '#ef4444';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 30;
+  } else {
+    ctx.shadowColor = '#3b82f6';
+    ctx.shadowBlur = 10;
   }
 
-  // Main body (triangle pointing upward)
-  ctx.fillStyle = flash ? '#ef4444' : '#60a5fa';
+  // Colors
+  const bodyColor = flash ? '#ef4444' : '#e2e8f0'; // Slate-200
+  const darkBodyColor = flash ? '#b91c1c' : '#64748b'; // Slate-500
+  const accentColor = flash ? '#dc2626' : '#3b82f6'; // Blue-500
+  const cockpitColor = flash ? '#fecaca' : '#0ea5e9'; // Sky-500
+  const engineColor = flash ? '#fecaca' : '#f59e0b'; // Amber-500
+
+  // Wings (Back layer)
+  ctx.fillStyle = darkBodyColor;
   ctx.beginPath();
-  ctx.moveTo(x, y - 40); // Top point
-  ctx.lineTo(x - 15, y); // Bottom left
-  ctx.lineTo(x + 15, y); // Bottom right
-  ctx.closePath();
+  // Left Wing Tip
+  ctx.moveTo(x - 8, y + 5);
+  ctx.lineTo(x - 35, y + 25);
+  ctx.lineTo(x - 8, y + 15);
+  // Right Wing Tip
+  ctx.moveTo(x + 8, y + 5);
+  ctx.lineTo(x + 35, y + 25);
+  ctx.lineTo(x + 8, y + 15);
   ctx.fill();
 
-  // Cockpit window
-  ctx.fillStyle = flash ? '#fca5a5' : '#93c5fd';
+  // Main Wings
+  ctx.fillStyle = bodyColor;
   ctx.beginPath();
-  ctx.arc(x, y - 15, 6, 0, Math.PI * 2);
+  // Left Wing
+  ctx.moveTo(x - 5, y - 10);
+  ctx.lineTo(x - 30, y + 20);
+  ctx.lineTo(x - 5, y + 10);
+  // Right Wing
+  ctx.moveTo(x + 5, y - 10);
+  ctx.lineTo(x + 30, y + 20);
+  ctx.lineTo(x + 5, y + 10);
   ctx.fill();
 
-  // Wings (horizontal)
-  ctx.fillStyle = flash ? '#dc2626' : '#3b82f6';
+  // Accent stripes on wings
+  ctx.fillStyle = accentColor;
   ctx.beginPath();
-  ctx.moveTo(x - 15, y - 10);
-  ctx.lineTo(x - 25, y - 5);
-  ctx.lineTo(x - 15, y - 5);
-  ctx.closePath();
+  ctx.moveTo(x - 15, y + 5);
+  ctx.lineTo(x - 25, y + 17);
+  ctx.lineTo(x - 18, y + 10);
+  ctx.moveTo(x + 15, y + 5);
+  ctx.lineTo(x + 25, y + 17);
+  ctx.lineTo(x + 18, y + 10);
   ctx.fill();
 
+  // Main Fuselage
+  ctx.fillStyle = bodyColor;
   ctx.beginPath();
-  ctx.moveTo(x + 15, y - 10);
-  ctx.lineTo(x + 25, y - 5);
-  ctx.lineTo(x + 15, y - 5);
-  ctx.closePath();
+  ctx.moveTo(x, y - 45); // Nose
+  ctx.bezierCurveTo(x - 8, y - 10, x - 10, y + 10, x - 8, y + 20); // Left side
+  ctx.lineTo(x + 8, y + 20); // Bottom
+  ctx.bezierCurveTo(x + 10, y + 10, x + 8, y - 10, x, y - 45); // Right side
   ctx.fill();
 
-  // Engine glow (at the bottom)
-  ctx.fillStyle = flash ? '#fca5a5' : '#fbbf24';
+  // Fuselage Detail (Central ridge)
+  ctx.fillStyle = darkBodyColor;
   ctx.beginPath();
-  ctx.arc(x, y + 5, 4, 0, Math.PI * 2);
+  ctx.moveTo(x, y - 40);
+  ctx.lineTo(x - 2, y + 15);
+  ctx.lineTo(x + 2, y + 15);
+  ctx.fill();
+
+  // Cockpit
+  ctx.fillStyle = cockpitColor;
+  ctx.beginPath();
+  ctx.ellipse(x, y - 15, 3, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Cockpit Glint
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.beginPath();
+  ctx.ellipse(x - 1, y - 17, 1, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Engine Thrusters
+  ctx.fillStyle = '#334155'; // Slate-700
+  ctx.beginPath();
+  ctx.rect(x - 6, y + 18, 4, 4);
+  ctx.rect(x + 2, y + 18, 4, 4);
+  ctx.fill();
+
+  // Engine Glow (Animated with random fluctuation)
+  ctx.fillStyle = engineColor;
+  ctx.shadowColor = engineColor;
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  const flicker = Math.random() * 5;
+  // Left Engine Flame
+  ctx.moveTo(x - 6, y + 22);
+  ctx.lineTo(x - 4, y + 35 + flicker);
+  ctx.lineTo(x - 2, y + 22);
+  // Right Engine Flame
+  ctx.moveTo(x + 2, y + 22);
+  ctx.lineTo(x + 4, y + 35 + flicker);
+  ctx.lineTo(x + 6, y + 22);
   ctx.fill();
 
   ctx.restore();
@@ -153,9 +464,39 @@ function drawExplosion(ctx: CanvasRenderingContext2D, particles: Particle[]) {
   });
 }
 
-function drawStarfield(ctx: CanvasRenderingContext2D, width: number, height: number, stars: Array<{x: number, y: number, size: number, brightness: number}>) {
+function drawStarfield(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  stars: Array<{x: number, y: number, size: number, brightness: number, twinkleSpeed: number, twinklePhase: number}>,
+  currentTime: number,
+  staffY?: number
+) {
+  // Define staff exclusion zone (roughly 150px height centered on staffY)
+  // Standard staff is drawn starting at staffY with 88px height (4 * 22px spacing)
+  // We'll add some padding above and below
+  const staffTop = staffY ? staffY - 20 : -1;
+  const staffBottom = staffY ? staffY + 110 : -1;
+
   stars.forEach(star => {
-    ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+    // Skip stars that are behind the staff area to avoid distraction
+    if (staffY && star.y >= staffTop && star.y <= staffBottom) {
+      return;
+    }
+
+    // Calculate twinkling brightness using sine wave mapped to 0-1 range
+    // This allows stars to fade completely to black
+    const sine = Math.sin((currentTime * star.twinkleSpeed) + star.twinklePhase);
+    const normalizedSine = (sine + 1) / 2; // 0 to 1
+    
+    // Apply cubic easing to make them stay dim/bright longer (more natural sparkle)
+    const easedAlpha = normalizedSine * normalizedSine * normalizedSine;
+    
+    const currentBrightness = easedAlpha * star.brightness;
+    
+    if (currentBrightness < 0.01) return; // Skip invisible stars
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${currentBrightness})`;
     ctx.beginPath();
     ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
     ctx.fill();
@@ -188,7 +529,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
     const particlesRef = useRef<Particle[]>([]);
     const laserRef = useRef<LaserBeam | null>(null);
     const spaceshipFlashRef = useRef<number>(0);
-    const starsRef = useRef<Array<{x: number, y: number, size: number, brightness: number}>>([]);
+    const starsRef = useRef<Array<{x: number, y: number, size: number, brightness: number, twinkleSpeed: number, twinklePhase: number}>>([]);
     const lastFeedbackRef = useRef<'correct' | 'incorrect' | null>(null);
     const feedbackRef = useRef<'correct' | 'incorrect' | null>(null);
     const lastNotePositionRef = useRef<{ x: number; y: number } | null>(null);
@@ -298,7 +639,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
           // Create laser beam (from top of spaceship pointing upward)
           laserRef.current = {
             startX: spaceshipX,
-            startY: spaceshipY - 40, // From the tip of the spaceship
+            startY: spaceshipY - 45, // From the tip of the spaceship
             endX: noteX,
             endY: noteY,
             startTime: performance.now(),
@@ -358,13 +699,15 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
 
       // Initialize starfield
       if (starsRef.current.length === 0) {
-        const starCount = 100;
+        const starCount = 400; // Increased star count
         for (let i = 0; i < starCount; i++) {
           starsRef.current.push({
             x: Math.random() * canvas.offsetWidth,
             y: Math.random() * canvas.offsetHeight,
-            size: Math.random() * 2,
-            brightness: 0.3 + Math.random() * 0.7,
+            size: 0.5 + Math.random() * 1.5, // Varied sizes
+            brightness: 0.5 + Math.random() * 0.5, // Brighter max brightness
+            twinkleSpeed: 0.0002 + Math.random() * 0.0005, // Very slow twinkling (0.2x previous speed)
+            twinklePhase: Math.random() * Math.PI * 2,
           });
         }
       }
@@ -376,16 +719,15 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        // Clear canvas with space background
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+        // Clear canvas (transparent background)
+        ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
         // Draw starfield
-        drawStarfield(ctx, canvas.offsetWidth, canvas.offsetHeight, starsRef.current);
+        drawStarfield(ctx, canvas.offsetWidth, canvas.offsetHeight, starsRef.current, currentTime, staffData?.staffY);
 
         // Redraw staff on every frame
         if (staffData) {
-          drawStaffLines(ctx, staffData.staffX, staffData.staffY, staffData.staffWidth, staffData.clef);
+          drawStaffLines(ctx, staffData.staffX, staffData.staffY, staffData.staffWidth, staffData.clef, currentTime);
         }
 
         // Draw spaceship (centered horizontally, positioned below the staff)
@@ -477,7 +819,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
       <div className="w-full h-full">
         <canvas
           ref={canvasRef}
-          className="w-full h-full bg-slate-950 rounded-lg border-2 border-blue-900 shadow-lg shadow-blue-900/50"
+          className="w-full h-full"
           style={{ display: 'block' }}
         />
       </div>

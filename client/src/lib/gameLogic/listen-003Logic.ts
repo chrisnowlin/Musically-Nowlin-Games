@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["baroque-classical", "romantic-modern", "jazz-contemporary"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for composer detection
+  // This function should generate questions based on the mode:
+  // - "baroque-classical": identifying baroque and classical composers
+  // - "romantic-modern": identifying romantic and modern composers
+  // - "jazz-contemporary": identifying jazz and contemporary composers
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

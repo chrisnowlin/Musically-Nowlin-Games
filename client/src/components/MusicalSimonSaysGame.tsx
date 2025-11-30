@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Music, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -44,6 +47,15 @@ export default function MusicalSimonSaysGame() {
   const [activeNote, setActiveNote] = useState<number | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -58,34 +70,14 @@ export default function MusicalSimonSaysGame() {
   }, [gameStarted]);
 
   const playNote = useCallback(async (noteId: number, duration: number = 0.6) => {
-    if (!audioContext.current) return;
-
     const note = NOTES[noteId];
-    const masterVolume = gameState.volume / 100;
-
     setActiveNote(noteId);
 
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
+    await audio.playNote(note.frequency, duration * 1000, gameState.volume / 100);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = note.frequency;
-    oscillator.type = "sine";
-
-    const volume = 0.3 * masterVolume;
-    const startTime = audioContext.current.currentTime;
-    gainNode.gain.setValueAtTime(volume, startTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000));
     setActiveNote(null);
-    await new Promise(resolve => setTimeout(resolve, 200)); // Gap between notes
-  }, [gameState.volume]);
+    await new Promise(resolve => setGameTimeout(resolve, 200)); // Gap between notes
+  }, [gameState.volume, audio, setGameTimeout]);
 
   const playSequence = useCallback(async (sequence: number[]) => {
     setGameState(prev => ({ ...prev, isPlaying: true, isListening: true }));
@@ -110,10 +102,10 @@ export default function MusicalSimonSaysGame() {
     }));
 
     // Play the new sequence after a short delay
-    setTimeout(() => {
+    setGameTimeout(() => {
       playSequence(newSequence);
     }, 500);
-  }, [gameState.sequence, playSequence]);
+  }, [gameState.sequence, playSequence, setGameTimeout]);
 
   const handleNoteClick = useCallback(async (noteId: number) => {
     if (gameState.isPlaying || gameState.isListening || gameState.feedback || gameState.gameOver) return;
@@ -152,14 +144,14 @@ export default function MusicalSimonSaysGame() {
       audioService.playSuccessTone();
 
       // Start next round after delay
-      setTimeout(() => {
+      setGameTimeout(() => {
         startNewRound();
       }, 2000);
     }
-  }, [gameState, playNote, startNewRound]);
+  }, [gameState, playNote, startNewRound, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     setGameStarted(true);
   };
 
@@ -175,7 +167,7 @@ export default function MusicalSimonSaysGame() {
       volume: gameState.volume,
       gameOver: false,
     });
-    setTimeout(() => {
+    setGameTimeout(() => {
       startNewRound();
     }, 500);
   };

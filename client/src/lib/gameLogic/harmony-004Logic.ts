@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["consonance", "dissonance", "non-chord-tones"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for consonance & dissonance mastery
+  // This function should generate questions based on the mode:
+  // - "consonance": consonant interval and chord identification
+  // - "dissonance": dissonant interval and chord identification
+  // - "non-chord-tones": non-chord tone identification
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

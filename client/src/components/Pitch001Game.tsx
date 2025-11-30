@@ -13,7 +13,6 @@ export const Pitch001Game: React.FC = () => {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   const handleGameComplete = (score: number, totalRounds: number) => {
-    console.log(`Pitch & Interval Master completed! Score: ${score}/${totalRounds}`);
     setSelectedMode(null);
   };
 

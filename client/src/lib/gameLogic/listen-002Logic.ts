@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["classical-periods", "popular-genres", "world-music"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for musical style detection
+  // This function should generate questions based on the mode:
+  // - "classical-periods": identifying classical music periods
+  // - "popular-genres": identifying popular music genres
+  // - "world-music": identifying world music styles
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

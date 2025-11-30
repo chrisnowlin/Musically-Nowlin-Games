@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { GameState, GameRound } from "@/lib/schema";
 import { audioService } from "@/lib/audioService";
 import { generateNewRound as generateRound, validateAnswer, calculateScore } from "@/lib/gameUtils";
@@ -7,8 +7,19 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import { Play, HelpCircle, Music2, Loader2, Star, Sparkles } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes } from "@/theme/playful";
-import { ResponsiveGameLayout, GameSection } from "@/components/ResponsiveGameLayout";
+import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/components/ResponsiveGameLayout";
 import { useResponsiveLayout } from "@/hooks/useViewport";
+
+const FEEDBACK_OPTIONS = [
+  { title: "Correct!", message: "You're a music master! 🎵" },
+  { title: "Awesome!", message: "Your ears are amazing! 👂✨" },
+  { title: "Spot On!", message: "That was perfect pitch! 🎯" },
+  { title: "Great Job!", message: "You're getting really good at this! 🌟" },
+  { title: "Fantastic!", message: "Keep up the musical magic! 🪄" },
+  { title: "Brilliant!", message: "You're a star listener! ⭐" },
+  { title: "Super!", message: "You got the right sound! 🎶" },
+  { title: "Hooray!", message: "That's the correct answer! 🎉" },
+];
 
 export default function Game() {
   const [gameState, setGameState] = useState<GameState>({
@@ -192,6 +203,14 @@ export default function Game() {
   // Get responsive layout utilities
   const layout = useResponsiveLayout();
 
+  // Randomize feedback message when correct answer is shown
+  const celebrationFeedback = useMemo(() => {
+    if (gameState.feedback?.isCorrect) {
+      return FEEDBACK_OPTIONS[Math.floor(Math.random() * FEEDBACK_OPTIONS.length)];
+    }
+    return FEEDBACK_OPTIONS[0]; // Default fallback
+  }, [gameState.feedback?.isCorrect, gameState.totalQuestions]); // Recalculate only when answer correctness changes or new question answered
+
   return (
     <ResponsiveGameLayout showDecorations={true}>
 
@@ -210,11 +229,33 @@ export default function Game() {
         )}
         {gameState.feedback && (
           gameState.feedback.isCorrect
-            ? "Correct! Great job!"
+            ? `${celebrationFeedback.title} ${celebrationFeedback.message}`
             : "Incorrect. Try again next time!"
         )}
         {isLoadingNextRound && "Getting next round ready..."}
       </div>
+
+      {/* Celebration Overlay */}
+      {gameState.feedback?.isCorrect && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-300" />
+          <div className="relative z-10 animate-in zoom-in-50 bounce-in duration-500">
+            <div className="bg-white/90 dark:bg-gray-800/90 p-8 rounded-[3rem] shadow-2xl border-8 border-green-400 flex flex-col items-center gap-4 transform rotate-[-2deg]">
+              <div className="flex gap-4">
+                <Star className="w-12 h-12 text-yellow-400 fill-yellow-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <Star className="w-12 h-12 text-yellow-400 fill-yellow-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <Star className="w-12 h-12 text-yellow-400 fill-yellow-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <h2 className={`${playfulTypography.headings.h1} text-green-600 dark:text-green-400 drop-shadow-md text-center`}>
+                {celebrationFeedback.title}
+              </h2>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-300 text-center">
+                {celebrationFeedback.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header with title and score */}
       <GameSection variant="header">
@@ -251,73 +292,77 @@ export default function Game() {
         <div className="flex flex-col items-center justify-center h-full overflow-y-auto">
           {!gameStarted ? (
             // Start game screen
-            <div className="text-center">
-              <div className={`${layout.device.isMobile ? 'mb-4' : 'mb-6'}`}>
-                <div className="relative inline-block mb-4">
-                  <Music2 className={`${layout.device.isMobile ? 'w-12 h-12' : 'w-20 h-20'} mx-auto text-purple-600 animate-pulse`} />
-                  <Sparkles className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-yellow-400 absolute -top-2 -right-2 animate-spin`} />
+            <ResponsiveCard className="w-full max-w-2xl mx-auto border-4 border-purple-300 dark:border-purple-700">
+              <div className="text-center">
+                <div className={`${layout.device.isMobile ? 'mb-4' : 'mb-6'}`}>
+                  <div className="relative inline-block mb-4">
+                    <div className="absolute inset-0 bg-purple-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                    <Music2 className={`${layout.device.isMobile ? 'w-12 h-12' : 'w-20 h-20'} mx-auto text-purple-600 relative z-10`} />
+                    <Sparkles className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-yellow-400 absolute -top-2 -right-2 animate-spin z-20`} />
+                    <Sparkles className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-pink-400 absolute -bottom-2 -left-2 animate-pulse z-20 delay-300`} />
+                  </div>
+                  <h2
+                    className={`${playfulColors.gradients.title} mb-4 font-bold`}
+                    style={{ fontSize: `${layout.getFontSize('2xl')}px` }}
+                  >
+                    Welcome to the Music Game!
+                  </h2>
+                  <p
+                    className="text-gray-700 dark:text-gray-300 max-w-md mx-auto mb-6 font-medium leading-relaxed"
+                    style={{ fontSize: `${layout.getFontSize('lg')}px` }}
+                  >
+                    🎵 Learn to identify <span className="text-blue-600 font-bold">higher</span> and <span className="text-orange-600 font-bold">lower</span> sounds with our friendly animal musicians! 🎵
+                  </p>
                 </div>
-                <h2
-                  className={`${playfulColors.gradients.title} mb-4`}
-                  style={{ fontSize: `${layout.getFontSize('2xl')}px` }}
-                >
-                  Welcome to the Music Game!
-                </h2>
-                <p
-                  className="text-gray-700 dark:text-gray-300 max-w-md mx-auto mb-6"
-                  style={{ fontSize: `${layout.getFontSize('lg')}px` }}
-                >
-                  🎵 Learn to identify higher and lower sounds with our friendly animal musicians! 🎵
-                </p>
-              </div>
-              
-              {/* Mode Selection Menu */}
-              <div className="mb-6">
-                <h3
-                  className={`${playfulColors.gradients.title} mb-4`}
-                  style={{ fontSize: `${layout.getFontSize('xl')}px` }}
-                >
-                  Choose Number of Animals:
-                </h3>
-                <div className="flex flex-wrap justify-center gap-3 max-w-md mx-auto">
-                  {[2, 3, 4, 5].map((count) => (
-                    <Button
-                      key={count}
-                      onClick={() => setNumAnimals(count)}
-                      variant={numAnimals === count ? "default" : "outline"}
-                      className={`
-                        ${playfulShapes.rounded.button} font-fredoka
-                        ${numAnimals === count 
-                          ? `${playfulColors.gradients.buttonPrimary} ${playfulShapes.shadows.button}` 
-                          : "border-2 border-purple-300 dark:border-purple-700 hover:border-purple-400"
-                        }
-                      `}
-                      style={{
-                        fontSize: `${layout.getFontSize('base')}px`,
-                        padding: `${layout.padding * 0.4}px ${layout.padding * 0.8}px`,
-                        minWidth: '4rem'
-                      }}
-                    >
-                      {count} Animals
-                    </Button>
-                  ))}
+                
+                {/* Mode Selection Menu */}
+                <div className="mb-8">
+                  <h3
+                    className="text-purple-800 dark:text-purple-200 mb-4 font-bold"
+                    style={{ fontSize: `${layout.getFontSize('xl')}px` }}
+                  >
+                    How many animals?
+                  </h3>
+                  <div className="flex flex-wrap justify-center gap-3 max-w-md mx-auto">
+                    {[2, 3, 4, 5].map((count) => (
+                      <Button
+                        key={count}
+                        onClick={() => setNumAnimals(count)}
+                        variant={numAnimals === count ? "default" : "outline"}
+                        className={`
+                          ${playfulShapes.rounded.button} font-fredoka transition-all duration-300
+                          ${numAnimals === count 
+                            ? `${playfulColors.gradients.buttonPrimary} ${playfulShapes.shadows.button} scale-110 ring-2 ring-purple-300` 
+                            : "border-2 border-purple-300 dark:border-purple-700 hover:border-purple-400 hover:bg-purple-50 text-purple-700"
+                          }
+                        `}
+                        style={{
+                          fontSize: `${layout.getFontSize('base')}px`,
+                          padding: `${layout.padding * 0.4}px ${layout.padding * 0.8}px`,
+                          minWidth: '4rem'
+                        }}
+                      >
+                        {count}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <Button
-                onClick={handleStartGame}
-                size="lg"
-                data-testid="button-start-game"
-                className={`${playfulShapes.rounded.button} ${playfulColors.gradients.buttonSuccess} ${playfulShapes.shadows.button} font-fredoka`}
-                style={{
-                  fontSize: `${layout.getFontSize('base')}px`,
-                  padding: `${layout.padding * 0.6}px ${layout.padding}px`
-                }}
-              >
-                <Play className={`${layout.device.isMobile ? 'w-4 h-4' : 'w-5 h-5'} mr-1`} />
-                Let's Play!
-              </Button>
-            </div>
+                <Button
+                  onClick={handleStartGame}
+                  size="lg"
+                  data-testid="button-start-game"
+                  className={`${playfulShapes.rounded.button} ${playfulColors.gradients.buttonSuccess} ${playfulShapes.shadows.button} font-fredoka hover:scale-105 transition-transform duration-200`}
+                  style={{
+                    fontSize: `${layout.getFontSize('xl')}px`,
+                    padding: `${layout.padding * 0.75}px ${layout.padding * 1.5}px`
+                  }}
+                >
+                  <Play className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'} mr-2 fill-current`} />
+                  Let's Play!
+                </Button>
+              </div>
+            </ResponsiveCard>
           ) : gameState.currentRound && (
           <>
             {/* Question prompt */}
@@ -329,16 +374,29 @@ export default function Game() {
                 marginBottom: `${layout.padding * 0.25}px`
               }}
             >
-              <div
-                className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm ${playfulShapes.rounded.container} ${playfulShapes.shadows.card} text-center ${playfulShapes.borders.thick} border-purple-300 dark:border-purple-700`}
-                style={{ padding: `${layout.padding * 0.25}px` }}
+              <ResponsiveCard
+                className={`${playfulShapes.borders.thick} border-purple-300 dark:border-purple-700 text-center relative overflow-visible`}
               >
+                {/* Floating decorative notes */}
+                <div className="absolute -top-4 -left-2 text-purple-400 animate-bounce" style={{ animationDelay: '0ms' }}>
+                  <Music2 size={24} />
+                </div>
+                <div className="absolute -top-2 -right-2 text-pink-400 animate-bounce" style={{ animationDelay: '300ms' }}>
+                  <Music2 size={20} />
+                </div>
+
                 <h2
-                  className="text-foreground"
+                  className="text-foreground font-bold mb-2"
                   style={{ fontSize: `${layout.getFontSize('lg')}px` }}
                 >
                   Which animal played the{" "}
-                  <span className={gameState.currentRound.question === "higher" ? "text-blue-600 font-bold" : "text-orange-600 font-bold"}>
+                  <span className={`
+                    inline-block px-2 py-1 rounded-lg transform -rotate-2
+                    ${gameState.currentRound.question === "higher" 
+                      ? "bg-blue-100 text-blue-600 border-2 border-blue-200" 
+                      : "bg-orange-100 text-orange-600 border-2 border-orange-200"
+                    }
+                  `}>
                     {numAnimals > 2 
                       ? (gameState.currentRound.question === "higher" ? "HIGHEST" : "LOWEST")
                       : (gameState.currentRound.question === "higher" ? "HIGHER" : "LOWER")
@@ -347,29 +405,32 @@ export default function Game() {
                   sound?
                 </h2>
                 {/* Persistent status message area - always takes up space */}
-                <div className="mt-1 min-h-[1rem] flex items-center justify-center">
+                <div className="mt-2 min-h-[1.5rem] flex items-center justify-center">
                   <p
-                    className={`transition-opacity duration-300 ${
+                    className={`transition-all duration-300 flex items-center gap-2 ${
                       !gameState.isPlaying && !canAnswer && !gameState.feedback
-                        ? "opacity-100 text-gray-700 dark:text-gray-300"
-                        : "opacity-0 absolute"
+                        ? "opacity-100 transform translate-y-0"
+                        : "opacity-0 absolute transform -translate-y-2"
                     }`}
                     style={{ fontSize: `${layout.getFontSize('base')}px` }}
                   >
-                    🎵 Listen carefully to all {gameState.currentRound.characters.length} sounds... 🎵
+                    <span className="w-2 h-2 bg-purple-500 rounded-full animate-ping"/>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium">Listen carefully...</span>
                   </p>
                   <p
-                    className={`text-green-600 dark:text-green-400 font-semibold transition-opacity duration-300 ${
+                    className={`text-green-600 dark:text-green-400 font-bold transition-all duration-300 flex items-center gap-2 ${
                       canAnswer && !gameState.feedback
-                        ? "opacity-100"
-                        : "opacity-0 absolute"
+                        ? "opacity-100 transform translate-y-0"
+                        : "opacity-0 absolute transform translate-y-2"
                     }`}
                     style={{ fontSize: `${layout.getFontSize('base')}px` }}
                   >
-                    ✨ Tap the animal you think is correct! ✨
+                    <Sparkles className="w-4 h-4 animate-spin" />
+                    Tap the correct animal!
+                    <Sparkles className="w-4 h-4 animate-spin" />
                   </p>
                 </div>
-              </div>
+              </ResponsiveCard>
             </div>
 
             {/* Persistent button area - transforms to show feedback or loading */}
@@ -388,7 +449,7 @@ export default function Game() {
                 data-testid={gameState.feedback ? "display-feedback" : "button-play-sounds"}
                 className={`
                   gap-2 font-fredoka font-bold
-                  ${playfulShapes.rounded.button} ${playfulShapes.shadows.button} transition-all duration-300
+                  ${playfulShapes.rounded.button} ${playfulShapes.shadows.button} transition-all duration-300 hover:scale-105
                   ${gameState.feedback?.isCorrect
                     ? "bg-green-500 hover:bg-green-500 text-white shadow-xl"
                     : gameState.feedback?.isCorrect === false
@@ -408,10 +469,12 @@ export default function Game() {
                   gameState.feedback.isCorrect ? "🎉 Great Job! 🎉" : "💪 Try Again Next Time! 💪"
                 ) : isLoadingNextRound ? (
                   // Show loading state
-                  <>
-                    <Loader2 className={`${layout.device.isMobile ? 'w-5 h-5' : 'w-6 h-6'} animate-spin`} />
-                    <span style={{ fontSize: `${layout.getFontSize('base')}px` }}>Next Round...</span>
-                  </>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span style={{ fontSize: `${layout.getFontSize('base')}px` }} className="ml-1">Next Round...</span>
+                  </div>
                 ) : (
                   // Show play button
                   <>

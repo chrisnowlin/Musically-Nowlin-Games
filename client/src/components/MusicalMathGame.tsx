@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Plus, Equal, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -44,6 +47,15 @@ export default function MusicalMathGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -58,41 +70,22 @@ export default function MusicalMathGame() {
   }, [gameStarted]);
 
   const playNote = useCallback(async (duration: number) => {
-    if (!audioContext.current) return;
-
-    const masterVolume = gameState.volume / 100;
     const frequency = 440; // A4
-
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = "sine";
-
-    const volume = 0.3 * masterVolume;
-    const startTime = audioContext.current.currentTime;
-    gainNode.gain.setValueAtTime(volume, startTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000 + 200));
-  }, [gameState.volume]);
+    await audio.playNote(frequency, duration * 1000, gameState.volume / 100);
+    // Add small pause after note
+    await new Promise(resolve => setGameTimeout(resolve, 200));
+  }, [gameState.volume, audio, setGameTimeout]);
 
   const playNotesSequence = useCallback(async (count: number, duration: number) => {
-    if (!audioContext.current || gameState.isPlaying) return;
+    if (gameState.isPlaying) return;
 
     for (let i = 0; i < count; i++) {
       await playNote(duration);
     }
 
     // Pause between groups
-    await new Promise(resolve => setTimeout(resolve, 400));
-  }, [playNote, gameState.isPlaying]);
+    await new Promise(resolve => setGameTimeout(resolve, 400));
+  }, [playNote, gameState.isPlaying, setGameTimeout]);
 
   const playProblem = useCallback(async () => {
     if (!gameState.currentProblem || gameState.isPlaying) return;
@@ -156,13 +149,13 @@ export default function MusicalMathGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewProblem();
     }, 2500);
-  }, [gameState.currentProblem, gameState.hasPlayed, gameState.feedback, generateNewProblem]);
+  }, [gameState.currentProblem, gameState.hasPlayed, gameState.feedback, generateNewProblem, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     setGameStarted(true);
   };
 

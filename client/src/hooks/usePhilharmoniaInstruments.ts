@@ -68,8 +68,7 @@ export function usePhilharmoniaInstruments(
       }, 0);
 
       if (totalSamples === 0) {
-        console.warn(`No samples found for instruments: ${names.join(', ')}`);
-        // Still mark as loaded so games can proceed with synthesis fallback
+        // No samples found, games can proceed with synthesis fallback
         setIsLoading(false);
         loadingRef.current = false;
         return;
@@ -90,7 +89,6 @@ export function usePhilharmoniaInstruments(
         const samples = instrumentLibrary.getSamples(instrumentName);
 
         if (samples.length === 0) {
-          console.warn(`No samples found for instrument: ${instrumentName}`);
           continue;
         }
 
@@ -128,7 +126,6 @@ export function usePhilharmoniaInstruments(
             loadedCount++;
           } else {
             failedSamplesCount++;
-            console.warn(`Sample not loaded (will use synthesis): ${sampleName}`);
           }
 
           // Track which instruments have been attempted
@@ -141,14 +138,7 @@ export function usePhilharmoniaInstruments(
         setLoadingProgress(((loadedCount + failedSamplesCount) / totalSamples) * 100);
       }
 
-      // Show warning if most samples failed (files likely not downloaded)
-      if (failedSamplesCount > loadedCount) {
-        console.warn(
-          `⚠️ Philharmonia samples not found (${failedSamplesCount}/${totalSamples} failed). ` +
-          `Using synthesized audio fallback. Download samples from: ` +
-          `https://philharmonia.co.uk/resources/sound-samples/`
-        );
-      }
+      // If most samples failed, games will use synthesized audio fallback
 
       setLoadedInstruments(loadedInstrumentsList);
       setIsLoading(false);
@@ -180,7 +170,6 @@ export function usePhilharmoniaInstruments(
     const samples = instrumentLibrary.getSamples(instrumentName);
 
     if (samples.length === 0) {
-      console.warn(`No samples available for instrument: ${instrumentName}`);
       return;
     }
 
@@ -215,8 +204,6 @@ export function usePhilharmoniaInstruments(
           options.duration ?? 0.5,
           options.volume ?? 1.0
         );
-      } else {
-        console.warn(`Note ${note} not found for instrument ${instrumentName}`);
       }
     }
   }, []);

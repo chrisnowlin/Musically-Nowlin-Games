@@ -15,6 +15,13 @@ export interface GameRound {
 const MODES = ["identification", "analysis", "transformation", "creation"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for polyrhythm mastery
+  // This function should generate questions based on the mode:
+  // - "identification": identifying polyrhythms
+  // - "analysis": analyzing polyrhythmic patterns
+  // - "transformation": transforming polyrhythms
+  // - "creation": creating polyrhythmic patterns
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

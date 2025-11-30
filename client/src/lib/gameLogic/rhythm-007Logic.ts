@@ -15,6 +15,14 @@ export interface GameRound {
 const MODES = ["tempo-setting", "conducting", "transitions", "expressive-timing", "ensemble-coordination"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for tempo conducting studio
+  // This function should generate questions based on the mode:
+  // - "tempo-setting": setting and identifying tempos
+  // - "conducting": conducting patterns and techniques
+  // - "transitions": tempo transitions
+  // - "expressive-timing": expressive timing variations
+  // - "ensemble-coordination": coordinating tempo in ensembles
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

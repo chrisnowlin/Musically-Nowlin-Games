@@ -15,6 +15,11 @@ export interface GameRound {
 const MODES = ["basic-chords", "complex-chords"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for chord building
+  // This function should generate questions based on the mode:
+  // - "basic-chords": basic chord construction
+  // - "complex-chords": complex chord construction
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

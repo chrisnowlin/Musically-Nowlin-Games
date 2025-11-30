@@ -4,15 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Volume2, VolumeX, Play, Pause, RotateCcw, Trophy, Target, Zap, ChevronLeft } from 'lucide-react';
-import { 
-  Pitch001Game, 
-  Pitch001Round, 
-  Pitch001GameState, 
+import {
+  Pitch001Game,
+  Pitch001Round,
+  Pitch001GameState,
   createPitch001Game,
-  getPitch001ModeConfig 
+  getPitch001ModeConfig
 } from '@/lib/gameLogic/pitch-001Logic';
 import { pitch001Modes } from '@/lib/gameLogic/pitch-001Modes';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
+import { useAudioService } from '@/hooks/useAudioService';
+import { useGameCleanup } from '@/hooks/useGameCleanup';
+import AudioErrorFallback from '@/components/AudioErrorFallback';
 
 interface PitchIntervalMasterGameProps {
   modeId: string;
@@ -45,6 +48,15 @@ export const PitchIntervalMasterGame: React.FC<PitchIntervalMasterGameProps> = (
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
 
   const modeConfig = getPitch001ModeConfig(modeId);
 
@@ -137,7 +149,7 @@ export const PitchIntervalMasterGame: React.FC<PitchIntervalMasterGameProps> = (
 
     for (const frequency of frequencies) {
       await playSimpleTone(frequency, duration);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setGameTimeout(resolve, 200));
     }
   };
 
@@ -331,16 +343,17 @@ export const PitchIntervalMasterGame: React.FC<PitchIntervalMasterGameProps> = (
     });
     
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
-    
+
     return new Promise(resolve => {
-      setTimeout(() => {
+      setGameTimeout(() => {
         oscillators.forEach(osc => osc.stop());
         resolve();
       }, 1500);
     });
   };
 
-  const startGame = () => {
+  const startGame = async () => {
+    await initialize();
     setGameStarted(true);
     nextRound();
   };
@@ -360,7 +373,7 @@ export const PitchIntervalMasterGame: React.FC<PitchIntervalMasterGameProps> = (
     }));
 
     // Auto-play audio for new round
-    setTimeout(() => {
+    setGameTimeout(() => {
       if (newRound.audioData) {
         playAudio(newRound.audioData);
       }

@@ -15,6 +15,11 @@ export interface GameRound {
 const MODES = ["steady-beat", "beat-tapping", "internal-pulse", "subdivisions", "tempo-stability"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for beat & pulse training
+  // Note: This game primarily uses interactive timing exercises rather than Q&A
+  // The actual implementation is in Rhythm006Game.tsx component
+  // This function is a placeholder for potential future Q&A mode
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

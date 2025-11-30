@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["triads", "sevenths", "extended"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for chord mastery
+  // This function should generate questions based on the mode:
+  // - "triads": triad identification and construction
+  // - "sevenths": seventh chord identification
+  // - "extended": extended chord identification
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

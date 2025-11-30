@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["meters", "types", "features"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for meter mastery
+  // This function should generate questions based on the mode:
+  // - "meters": time signature identification and meter types
+  // - "types": different meter types (simple, compound, etc.)
+  // - "features": metric features and characteristics
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

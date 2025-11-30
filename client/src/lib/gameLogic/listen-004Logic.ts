@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["texture-density", "range-register", "unity-development"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for musical elements analysis
+  // This function should generate questions based on the mode:
+  // - "texture-density": analyzing texture and density
+  // - "range-register": analyzing range and register
+  // - "unity-development": analyzing unity and development
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

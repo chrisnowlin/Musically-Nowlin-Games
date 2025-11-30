@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Volume2, Play, Pause, RotateCcw, Trophy, Target, Clock } from "lucide-react";
 import { useLocation } from "wouter";
-import { 
-  initializeGame, 
-  generateGameRounds, 
-  updateGameState, 
+import {
+  initializeGame,
+  generateGameRounds,
+  updateGameState,
   calculateGameResults,
   getInstrumentAudioProperties,
   getFamilyColor,
@@ -14,6 +14,9 @@ import {
   type GameResult
 } from "@/lib/gameLogic/timbre-001Logic";
 import { TIMBRE_MODES, INSTRUMENT_FAMILIES } from "@/lib/gameLogic/timbre-001Modes";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 export const Timbre001Game: React.FC = () => {
   const [, setLocation] = useLocation();
@@ -26,6 +29,15 @@ export const Timbre001Game: React.FC = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
 
   // Initialize audio context
   useEffect(() => {
@@ -97,7 +109,7 @@ export const Timbre001Game: React.FC = () => {
     setGameState(updatedState);
 
     // Auto-advance after feedback
-    setTimeout(() => {
+    setGameTimeout(() => {
       if (updatedState.currentRound < updatedState.totalRounds) {
         setRoundStartTime(Date.now());
         setSelectedAnswer("");
@@ -107,7 +119,7 @@ export const Timbre001Game: React.FC = () => {
         setShowResult(true);
       }
     }, 2000);
-  }, [gameState, isPlaying, feedback, roundStartTime]);
+  }, [gameState, isPlaying, feedback, roundStartTime, setGameTimeout]);
 
   // Start game
   const startGame = useCallback(() => {

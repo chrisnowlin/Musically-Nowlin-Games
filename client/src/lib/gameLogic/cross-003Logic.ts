@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["gestures-dance", "spatial-relationships", "expressive-movement"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for music & movement studio
+  // This function should generate questions based on the mode:
+  // - "gestures-dance": musical gestures and dance
+  // - "spatial-relationships": spatial relationships in music
+  // - "expressive-movement": expressive movement in music
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

@@ -1,10 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Circle, Music, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface Beat {
   type: "note" | "rest";
@@ -32,6 +34,9 @@ const MELODY_NOTES = [262, 294, 330, 349, 392, 440, 494, 523]; // C D E F G A B 
 
 export default function RestFinderGame() {
   const [, setLocation] = useLocation();
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
   const [gameState, setGameState] = useState<GameState>({
     score: 0,
     totalQuestions: 0,
@@ -44,14 +49,6 @@ export default function RestFinderGame() {
   });
 
   const [gameStarted, setGameStarted] = useState(false);
-  const audioContext = useRef<AudioContext | null>(null);
-
-  useEffect(() => {
-    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return () => {
-      audioContext.current?.close();
-    };
-  }, []);
 
   useEffect(() => {
     if (gameStarted && !gameState.currentSequence) {
@@ -60,34 +57,18 @@ export default function RestFinderGame() {
   }, [gameStarted]);
 
   const playNote = useCallback(async (frequency: number, duration: number) => {
-    if (!audioContext.current) return;
-
     const masterVolume = gameState.volume / 100;
+    audio.setVolume(masterVolume);
 
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = "sine";
-
-    const volume = 0.3 * masterVolume;
-    const startTime = audioContext.current.currentTime;
-    gainNode.gain.setValueAtTime(volume, startTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000));
-  }, [gameState.volume]);
+    try {
+      await audio.playNoteWithDynamics(frequency, duration, 0.7);
+    } catch (err) {
+      console.error('Failed to play note:', err);
+    }
+  }, [gameState.volume, audio]);
 
   const playSequence = useCallback(async (sequence: MusicalSequence) => {
-    if (!audioContext.current) return;
-
-    const beatDuration = 0.5; // Half second per beat
+    const beatDuration = 500; // milliseconds per beat
 
     for (let i = 0; i < sequence.beats.length; i++) {
       const beat = sequence.beats[i];
@@ -98,12 +79,12 @@ export default function RestFinderGame() {
         await playNote(beat.frequency, beatDuration);
       } else {
         // Rest - just silence
-        await new Promise(resolve => setTimeout(resolve, beatDuration * 1000));
+        await new Promise(resolve => setGameTimeout(resolve, beatDuration));
       }
     }
 
     setGameState(prev => ({ ...prev, currentBeatIndex: -1 }));
-  }, [playNote]);
+  }, [playNote, setGameTimeout]);
 
   const generateNewSequence = useCallback(() => {
     // Create a sequence of 8 beats with 0-3 rests
@@ -161,20 +142,38 @@ export default function RestFinderGame() {
     }));
 
     if (isCorrect) {
-      audioService.playSuccessTone();
+      audio.playSuccessTone();
     } else {
-      audioService.playErrorTone();
+      audio.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewSequence();
     }, 3000);
-  }, [gameState.currentSequence, gameState.hasPlayed, gameState.feedback, generateNewSequence]);
+  }, [gameState.currentSequence, gameState.hasPlayed, gameState.feedback, generateNewSequence, audio, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    if (!isReady) {
+      await initialize();
+    }
     setGameStarted(true);
   };
+
+  // Show audio error if initialization failed
+  if (error) {
+    return (
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4`}>
+        <button
+          onClick={() => setLocation("/")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
+        <AudioErrorFallback error={error} onRetry={initialize} />
+      </div>
+    );
+  }
 
   const decorativeOrbs = generateDecorativeOrbs();
 

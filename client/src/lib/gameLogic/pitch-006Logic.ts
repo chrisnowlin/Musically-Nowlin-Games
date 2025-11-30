@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["transformations", "modifications", "analysis"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for contour mastery
+  // This function should generate questions based on the mode:
+  // - "transformations": melodic contour transformations
+  // - "modifications": contour modifications
+  // - "analysis": contour analysis
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

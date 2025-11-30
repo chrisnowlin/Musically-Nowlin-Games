@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Volume2, VolumeX, Pause } from 'lucide-react';
+import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Menu } from 'lucide-react';
 import { Clef, GameConfig } from '../StaffWarsGame';
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/lib/audioService';
@@ -156,174 +156,130 @@ export default function GameplayScreen({
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden flex flex-col bg-gradient-to-br from-slate-900 to-slate-800">
-      {/* Space-themed container */}
+    <div className="w-full h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-900 to-black relative">
+      {/* Starfield background effect (CSS) */}
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
+         <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full shadow-[0_0_5px_white]" />
+         <div className="absolute top-20 left-3/4 w-2 h-2 bg-blue-200 rounded-full shadow-[0_0_10px_blue]" />
+         <div className="absolute bottom-1/3 left-1/5 w-1 h-1 bg-white rounded-full" />
+      </div>
+
+      {/* Main Game Container */}
       <div
-        className="flex-1 flex flex-col rounded-2xl border-2 border-blue-900/50 bg-slate-900/90 backdrop-blur-sm shadow-2xl shadow-blue-900/30"
+        className="flex-1 flex flex-col relative z-10"
         style={{
           padding: `${layout.padding * 0.5}px`,
-          margin: `${layout.padding * 0.5}px`,
-          maxHeight: `calc(100vh - ${layout.padding}px)`,
-          minHeight: 0
+          gap: `${layout.padding * 0.5}px`,
+          maxHeight: '100vh'
         }}
       >
-        {/* HUD */}
-        <div
-          className="bg-slate-800/80 border border-slate-700 rounded-lg flex justify-between items-center flex-shrink-0"
-          style={{ padding: `${layout.padding * 0.5}px`, marginBottom: `${layout.padding * 0.5}px` }}
-          role="region"
-          aria-label="Game status"
-        >
-          <div className="flex" style={{ gap: `${layout.gridGap * 2}px` }}>
-            <div className="text-white">
-              <p
-                className="text-slate-400"
-                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
-              >
-                Score
-              </p>
-              <p
-                className="font-bold"
-                style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
-                aria-live="polite"
-                aria-label={`Score: ${score}`}
-              >
-                {score}
-              </p>
+        {/* HUD Bar */}
+        <div className="flex items-center justify-between bg-slate-800/80 backdrop-blur-md border border-slate-700/50 rounded-xl p-3 shadow-lg">
+          <div className="flex items-center gap-4 sm:gap-8">
+            {/* Score */}
+            <div className="flex flex-col">
+              <div className="text-xs uppercase text-slate-400 font-bold tracking-wider flex items-center gap-1">
+                <Trophy className="w-3 h-3" /> Score
+              </div>
+              <div className="text-2xl font-mono font-bold text-white leading-none mt-1">
+                {score.toString().padStart(3, '0')}
+              </div>
             </div>
-            <div className="text-white">
-              <p
-                className="text-slate-400"
-                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
-              >
-                Level
-              </p>
-              <p
-                className="font-bold text-yellow-400"
-                style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
-                aria-live="polite"
-                aria-label={`Level: ${level}`}
-              >
-                {level}
-              </p>
-              <div className="w-full bg-slate-700 rounded-full h-2 mt-1">
+
+            {/* Level & Progress */}
+            <div className="flex flex-col min-w-[100px]">
+              <div className="flex justify-between items-center text-xs uppercase text-slate-400 font-bold tracking-wider">
+                <span className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400" /> Level {level}</span>
+                <span className="text-slate-500">{score % 10}/10</span>
+              </div>
+              <div className="h-2 bg-slate-700/50 rounded-full mt-1.5 overflow-hidden border border-slate-600/30">
                 <div 
-                  className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500 ease-out"
                   style={{ width: `${((score % 10) / 10) * 100}%` }}
-                  aria-label={`Progress to next level: ${score % 10}/10`}
                 />
               </div>
-              <p
-                className="text-slate-500 text-xs mt-1"
-                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
-              >
-                {score % 10}/10 to next level
-              </p>
             </div>
-            <div className="text-white">
-              <p
-                className="text-slate-400"
-                style={{ fontSize: `${layout.getFontSize('xs')}px` }}
-              >
-                Lives
-              </p>
-              <p
-                className="font-bold text-red-400"
-                style={{ fontSize: `${layout.getFontSize('3xl')}px` }}
-                aria-live="polite"
-                aria-label={`Lives remaining: ${lives}`}
-              >
-                {'❤️'.repeat(lives)}
-              </p>
+
+            {/* Lives */}
+            <div className="flex flex-col">
+              <div className="text-xs uppercase text-slate-400 font-bold tracking-wider flex items-center gap-1">
+                <Heart className="w-3 h-3 text-red-400" /> Lives
+              </div>
+              <div className="flex gap-1 mt-1.5">
+                {[...Array(3)].map((_, i) => (
+                  <Heart
+                    key={i}
+                    className={`w-5 h-5 transition-all duration-300 ${
+                      i < lives ? 'fill-red-500 text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]' : 'fill-slate-700 text-slate-800'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex" style={{ gap: `${layout.gridGap / 2}px` }}>
+          {/* Controls */}
+          <div className="flex items-center gap-2">
             <Button
               onClick={onToggleSFX}
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="touch-target"
-              style={{
-                height: `${Math.max(layout.padding * 2, 44)}px`,
-                width: `${Math.max(layout.padding * 2, 44)}px`
-              }}
-              aria-label={sfxEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
-              aria-pressed={sfxEnabled}
-              title={sfxEnabled ? 'Mute (M)' : 'Unmute (M)'}
+              className="text-slate-400 hover:text-white hover:bg-slate-700/50"
             >
-              {sfxEnabled ? <Volume2 size={layout.device.isMobile ? 18 : 20} /> : <VolumeX size={layout.device.isMobile ? 18 : 20} />}
+              {sfxEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </Button>
             <Button
               onClick={onPause}
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="touch-target"
-              style={{
-                height: `${Math.max(layout.padding * 2, 44)}px`,
-                width: `${Math.max(layout.padding * 2, 44)}px`
-              }}
-              aria-label="Pause game"
-              title="Pause (Space)"
+              className="text-slate-400 hover:text-white hover:bg-slate-700/50"
             >
-              <Pause size={layout.device.isMobile ? 18 : 20} />
+              <Pause className="w-5 h-5" />
             </Button>
           </div>
         </div>
 
         {/* Game Canvas */}
-        <div
-          className="flex-1 flex items-center justify-center overflow-hidden rounded-lg border border-slate-700/50 bg-slate-950/50"
-          style={{ padding: `${layout.padding * 0.25}px`, minHeight: 0 }}
-        >
-        <StaffCanvas
-          ref={canvasRef}
-          config={config}
-          currentNote={currentNote}
-          onNoteSpawned={setCurrentNote}
-          onNoteTimeout={handleNoteTimeout}
-          speed={currentSpeed}
-          isPaused={isPaused}
-          feedback={feedback}
-          gameLoopRef={gameLoopRef}
-        />
+        <div className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 relative overflow-hidden shadow-inner shadow-black/50">
+          <StaffCanvas
+            ref={canvasRef}
+            config={config}
+            currentNote={currentNote}
+            onNoteSpawned={setCurrentNote}
+            onNoteTimeout={handleNoteTimeout}
+            speed={currentSpeed}
+            isPaused={isPaused}
+            feedback={feedback}
+            gameLoopRef={gameLoopRef}
+          />
         </div>
 
-        {/* Note Buttons */}
-        <div
-          className="bg-slate-800/80 border-t border-slate-700 rounded-lg flex-shrink-0"
-          style={{ padding: `${layout.padding * 0.5}px`, marginTop: `${layout.padding * 0.5}px` }}
-        >
-          <div
-            className="flex justify-center flex-wrap mx-auto"
-            style={{
-              gap: `${layout.gridGap / 2}px`,
-              maxWidth: `${layout.maxContentWidth}px`
-            }}
-          >
-            {NOTE_NAMES.map((note) => (
-              <Button
-                key={note}
-                onClick={() => handleNoteAnswer(note)}
-                disabled={!currentNote || isPaused}
-                aria-label={`Note ${note}${currentNote === note ? ' - current note' : ''}`}
-                aria-pressed={currentNote === note}
-                className={`font-bold touch-target ${
-                  currentNote === note
-                    ? 'bg-yellow-500 hover:bg-yellow-600 text-black ring-2 ring-yellow-300'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-                style={{
-                  height: `${Math.max(layout.padding * 2, 48)}px`,
-                  width: `${Math.max(layout.padding * 2, 48)}px`,
-                  minWidth: `${Math.max(layout.padding * 2, 48)}px`,
-                  fontSize: `${layout.getFontSize('lg')}px`
-                }}
-                title={`Press ${note} or click to answer`}
-              >
-                {note}
-              </Button>
-            ))}
+        {/* Input Controls */}
+        <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700/50 rounded-xl p-3 shadow-lg">
+          <div className="flex justify-center gap-2 flex-wrap">
+            {NOTE_NAMES.map((note) => {
+              const isMatching = currentNote === note;
+              return (
+                <button
+                  key={note}
+                  onClick={() => handleNoteAnswer(note)}
+                  disabled={!currentNote || isPaused}
+                  className={`
+                    relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-xl sm:text-2xl transition-all duration-150
+                    active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+                    ${isMatching
+                      ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.6)] scale-110 z-10 ring-2 ring-white'
+                      : 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300 shadow-lg border border-slate-600 hover:border-slate-400 hover:text-white'
+                    }
+                  `}
+                >
+                  {note}
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-center mt-2 text-[10px] text-slate-500 uppercase tracking-widest">
+            Tap note to fire
           </div>
         </div>
       </div>

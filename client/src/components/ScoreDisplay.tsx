@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Trophy, RotateCcw, Volume2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -12,30 +13,34 @@ interface ScoreDisplayProps {
   onVolumeChange: (v: number) => void;
 }
 
-export default function ScoreDisplay({ score, totalQuestions, onReset, volume, onVolumeChange }: ScoreDisplayProps) {
+/**
+ * ScoreDisplay component - shows game score, accuracy, and volume control
+ * Memoized to prevent unnecessary re-renders
+ */
+function ScoreDisplay({ score, totalQuestions, onReset, volume, onVolumeChange }: ScoreDisplayProps) {
   return (
     <div className="flex items-center gap-4 justify-between w-full max-w-screen-2xl mx-auto px-4 lg:px-8">
       {/* Score counter */}
       <div
         data-testid="display-score"
-        className={`flex items-center gap-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-6 py-4 ${playfulShapes.rounded.container} ${playfulShapes.shadows.card} ${playfulShapes.borders.thick} border-yellow-400 dark:border-yellow-600`}
+        className={`flex items-center gap-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-6 py-4 ${playfulShapes.rounded.container} ${playfulShapes.shadows.card} ${playfulShapes.borders.thick} border-yellow-400 dark:border-yellow-600 transition-all duration-300 hover:scale-105`}
       >
         <div className="relative">
           <Trophy className="w-8 h-8 xl:w-10 xl:h-10 text-yellow-500 animate-pulse" />
-          <Star className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1 fill-yellow-400" />
+          <Star className="w-4 h-4 text-yellow-400 absolute -top-1 -right-1 fill-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
         </div>
         <div className="flex flex-col">
-          <span className={`${playfulTypography.headings.h2} text-foreground`}>
+          <span key={score} className={`${playfulTypography.headings.h2} text-foreground animate-in zoom-in duration-300`}>
             {score}
           </span>
           <span className={`${playfulTypography.body.small} text-purple-800 dark:text-purple-200 font-semibold`}>
-            ⭐ Correct Answers
+            ⭐ Correct
           </span>
         </div>
         {totalQuestions > 0 && (
           <div className="ml-4 pl-4 border-l-4 border-purple-300 dark:border-purple-700">
             <span className={`${playfulTypography.body.large} text-purple-800 dark:text-purple-200 font-semibold`}>
-              {Math.round((score / totalQuestions) * 100)}% 🎯
+              {Math.round((score / totalQuestions) * 100)}%
             </span>
           </div>
         )}
@@ -88,5 +93,10 @@ export default function ScoreDisplay({ score, totalQuestions, onReset, volume, o
 
     </div>
   );
-
 }
+
+/**
+ * Export memoized version to prevent re-renders when props haven't changed
+ * This is important because ScoreDisplay is rendered on every game state update
+ */
+export default memo(ScoreDisplay);

@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["phonemes-prosody", "rhythm-stress", "narrative-structure"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for music & language lab
+  // This function should generate questions based on the mode:
+  // - "phonemes-prosody": phonemes and prosody in music
+  // - "rhythm-stress": rhythm and stress patterns
+  // - "narrative-structure": narrative structure in music
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { ChevronLeft, Play, Volume2, RotateCcw, CheckCircle, XCircle, Music, Palette, Instrument } from "lucide-react";
+import { ChevronLeft, Play, Volume2, RotateCcw, CheckCircle, XCircle, Music, Palette } from "lucide-react";
 import { useLocation } from "wouter";
 import { sampleAudioService } from "@/lib/sampleAudioService";
 import { instrumentLibrary, getAllInstruments, getInstrumentsByFamily } from "@/lib/instrumentLibrary";
+import { ResponsiveGameLayout, GameSection, ResponsiveGrid } from "@/components/ResponsiveGameLayout";
+import { useViewport, useResponsiveLayout } from "@/hooks/useViewport";
+import { playfulColors, playfulShapes, playfulComponents, playfulTypography } from "@/theme/playful";
+import { Button } from "@/components/ui/button";
 
 interface GameState {
   currentMode: "orchestration" | "style";
@@ -60,6 +64,8 @@ const ORCHESTRATION_CHALLENGES = [
 
 export const Compose002Game: React.FC = () => {
   const [, setLocation] = useLocation();
+  const layout = useResponsiveLayout();
+  const { isMobile } = layout.device;
   const [gameState, setGameState] = useState<GameState>({
     currentMode: "orchestration",
     score: 0,
@@ -297,35 +303,38 @@ export const Compose002Game: React.FC = () => {
   }, [gameState.currentMode, currentChallenge]);
 
   const renderOrchestrationMode = () => (
-    <div>
-      <div className="bg-blue-50 rounded-lg p-3 mb-3">
-        <h3 className="font-bold text-blue-900 mb-1 text-sm">Challenge: {currentChallenge.title}</h3>
-        <p className="text-blue-700 mb-2 text-xs">{currentChallenge.description}</p>
-        <div className="text-xs text-blue-600 space-y-1">
-          <p>Required: {currentChallenge.requiredInstruments.join(", ")}</p>
-          <p>Max instruments: {currentChallenge.maxInstruments}</p>
-          <p>Allowed families: {currentChallenge.allowedFamilies.join(", ")}</p>
+    <div className="space-y-4">
+      <div className={`${playfulComponents.card.base} bg-blue-50 p-3 sm:p-4`}>
+        <h3 className="font-bold text-blue-900 mb-1 text-sm sm:text-base">Challenge: {currentChallenge.title}</h3>
+        <p className="text-blue-700 mb-2 text-xs sm:text-sm">{currentChallenge.description}</p>
+        <div className="text-xs sm:text-sm text-blue-600 space-y-1 bg-white/50 p-2 rounded-lg">
+          <p><span className="font-semibold">Required:</span> {currentChallenge.requiredInstruments.join(", ")}</p>
+          <p><span className="font-semibold">Max instruments:</span> {currentChallenge.maxInstruments}</p>
+          <p><span className="font-semibold">Allowed families:</span> {currentChallenge.allowedFamilies.join(", ")}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg p-3 mb-3">
-        <h3 className="font-bold mb-2 text-gray-700 flex items-center gap-2 text-sm">
-          <Instrument size={16} /> Your Ensemble ({gameState.selectedInstruments.length}/{currentChallenge.maxInstruments}):
+      <div className={`${playfulComponents.card.base} p-3 sm:p-4`}>
+        <h3 className="font-bold mb-2 text-gray-700 flex items-center gap-2 text-sm sm:text-base">
+          <Music size={18} /> Your Ensemble ({gameState.selectedInstruments.length}/{currentChallenge.maxInstruments}):
         </h3>
-        <div className="min-h-[60px] bg-purple-50 rounded-lg p-2 mb-2">
+        <div className="min-h-[80px] bg-purple-50 rounded-xl p-3 mb-4 border-2 border-dashed border-purple-200 transition-all">
           {gameState.selectedInstruments.length === 0 ? (
-            <p className="text-gray-400 text-center text-xs">Click instruments below to build your ensemble</p>
+            <div className="flex flex-col items-center justify-center h-full py-4 text-gray-400">
+              <Music size={24} className="mb-2 opacity-50" />
+              <p className="text-xs sm:text-sm">Click instruments below to build your ensemble</p>
+            </div>
           ) : (
             <div className="flex gap-2 flex-wrap">
               {gameState.selectedInstruments.map((instrumentName, index) => {
                 const instrument = instrumentLibrary.getInstrument(instrumentName);
                 return (
                   <button
-                    key={index}
+                    key={`${index}-${instrumentName}`}
                     onClick={() => handleInstrumentSelect(instrumentName)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded-lg font-bold flex items-center gap-1 transition-colors text-xs"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-sm hover:shadow-md text-xs sm:text-sm animate-in fade-in zoom-in duration-200"
                   >
-                    <span className="text-xs">{instrument?.emoji}</span>
+                    <span className="text-base">{instrument?.emoji}</span>
                     {instrument?.displayName}
                   </button>
                 );
@@ -334,8 +343,8 @@ export const Compose002Game: React.FC = () => {
           )}
         </div>
 
-        <h3 className="font-bold mb-2 text-gray-700 text-sm">Available Instruments:</h3>
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+        <h3 className="font-bold mb-2 text-gray-700 text-sm sm:text-base">Available Instruments:</h3>
+        <ResponsiveGrid columns={isMobile ? 3 : 4} className="gap-2">
           {availableInstruments.map(instrument => {
             const isSelected = gameState.selectedInstruments.includes(instrument.name);
             const isDisabled = !isSelected && gameState.selectedInstruments.length >= currentChallenge.maxInstruments;
@@ -345,183 +354,193 @@ export const Compose002Game: React.FC = () => {
                 key={instrument.name}
                 onClick={() => handleInstrumentSelect(instrument.name)}
                 disabled={isDisabled}
-                className={`p-2 rounded-lg font-semibold shadow-md transition-all text-xs ${
+                className={`p-2 rounded-xl font-semibold shadow-sm transition-all text-xs sm:text-sm flex flex-col items-center justify-center aspect-square sm:aspect-auto sm:h-auto ${
                   isSelected 
-                    ? "bg-purple-600 text-white" 
+                    ? "bg-purple-600 text-white scale-95 ring-2 ring-purple-300" 
                     : isDisabled
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-white hover:bg-purple-100 text-purple-700 border border-purple-300"
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                    : "bg-white hover:bg-purple-50 text-purple-900 border border-purple-100 hover:border-purple-300 hover:shadow-md"
                 }`}
               >
-                <div className="text-lg mb-1">{instrument.emoji}</div>
-                <div className="text-xs">{instrument.displayName}</div>
-                <div className="text-xs opacity-75">{instrument.family}</div>
+                <div className="text-2xl sm:text-3xl mb-1 transform transition-transform group-hover:scale-110">{instrument.emoji}</div>
+                <div className="text-[10px] sm:text-xs text-center leading-tight">{instrument.displayName}</div>
               </button>
             );
           })}
-        </div>
+        </ResponsiveGrid>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        <button
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 sticky bottom-0 bg-white/95 backdrop-blur p-2 -mx-2 sm:mx-0 border-t sm:border-none border-gray-100 z-10">
+        <Button
           onClick={playEnsemble}
           disabled={gameState.selectedInstruments.length === 0}
-          className="flex-1 min-w-[120px] flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-3 py-2 rounded-lg font-semibold shadow-md text-sm"
+          className={`flex-1 ${playfulColors.gradients.buttonSuccess} text-white shadow-md`}
         >
-          <Play size={16} /> Play
-        </button>
-        <button
+          <Play size={16} className="mr-1" /> Play
+        </Button>
+        <Button
+          variant="outline"
           onClick={handleClear}
-          className="flex items-center justify-center gap-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-semibold shadow-md text-sm"
+          className="border-gray-300 text-gray-600 hover:bg-gray-100"
         >
-          <RotateCcw size={16} /> Clear
-        </button>
-        <button
+          <RotateCcw size={16} className="mr-1" /> Clear
+        </Button>
+        <Button
           onClick={handleSubmit}
           disabled={gameState.selectedInstruments.length < 2}
-          className="flex-1 min-w-[120px] bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white px-3 py-2 rounded-lg font-semibold shadow-md text-sm"
+          className={`flex-1 ${playfulColors.gradients.buttonPrimary} text-white shadow-md`}
         >
           Submit
-        </button>
+        </Button>
       </div>
     </div>
   );
 
   const renderStyleMode = () => (
-    <div>
-      <div className="bg-orange-50 rounded-lg p-3 mb-3">
-        <h3 className="font-bold text-orange-900 mb-1 flex items-center gap-2 text-sm">
-          <Palette size={16} /> Musical Style Challenge
+    <div className="space-y-4">
+      <div className={`${playfulComponents.card.base} bg-orange-50 p-3 sm:p-4`}>
+        <h3 className="font-bold text-orange-900 mb-1 flex items-center gap-2 text-sm sm:text-base">
+          <Palette size={18} /> Musical Style Challenge
         </h3>
-        <p className="text-orange-700 text-xs">Select a musical style and choose instruments that match its characteristics</p>
+        <p className="text-orange-700 text-xs sm:text-sm">Select a musical style and choose instruments that match its characteristics</p>
       </div>
 
-      <div className="bg-white rounded-lg p-3 mb-3">
-        <h3 className="font-bold mb-2 text-gray-700 text-sm">Choose a Style:</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+      <div className={`${playfulComponents.card.base} p-3 sm:p-4`}>
+        <h3 className="font-bold mb-2 text-gray-700 text-sm sm:text-base">Choose a Style:</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
           {MUSICAL_STYLES.map(style => {
             const isSelected = gameState.selectedStyle === style.id;
             return (
               <button
                 key={style.id}
                 onClick={() => handleStyleSelect(style.id)}
-                className={`p-3 rounded-lg font-semibold shadow-md transition-all text-left text-xs ${
+                className={`p-3 rounded-xl font-semibold shadow-sm transition-all text-left text-xs sm:text-sm ${
                   isSelected 
-                    ? "bg-orange-600 text-white" 
-                    : "bg-white hover:bg-orange-100 text-orange-700 border border-orange-300"
+                    ? "bg-orange-600 text-white ring-2 ring-orange-300" 
+                    : "bg-white hover:bg-orange-50 text-orange-900 border border-orange-200 hover:border-orange-300"
                 }`}
               >
-                <div className="font-bold mb-1">{style.name}</div>
-                <div className="opacity-75 mb-1">{style.description}</div>
-                <div className="text-xs">Typical: {style.instruments.join(", ")}</div>
+                <div className="font-bold mb-1 text-base">{style.name}</div>
+                <div className={`mb-1 ${isSelected ? 'text-white/90' : 'text-orange-700/80'}`}>{style.description}</div>
+                <div className={`text-xs ${isSelected ? 'text-white/70' : 'text-orange-600/60'}`}>Typical: {style.instruments.join(", ")}</div>
               </button>
             );
           })}
         </div>
 
         {gameState.selectedStyle && (
-          <>
-            <h3 className="font-bold mb-2 text-gray-700 flex items-center gap-2 text-sm">
-              <Music size={16} /> Your Instruments ({gameState.selectedInstruments.length}):
-            </h3>
-            <div className="min-h-[60px] bg-orange-50 rounded-lg p-2 mb-2">
-              {gameState.selectedInstruments.length === 0 ? (
-                <p className="text-gray-400 text-center text-xs">Select instruments that match your chosen style</p>
-              ) : (
-                <div className="flex gap-2 flex-wrap">
-                  {gameState.selectedInstruments.map((instrumentName, index) => {
-                    const instrument = instrumentLibrary.getInstrument(instrumentName);
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => handleInstrumentSelect(instrumentName)}
-                        className="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded-lg font-bold flex items-center gap-1 transition-colors text-xs"
-                      >
-                        <span className="text-xs">{instrument?.emoji}</span>
-                        {instrument?.displayName}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+          <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="mb-4">
+              <h3 className="font-bold mb-2 text-gray-700 flex items-center gap-2 text-sm sm:text-base">
+                <Music size={18} /> Your Instruments ({gameState.selectedInstruments.length}):
+              </h3>
+              <div className="min-h-[80px] bg-orange-50 rounded-xl p-3 mb-2 border-2 border-dashed border-orange-200">
+                {gameState.selectedInstruments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full py-2 text-gray-400">
+                     <p className="text-xs sm:text-sm">Select instruments that match your chosen style</p>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 flex-wrap">
+                    {gameState.selectedInstruments.map((instrumentName, index) => {
+                      const instrument = instrumentLibrary.getInstrument(instrumentName);
+                      return (
+                        <button
+                          key={`${index}-${instrumentName}`}
+                          onClick={() => handleInstrumentSelect(instrumentName)}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-sm hover:shadow-md text-xs sm:text-sm animate-in zoom-in duration-200"
+                        >
+                          <span className="text-base">{instrument?.emoji}</span>
+                          {instrument?.displayName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <h3 className="font-bold mb-2 text-gray-700 text-sm">All Available Instruments:</h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+            <h3 className="font-bold mb-2 text-gray-700 text-sm sm:text-base">All Available Instruments:</h3>
+            <ResponsiveGrid columns={isMobile ? 3 : 4} className="gap-2">
               {getAllInstruments().map(instrument => {
                 const isSelected = gameState.selectedInstruments.includes(instrument.name);
                 return (
                   <button
                     key={instrument.name}
                     onClick={() => handleInstrumentSelect(instrument.name)}
-                    className={`p-2 rounded-lg font-semibold shadow-md transition-all text-xs ${
+                    className={`p-2 rounded-xl font-semibold shadow-sm transition-all text-xs sm:text-sm flex flex-col items-center justify-center aspect-square sm:aspect-auto sm:h-auto ${
                       isSelected 
-                        ? "bg-orange-600 text-white" 
-                        : "bg-white hover:bg-orange-100 text-orange-700 border border-orange-300"
+                        ? "bg-orange-600 text-white scale-95 ring-2 ring-orange-300" 
+                        : "bg-white hover:bg-orange-50 text-orange-900 border border-orange-100 hover:border-orange-300 hover:shadow-md"
                     }`}
                   >
-                    <div className="text-lg mb-1">{instrument.emoji}</div>
-                    <div className="text-xs">{instrument.displayName}</div>
-                    <div className="text-xs opacity-75">{instrument.family}</div>
+                    <div className="text-2xl sm:text-3xl mb-1 transform transition-transform group-hover:scale-110">{instrument.emoji}</div>
+                    <div className="text-[10px] sm:text-xs text-center leading-tight">{instrument.displayName}</div>
                   </button>
                 );
               })}
-            </div>
-          </>
+            </ResponsiveGrid>
+          </div>
         )}
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        <button
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 sticky bottom-0 bg-white/95 backdrop-blur p-2 -mx-2 sm:mx-0 border-t sm:border-none border-gray-100 z-10">
+        <Button
           onClick={playEnsemble}
           disabled={gameState.selectedInstruments.length === 0}
-          className="flex-1 min-w-[120px] flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white px-3 py-2 rounded-lg font-semibold shadow-md text-sm"
+          className={`flex-1 ${playfulColors.gradients.buttonSuccess} text-white shadow-md`}
         >
-          <Play size={16} /> Play
-        </button>
-        <button
+          <Play size={16} className="mr-1" /> Play
+        </Button>
+        <Button
+          variant="outline"
           onClick={handleClear}
-          className="flex items-center justify-center gap-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg font-semibold shadow-md text-sm"
+          className="border-gray-300 text-gray-600 hover:bg-gray-100"
         >
-          <RotateCcw size={16} /> Clear
-        </button>
-        <button
+          <RotateCcw size={16} className="mr-1" /> Clear
+        </Button>
+        <Button
           onClick={handleSubmit}
           disabled={!gameState.selectedStyle || gameState.selectedInstruments.length < 3}
-          className="flex-1 min-w-[120px] bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white px-3 py-2 rounded-lg font-semibold shadow-md text-sm"
+          className={`flex-1 ${playfulColors.gradients.buttonPrimary} text-white shadow-md`}
         >
           Submit
-        </button>
+        </Button>
       </div>
     </div>
   );
 
   const renderFeedback = () => {
-    if (!gameState.feedback?.show) return null;
+    const { feedback } = gameState;
+    if (!feedback?.show) return null;
 
     return (
-      <div className={`rounded-lg p-3 mb-3 ${
-        gameState.feedback.isCorrect ? 'bg-green-50' : 'bg-red-50'
+      <div className={`p-4 mb-4 rounded-xl animate-in slide-in-from-top-2 ${
+        feedback.isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'
       }`}>
-        <div className="flex items-center gap-2 mb-2">
-          {gameState.feedback.isCorrect ? (
-            <CheckCircle size={18} className="text-green-600" />
+        <div className="flex items-center gap-3 mb-2">
+          {feedback.isCorrect ? (
+            <div className="bg-green-100 p-1.5 rounded-full">
+              <CheckCircle size={20} className="text-green-600" />
+            </div>
           ) : (
-            <XCircle size={18} className="text-red-600" />
+            <div className="bg-red-100 p-1.5 rounded-full">
+              <XCircle size={20} className="text-red-600" />
+            </div>
           )}
-          <h3 className={`text-sm font-semibold ${
-            gameState.feedback.isCorrect ? 'text-green-900' : 'text-red-900'
+          <h3 className={`font-bold text-base ${
+            feedback.isCorrect ? 'text-green-900' : 'text-red-900'
           }`}>
-            {gameState.feedback.message}
+            {feedback.message}
           </h3>
         </div>
         
-        {gameState.feedback.details && (
-          <div className="space-y-1">
-            {gameState.feedback.details.map((detail, index) => (
-              <p key={index} className={`text-xs ${
-                gameState.feedback.isCorrect ? 'text-green-700' : 'text-red-700'
-              }`}>
+        {feedback.details && (
+          <div className="pl-11 space-y-1.5">
+            {feedback.details.map((detail, index) => (
+              <p key={index} className={`text-sm ${
+                feedback.isCorrect ? 'text-green-800' : 'text-red-800'
+              } flex items-start gap-2`}>
+                <span className="opacity-50 mt-1.5 text-[8px]">●</span>
                 {detail}
               </p>
             ))}
@@ -533,106 +552,103 @@ export const Compose002Game: React.FC = () => {
 
   if (!gameState.gameStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-purple-900 mb-4">Loading Orchestration Studio...</h1>
-          <p className="text-purple-700">Preparing orchestral samples...</p>
-        </div>
-      </div>
+      <ResponsiveGameLayout showDecorations={true}>
+        <GameSection variant="main" fillSpace>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <h1 className={`${playfulTypography.headings.h1} mb-4 text-purple-900`}>Loading Orchestration Studio...</h1>
+            <p className="text-purple-700 text-lg animate-pulse">Preparing orchestral samples...</p>
+          </div>
+        </GameSection>
+      </ResponsiveGameLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-2 relative">
-      <button
-        onClick={() => setLocation("/")}
-        className="absolute top-2 left-2 z-50 flex items-center gap-1 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow-lg hover:shadow-xl transition-all text-xs"
-      >
-        <ChevronLeft size={16} />
-        Main Menu
-      </button>
-      
-      <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-bold text-purple-900">Orchestration & Style Studio</h1>
-        <div className="text-sm font-bold text-purple-700">Score: {gameState.score}</div>
-      </div>
-
-      <div className="mb-3 flex flex-wrap gap-1 justify-center">
-        <button
-          onClick={() => handleModeChange("orchestration")}
-          className={`px-3 py-2 rounded-lg font-semibold shadow-lg text-xs ${
-            gameState.currentMode === "orchestration"
-              ? "bg-purple-600 text-white"
-              : "bg-white text-purple-600 hover:bg-purple-100"
-          }`}
-        >
-          <Instrument size={16} className="inline mr-1" />
-          ORCHESTRATION
-        </button>
-        <button
-          onClick={() => handleModeChange("style")}
-          className={`px-3 py-2 rounded-lg font-semibold shadow-lg text-xs ${
-            gameState.currentMode === "style"
-              ? "bg-orange-600 text-white"
-              : "bg-white text-orange-600 hover:bg-orange-100"
-          }`}
-        >
-          <Palette size={16} className="inline mr-1" />
-          STYLE
-        </button>
-      </div>
-
-      <div className="max-w-6xl mx-auto mb-3">
-        <div className="bg-white rounded-lg shadow-lg p-3 mb-2">
-          <div className="flex items-center gap-2 mb-2">
-            <Volume2 size={16} className="text-purple-600" />
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={gameState.volume}
-              onChange={(e) => setGameState(prev => ({ ...prev, volume: parseInt(e.target.value) }))}
-              className="flex-1"
-            />
-            <span className="text-xs font-semibold text-gray-600 min-w-[35px]">{gameState.volume}%</span>
-          </div>
+    <ResponsiveGameLayout showDecorations={true}>
+      <GameSection variant="header">
+        <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-1 text-purple-700 hover:text-purple-900"
+          >
+            <ChevronLeft size={20} />
+            <span className="hidden sm:inline">Main Menu</span>
+          </Button>
           
-          {samplesLoaded && (
-            <div className={`text-xs p-1 rounded ${
-              usingSamples ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              {usingSamples ? '🎻 Using real orchestral samples!' : '🎹 Using synthesized audio'}
-            </div>
-          )}
-        </div>
-
-        {renderFeedback()}
-
-        <div className="bg-white rounded-lg shadow-lg p-4 mb-2">
-          <div className="text-center mb-3">
-            <p className="text-gray-600 mb-1 text-xs">Round {gameState.round}</p>
-            <p className="text-sm font-semibold text-purple-700">
-              Mode: {gameState.currentMode.toUpperCase()}
-            </p>
-          </div>
-
-          {gameState.currentMode === "orchestration" ? renderOrchestrationMode() : renderStyleMode()}
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-3">
-          <h3 className="font-bold mb-2 text-sm">Stats</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-gray-600 text-xs">Round</p>
-              <p className="text-lg font-bold text-purple-600">{gameState.round}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 text-xs">Score</p>
-              <p className="text-lg font-bold text-purple-600">{gameState.score}</p>
-            </div>
+          <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-purple-900 truncate mx-2`}>
+            {isMobile ? "Orchestration Studio" : "Orchestration & Style Studio"}
+          </h1>
+          
+          <div className={`${playfulComponents.card.base} px-3 py-1 bg-purple-100 text-purple-900 font-bold text-sm whitespace-nowrap`}>
+            Score: {gameState.score}
           </div>
         </div>
-      </div>
-    </div>
+
+        <div className="flex justify-center mt-2 gap-2">
+           <button
+            onClick={() => handleModeChange("orchestration")}
+            className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all duration-200 flex items-center gap-1 ${
+              gameState.currentMode === "orchestration"
+                ? "bg-purple-600 text-white shadow-md scale-105"
+                : "bg-white/50 text-purple-600 hover:bg-purple-100"
+            }`}
+          >
+            <Music size={14} />
+            ORCHESTRATION
+          </button>
+          <button
+            onClick={() => handleModeChange("style")}
+            className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all duration-200 flex items-center gap-1 ${
+              gameState.currentMode === "style"
+                ? "bg-orange-600 text-white shadow-md scale-105"
+                : "bg-white/50 text-orange-600 hover:bg-orange-100"
+            }`}
+          >
+            <Palette size={14} />
+            STYLE
+          </button>
+        </div>
+      </GameSection>
+
+      <GameSection variant="main" fillSpace>
+        <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 h-full overflow-y-auto p-1">
+          {/* Volume Control */}
+          <div className={`${playfulComponents.card.base} p-2 flex items-center justify-between bg-white/90 backdrop-blur-sm`}>
+            <div className="flex items-center gap-3 flex-1">
+              <Volume2 size={18} className="text-purple-600" />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={gameState.volume}
+                onChange={(e) => setGameState(prev => ({ ...prev, volume: parseInt(e.target.value) }))}
+                className="flex-1 h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+              />
+              <span className="text-xs font-bold text-purple-900 w-8">{gameState.volume}%</span>
+            </div>
+            {samplesLoaded && (
+              <div className={`hidden sm:block ml-4 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                usingSamples ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {usingSamples ? '🎻 Real Samples' : '🎹 Synth Audio'}
+              </div>
+            )}
+          </div>
+
+          {renderFeedback()}
+
+          <div className="flex-1 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-3 sm:p-4 overflow-y-auto">
+            <div className="text-center mb-4">
+              <div className="inline-block px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mb-1">
+                Round {gameState.round}
+              </div>
+            </div>
+
+            {gameState.currentMode === "orchestration" ? renderOrchestrationMode() : renderStyleMode()}
+          </div>
+        </div>
+      </GameSection>
+    </ResponsiveGameLayout>
   );
 };

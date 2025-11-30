@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["structure", "relationships", "transformations"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for phrase analysis
+  // This function should generate questions based on the mode:
+  // - "structure": musical phrase structure (antecedent/consequent, etc.)
+  // - "relationships": relationships between phrases
+  // - "transformations": phrase transformations and variations
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, Music, Trash2, Save, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -51,8 +54,17 @@ export default function ComposeYourSongGame() {
 
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     if (!audioContext.current) {
       audioContext.current = new AudioContext();
     }
@@ -60,29 +72,8 @@ export default function ComposeYourSongGame() {
   };
 
   const playNote = useCallback(async (frequency: number, duration: number = 0.4) => {
-    if (!audioContext.current) return;
-
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = "triangle";
-
-    const masterVolume = gameState.volume / 100;
-    const volume = 0.3 * masterVolume;
-    const startTime = audioContext.current.currentTime;
-
-    gainNode.gain.setValueAtTime(volume, startTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000));
-  }, [gameState.volume]);
+    await audio.playNote(frequency, duration * 1000, gameState.volume / 100);
+  }, [gameState.volume, audio]);
 
   const handleAddNote = useCallback((noteIndex: number) => {
     if (gameState.composition.length >= 12) {
@@ -90,7 +81,7 @@ export default function ComposeYourSongGame() {
         ...prev,
         feedback: { show: true, message: "Maximum 12 notes! Play your melody or clear to add more.", type: 'info' },
       }));
-      setTimeout(() => {
+      setGameTimeout(() => {
         setGameState(prev => ({ ...prev, feedback: null }));
       }, 2000);
       return;
@@ -102,7 +93,7 @@ export default function ComposeYourSongGame() {
       ...prev,
       composition: [...prev.composition, noteIndex],
     }));
-  }, [gameState.composition.length, playNote]);
+  }, [gameState.composition.length, playNote, setGameTimeout]);
 
   const handleClearComposition = useCallback(() => {
     setGameState(prev => ({
@@ -110,10 +101,10 @@ export default function ComposeYourSongGame() {
       composition: [],
       feedback: { show: true, message: "Composition cleared! Start creating a new melody.", type: 'info' },
     }));
-    setTimeout(() => {
+    setGameTimeout(() => {
       setGameState(prev => ({ ...prev, feedback: null }));
     }, 1500);
-  }, []);
+  }, [setGameTimeout]);
 
   const handlePlayComposition = useCallback(async () => {
     if (gameState.composition.length === 0) {
@@ -121,7 +112,7 @@ export default function ComposeYourSongGame() {
         ...prev,
         feedback: { show: true, message: "Add some notes first!", type: 'info' },
       }));
-      setTimeout(() => {
+      setGameTimeout(() => {
         setGameState(prev => ({ ...prev, feedback: null }));
       }, 1500);
       return;
@@ -134,7 +125,7 @@ export default function ComposeYourSongGame() {
     }
 
     setGameState(prev => ({ ...prev, isPlaying: false }));
-  }, [gameState.composition, playNote]);
+  }, [gameState.composition, playNote, setGameTimeout]);
 
   const handleSaveComposition = useCallback(() => {
     if (gameState.composition.length === 0) {
@@ -142,7 +133,7 @@ export default function ComposeYourSongGame() {
         ...prev,
         feedback: { show: true, message: "Create a melody first before saving!", type: 'info' },
       }));
-      setTimeout(() => {
+      setGameTimeout(() => {
         setGameState(prev => ({ ...prev, feedback: null }));
       }, 1500);
       return;
@@ -158,10 +149,10 @@ export default function ComposeYourSongGame() {
 
     audioService.playSuccessTone();
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       setGameState(prev => ({ ...prev, feedback: null }));
     }, 2000);
-  }, [gameState.composition]);
+  }, [gameState.composition, setGameTimeout]);
 
   const handlePlaySaved = useCallback(async (compositionIndex: number) => {
     const composition = gameState.savedCompositions[compositionIndex];

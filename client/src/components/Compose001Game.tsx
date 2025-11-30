@@ -1,22 +1,25 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Play, Volume2, RotateCcw, CheckCircle, XCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import { 
-  generateRound, 
-  validateComposition, 
-  calculateScore, 
+import {
+  generateRound,
+  validateComposition,
+  calculateScore,
   getDifficultyProgression,
-  NOTES, 
-  RHYTHM_NOTES, 
+  NOTES,
+  RHYTHM_NOTES,
   CHORDS,
   type GameRound,
   type Composition,
   type ValidationResult
 } from "@/lib/gameLogic/compose-001Logic";
-import { 
-  getAllModes, 
+import {
+  getAllModes,
   getModeDefinition
 } from "@/lib/gameLogic/compose-001Modes";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 type Mode = "melody" | "rhythm" | "harmony";
 
@@ -52,6 +55,15 @@ export const Compose001Game: React.FC = () => {
 
   const audioContext = React.useRef<AudioContext | null>(null);
   const modes = getAllModes();
+
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
 
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -104,12 +116,12 @@ export const Compose001Game: React.FC = () => {
     gameState.selectedNotes.forEach((noteName, index) => {
       const note = NOTES.find(n => n.name === noteName);
       if (note) {
-        setTimeout(() => {
+        setGameTimeout(() => {
           playNote(note.frequency, 0.4);
         }, index * 500);
       }
     });
-  }, [gameState.selectedNotes, playNote]);
+  }, [gameState.selectedNotes, playNote, setGameTimeout]);
 
   const playChord = useCallback((chordName: string) => {
     const chord = CHORDS.find(c => c.name === chordName);
@@ -127,11 +139,11 @@ export const Compose001Game: React.FC = () => {
     if (gameState.selectedChords.length === 0) return;
 
     gameState.selectedChords.forEach((chordName, index) => {
-      setTimeout(() => {
+      setGameTimeout(() => {
         playChord(chordName);
       }, index * 1200);
     });
-  }, [gameState.selectedChords, playChord]);
+  }, [gameState.selectedChords, playChord, setGameTimeout]);
 
   const handleModeChange = (mode: Mode) => {
     setGameState(prev => ({

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Volume2, Play, Pause, RotateCcw, Trophy, Target, Clock, Music } from "lucide-react";
 import { useLocation } from "wouter";
-import { 
-  initializeGame, 
-  generateGameRounds, 
-  updateGameState, 
+import {
+  initializeGame,
+  generateGameRounds,
+  updateGameState,
   calculateGameResults,
   getProgressionAudioData,
   getFeatureAudioData,
@@ -15,6 +15,9 @@ import {
   type GameResult
 } from "@/lib/gameLogic/harmony-003Logic";
 import { HARMONY_MODES, CHORD_PROGRESSIONS, HARMONIC_FEATURES, HARMONIC_RHYTHMS } from "@/lib/gameLogic/harmony-003Modes";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 const Harmony003Game: React.FC = () => {
   const [, setLocation] = useLocation();
@@ -26,17 +29,16 @@ const Harmony003Game: React.FC = () => {
   const [showResult, setShowResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string } | null>(null);
-  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
-  // Initialize audio context
-  useEffect(() => {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    setAudioContext(ctx);
-    return () => {
-      ctx.close();
-    };
-  }, []);
+  // Use audio service hook
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
 
   // Initialize game when mode changes
   const initializeNewGame = useCallback((mode: string, difficulty: number) => {
@@ -51,157 +53,68 @@ const Harmony003Game: React.FC = () => {
 
   // Play chord progression audio
   const playProgressionAudio = useCallback(async (progression: string[], tempo: number = 120) => {
-    if (!audioContext || isPlayingAudio) return;
+    if (!isReady || isPlayingAudio) return;
 
     try {
       setIsPlayingAudio(true);
       const audioData = getProgressionAudioData(progression);
-      const beatDuration = 60000 / tempo; // milliseconds per beat
 
       for (const chord of audioData) {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.type = 'sine';
-        
-        // Create chord by mixing frequencies
-        const gainValues = chord.frequencies.map(() => 1 / chord.frequencies.length);
-        chord.frequencies.forEach((freq, index) => {
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          
-          osc.connect(gain);
-          gain.connect(gainNode);
-          
-          osc.frequency.setValueAtTime(freq, audioContext.currentTime);
-          osc.type = 'sine';
-          gain.gain.setValueAtTime(gainValues[index], audioContext.currentTime);
-          
-          osc.start(audioContext.currentTime);
-          osc.stop(audioContext.currentTime + chord.duration / 1000);
-        });
-
-        // Apply envelope
-        const now = audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.1, now + chord.duration / 1000 - 0.1);
-        gainNode.gain.linearRampToValueAtTime(0, now + chord.duration / 1000);
-
-        await new Promise(resolve => setTimeout(resolve, chord.duration));
+        // Play chord as a phrase (all notes simultaneously)
+        const durations = chord.frequencies.map(() => chord.duration);
+        const dynamics = chord.frequencies.map(() => 0.3);
+        await audio.playPhrase(chord.frequencies, durations, dynamics, 0);
       }
     } catch (error) {
       console.error('Error playing progression:', error);
     } finally {
       setIsPlayingAudio(false);
     }
-  }, [audioContext, isPlayingAudio]);
+  }, [audio, isReady, isPlayingAudio]);
 
   // Play feature audio
   const playFeatureAudio = useCallback(async (featureId: string) => {
-    if (!audioContext || isPlayingAudio) return;
+    if (!isReady || isPlayingAudio) return;
 
     try {
       setIsPlayingAudio(true);
       const audioData = getFeatureAudioData(featureId);
-      
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'sine';
-      
-      // Create feature-specific sound
-      audioData.frequencies.forEach((freq, index) => {
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        
-        osc.connect(gain);
-        gain.connect(gainNode);
-        
-        osc.frequency.setValueAtTime(freq, audioContext.currentTime);
-        osc.type = index === 0 ? 'sine' : 'triangle';
-        gain.gain.setValueAtTime(0.2 / audioData.frequencies.length, audioContext.currentTime);
-        
-        osc.start(audioContext.currentTime);
-        osc.stop(audioContext.currentTime + audioData.duration / 1000);
-      });
-
-      // Apply envelope
-      const now = audioContext.currentTime;
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.4, now + 0.05);
-      gainNode.gain.exponentialRampToValueAtTime(0.1, now + audioData.duration / 1000 - 0.1);
-      gainNode.gain.linearRampToValueAtTime(0, now + audioData.duration / 1000);
-
-      await new Promise(resolve => setTimeout(resolve, audioData.duration));
+      // Play feature as a chord
+      const durations = audioData.frequencies.map(() => audioData.duration);
+      const dynamics = audioData.frequencies.map(() => 0.4);
+      await audio.playPhrase(audioData.frequencies, durations, dynamics, 0);
     } catch (error) {
       console.error('Error playing feature:', error);
     } finally {
       setIsPlayingAudio(false);
     }
-  }, [audioContext, isPlayingAudio]);
+  }, [audio, isReady, isPlayingAudio]);
 
   // Play rhythm audio
   const playRhythmAudio = useCallback(async (rhythmId: string, tempo: number = 120) => {
-    if (!audioContext || isPlayingAudio) return;
+    if (!isReady || isPlayingAudio) return;
 
     try {
       setIsPlayingAudio(true);
       const audioData = getRhythmAudioData(rhythmId);
       const beatDuration = 60000 / tempo;
-      
+
       // Play a simple chord progression with the specified rhythm
-      const progression = ['I', 'IV', 'V', 'I'];
-      let chordIndex = 0;
+      const frequencies = [261.63, 329.63, 392.00]; // C major chord
 
       for (const changes of audioData.chordChanges) {
-        const chordSymbol = progression[chordIndex % progression.length];
-        const frequencies = [261.63, 329.63, 392.00]; // C major chord
-        
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.type = 'sine';
-        
-        frequencies.forEach((freq, index) => {
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          
-          osc.connect(gain);
-          gain.connect(gainNode);
-          
-          osc.frequency.setValueAtTime(freq, audioContext.currentTime);
-          osc.type = 'sine';
-          gain.gain.setValueAtTime(0.2 / frequencies.length, audioContext.currentTime);
-          
-          osc.start(audioContext.currentTime);
-          osc.stop(audioContext.currentTime + (beatDuration * changes) / 1000);
-        });
-
-        const now = audioContext.currentTime;
-        gainNode.gain.setValueAtTime(0, now);
-        gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.1, now + (beatDuration * changes) / 1000 - 0.1);
-        gainNode.gain.linearRampToValueAtTime(0, now + (beatDuration * changes) / 1000);
-
-        await new Promise(resolve => setTimeout(resolve, beatDuration * changes));
-        chordIndex++;
+        const duration = beatDuration * changes;
+        const durations = frequencies.map(() => duration);
+        const dynamics = frequencies.map(() => 0.3);
+        await audio.playPhrase(frequencies, durations, dynamics, 0);
       }
     } catch (error) {
       console.error('Error playing rhythm:', error);
     } finally {
       setIsPlayingAudio(false);
     }
-  }, [audioContext, isPlayingAudio]);
+  }, [audio, isReady, isPlayingAudio]);
 
   // Handle answer selection
   const handleAnswer = useCallback((answer: string) => {
@@ -209,10 +122,10 @@ const Harmony003Game: React.FC = () => {
 
     const timeSpent = Date.now() - roundStartTime;
     setSelectedAnswer(answer);
-    
+
     const currentRound = gameState.rounds[gameState.currentRound];
     const isCorrect = answer === currentRound.answer;
-    
+
     setFeedback({
       correct: isCorrect,
       message: isCorrect ? "Correct! Well done!" : `Incorrect. The answer was ${currentRound.answer}.`
@@ -222,7 +135,7 @@ const Harmony003Game: React.FC = () => {
     setGameState(updatedState);
 
     // Auto-advance after feedback
-    setTimeout(() => {
+    setGameTimeout(() => {
       if (updatedState.currentRound < updatedState.totalRounds) {
         setRoundStartTime(Date.now());
         setSelectedAnswer("");
@@ -232,13 +145,14 @@ const Harmony003Game: React.FC = () => {
         setShowResult(true);
       }
     }, 2000);
-  }, [gameState, isPlaying, feedback, roundStartTime]);
+  }, [gameState, isPlaying, feedback, roundStartTime, setGameTimeout]);
 
   // Start game
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    await initialize();
     initializeNewGame(selectedMode, selectedDifficulty);
     setRoundStartTime(Date.now());
-  }, [selectedMode, selectedDifficulty, initializeNewGame]);
+  }, [initialize, selectedMode, selectedDifficulty, initializeNewGame]);
 
   // Reset game
   const resetGame = useCallback(() => {

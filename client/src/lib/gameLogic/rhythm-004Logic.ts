@@ -15,6 +15,13 @@ export interface GameRound {
 const MODES = ["values", "tuplets", "conversion", "speed-reading"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for rhythm notation mastery
+  // This function should generate questions based on the mode:
+  // - "values": note value identification
+  // - "tuplets": tuplet identification and notation
+  // - "conversion": rhythm conversion exercises
+  // - "speed-reading": rapid rhythm reading
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

@@ -1,10 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, ArrowUp, ArrowDown, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -24,6 +26,9 @@ interface GameState {
 
 export default function MusicalOppositesGame() {
   const [, setLocation] = useLocation();
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
   const [gameState, setGameState] = useState<GameState>({
     score: 0,
     totalQuestions: 0,
@@ -35,14 +40,6 @@ export default function MusicalOppositesGame() {
   });
 
   const [gameStarted, setGameStarted] = useState(false);
-  const audioContext = useRef<AudioContext | null>(null);
-
-  useEffect(() => {
-    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return () => {
-      audioContext.current?.close();
-    };
-  }, []);
 
   useEffect(() => {
     if (gameStarted && !gameState.currentChallenge) {
@@ -51,87 +48,52 @@ export default function MusicalOppositesGame() {
   }, [gameStarted]);
 
   const playPitchChallenge = useCallback(async (isHigher: boolean) => {
-    if (!audioContext.current) return;
-
     const frequency = isHigher ? 523 : 262; // High C vs Low C
-    const duration = 1.0;
+    const duration = 1000; // milliseconds
     const masterVolume = gameState.volume / 100;
 
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
+    audio.setVolume(masterVolume);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = "sine";
-
-    const volume = 0.3 * masterVolume;
-    gainNode.gain.setValueAtTime(volume, audioContext.current.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.current.currentTime + duration);
-
-    oscillator.start(audioContext.current.currentTime);
-    oscillator.stop(audioContext.current.currentTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000 + 200));
-  }, [gameState.volume]);
+    try {
+      await audio.playNoteWithDynamics(frequency, duration, 0.7);
+    } catch (err) {
+      console.error('Failed to play pitch challenge:', err);
+    }
+  }, [gameState.volume, audio]);
 
   const playVolumeChallenge = useCallback(async (isLouder: boolean) => {
-    if (!audioContext.current) return;
-
     const frequency = 440; // A4
-    const duration = 1.0;
+    const duration = 1000; // milliseconds
+    const volumeScale = isLouder ? 1.0 : 0.25; // Louder vs quieter
     const masterVolume = gameState.volume / 100;
 
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
+    audio.setVolume(masterVolume);
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = "sine";
-
-    const volume = (isLouder ? 0.6 : 0.15) * masterVolume;
-    gainNode.gain.setValueAtTime(volume, audioContext.current.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.current.currentTime + duration);
-
-    oscillator.start(audioContext.current.currentTime);
-    oscillator.stop(audioContext.current.currentTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000 + 200));
-  }, [gameState.volume]);
+    try {
+      await audio.playNoteWithDynamics(frequency, duration, volumeScale);
+    } catch (err) {
+      console.error('Failed to play volume challenge:', err);
+    }
+  }, [gameState.volume, audio]);
 
   const playTempoChallenge = useCallback(async (isFaster: boolean) => {
-    if (!audioContext.current) return;
-
     const frequencies = [262, 294, 330, 349]; // C D E F
-    const noteDuration = isFaster ? 0.2 : 0.6; // Fast vs slow
+    const noteDuration = isFaster ? 200 : 600; // Fast vs slow (milliseconds)
     const masterVolume = gameState.volume / 100;
 
-    for (const freq of frequencies) {
-      const oscillator = audioContext.current.createOscillator();
-      const gainNode = audioContext.current.createGain();
+    audio.setVolume(masterVolume);
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.current.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = "sine";
-
-      const volume = 0.3 * masterVolume;
-      const startTime = audioContext.current.currentTime;
-      gainNode.gain.setValueAtTime(volume, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration * 0.9);
-
-      oscillator.start(startTime);
-      oscillator.stop(startTime + noteDuration * 0.9);
-
-      await new Promise(resolve => setTimeout(resolve, noteDuration * 1000));
+    try {
+      await audio.playPhrase(
+        frequencies,
+        frequencies.map(() => noteDuration),
+        frequencies.map(() => 0.7),
+        0.05
+      );
+    } catch (err) {
+      console.error('Failed to play tempo challenge:', err);
     }
-
-    await new Promise(resolve => setTimeout(resolve, 200));
-  }, [gameState.volume]);
+  }, [gameState.volume, audio]);
 
   const generateNewChallenge = useCallback(() => {
     const types: Array<"pitch" | "volume" | "tempo"> = ["pitch", "volume", "tempo"];
@@ -213,20 +175,38 @@ export default function MusicalOppositesGame() {
     }));
 
     if (isCorrect) {
-      audioService.playSuccessTone();
+      audio.playSuccessTone();
     } else {
-      audioService.playErrorTone();
+      audio.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewChallenge();
     }, 2500);
-  }, [gameState.currentChallenge, gameState.hasPlayed, gameState.feedback, generateNewChallenge]);
+  }, [gameState.currentChallenge, gameState.hasPlayed, gameState.feedback, generateNewChallenge, audio, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    if (!isReady) {
+      await initialize();
+    }
     setGameStarted(true);
   };
+
+  // Show audio error if initialization failed
+  if (error) {
+    return (
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4`}>
+        <button
+          onClick={() => setLocation("/")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
+        <AudioErrorFallback error={error} onRetry={initialize} />
+      </div>
+    );
+  }
 
   const decorativeOrbs = generateDecorativeOrbs();
 

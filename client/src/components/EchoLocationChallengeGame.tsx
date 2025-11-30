@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, Headphones, ArrowLeft, ArrowRight, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -47,8 +50,17 @@ export default function EchoLocationChallengeGame() {
 
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     if (!audioContext.current) {
       audioContext.current = new AudioContext();
     }
@@ -139,11 +151,11 @@ export default function EchoLocationChallengeGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       setGameState(prev => ({ ...prev, feedback: null }));
       generateNewQuestion();
     }, 2000);
-  }, [gameState.currentQuestion, gameState.hasPlayed, generateNewQuestion]);
+  }, [gameState.currentQuestion, gameState.hasPlayed, generateNewQuestion, setGameTimeout]);
 
   const decorativeOrbs = generateDecorativeOrbs();
 

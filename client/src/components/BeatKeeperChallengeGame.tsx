@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, Pause, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -44,6 +47,15 @@ export default function BeatKeeperChallengeGame() {
   const lastBeatTime = useRef<number>(0);
   const tapHistory = useRef<TapTiming[]>([]);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout, setInterval: setGameInterval } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   useEffect(() => {
     return () => {
       if (beatIntervalRef.current) {
@@ -53,7 +65,7 @@ export default function BeatKeeperChallengeGame() {
   }, []);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     if (!audioContext.current) {
       audioContext.current = new AudioContext();
     }
@@ -96,12 +108,12 @@ export default function BeatKeeperChallengeGame() {
     // Play first beat immediately
     playBeatSound();
 
-    beatIntervalRef.current = setInterval(() => {
+    beatIntervalRef.current = setGameInterval(() => {
       setGameState(prev => ({ ...prev, currentBeat: prev.currentBeat + 1 }));
       lastBeatTime.current = Date.now();
       playBeatSound();
     }, beatInterval);
-  }, [gameState.tempo, playBeatSound]);
+  }, [gameState.tempo, playBeatSound, setGameInterval]);
 
   const stopBeats = useCallback(() => {
     if (beatIntervalRef.current) {
@@ -154,10 +166,10 @@ export default function BeatKeeperChallengeGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       setGameState(prev => ({ ...prev, feedback: null }));
     }, 1000);
-  }, [gameState.isPlaying, gameState.tempo, playBeatSound]);
+  }, [gameState.isPlaying, gameState.tempo, playBeatSound, setGameTimeout]);
 
   const handleChangeTempo = useCallback((delta: number) => {
     if (gameState.isPlaying) return;

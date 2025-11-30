@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Pause, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -33,15 +36,20 @@ export default function MusicalFreezeDanceGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const [freezeButtonPressed, setFreezeButtonPressed] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
-  const stopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const scoreTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout, clearTimeout: clearGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
 
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
       audioContext.current?.close();
-      if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
-      if (scoreTimeoutRef.current) clearTimeout(scoreTimeoutRef.current);
     };
   }, []);
 
@@ -101,11 +109,11 @@ export default function MusicalFreezeDanceGame() {
     playMusic();
 
     // Schedule the music to stop
-    stopTimeoutRef.current = setTimeout(() => {
+    setGameTimeout(() => {
       setGameState(prev => ({ ...prev, isPlaying: false, hasStopped: true, shouldFreeze: true }));
 
       // Check if user pressed freeze in time
-      scoreTimeoutRef.current = setTimeout(() => {
+      setGameTimeout(() => {
         const pressedInTime = freezeButtonPressed;
 
         setGameState(prev => ({
@@ -123,12 +131,12 @@ export default function MusicalFreezeDanceGame() {
         }
 
         // Start next round after feedback
-        setTimeout(() => {
+        setGameTimeout(() => {
           startRound();
         }, 2500);
       }, 1000); // 1 second window to press freeze after music stops
     }, playDuration);
-  }, [playMusic, freezeButtonPressed]);
+  }, [playMusic, freezeButtonPressed, setGameTimeout]);
 
   const handleFreeze = useCallback(() => {
     if (!gameState.roundActive || gameState.feedback) return;
@@ -137,9 +145,6 @@ export default function MusicalFreezeDanceGame() {
 
     // If music hasn't stopped yet, they pressed too early
     if (gameState.isPlaying) {
-      if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
-      if (scoreTimeoutRef.current) clearTimeout(scoreTimeoutRef.current);
-
       setGameState(prev => ({
         ...prev,
         isPlaying: false,
@@ -152,16 +157,16 @@ export default function MusicalFreezeDanceGame() {
       audioService.playErrorTone();
 
       // Start next round
-      setTimeout(() => {
+      setGameTimeout(() => {
         startRound();
       }, 2500);
     }
-  }, [gameState, startRound]);
+  }, [gameState, startRound, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     setGameStarted(true);
-    setTimeout(() => {
+    setGameTimeout(() => {
       startRound();
     }, 1000);
   };

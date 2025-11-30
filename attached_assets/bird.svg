@@ -1,39 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-  <!-- Bird body - more rounded and stylized -->
-  <ellipse cx="100" cy="110" rx="40" ry="50" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+  <defs>
+    <linearGradient id="birdFeathers" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4DD0E1" />
+      <stop offset="100%" stop-color="#0097A7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Legs -->
+  <path d="M 130 280 L 130 350" stroke="#FBC02D" stroke-width="8" stroke-linecap="round" />
+  <path d="M 170 280 L 170 350" stroke="#FBC02D" stroke-width="8" stroke-linecap="round" />
   
-  <!-- Bird head -->
-  <circle cx="100" cy="70" r="35" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+  <!-- Feet -->
+  <path d="M 130 350 L 115 365 M 130 350 L 130 370 M 130 350 L 145 365" stroke="#FBC02D" stroke-width="5" stroke-linecap="round" />
+  <path d="M 170 350 L 155 365 M 170 350 L 170 370 M 170 350 L 185 365" stroke="#FBC02D" stroke-width="5" stroke-linecap="round" />
+
+  <!-- Tail Feathers -->
+  <path d="M 110 260 L 80 300 L 120 290 Z" fill="#00838F" />
+
+  <!-- Body -->
+  <ellipse cx="150" cy="200" rx="60" ry="90" fill="url(#birdFeathers)" />
+  <ellipse cx="150" cy="210" rx="40" ry="70" fill="#B2EBF2" opacity="0.3" />
+
+  <!-- Wings (Arms) -->
+  <path d="M 95 180 Q 70 230 90 260 L 110 220" fill="#0097A7" />
+  <path d="M 205 180 Q 230 230 210 260 L 190 220" fill="#0097A7" />
+
+  <!-- Head -->
+  <circle cx="150" cy="100" r="50" fill="url(#birdFeathers)" />
   
-  <!-- Bird chest/breast - lighter color -->
-  <ellipse cx="100" cy="100" rx="25" ry="35" fill="#7BB3F0"/>
+  <!-- Tuft -->
+  <path d="M 150 55 Q 140 30 150 20 Q 160 30 160 55" fill="#0097A7" />
+
+  <!-- Eyes -->
+  <circle cx="135" cy="90" r="8" fill="#FFF" />
+  <circle cx="135" cy="90" r="4" fill="#000" />
+  <circle cx="165" cy="90" r="8" fill="#FFF" />
+  <circle cx="165" cy="90" r="4" fill="#000" />
+
+  <!-- Beak -->
+  <path d="M 140 110 L 160 110 L 150 130 Z" fill="#FBC02D" />
+
+  <!-- Bow Tie / Scarf -->
+  <path d="M 130 150 L 150 160 L 170 150 L 150 140 Z" fill="#E91E63" />
   
-  <!-- Bird beak - triangular -->
-  <path d="M 65 75 L 50 80 L 65 85 Z" fill="#FFA500" stroke="#FF8C00" stroke-width="1"/>
-  
-  <!-- Bird eye -->
-  <circle cx="85" cy="65" r="8" fill="#000"/>
-  <circle cx="87" cy="63" r="3" fill="#FFF"/>
-  
-  <!-- Bird wing - more detailed -->
-  <path d="M 70 100 Q 50 90, 45 110 Q 40 130, 60 120 Q 75 115, 85 105" fill="#2E5C8A" stroke="#1A3A5A" stroke-width="2"/>
-  <path d="M 70 100 Q 60 95, 55 105 Q 50 115, 65 110" fill="#5A9FD4"/>
-  
-  <!-- Bird tail feathers - fan shape -->
-  <path d="M 60 140 Q 30 150, 20 160 Q 15 165, 18 170 Q 25 168, 35 165" fill="#2E5C8A" stroke="#1A3A5A" stroke-width="2"/>
-  <path d="M 65 145 Q 40 155, 30 165 Q 25 170, 28 175 Q 35 173, 45 170" fill="#4A90E2" stroke="#2E5C8A" stroke-width="1"/>
-  <path d="M 70 150 Q 50 160, 40 170 Q 35 175, 38 180 Q 45 178, 55 175" fill="#5A9FD4" stroke="#4A90E2" stroke-width="1"/>
-  
-  <!-- Bird legs -->
-  <line x1="85" y1="155" x2="85" y2="175" stroke="#FFA500" stroke-width="5" stroke-linecap="round"/>
-  <line x1="115" y1="155" x2="115" y2="175" stroke="#FFA500" stroke-width="5" stroke-linecap="round"/>
-  
-  <!-- Bird feet/claws -->
-  <path d="M 85 175 L 80 180 L 82 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M 85 175 L 88 180 L 86 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M 115 175 L 110 180 L 112 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <path d="M 115 175 L 118 180 L 116 178" stroke="#FF8C00" stroke-width="3" fill="none" stroke-linecap="round"/>
-  
-  <!-- Decorative wing pattern -->
-  <ellipse cx="75" cy="105" rx="8" ry="12" fill="#7BB3F0" opacity="0.6"/>
+  <!-- Musical Notes floating -->
+  <text x="220" y="80" font-family="Arial" font-size="40" fill="#E91E63">♪</text>
+  <text x="250" y="60" font-family="Arial" font-size="30" fill="#9C27B0">♫</text>
+
 </svg>

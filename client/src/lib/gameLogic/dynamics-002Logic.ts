@@ -15,6 +15,11 @@ export interface GameRound {
 const MODES = ["articulation", "interpretation"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for expression mastery
+  // This function should generate questions based on the mode:
+  // - "articulation": articulation mark identification
+  // - "interpretation": musical interpretation and expression
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

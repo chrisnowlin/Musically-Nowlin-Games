@@ -15,6 +15,9 @@ import {
 } from '@/lib/gameLogic/rhythm-002Modes';
 import { Rhythm002Logic, type GameRound, type Rhythm002State } from '@/lib/gameLogic/rhythm-002Logic';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations } from '@/theme/playful';
+import { useAudioService } from '@/hooks/useAudioService';
+import { useGameCleanup } from '@/hooks/useGameCleanup';
+import AudioErrorFallback from '@/components/AudioErrorFallback';
 
 interface TempoPulseMasterGameProps {
   onGameComplete?: (score: number, totalPossible: number) => void;
@@ -33,6 +36,15 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [roundStartTime, setRoundStartTime] = useState<number>(Date.now());
   const metronomeIntervalRef = useRef<number | null>(null);
+
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout, setInterval: setGameInterval } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
 
   // Initialize audio context
   useEffect(() => {
@@ -88,11 +100,11 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
 
     for (let i = 0; i < totalBeats; i++) {
       playClick();
-      await new Promise(resolve => setTimeout(resolve, beatDuration));
+      await new Promise(resolve => setGameTimeout(resolve, beatDuration));
     }
 
     setIsPlaying(false);
-  }, [audioContext, playClick]);
+  }, [audioContext, playClick, setGameTimeout]);
 
   // Play tempo change pattern
   const playTempoChangePattern = useCallback(async (startTempo: number, endTempo: number) => {
@@ -104,11 +116,11 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
     for (const tempo of tempoSequence) {
       playClick();
       const beatDuration = 60000 / tempo;
-      await new Promise(resolve => setTimeout(resolve, beatDuration));
+      await new Promise(resolve => setGameTimeout(resolve, beatDuration));
     }
 
     setIsPlaying(false);
-  }, [audioContext, currentRound, playClick]);
+  }, [audioContext, currentRound, playClick, setGameTimeout]);
 
   // Play subdivision pattern
   const playSubdivisionPattern = useCallback(async (subdivisionType: string, tempo: number = 120) => {
@@ -128,11 +140,11 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
     for (let i = 0; i < totalNotes; i++) {
       const isDownbeat = i % pattern.divisionsPerBeat === 0;
       playClick(isDownbeat ? 1200 : 800, 0.03);
-      await new Promise(resolve => setTimeout(resolve, noteDuration));
+      await new Promise(resolve => setGameTimeout(resolve, noteDuration));
     }
 
     setIsPlaying(false);
-  }, [audioContext, playClick]);
+  }, [audioContext, playClick, setGameTimeout]);
 
   // Play audio for current round
   const playRoundAudio = useCallback(() => {
@@ -147,7 +159,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
         } else if (currentRound.questionType === 'compare-tempos' && currentRound.audioData) {
           const { tempo1, tempo2 } = currentRound.audioData;
           playTempoPattern(tempo1, 2).then(() => {
-            setTimeout(() => playTempoPattern(tempo2, 2), 500);
+            setGameTimeout(() => playTempoPattern(tempo2, 2), 500);
           });
         }
         break;
@@ -194,7 +206,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
     setGameState(updatedState);
 
     // Check game end
-    setTimeout(() => {
+    setGameTimeout(() => {
       if (updatedState.gameStatus === 'completed') {
         if (onGameComplete) {
           onGameComplete(updatedState.score, updatedState.totalRounds * 100);
@@ -214,13 +226,13 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
         setRoundStartTime(Date.now());
       }
     }, 2000);
-  }, [currentRound, gameState, selectedAnswer, roundStartTime, onGameComplete]);
+  }, [currentRound, gameState, selectedAnswer, roundStartTime, onGameComplete, setGameTimeout]);
 
   // Timer effect
   useEffect(() => {
     if (!currentRound || feedback || timeRemaining <= 0) return;
 
-    const timer = setInterval(() => {
+    const timer = setGameInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
           return 0;
@@ -230,7 +242,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentRound, feedback, timeRemaining]);
+  }, [currentRound, feedback, timeRemaining, setGameInterval]);
 
   // Auto-submit on timeout
   useEffect(() => {

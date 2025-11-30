@@ -1,5 +1,6 @@
+import { memo } from "react";
 import { AnimalCharacter as CharacterType } from "@/lib/schema";
-import { Volume2, Check, X, Sparkles } from "lucide-react";
+import { Volume2, Check, X, Sparkles, Music } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playfulShapes, playfulTypography } from "@/theme/playful";
 import elephantSprites from "@assets/Gemini_Generated_Image_t2nuj7t2nuj7t2nu_1759934375606.png";
@@ -18,7 +19,11 @@ interface AnimalCharacterProps {
   onClick: () => void;
 }
 
-export default function AnimalCharacter({
+/**
+ * AnimalCharacter component - displays an interactive animal character
+ * Memoized to prevent unnecessary re-renders when props haven't changed
+ */
+function AnimalCharacter({
   character,
   position,
   isPlaying,
@@ -86,19 +91,27 @@ export default function AnimalCharacter({
         playfulShapes.borders.thick,
         "transition-all duration-300",
         "transform",
-        !disabled && "cursor-pointer hover:scale-105 hover:-rotate-1",
+        !disabled && "cursor-pointer hover:scale-105 hover:-rotate-1 hover:shadow-2xl hover:border-purple-400",
         disabled && "cursor-not-allowed opacity-90",
-        isPlaying && "ring-4 ring-purple-500 animate-pulse",
+        isPlaying && "ring-8 ring-purple-500/50 scale-105 z-10 shadow-[0_0_30px_rgba(168,85,247,0.5)] border-purple-500",
         isSelected && isCorrect === true && "bg-green-100 dark:bg-green-900/30 border-green-500 scale-105",
         isSelected && isCorrect === false && "bg-red-100 dark:bg-red-900/30 border-red-500",
-        !isSelected && !isPlaying && "border-purple-300 dark:border-purple-700 hover:border-purple-400"
+        !isSelected && !isPlaying && "border-purple-300 dark:border-purple-700"
       )}
     >
       {/* Sound indicator when playing */}
       {isPlaying && (
-        <div className="absolute top-4 right-4 z-10">
-          <Volume2 className="text-purple-600 w-[clamp(2rem,2.8vw,2.75rem)] h-[clamp(2rem,2.8vw,2.75rem)] animate-pulse" />
-        </div>
+        <>
+          <div className="absolute top-4 right-4 z-10">
+            <Volume2 className="text-purple-600 w-[clamp(2rem,2.8vw,2.75rem)] h-[clamp(2rem,2.8vw,2.75rem)] animate-pulse" />
+          </div>
+          {/* Floating musical notes */}
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+             <Music className="text-pink-500 w-8 h-8 animate-float-up absolute -left-4" style={{ animationDelay: '0ms' }} />
+             <Music className="text-blue-500 w-6 h-6 animate-float-up absolute left-4 top-2" style={{ animationDelay: '200ms' }} />
+             <Music className="text-yellow-500 w-10 h-10 animate-float-up absolute left-0 -top-4" style={{ animationDelay: '400ms' }} />
+          </div>
+        </>
       )}
 
       {/* Sparkle effect when hoverable and not disabled */}
@@ -162,3 +175,10 @@ export default function AnimalCharacter({
     </button>
   );
 }
+
+/**
+ * Export memoized version to prevent re-renders when props haven't changed
+ * This is important because AnimalCharacter is rendered multiple times per game
+ * and re-renders can be expensive with animations and images
+ */
+export default memo(AnimalCharacter);

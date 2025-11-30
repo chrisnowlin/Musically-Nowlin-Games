@@ -1,10 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -40,6 +42,9 @@ const MELODY_C_OPTIONS = [
 
 export default function MusicalPatternDetectiveGame() {
   const [, setLocation] = useLocation();
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
   const [gameState, setGameState] = useState<GameState>({
     score: 0,
     totalQuestions: 0,
@@ -51,14 +56,6 @@ export default function MusicalPatternDetectiveGame() {
   });
 
   const [gameStarted, setGameStarted] = useState(false);
-  const audioContext = useRef<AudioContext | null>(null);
-
-  useEffect(() => {
-    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    return () => {
-      audioContext.current?.close();
-    };
-  }, []);
 
   useEffect(() => {
     if (gameStarted && !gameState.currentPattern) {
@@ -67,35 +64,23 @@ export default function MusicalPatternDetectiveGame() {
   }, [gameStarted]);
 
   const playMelody = useCallback(async (melody: number[]) => {
-    if (!audioContext.current) return;
-
     const masterVolume = gameState.volume / 100;
-    const noteDuration = 0.4; // seconds per note
+    audio.setVolume(masterVolume);
 
-    for (const freq of melody) {
-      const oscillator = audioContext.current.createOscillator();
-      const gainNode = audioContext.current.createGain();
+    const noteDuration = 400; // milliseconds per note
+    const gap = 0.05; // gap between notes in seconds
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.current.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = "sine";
-
-      const volume = 0.3 * masterVolume;
-      const startTime = audioContext.current.currentTime;
-      gainNode.gain.setValueAtTime(volume, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration * 0.9);
-
-      oscillator.start(startTime);
-      oscillator.stop(startTime + noteDuration * 0.9);
-
-      await new Promise(resolve => setTimeout(resolve, noteDuration * 1000));
+    try {
+      await audio.playPhrase(
+        melody,
+        melody.map(() => noteDuration),
+        melody.map(() => 0.7),
+        gap
+      );
+    } catch (err) {
+      console.error('Failed to play melody:', err);
     }
-
-    // Small pause between sections
-    await new Promise(resolve => setTimeout(resolve, 300));
-  }, [gameState.volume]);
+  }, [gameState.volume, audio]);
 
   const playFullPattern = useCallback(async (melodies: [number[], number[], number[]]) => {
     if (gameState.isPlaying) return;
@@ -158,20 +143,38 @@ export default function MusicalPatternDetectiveGame() {
     }));
 
     if (isCorrect) {
-      audioService.playSuccessTone();
+      audio.playSuccessTone();
     } else {
-      audioService.playErrorTone();
+      audio.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewPattern();
     }, 2500);
-  }, [gameState.currentPattern, gameState.hasPlayed, gameState.feedback, generateNewPattern]);
+  }, [gameState.currentPattern, gameState.hasPlayed, gameState.feedback, generateNewPattern, audio, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    if (!isReady) {
+      await initialize();
+    }
     setGameStarted(true);
   };
+
+  // Show audio error if initialization failed
+  if (error) {
+    return (
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4`}>
+        <button
+          onClick={() => setLocation("/")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
+        <AudioErrorFallback error={error} onRetry={initialize} />
+      </div>
+    );
+  }
 
   const decorativeOrbs = generateDecorativeOrbs();
 

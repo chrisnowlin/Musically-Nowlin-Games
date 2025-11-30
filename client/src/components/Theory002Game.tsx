@@ -9,7 +9,6 @@ export const Theory002Game: React.FC = () => {
   const decorativeOrbs = generateDecorativeOrbs();
 
   const handleGameComplete = (score: number, totalPossible: number) => {
-    console.log(`Scale Builder completed! Score: ${score}/${totalPossible}`);
     navigate('/games');
   };
 

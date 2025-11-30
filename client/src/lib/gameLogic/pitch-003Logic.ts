@@ -15,6 +15,12 @@ export interface GameRound {
 const MODES = ["transformations", "patterns", "articulations"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for melody transformations
+  // This function should generate questions based on the mode:
+  // - "transformations": melodic transformations (inversion, retrograde, etc.)
+  // - "patterns": melodic patterns and sequences
+  // - "articulations": melodic articulation and expression
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

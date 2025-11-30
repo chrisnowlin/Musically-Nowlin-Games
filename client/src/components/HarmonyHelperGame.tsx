@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Check, X, Volume2, VolumeX, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -55,6 +58,15 @@ export default function HarmonyHelperGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -68,41 +80,22 @@ export default function HarmonyHelperGame() {
     }
   }, [gameStarted]);
 
-  const playInterval = useCallback((semitones: number) => {
-    if (!audioContext.current || gameState.isPlaying) return;
+  const playInterval = useCallback(async (semitones: number) => {
+    if (gameState.isPlaying) return;
 
     setGameState(prev => ({ ...prev, isPlaying: true, hasPlayed: true }));
 
-    const masterVolume = gameState.volume / 100;
-    const duration = 2.5; // seconds
+    const duration = 2500; // 2.5 seconds in ms
 
     // Calculate second frequency
     const freq1 = BASE_FREQUENCY;
     const freq2 = BASE_FREQUENCY * Math.pow(2, semitones / 12);
 
-    // Play both notes simultaneously
-    [freq1, freq2].forEach((freq) => {
-      const oscillator = audioContext.current!.createOscillator();
-      const gainNode = audioContext.current!.createGain();
+    // Play both notes simultaneously using playChord
+    await audio.playChord([freq1, freq2], duration, gameState.volume / 100);
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.current!.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = "sine";
-
-      const volume = 0.25 * masterVolume;
-      gainNode.gain.setValueAtTime(volume, audioContext.current!.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.current!.currentTime + duration);
-
-      oscillator.start(audioContext.current!.currentTime);
-      oscillator.stop(audioContext.current!.currentTime + duration);
-    });
-
-    setTimeout(() => {
-      setGameState(prev => ({ ...prev, isPlaying: false }));
-    }, duration * 1000);
-  }, [gameState.volume, gameState.isPlaying]);
+    setGameState(prev => ({ ...prev, isPlaying: false }));
+  }, [gameState.volume, gameState.isPlaying, audio]);
 
   const generateNewInterval = useCallback(() => {
     const isConsonant = Math.random() > 0.5;
@@ -145,13 +138,13 @@ export default function HarmonyHelperGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewInterval();
     }, 2500);
-  }, [gameState.currentInterval, gameState.hasPlayed, gameState.feedback, generateNewInterval]);
+  }, [gameState.currentInterval, gameState.hasPlayed, gameState.feedback, generateNewInterval, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     setGameStarted(true);
   };
 

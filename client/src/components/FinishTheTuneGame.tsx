@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, Music, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 interface GameState {
   score: number;
@@ -88,8 +91,17 @@ export default function FinishTheTuneGame() {
 
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     if (!audioContext.current) {
       audioContext.current = new AudioContext();
     }
@@ -98,33 +110,11 @@ export default function FinishTheTuneGame() {
   };
 
   const playMelody = useCallback(async (notes: number[]) => {
-    if (!audioContext.current) return;
-
-    const noteDuration = 0.4;
-    const masterVolume = gameState.volume / 100;
-
+    const noteDuration = 400; // 0.4 seconds in ms
     for (const freq of notes) {
-      const oscillator = audioContext.current.createOscillator();
-      const gainNode = audioContext.current.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.current.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = "triangle";
-
-      const volume = 0.3 * masterVolume;
-      const startTime = audioContext.current.currentTime;
-
-      gainNode.gain.setValueAtTime(volume, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
-
-      oscillator.start(startTime);
-      oscillator.stop(startTime + noteDuration);
-
-      await new Promise(resolve => setTimeout(resolve, noteDuration * 1000));
+      await audio.playNote(freq, noteDuration, gameState.volume / 100);
     }
-  }, [gameState.volume]);
+  }, [gameState.volume, audio]);
 
   const generateWrongEndings = useCallback((correctEnding: number[]): number[][] => {
     const allNotes = Object.values(NOTES);
@@ -205,11 +195,11 @@ export default function FinishTheTuneGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       setGameState(prev => ({ ...prev, feedback: null }));
       generateNewQuestion();
     }, 2500);
-  }, [gameState.currentQuestion, gameState.hasPlayedMelody, generateNewQuestion]);
+  }, [gameState.currentQuestion, gameState.hasPlayedMelody, generateNewQuestion, setGameTimeout]);
 
   const decorativeOrbs = generateDecorativeOrbs();
 

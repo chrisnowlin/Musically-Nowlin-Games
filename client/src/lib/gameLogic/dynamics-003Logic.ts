@@ -15,6 +15,11 @@ export interface GameRound {
 const MODES = ["detection", "analysis"];
 
 export function generateRound(mode: string, difficulty: number): GameRound {
+  // TODO: Implement actual question generation logic for emotion mastery
+  // This function should generate questions based on the mode:
+  // - "detection": detecting emotional content in music
+  // - "analysis": analyzing emotional expression
+  // For now, returns placeholder values
   return {
     id: `round-${Date.now()}`,
     mode,

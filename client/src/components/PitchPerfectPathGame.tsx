@@ -5,6 +5,9 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, TrendingUp, TrendingDown, Minus, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useAudioService } from "@/hooks/useAudioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
+import AudioErrorFallback from "@/components/AudioErrorFallback";
 
 type PitchDirection = "ascending" | "descending" | "same";
 
@@ -41,6 +44,15 @@ export default function PitchPerfectPathGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use audio service and cleanup hooks
+  const { audio, isReady, error, initialize } = useAudioService();
+  const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  // Handle audio errors
+  if (error) {
+    return <AudioErrorFallback error={error} onRetry={initialize} />;
+  }
+
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -55,34 +67,12 @@ export default function PitchPerfectPathGame() {
   }, [gameStarted]);
 
   const playSequence = useCallback(async (frequencies: number[]) => {
-    if (!audioContext.current) return;
-
-    const masterVolume = gameState.volume / 100;
-    const noteDuration = 0.5;
+    const noteDuration = 500; // 0.5 seconds in ms
 
     for (const freq of frequencies) {
-      if (!audioContext.current) break;
-
-      const oscillator = audioContext.current.createOscillator();
-      const gainNode = audioContext.current.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.current.destination);
-
-      oscillator.frequency.value = freq;
-      oscillator.type = "sine";
-
-      const volume = 0.3 * masterVolume;
-      const startTime = audioContext.current.currentTime;
-      gainNode.gain.setValueAtTime(volume, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteDuration);
-
-      oscillator.start(startTime);
-      oscillator.stop(startTime + noteDuration);
-
-      await new Promise(resolve => setTimeout(resolve, noteDuration * 1000));
+      await audio.playNote(freq, noteDuration, gameState.volume / 100);
     }
-  }, [gameState.volume]);
+  }, [gameState.volume, audio]);
 
   const generateNewSequence = useCallback(() => {
     const direction = ["ascending", "descending", "same"][Math.floor(Math.random() * 3)] as PitchDirection;
@@ -137,13 +127,13 @@ export default function PitchPerfectPathGame() {
       audioService.playErrorTone();
     }
 
-    setTimeout(() => {
+    setGameTimeout(() => {
       generateNewSequence();
     }, 2500);
-  }, [gameState.currentSequence, gameState.hasPlayed, gameState.feedback, generateNewSequence]);
+  }, [gameState.currentSequence, gameState.hasPlayed, gameState.feedback, generateNewSequence, setGameTimeout]);
 
   const handleStartGame = async () => {
-    await audioService.initialize();
+    await initialize();
     setGameStarted(true);
   };
 

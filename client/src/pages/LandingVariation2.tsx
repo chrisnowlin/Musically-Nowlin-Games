@@ -54,11 +54,21 @@ export default function LandingVariation2() {
 
       {/* Games Dashboard */}
       <main className="max-w-6xl mx-auto px-4 pb-16 relative z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {games
-            .slice()
-            .sort((a, b) => a.title.localeCompare(b.title))
-            .map((game, index) => {
+        {/* Main Games Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="font-fredoka font-bold text-4xl md:text-5xl text-purple-800 dark:text-purple-200 mb-2">
+              Available Now
+            </h2>
+            <p className="font-nunito text-lg text-gray-700 dark:text-gray-300">
+              🎵 Ready to play! 🎵
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {games
+              .filter(game => game.id === "staff-wars" || game.id === "pitch-match")
+              .sort((a, b) => a.title.localeCompare(b.title))
+              .map((game, index) => {
             const Icon = game.icon;
             const isAvailable = game.status === "available";
             const isLocked = game.status === "locked";
@@ -171,6 +181,136 @@ export default function LandingVariation2() {
             );
           })}
         </div>
+        </section>
+
+        {/* Under Development Section */}
+        <section>
+          <div className="text-center mb-8">
+            <h2 className="font-fredoka font-bold text-4xl md:text-5xl text-orange-800 dark:text-orange-200 mb-2">
+              Under Development
+            </h2>
+            <p className="font-nunito text-lg text-gray-700 dark:text-gray-300">
+              🚧 Coming soon! 🚧
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {games
+              .filter(game => game.id !== "staff-wars" && game.id !== "pitch-match")
+              .sort((a, b) => a.title.localeCompare(b.title))
+              .map((game, index) => {
+            const Icon = game.icon;
+            const isAvailable = game.status === "available";
+            const isLocked = game.status === "locked";
+            const isHovered = hoveredGame === game.id;
+            
+            return (
+              <div
+                key={game.id}
+                className="relative"
+                onMouseEnter={() => setHoveredGame(game.id)}
+                onMouseLeave={() => setHoveredGame(null)}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                {/* Floating Card */}
+                <div
+                  className={`
+                    bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl 
+                    transition-all duration-300 overflow-hidden border-4
+                    ${isAvailable ? "border-green-400 hover:border-green-500" : "border-gray-300"}
+                    ${isHovered && isAvailable ? "scale-105 -rotate-1" : ""}
+                    ${!isAvailable ? "opacity-75" : ""}
+                  `}
+                >
+                  {/* Sparkle Effect for Available Games */}
+                  {isAvailable && isHovered && (
+                    <div className="absolute top-2 right-2 z-20">
+                      <Sparkles className="w-8 h-8 text-yellow-400 animate-spin" />
+                    </div>
+                  )}
+
+                  {/* Icon Circle */}
+                  <div className="relative pt-8 pb-4">
+                    <div
+                      className={`
+                        w-24 h-24 mx-auto rounded-full flex items-center justify-center
+                        ${game.color} shadow-lg
+                        ${isHovered && isAvailable ? "animate-bounce" : ""}
+                      `}
+                    >
+                      {isLocked ? (
+                        <Lock className="w-12 h-12 text-white" />
+                      ) : (
+                        <Icon className="w-12 h-12 text-white" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="px-6 pb-6 text-center">
+                    {/* Title */}
+                    <h2 className="font-fredoka font-bold text-2xl md:text-3xl text-foreground mb-2">
+                      {game.title}
+                    </h2>
+
+                    {/* Age Badge */}
+                    {game.ageRange && (
+                      <div className="inline-block bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full font-nunito text-sm font-semibold mb-3">
+                        Ages {game.ageRange}
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">
+                      {game.description}
+                    </p>
+
+                    {/* Status Indicator */}
+                    {isAvailable ? (
+                      <Link href={game.route}>
+                        <Button
+                          className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg"
+                          size="lg"
+                        >
+                          <Play className="w-6 h-6 mr-2" />
+                          Let's Play!
+                        </Button>
+                      </Link>
+                    ) : isLocked ? (
+                      <div className="w-full py-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-fredoka text-xl flex items-center justify-center gap-2">
+                        <Lock className="w-5 h-5" />
+                        Coming Later
+                      </div>
+                    ) : (
+                      <div className="w-full py-6 rounded-full bg-gradient-to-r from-orange-200 to-yellow-200 dark:from-orange-900 dark:to-yellow-900 text-orange-800 dark:text-orange-200 font-fredoka text-xl flex items-center justify-center gap-2">
+                        <Sparkles className="w-5 h-5" />
+                        Coming Soon!
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Difficulty Stars */}
+                {game.difficulty && (
+                  <div className="flex justify-center gap-1 mt-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${
+                          (game.difficulty === "easy" && i === 0) ||
+                          (game.difficulty === "medium" && i <= 1) ||
+                          (game.difficulty === "hard" && i <= 2)
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300 dark:text-gray-600"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        </section>
       </main>
 
       {/* Fun Footer */}
