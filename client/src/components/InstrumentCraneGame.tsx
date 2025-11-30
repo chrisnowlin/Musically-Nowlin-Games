@@ -76,21 +76,21 @@ const INSTRUMENTS: Instrument[] = [
     id: 'saxophone',
     name: 'Saxophone',
     Icon: SaxophoneIcon,
-    audioPath: '/sounds/philharmonia/woodwinds/saxophone/saxophone_A3_1_forte_normal.mp3',
+    audioPath: '/audio/woodwinds/saxophone/saxophone_A3_1_forte_normal.mp3',
     color: 'bg-yellow-400'
   },
   {
     id: 'bassoon',
     name: 'Bassoon',
     Icon: BassoonIcon,
-    audioPath: '/sounds/philharmonia/woodwinds/bassoon/bassoon_A2_1_forte_normal.mp3',
+    audioPath: '/audio/woodwinds/bassoon/bassoon_A2_1_forte_normal.mp3',
     color: 'bg-amber-900'
   },
   {
     id: 'viola',
     name: 'Viola',
     Icon: ViolaIcon,
-    audioPath: '/sounds/philharmonia/strings/viola/viola_C4_1_fortissimo_arco-normal.mp3',
+    audioPath: '/audio/strings/viola/viola_C4_1_fortissimo_arco-normal.mp3',
     color: 'bg-violet-500'
   },
   {
