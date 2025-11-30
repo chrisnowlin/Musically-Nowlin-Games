@@ -437,4 +437,57 @@
   .animate-float-up {
     animation: float-up 1.5s ease-out forwards;
   }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5%); }
+  }
+  .animate-bounce-subtle {
+    animation: bounce-subtle 1s infinite;
+  }
+
+  @keyframes sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+  .animate-sway {
+    animation: sway 2s ease-in-out infinite;
+  }
+
+  @keyframes flap-left {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(20deg); }
+  }
+  .animate-flap-left {
+    transform-origin: 95px 180px;
+    animation: flap-left 0.5s ease-in-out infinite;
+  }
+
+  @keyframes flap-right {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-20deg); }
+  }
+  .animate-flap-right {
+    transform-origin: 205px 180px;
+    animation: flap-right 0.5s ease-in-out infinite;
+  }
+
+  @keyframes float-note-1 {
+    0% { transform: translate(0, 0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(10px, -20px); opacity: 0; }
+  }
+  .animate-float-note-1 {
+    animation: float-note-1 1.5s ease-out infinite;
+  }
+
+  @keyframes float-note-2 {
+    0% { transform: translate(0, 0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(-10px, -30px); opacity: 0; }
+  }
+  .animate-float-note-2 {
+    animation: float-note-2 1.8s ease-out infinite;
+    animation-delay: 0.5s;
+  }
 }

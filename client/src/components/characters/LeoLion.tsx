@@ -1,0 +1,76 @@
+import React from 'react';
+
+interface CharacterProps extends React.SVGProps<SVGSVGElement> {
+  isPlaying?: boolean;
+}
+
+export const LeoLion: React.FC<CharacterProps> = ({ isPlaying, className, ...props }) => {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 300 400" 
+      className={`${className} ${isPlaying ? 'animate-bounce-subtle' : ''}`}
+      {...props}
+    >
+      <defs>
+        <radialGradient id="lionFur" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFD54F" />
+          <stop offset="100%" stopColor="#FFCA28" />
+        </radialGradient>
+        <radialGradient id="maneColor" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FF7043" />
+          <stop offset="100%" stopColor="#E64A19" />
+        </radialGradient>
+      </defs>
+
+      {/* Legs */}
+      <rect x="110" y="280" width="25" height="80" rx="10" fill="#FFCA28" />
+      <rect x="165" y="280" width="25" height="80" rx="10" fill="#FFCA28" />
+      
+      {/* Feet */}
+      <path d="M 105 360 Q 122 370 140 360 L 135 350 L 110 350 Z" fill="#E64A19" /> 
+      <ellipse cx="122" cy="360" rx="18" ry="8" fill="#FFCA28" />
+      <ellipse cx="177" cy="360" rx="18" ry="8" fill="#FFCA28" />
+
+      {/* Tail */}
+      <path d="M 165 250 Q 230 300 240 200" stroke="#FFCA28" strokeWidth="10" fill="none" strokeLinecap="round" className={isPlaying ? 'animate-sway' : ''} />
+      <ellipse cx="240" cy="200" rx="10" ry="15" fill="#E64A19" />
+
+      {/* Body */}
+      <rect x="100" y="160" width="100" height="130" rx="40" fill="url(#lionFur)" />
+      <ellipse cx="150" cy="210" rx="30" ry="50" fill="#FFE082" opacity="0.5" />
+
+      {/* Arms */}
+      <path d="M 100 180 Q 60 220 80 240" stroke="#FFCA28" strokeWidth="20" strokeLinecap="round" />
+      <path d="M 200 180 Q 240 220 220 240" stroke="#FFCA28" strokeWidth="20" strokeLinecap="round" />
+
+      {/* Microphone in hand */}
+      <g transform={isPlaying ? "rotate(-5 217 230)" : ""}>
+        <rect x="210" y="210" width="15" height="40" fill="#424242" transform="rotate(-20 217 230)" />
+        <circle cx="225" cy="205" r="12" fill="#78909C" />
+        <circle cx="225" cy="205" r="14" stroke="#90A4AE" strokeWidth="2" fill="none" />
+      </g>
+
+      {/* Mane */}
+      <circle cx="150" cy="100" r="75" fill="url(#maneColor)" />
+      {/* Mane Spikes (Simplified) */}
+      <path d="M 150 20 L 165 40 L 180 25 L 190 45 L 210 35 L 210 60 L 230 60 L 220 80 L 240 90 L 225 110 L 240 130 L 220 140 L 230 160 L 210 165 L 210 185 L 190 175 L 180 195 L 165 180 L 150 200 L 135 180 L 120 195 L 110 175 L 90 185 L 90 165 L 70 160 L 80 140 L 60 130 L 75 110 L 60 90 L 80 80 L 70 60 L 90 60 L 90 35 L 110 45 L 120 25 L 135 40 Z" fill="#E64A19" opacity="0.3" />
+
+      {/* Ears */}
+      <circle cx="100" cy="70" r="15" fill="#FFCA28" />
+      <circle cx="200" cy="70" r="15" fill="#FFCA28" />
+
+      {/* Head Face */}
+      <circle cx="150" cy="100" r="50" fill="url(#lionFur)" />
+      
+      {/* Face Details */}
+      <circle cx="135" cy="90" r="6" fill="#FFF" />
+      <circle cx="135" cy="90" r="3" fill="#000" />
+      <circle cx="165" cy="90" r="6" fill="#FFF" />
+      <circle cx="165" cy="90" r="3" fill="#000" />
+      
+      <path d="M 140 110 Q 150 120 160 110 L 150 125 Z" fill="#5D4037" /> {/* Nose */}
+      <path d="M 150 125 L 150 135 M 150 135 Q 140 145 130 135 M 150 135 Q 160 145 170 135" stroke="#5D4037" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+};

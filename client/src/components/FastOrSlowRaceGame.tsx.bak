@@ -3,29 +3,14 @@ import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import { Play, HelpCircle, Loader2, Star, Sparkles, ChevronLeft } from "lucide-react";
+import {Play, HelpCircle, Zap, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { LeoLion, MiloMonkey, BellaBird } from "@/components/characters";
-
-const CHARACTERS = [
-  { Component: LeoLion, name: "Leo Lion", id: "leo" },
-  { Component: MiloMonkey, name: "Milo Monkey", id: "milo" },
-  { Component: BellaBird, name: "Bella Bird", id: "bella" },
-];
-
-interface Character {
-  Component: React.ComponentType<any>;
-  name: string;
-  id: string;
-}
 
 interface Round {
   melody: number[];
   tempo1: number; // Duration multiplier (lower = faster)
   tempo2: number;
   correctAnswer: 1 | 2; // Which one is faster
-  character1: Character;
-  character2: Character;
 }
 
 interface GameState {
@@ -40,44 +25,24 @@ const MELODIES = [
   [262, 294, 330, 349], // C D E F
   [392, 440, 494, 523], // G A B C
   [330, 392, 440, 494], // E G A B
-  [262, 330, 392, 523], // C E G C (Major Arpeggio)
-  [523, 494, 440, 392], // C B A G (Descending)
-  [262, 262, 392, 392], // C C G G (Twinkle start)
-  [330, 294, 262, 294, 330], // E D C D E (Mary Had a Little Lamb)
-  [392, 392, 392, 311], // G G G Eb (Beethoven 5th)
-  [262, 277, 294, 311], // C C# D Eb (Chromatic)
-  [262, 262, 262, 392], // C C C G (Fanfare)
-  [330, 262, 294, 196], // E C D G3 (Doorbell)
-  [262, 294, 330, 349, 392], // C D E F G (Scale Run)
-  [262, 392, 294, 440], // C G D A (Jumping Intervals)
-  [220, 262, 330, 440], // A C E A (Minor Arpeggio)
-  [262, 294, 262, 294], // C D C D (Simple Steps)
 ];
 
 function generateRound(): Round {
   const melody = MELODIES[Math.floor(Math.random() * MELODIES.length)];
-  // Wider tempo range: 0.15s (Very Fast) to 1.0s (Very Slow)
-  const tempo1 = 0.15 + Math.random() * 0.85; 
-  const tempo2 = 0.15 + Math.random() * 0.85;
+  const tempo1 = 0.3 + Math.random() * 0.3; // 0.3 to 0.6 seconds per note
+  const tempo2 = 0.3 + Math.random() * 0.3;
   
-  // Ensure tempos are different enough - increased threshold for clarity
+  // Ensure tempos are different enough
   const diff = Math.abs(tempo1 - tempo2);
-  if (diff < 0.25) {
+  if (diff < 0.15) {
     return generateRound(); // Regenerate if too similar
   }
-
-  // Pick two random characters
-  const shuffled = [...CHARACTERS].sort(() => 0.5 - Math.random());
-  const character1 = shuffled[0];
-  const character2 = shuffled[1];
   
   return {
     melody,
     tempo1,
     tempo2,
     correctAnswer: tempo1 < tempo2 ? 1 : 2, // Lower tempo value = faster
-    character1,
-    character2,
   };
 }
 
@@ -101,7 +66,6 @@ export default function FastOrSlowRaceGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const [isLoadingNextRound, setIsLoadingNextRound] = useState(false);
   const [playingCharacter, setPlayingCharacter] = useState<1 | 2 | null>(null);
-  const [volume, setVolume] = useState(75);
 
   const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -111,24 +75,6 @@ export default function FastOrSlowRaceGame() {
       if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
     };
-  }, []);
-
-  // Update volume when changed
-  useEffect(() => {
-    audioService.setVolume(volume / 100);
-  }, [volume]);
-
-  const handleReset = useCallback(() => {
-    setGameState({
-      currentRound: null,
-      score: 0,
-      totalQuestions: 0,
-      isPlaying: false,
-      feedback: null,
-    });
-    setGameStarted(false);
-    if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
   }, []);
 
   const playBothMelodies = useCallback(async (round: Round) => {
@@ -193,7 +139,7 @@ export default function FastOrSlowRaceGame() {
         loadingTimeoutRef.current = null;
       }, 500);
       nextRoundTimeoutRef.current = null;
-    }, 2500);
+    }, 2000);
   }, [gameState, startNewRound]);
 
   const handleStartGame = async () => {
@@ -270,13 +216,7 @@ export default function FastOrSlowRaceGame() {
       ))}
       
       <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-4xl mx-auto w-full">
-        <ScoreDisplay 
-          score={gameState.score} 
-          totalQuestions={gameState.totalQuestions}
-          onReset={handleReset}
-          volume={volume}
-          onVolumeChange={setVolume}
-        />
+        <ScoreDisplay score={gameState.score} total={gameState.totalQuestions} />
 
         <div className="mt-8 mb-8">
           <h2 className={`${playfulTypography.headings.h2} text-center text-gray-800 dark:text-gray-200`}>
@@ -286,75 +226,47 @@ export default function FastOrSlowRaceGame() {
 
         {gameState.currentRound && (
           <div className="w-full space-y-8">
-            <div className="grid grid-cols-2 gap-8 max-w-3xl mx-auto">
-              {/* Character 1 */}
+            <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
               <button
                 onClick={() => handleAnswer(1)}
                 disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
                 className={`
-                  ${playfulShapes.rounded.card} ${playfulShapes.shadows.card} p-6 pb-8
-                  transition-all duration-300 transform relative overflow-hidden
-                  ${playingCharacter === 1 ? 'scale-105 bg-orange-100 dark:bg-orange-900/30 ring-4 ring-orange-400' : 'bg-white dark:bg-gray-800'}
+                  ${playfulShapes.rounded.card} ${playfulShapes.shadows.card} p-8
+                  transition-all duration-300 transform
+                  ${playingCharacter === 1 ? 'scale-110 bg-orange-200 dark:bg-orange-900' : 'bg-white dark:bg-gray-800'}
                   ${gameState.feedback?.show && gameState.currentRound.correctAnswer === 1 
-                    ? 'bg-green-100 dark:bg-green-900/50 border-4 border-green-500 scale-105' 
+                    ? 'bg-green-100 dark:bg-green-900 border-4 border-green-500' 
                     : gameState.feedback?.show && gameState.feedback.isCorrect === false && playingCharacter !== 1
-                    ? 'opacity-50 grayscale'
+                    ? 'opacity-50'
                     : 'hover:scale-105'
                   }
                   disabled:cursor-not-allowed
-                  flex flex-col items-center gap-4 group
+                  flex flex-col items-center gap-4
                 `}
               >
-                <div className="w-48 h-48 relative">
-                   <gameState.currentRound.character1.Component 
-                     className={`w-full h-full transition-transform duration-300 ${playingCharacter === 1 ? 'scale-110' : ''}`}
-                     isPlaying={playingCharacter === 1}
-                   />
-                   {/* Speed indicator when playing */}
-                   {playingCharacter === 1 && (
-                     <div className="absolute -top-4 -right-4 bg-yellow-400 text-white p-2 rounded-full animate-bounce">
-                       <span className="text-2xl">🎵</span>
-                     </div>
-                   )}
-                </div>
-                <span className={`${playfulTypography.headings.h3} group-hover:text-orange-600 transition-colors`}>
-                  {gameState.currentRound.character1.name}
-                </span>
+                <Zap className={`w-24 h-24 ${playingCharacter === 1 ? 'text-orange-600 animate-pulse' : 'text-orange-500'}`} />
+                <span className={playfulTypography.headings.h3}>Animal 1</span>
               </button>
 
-              {/* Character 2 */}
               <button
                 onClick={() => handleAnswer(2)}
                 disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
                 className={`
-                  ${playfulShapes.rounded.card} ${playfulShapes.shadows.card} p-6 pb-8
-                  transition-all duration-300 transform relative overflow-hidden
-                  ${playingCharacter === 2 ? 'scale-105 bg-orange-100 dark:bg-orange-900/30 ring-4 ring-orange-400' : 'bg-white dark:bg-gray-800'}
+                  ${playfulShapes.rounded.card} ${playfulShapes.shadows.card} p-8
+                  transition-all duration-300 transform
+                  ${playingCharacter === 2 ? 'scale-110 bg-orange-200 dark:bg-orange-900' : 'bg-white dark:bg-gray-800'}
                   ${gameState.feedback?.show && gameState.currentRound.correctAnswer === 2 
-                    ? 'bg-green-100 dark:bg-green-900/50 border-4 border-green-500 scale-105' 
+                    ? 'bg-green-100 dark:bg-green-900 border-4 border-green-500' 
                     : gameState.feedback?.show && gameState.feedback.isCorrect === false && playingCharacter !== 2
-                    ? 'opacity-50 grayscale'
+                    ? 'opacity-50'
                     : 'hover:scale-105'
                   }
                   disabled:cursor-not-allowed
-                  flex flex-col items-center gap-4 group
+                  flex flex-col items-center gap-4
                 `}
               >
-                <div className="w-48 h-48 relative">
-                   <gameState.currentRound.character2.Component 
-                     className={`w-full h-full transition-transform duration-300 ${playingCharacter === 2 ? 'scale-110' : ''}`}
-                     isPlaying={playingCharacter === 2}
-                   />
-                   {/* Speed indicator when playing */}
-                   {playingCharacter === 2 && (
-                     <div className="absolute -top-4 -right-4 bg-yellow-400 text-white p-2 rounded-full animate-bounce">
-                       <span className="text-2xl">🎵</span>
-                     </div>
-                   )}
-                </div>
-                <span className={`${playfulTypography.headings.h3} group-hover:text-orange-600 transition-colors`}>
-                  {gameState.currentRound.character2.name}
-                </span>
+                <Zap className={`w-24 h-24 ${playingCharacter === 2 ? 'text-orange-600 animate-pulse' : 'text-orange-500'}`} />
+                <span className={playfulTypography.headings.h3}>Animal 2</span>
               </button>
             </div>
 
@@ -364,35 +276,30 @@ export default function FastOrSlowRaceGame() {
                 disabled={gameState.isPlaying || isLoadingNextRound}
                 size="lg"
                 variant="outline"
-                className={`${playfulShapes.rounded.button} min-w-[200px]`}
+                className={`${playfulShapes.rounded.button}`}
               >
                 {gameState.isPlaying ? (
-                  <>
-                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                    Listening...
-                  </>
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
                 ) : (
-                  <>
-                    <Play className="w-6 h-6 mr-2" />
-                    Play Again
-                  </>
+                  <Play className="w-6 h-6 mr-2" />
                 )}
+                Play Again
               </Button>
             </div>
 
             {gameState.feedback?.show && (
               <div className={`text-center p-6 ${playfulShapes.rounded.container} ${
                 gameState.feedback.isCorrect ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'
-              } max-w-xl mx-auto transform animate-in fade-in slide-in-from-bottom-4 duration-300`}>
+              }`}>
                 <p className={playfulTypography.headings.h3}>
                   {gameState.feedback.isCorrect ? (
                     <>
-                      <Star className="inline w-8 h-8 mr-2 text-yellow-500 animate-spin-slow" />
-                      Correct! {gameState.currentRound.correctAnswer === 1 ? gameState.currentRound.character1.name : gameState.currentRound.character2.name} was faster!
-                      <Sparkles className="inline w-8 h-8 ml-2 text-yellow-500 animate-pulse" />
+                      <Star className="inline w-8 h-8 mr-2 text-yellow-500" />
+                      Correct! Great ear for tempo!
+                      <Sparkles className="inline w-8 h-8 ml-2 text-yellow-500" />
                     </>
                   ) : (
-                    <>Try again! Listen carefully to who finishes first.</>
+                    <>Try again! Listen carefully to the speed.</>
                   )}
                 </p>
               </div>
@@ -403,3 +310,4 @@ export default function FastOrSlowRaceGame() {
     </div>
   );
 }
+
