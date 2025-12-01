@@ -201,49 +201,7 @@ export default function InstrumentCraneGame() {
   // Fixed positions for 4 items
   const POSITIONS = [20, 40, 60, 80];
 
-  // Initialize Round
-  const startRound = useCallback((autoPlay: boolean = false) => {
-    // Pick random target instrument
-    const targetInst = INSTRUMENTS[Math.floor(Math.random() * INSTRUMENTS.length)];
-    setCurrentInstrument(targetInst);
-
-    // Generate targets on the fixed positions (ensure target is included + 3 random distractors)
-    const distractors = INSTRUMENTS.filter(i => i.id !== targetInst.id)
-                                   .sort(() => Math.random() - 0.5)
-                                   .slice(0, 3);
-    
-    const roundInstruments = [targetInst, ...distractors].sort(() => Math.random() - 0.5);
-
-    const newTargets = roundInstruments.map((inst, i) => ({
-      id: `target-${i}-${inst.id}`,
-      instrument: inst,
-      xPos: POSITIONS[i]
-    }));
-    
-    setTargets(newTargets);
-    setCraneIndex(1); // Reset to roughly center-left
-    setCraneState('idle');
-    setCaughtTargetId(null);
-    setFeedback(null);
-    setHasPlayedSound(false); // Reset sound played state for new round
-    
-    // Only auto-play on first round (triggered by user's Start button)
-    // Subsequent rounds should not auto-play to avoid iOS audio restrictions
-    if (autoPlay) {
-      setHasPlayedSound(true);
-      setGameTimeout(() => {
-        playInstrumentSound(targetInst.audioPath);
-      }, 500);
-    }
-  }, [setGameTimeout, playInstrumentSound]);
-
-  const handleStartGame = () => {
-    audioService.playClickSound();
-    setGameStarted(true);
-    // Pass true to auto-play on first round - user just clicked Start button
-    startRound(true);
-  };
-
+  // Play instrument sound - defined first so it can be used by startRound
   const playInstrumentSound = useCallback((path: string) => {
     // Stop any currently playing audio
     if (audioRef.current) {
@@ -300,6 +258,49 @@ export default function InstrumentCraneGame() {
       });
     }
   }, []);
+
+  // Initialize Round
+  const startRound = useCallback((autoPlay: boolean = false) => {
+    // Pick random target instrument
+    const targetInst = INSTRUMENTS[Math.floor(Math.random() * INSTRUMENTS.length)];
+    setCurrentInstrument(targetInst);
+
+    // Generate targets on the fixed positions (ensure target is included + 3 random distractors)
+    const distractors = INSTRUMENTS.filter(i => i.id !== targetInst.id)
+                                   .sort(() => Math.random() - 0.5)
+                                   .slice(0, 3);
+    
+    const roundInstruments = [targetInst, ...distractors].sort(() => Math.random() - 0.5);
+
+    const newTargets = roundInstruments.map((inst, i) => ({
+      id: `target-${i}-${inst.id}`,
+      instrument: inst,
+      xPos: POSITIONS[i]
+    }));
+    
+    setTargets(newTargets);
+    setCraneIndex(1); // Reset to roughly center-left
+    setCraneState('idle');
+    setCaughtTargetId(null);
+    setFeedback(null);
+    setHasPlayedSound(false); // Reset sound played state for new round
+    
+    // Only auto-play on first round (triggered by user's Start button)
+    // Subsequent rounds should not auto-play to avoid iOS audio restrictions
+    if (autoPlay) {
+      setHasPlayedSound(true);
+      setGameTimeout(() => {
+        playInstrumentSound(targetInst.audioPath);
+      }, 500);
+    }
+  }, [setGameTimeout, playInstrumentSound]);
+
+  const handleStartGame = () => {
+    audioService.playClickSound();
+    setGameStarted(true);
+    // Pass true to auto-play on first round - user just clicked Start button
+    startRound(true);
+  };
 
   // Crane Controls
   const moveCrane = (direction: 'left' | 'right') => {
