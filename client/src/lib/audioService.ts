@@ -88,6 +88,7 @@ export class AudioService {
   private initializationError: Error | null = null;
   private audioBufferCache: Map<string, AudioBuffer> = new Map();
   private currentSampleSource: AudioBufferSourceNode | null = null;
+  private isUnlocked: boolean = false; // Track if audio has been unlocked by user gesture
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -133,10 +134,30 @@ export class AudioService {
     if (this.audioContext && this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume();
+        // Mark as unlocked once context is successfully resumed
+        if (this.audioContext.state === 'running') {
+          this.isUnlocked = true;
+        }
       } catch (error) {
         throw new AudioError('Failed to resume audio context. Please check your browser permissions.');
       }
+    } else if (this.audioContext && this.audioContext.state === 'running') {
+      this.isUnlocked = true;
     }
+  }
+
+  /**
+   * Check if audio has been unlocked by user gesture
+   */
+  isAudioUnlocked(): boolean {
+    return this.isUnlocked;
+  }
+
+  /**
+   * Clear the audio buffer cache (useful when re-initializing after user gesture)
+   */
+  clearCache(): void {
+    this.audioBufferCache.clear();
   }
 
   /**
@@ -367,13 +388,25 @@ export class AudioService {
    * @param urls - Array of audio file URLs to preload
    */
   async preloadSamples(urls: string[]): Promise<void> {
-    await this.ensureAudioContext();
-    
+    // On iOS Safari, preloading before user gesture will fail
+    // Skip preloading if the audio context is suspended
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      // Don't even try - it won't work on iOS Safari
+      return;
+    }
+
+    try {
+      await this.ensureAudioContext();
+    } catch {
+      // Can't resume context yet, skip preloading
+      return;
+    }
+
     const loadPromises = urls.map(async (url) => {
       if (this.audioBufferCache.has(url)) {
         return; // Already cached
       }
-      
+
       try {
         const response = await fetch(url);
         if (!response.ok) {

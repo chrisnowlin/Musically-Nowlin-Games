@@ -274,7 +274,19 @@ export default function InstrumentCraneGame() {
     }
   }, [setGameTimeout, playInstrumentSound]);
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
+    // CRITICAL for iOS Safari: Initialize audio context in direct response to user gesture
+    // This must happen BEFORE any audio operations
+    try {
+      await audioService.initialize();
+    } catch (e) {
+      console.warn('Audio initialization warning:', e);
+    }
+
+    // Now audio should be unlocked, preload all instrument sounds
+    const allAudioPaths = INSTRUMENTS.map(i => i.audioPath);
+    audioService.preloadSamples(allAudioPaths);
+
     audioService.playClickSound();
     setGameStarted(true);
     // Pass true to auto-play on first round - user just clicked Start button
