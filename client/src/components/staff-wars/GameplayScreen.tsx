@@ -156,7 +156,7 @@ export default function GameplayScreen({
   };
 
   return (
-    <div className="w-full h-screen overflow-hidden flex flex-col bg-gradient-to-b from-slate-900 to-black relative">
+    <div className="w-full h-[100dvh] overflow-hidden flex flex-col bg-gradient-to-b from-slate-900 to-black relative">
       {/* Starfield background effect (CSS) */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
          <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full shadow-[0_0_5px_white]" />
@@ -170,7 +170,7 @@ export default function GameplayScreen({
         style={{
           padding: `${layout.padding * 0.5}px`,
           gap: `${layout.padding * 0.5}px`,
-          maxHeight: '100vh'
+          maxHeight: '100dvh'
         }}
       >
         {/* HUD Bar */}

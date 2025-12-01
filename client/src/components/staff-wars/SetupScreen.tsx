@@ -39,7 +39,7 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
 
   return (
     <div
-      className="w-full mx-auto h-screen flex items-center justify-center overflow-hidden relative"
+      className="w-full mx-auto h-[100dvh] flex items-center justify-center overflow-hidden relative"
       style={{
         maxWidth: `${layout.maxContentWidth}px`,
         padding: `${layout.padding}px`

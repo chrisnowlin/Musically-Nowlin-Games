@@ -17,43 +17,42 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
   const layout = useResponsiveLayout();
 
   return (
-    <>
-      {/* Overlay Background */}
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <Card
-          className="bg-slate-900/90 border-slate-700 w-full max-h-full overflow-y-auto my-auto shadow-2xl relative overflow-hidden"
-          style={{
-            maxWidth: `${Math.min(layout.maxContentWidth, 448)}px`,
-            padding: 0
-          }}
-        >
-          {/* Decoration */}
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-          
-          <CardHeader className="text-center pb-2 pt-8">
-            <div className="mx-auto w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 ring-4 ring-slate-800 border-2 border-slate-700 shadow-lg relative">
-              {isNewHighScore ? (
-                <>
-                  <Trophy className="w-10 h-10 text-yellow-400 animate-pulse" />
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-slate-800">
-                    <span className="text-[10px] font-bold text-white">NEW</span>
-                  </div>
-                </>
-              ) : (
-                <Medal className="w-10 h-10 text-slate-400" />
-              )}
-            </div>
-            <CardTitle
-              className="font-bold text-3xl text-white mb-1"
-            >
-              {isNewHighScore ? 'New High Score!' : 'Game Over'}
-            </CardTitle>
-            <p className="text-slate-400 text-sm">
-              {isNewHighScore ? 'Outstanding performance, cadet!' : 'Good effort! Try again to improve.'}
-            </p>
-          </CardHeader>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4">
+          <Card
+            className="relative w-full overflow-hidden bg-slate-900/90 shadow-2xl border-slate-700"
+            style={{
+              maxWidth: `${Math.min(layout.maxContentWidth, 448)}px`,
+              padding: 0
+            }}
+          >
+            {/* Decoration */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+            
+            <CardHeader className="text-center pb-2 pt-8">
+              <div className="mx-auto w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 ring-4 ring-slate-800 border-2 border-slate-700 shadow-lg relative">
+                {isNewHighScore ? (
+                  <>
+                    <Trophy className="w-10 h-10 text-yellow-400 animate-pulse" />
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-slate-800">
+                      <span className="text-[10px] font-bold text-white">NEW</span>
+                    </div>
+                  </>
+                ) : (
+                  <Medal className="w-10 h-10 text-slate-400" />
+                )}
+              </div>
+              <CardTitle
+                className="font-bold text-3xl text-white mb-1"
+              >
+                {isNewHighScore ? 'New High Score!' : 'Game Over'}
+              </CardTitle>
+              <p className="text-slate-400 text-sm">
+                {isNewHighScore ? 'Outstanding performance, cadet!' : 'Good effort! Try again to improve.'}
+              </p>
+            </CardHeader>
 
-          <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6 space-y-6">
             {/* Final Score */}
             <div className="text-center py-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
               <p className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-1">
@@ -128,7 +127,7 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }
 
