@@ -89,6 +89,9 @@ export class AudioService {
   private audioBufferCache: Map<string, AudioBuffer> = new Map();
   private currentSampleSource: AudioBufferSourceNode | null = null;
   private isUnlocked: boolean = false; // Track if audio has been unlocked by user gesture
+  private scratchBuffer: AudioBuffer | null = null; // Silent buffer for iOS unlock
+  private html5AudioPool: HTMLAudioElement[] = []; // Pool of unlocked HTML5 Audio elements
+  private unlockListenersAttached: boolean = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -103,10 +106,140 @@ export class AudioService {
         this.masterGain = this.audioContext.createGain();
         this.masterGain.gain.value = this.currentVolume; // Reduced volume for children's ears
         this.masterGain.connect(this.audioContext.destination);
+
+        // Create a scratch buffer for iOS unlock (1 sample of silence at 22050Hz)
+        // This is the Howler.js pattern that actually works on iOS
+        this.scratchBuffer = this.audioContext.createBuffer(1, 1, 22050);
+
+        // Attach unlock listeners for iOS Safari
+        this.attachUnlockListeners();
       } catch (error) {
         this.initializationError = error instanceof Error ? error : new AudioError('Failed to initialize audio context');
         console.error('Audio initialization failed:', this.initializationError);
       }
+    }
+  }
+
+  /**
+   * Attach event listeners to unlock audio on first user interaction
+   * This is required for iOS Safari - based on Howler.js implementation
+   */
+  private attachUnlockListeners(): void {
+    if (this.unlockListenersAttached || typeof document === 'undefined') return;
+
+    const unlock = () => {
+      // Already unlocked
+      if (this.isUnlocked) return;
+
+      // Try to unlock Web Audio by playing a scratch buffer
+      this.unlockWebAudio();
+
+      // Create pool of unlocked HTML5 Audio elements as fallback
+      this.createHtml5AudioPool();
+    };
+
+    // Listen for multiple event types - iOS has been picky about which events work
+    // touchend is most reliable on iOS, but we listen to all for maximum compatibility
+    document.addEventListener('touchstart', unlock, true);
+    document.addEventListener('touchend', unlock, true);
+    document.addEventListener('click', unlock, true);
+    document.addEventListener('keydown', unlock, true);
+
+    this.unlockListenersAttached = true;
+  }
+
+  /**
+   * Unlock Web Audio by playing a silent scratch buffer
+   * This is the key technique from Howler.js that makes iOS work
+   */
+  private unlockWebAudio(): void {
+    if (!this.audioContext || !this.scratchBuffer) return;
+
+    try {
+      // Create and play an empty buffer
+      const source = this.audioContext.createBufferSource();
+      source.buffer = this.scratchBuffer;
+      source.connect(this.audioContext.destination);
+
+      // Use noteOn for older iOS, start for modern browsers
+      if (typeof source.start === 'undefined') {
+        (source as any).noteOn(0);
+      } else {
+        source.start(0);
+      }
+
+      // Also call resume() for good measure
+      if (typeof this.audioContext.resume === 'function') {
+        this.audioContext.resume();
+      }
+
+      // Check if we're actually unlocked
+      source.onended = () => {
+        source.disconnect(0);
+
+        if (this.audioContext && this.audioContext.state === 'running') {
+          this.isUnlocked = true;
+          console.log('Web Audio unlocked successfully');
+
+          // Remove unlock listeners now that we're unlocked
+          this.removeUnlockListeners();
+        }
+      };
+    } catch (e) {
+      console.warn('Failed to unlock Web Audio:', e);
+    }
+  }
+
+  /**
+   * Create a pool of unlocked HTML5 Audio elements for fallback playback
+   */
+  private createHtml5AudioPool(): void {
+    const poolSize = 5;
+    while (this.html5AudioPool.length < poolSize) {
+      try {
+        const audio = new Audio();
+        // Load a tiny data URI to "unlock" the audio element
+        audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        audio.load();
+        (audio as any)._unlocked = true;
+        this.html5AudioPool.push(audio);
+      } catch (e) {
+        break;
+      }
+    }
+  }
+
+  /**
+   * Remove unlock event listeners after successful unlock
+   */
+  private removeUnlockListeners(): void {
+    if (typeof document === 'undefined') return;
+
+    const noop = () => {};
+    document.removeEventListener('touchstart', noop, true);
+    document.removeEventListener('touchend', noop, true);
+    document.removeEventListener('click', noop, true);
+    document.removeEventListener('keydown', noop, true);
+  }
+
+  /**
+   * Get an HTML5 Audio element from the pool (for fallback playback)
+   */
+  private getHtml5Audio(): HTMLAudioElement {
+    if (this.html5AudioPool.length > 0) {
+      return this.html5AudioPool.pop()!;
+    }
+    return new Audio();
+  }
+
+  /**
+   * Return an HTML5 Audio element to the pool
+   */
+  private releaseHtml5Audio(audio: HTMLAudioElement): void {
+    if ((audio as any)._unlocked && this.html5AudioPool.length < 5) {
+      audio.pause();
+      audio.currentTime = 0;
+      this.html5AudioPool.push(audio);
     }
   }
 
@@ -296,76 +429,142 @@ export class AudioService {
   }
 
   /**
-   * Play an audio sample file using Web Audio API (more reliable on iOS Safari)
+   * Play an audio sample file using Web Audio API with HTML5 Audio fallback
    * @param url - URL path to the audio file (e.g., '/audio/strings/violin/violin_A4.mp3')
    * @param repeatCount - Number of times to play the sample (default 1)
    * @returns Promise that resolves when playback completes
    */
   async playSample(url: string, repeatCount: number = 1): Promise<void> {
+    // Try Web Audio API first, fall back to HTML5 Audio if it fails
     try {
-      await this.ensureAudioContext();
-      this.ensureAudioAvailable();
+      await this.playSampleWebAudio(url, repeatCount);
+    } catch (webAudioError) {
+      console.warn('Web Audio failed, trying HTML5 Audio fallback:', webAudioError);
+      try {
+        await this.playSampleHtml5(url, repeatCount);
+      } catch (html5Error) {
+        console.error('Both Web Audio and HTML5 Audio failed:', html5Error);
+        throw new AudioError(`Failed to play sample: ${url}`);
+      }
+    }
+  }
 
-      // Stop any currently playing sample
-      if (this.currentSampleSource) {
+  /**
+   * Play sample using Web Audio API
+   */
+  private async playSampleWebAudio(url: string, repeatCount: number): Promise<void> {
+    await this.ensureAudioContext();
+    this.ensureAudioAvailable();
+
+    // Stop any currently playing sample
+    if (this.currentSampleSource) {
+      try {
+        this.currentSampleSource.stop();
+        this.currentSampleSource.disconnect();
+      } catch (e) {
+        // Ignore - source may already be stopped
+      }
+      this.currentSampleSource = null;
+    }
+
+    // Check cache first
+    let audioBuffer = this.audioBufferCache.get(url);
+
+    if (!audioBuffer) {
+      // Fetch and decode the audio file
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new AudioError(`Failed to fetch audio file: ${url}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      audioBuffer = await this.decodeAudioData(arrayBuffer);
+
+      // Cache the buffer for future use
+      this.audioBufferCache.set(url, audioBuffer);
+    }
+
+    // Play the sample the specified number of times
+    let playCount = 0;
+
+    const playOnce = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
         try {
-          this.currentSampleSource.stop();
-          this.currentSampleSource.disconnect();
-        } catch (e) {
-          // Ignore - source may already be stopped
-        }
-        this.currentSampleSource = null;
-      }
-
-      // Check cache first
-      let audioBuffer = this.audioBufferCache.get(url);
-
-      if (!audioBuffer) {
-        // Fetch and decode the audio file
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new AudioError(`Failed to fetch audio file: ${url}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await this.decodeAudioData(arrayBuffer);
-        
-        // Cache the buffer for future use
-        this.audioBufferCache.set(url, audioBuffer);
-      }
-
-      // Play the sample the specified number of times
-      let playCount = 0;
-      
-      const playOnce = (): Promise<void> => {
-        return new Promise((resolve) => {
           const source = this.audioContext!.createBufferSource();
           source.buffer = audioBuffer!;
           source.connect(this.masterGain!);
-          
+
           this.currentSampleSource = source;
-          
+
           source.onended = () => {
             playCount++;
             if (playCount < repeatCount) {
               // Small delay between repeats
               setTimeout(() => {
-                playOnce().then(resolve);
+                playOnce().then(resolve).catch(reject);
               }, 100);
             } else {
               this.currentSampleSource = null;
               resolve();
             }
           };
-          
+
           source.start(0);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    };
+
+    await playOnce();
+  }
+
+  /**
+   * Play sample using HTML5 Audio (fallback for iOS Safari issues)
+   */
+  private async playSampleHtml5(url: string, repeatCount: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const audio = this.getHtml5Audio();
+      let playCount = 0;
+
+      const playOnce = () => {
+        audio.src = url;
+        audio.volume = this.currentVolume;
+
+        const onEnded = () => {
+          playCount++;
+          if (playCount < repeatCount) {
+            setTimeout(() => {
+              audio.currentTime = 0;
+              audio.play().catch(reject);
+            }, 100);
+          } else {
+            audio.removeEventListener('ended', onEnded);
+            audio.removeEventListener('error', onError);
+            this.releaseHtml5Audio(audio);
+            resolve();
+          }
+        };
+
+        const onError = (e: Event) => {
+          audio.removeEventListener('ended', onEnded);
+          audio.removeEventListener('error', onError);
+          this.releaseHtml5Audio(audio);
+          reject(new AudioError(`HTML5 Audio error: ${(e as ErrorEvent).message || 'unknown'}`));
+        };
+
+        audio.addEventListener('ended', onEnded);
+        audio.addEventListener('error', onError);
+
+        audio.play().catch((e) => {
+          audio.removeEventListener('ended', onEnded);
+          audio.removeEventListener('error', onError);
+          this.releaseHtml5Audio(audio);
+          reject(e);
         });
       };
 
-      await playOnce();
-    } catch (error) {
-      console.error(`Failed to play sample ${url}:`, error);
-      throw error instanceof AudioError ? error : new AudioError(`Failed to play sample: ${error}`);
-    }
+      playOnce();
+    });
   }
 
   /**
@@ -602,6 +801,7 @@ export class AudioService {
   /**
    * Initialize audio context on user interaction
    * Required for browsers that block audio until user gesture
+   * MUST be called from a user gesture (click/touch) handler on iOS Safari
    * @throws AudioError if initialization fails
    */
   async initialize(): Promise<void> {
@@ -616,12 +816,52 @@ export class AudioService {
         this.masterGain = this.audioContext.createGain();
         this.masterGain.gain.value = this.currentVolume;
         this.masterGain.connect(this.audioContext.destination);
+
+        // Create scratch buffer for iOS unlock
+        this.scratchBuffer = this.audioContext.createBuffer(1, 1, 22050);
+
         this.initializationError = null;
       } catch (error) {
         this.initializationError = error instanceof Error ? error : new AudioError('Failed to initialize audio');
         throw this.initializationError;
       }
     }
+
+    // CRITICAL: On iOS Safari, we must play a scratch buffer AND call resume()
+    // Just calling resume() is not enough!
+    if (this.audioContext && this.scratchBuffer && !this.isUnlocked) {
+      try {
+        // Play silent scratch buffer - this is what actually unlocks iOS audio
+        const source = this.audioContext.createBufferSource();
+        source.buffer = this.scratchBuffer;
+        source.connect(this.audioContext.destination);
+
+        if (typeof source.start === 'undefined') {
+          (source as any).noteOn(0);
+        } else {
+          source.start(0);
+        }
+
+        // Also resume the context
+        if (typeof this.audioContext.resume === 'function') {
+          await this.audioContext.resume();
+        }
+
+        // Create HTML5 Audio pool as fallback
+        this.createHtml5AudioPool();
+
+        // Check state after a brief moment
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        if (this.audioContext.state === 'running') {
+          this.isUnlocked = true;
+          console.log('Audio initialized and unlocked');
+        }
+      } catch (e) {
+        console.warn('Failed to unlock audio during initialize:', e);
+      }
+    }
+
     await this.ensureAudioContext();
   }
 

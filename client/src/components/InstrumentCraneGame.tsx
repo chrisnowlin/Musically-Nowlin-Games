@@ -219,14 +219,20 @@ export default function InstrumentCraneGame() {
   const playInstrumentSound = useCallback(async (path: string) => {
     // Stop any currently playing audio
     audioService.stopSample();
-    
+
     // Mark that sound has been played this round
     setHasPlayedSound(true);
     setIsPlayingAudio(true);
-    
+
     try {
+      // CRITICAL for iOS Safari: Ensure audio is initialized on every play attempt
+      // This handles the case where the user presses the Listen button directly
+      if (!audioService.isAudioUnlocked()) {
+        await audioService.initialize();
+      }
+
       // Play the sound 3 times so short clips are easier to hear
-      // Uses Web Audio API which is more reliable on iOS Safari
+      // Uses Web Audio API with HTML5 Audio fallback for iOS Safari
       await audioService.playSample(path, 3);
     } catch (e) {
       console.error(`Audio play failed for ${path}:`, e);
