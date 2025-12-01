@@ -22,152 +22,156 @@ interface Instrument {
   color: string;
 }
 
+// Use import.meta.env.BASE_URL to get the correct base path for production (GitHub Pages)
+// This ensures audio files are loaded from the correct URL in all environments
+const BASE_URL = import.meta.env.BASE_URL || '/';
+
 const INSTRUMENTS: Instrument[] = [
   {
     id: 'violin',
     name: 'Violin',
     Icon: ViolinIcon,
-    audioPath: '/audio/strings/violin/violin_A4_05_forte_arco-normal.mp3',
+    audioPath: `${BASE_URL}audio/strings/violin/violin_A4_05_forte_arco-normal.mp3`,
     color: 'bg-amber-500'
   },
   {
     id: 'cello',
     name: 'Cello',
     Icon: CelloIcon,
-    audioPath: '/audio/strings/cello/cello_C3_1_forte_arco-normal.mp3',
+    audioPath: `${BASE_URL}audio/strings/cello/cello_C3_1_forte_arco-normal.mp3`,
     color: 'bg-orange-800'
   },
   {
     id: 'flute',
     name: 'Flute',
     Icon: FluteIcon,
-    audioPath: '/audio/woodwinds/flute/flute_A5_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/woodwinds/flute/flute_A5_1_forte_normal.mp3`,
     color: 'bg-slate-400'
   },
   {
     id: 'trumpet',
     name: 'Trumpet',
     Icon: TrumpetIcon,
-    audioPath: '/audio/brass/trumpet/trumpet_C4_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/brass/trumpet/trumpet_C4_1_forte_normal.mp3`,
     color: 'bg-yellow-500'
   },
   {
     id: 'french-horn',
     name: 'French Horn',
     Icon: FrenchHornIcon,
-    audioPath: '/audio/brass/french horn/french-horn_C3_1_mezzo-forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/brass/french horn/french-horn_C3_1_mezzo-forte_normal.mp3`,
     color: 'bg-amber-600'
   },
   {
     id: 'clarinet',
     name: 'Clarinet',
     Icon: ClarinetIcon,
-    audioPath: '/audio/woodwinds/clarinet/clarinet_C4_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/woodwinds/clarinet/clarinet_C4_1_forte_normal.mp3`,
     color: 'bg-gray-800'
   },
   {
     id: 'oboe',
     name: 'Oboe',
     Icon: OboeIcon,
-    audioPath: '/audio/woodwinds/oboe/oboe_C4_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/woodwinds/oboe/oboe_C4_1_forte_normal.mp3`,
     color: 'bg-stone-500'
   },
   {
     id: 'saxophone',
     name: 'Saxophone',
     Icon: SaxophoneIcon,
-    audioPath: '/audio/woodwinds/saxophone/saxophone_A3_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/woodwinds/saxophone/saxophone_A3_1_forte_normal.mp3`,
     color: 'bg-yellow-400'
   },
   {
     id: 'bassoon',
     name: 'Bassoon',
     Icon: BassoonIcon,
-    audioPath: '/audio/woodwinds/bassoon/bassoon_A2_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/woodwinds/bassoon/bassoon_A2_1_forte_normal.mp3`,
     color: 'bg-amber-900'
   },
   {
     id: 'viola',
     name: 'Viola',
     Icon: ViolaIcon,
-    audioPath: '/audio/strings/viola/viola_C4_1_fortissimo_arco-normal.mp3',
+    audioPath: `${BASE_URL}audio/strings/viola/viola_C4_1_fortissimo_arco-normal.mp3`,
     color: 'bg-violet-500'
   },
   {
     id: 'trombone',
     name: 'Trombone',
     Icon: TromboneIcon,
-    audioPath: '/audio/brass/trombone/trombone_A3_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/brass/trombone/trombone_A3_1_forte_normal.mp3`,
     color: 'bg-yellow-600'
   },
   {
     id: 'tuba',
     name: 'Tuba',
     Icon: TubaIcon,
-    audioPath: '/audio/brass/tuba/tuba_A2_1_forte_normal.mp3',
+    audioPath: `${BASE_URL}audio/brass/tuba/tuba_A2_1_forte_normal.mp3`,
     color: 'bg-zinc-600'
   },
   {
     id: 'double-bass',
     name: 'Double Bass',
     Icon: DoubleBassIcon,
-    audioPath: '/audio/strings/double-bass/double-bass_A2_1_forte_arco-normal.mp3',
+    audioPath: `${BASE_URL}audio/strings/double-bass/double-bass_A2_1_forte_arco-normal.mp3`,
     color: 'bg-amber-800'
   },
   {
     id: 'snare-drum',
     name: 'Snare Drum',
     Icon: SnareDrumIcon,
-    audioPath: '/audio/percussion/snare-drum/snare-drum__025_forte_with-snares.mp3',
+    audioPath: `${BASE_URL}audio/percussion/snare-drum/snare-drum__025_forte_with-snares.mp3`,
     color: 'bg-red-500'
   },
   {
     id: 'bass-drum',
     name: 'Bass Drum',
     Icon: BassDrumIcon,
-    audioPath: '/audio/percussion/bass-drum/bass-drum__1_fortissimo_struck-singly.mp3',
+    audioPath: `${BASE_URL}audio/percussion/bass-drum/bass-drum__1_fortissimo_struck-singly.mp3`,
     color: 'bg-red-800'
   },
   {
     id: 'triangle',
     name: 'Triangle',
     Icon: TriangleIcon,
-    audioPath: '/audio/percussion/triangle/triangle__long_piano_struck-singly.mp3',
+    audioPath: `${BASE_URL}audio/percussion/triangle/triangle__long_piano_struck-singly.mp3`,
     color: 'bg-slate-300'
   },
   {
     id: 'tambourine',
     name: 'Tambourine',
     Icon: TambourineIcon,
-    audioPath: '/audio/percussion/tambourine/tambourine__025_forte_hand.mp3',
+    audioPath: `${BASE_URL}audio/percussion/tambourine/tambourine__025_forte_hand.mp3`,
     color: 'bg-orange-400'
   },
   {
     id: 'timpani',
     name: 'Timpani',
     Icon: TimpaniIcon,
-    audioPath: '/audio/percussion/timpani/timpani_C2_forte_hits_normal.mp3',
+    audioPath: `${BASE_URL}audio/percussion/timpani/timpani_C2_forte_hits_normal.mp3`,
     color: 'bg-rose-700'
   },
   {
     id: 'xylophone',
     name: 'Xylophone',
     Icon: XylophoneIcon,
-    audioPath: '/audio/percussion/xylophone/xylophone_C5_forte.mp3',
+    audioPath: `${BASE_URL}audio/percussion/xylophone/xylophone_C5_forte.mp3`,
     color: 'bg-pink-400'
   },
   {
     id: 'glockenspiel',
     name: 'Glockenspiel',
     Icon: GlockenspielIcon,
-    audioPath: '/audio/percussion/glockenspiel/glockenspiel_C6_forte.mp3',
+    audioPath: `${BASE_URL}audio/percussion/glockenspiel/glockenspiel_C6_forte.mp3`,
     color: 'bg-cyan-300'
   },
   {
     id: 'harp',
     name: 'Harp',
     Icon: HarpIcon,
-    audioPath: '/audio/strings/harp/harp_C3_forte.mp3',
+    audioPath: `${BASE_URL}audio/strings/harp/harp_C3_forte.mp3`,
     color: 'bg-emerald-400'
   }
 ];
