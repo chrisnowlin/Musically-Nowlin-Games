@@ -260,6 +260,21 @@ export class AudioService {
   }
 
   /**
+   * Helper to decode audio data with compatibility for older Safari
+   */
+  private decodeAudioData(arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
+    return new Promise((resolve, reject) => {
+      // Use the promise-based syntax if supported, otherwise fall back to callbacks
+      // @ts-ignore - Safari signature difference
+      const result = this.audioContext!.decodeAudioData(arrayBuffer, resolve, reject);
+      // If a promise was returned (modern browsers), handle it
+      if (result && typeof result.then === 'function') {
+        result.catch(reject);
+      }
+    });
+  }
+
+  /**
    * Play an audio sample file using Web Audio API (more reliable on iOS Safari)
    * @param url - URL path to the audio file (e.g., '/audio/strings/violin/violin_A4.mp3')
    * @param repeatCount - Number of times to play the sample (default 1)
@@ -291,7 +306,7 @@ export class AudioService {
           throw new AudioError(`Failed to fetch audio file: ${url}`);
         }
         const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+        audioBuffer = await this.decodeAudioData(arrayBuffer);
         
         // Cache the buffer for future use
         this.audioBufferCache.set(url, audioBuffer);
@@ -366,7 +381,7 @@ export class AudioService {
           return;
         }
         const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+        const audioBuffer = await this.decodeAudioData(arrayBuffer);
         this.audioBufferCache.set(url, audioBuffer);
       } catch (e) {
         console.warn(`Failed to preload audio: ${url}`, e);

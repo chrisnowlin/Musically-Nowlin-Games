@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Music, Play, ArrowLeft, ArrowRight, ArrowDown, RefreshCw, Sparkles, Star } from "lucide-react";
@@ -197,6 +197,21 @@ export default function InstrumentCraneGame() {
 
   const decorativeOrbs = generateDecorativeOrbs();
 
+  // Preload all instrument sounds on mount
+  useEffect(() => {
+    const allAudioPaths = INSTRUMENTS.map(i => i.audioPath);
+    // Load in chunks to avoid overwhelming network
+    const preloadChunk = async () => {
+       // Preload first 5 (likely to be used)
+       await audioService.preloadSamples(allAudioPaths.slice(0, 5));
+       // Preload rest in background
+       setTimeout(() => {
+         audioService.preloadSamples(allAudioPaths.slice(5));
+       }, 2000);
+    };
+    preloadChunk();
+  }, []);
+
   // Fixed positions for 4 items
   const POSITIONS = [20, 40, 60, 80];
 
@@ -246,6 +261,9 @@ export default function InstrumentCraneGame() {
     setFeedback(null);
     setHasPlayedSound(false); // Reset sound played state for new round
     
+    // Preload the target instrument audio
+    audioService.preloadSamples([targetInst.audioPath]);
+
     // Only auto-play on first round (triggered by user's Start button)
     // Subsequent rounds should not auto-play to avoid iOS audio restrictions
     if (autoPlay) {
