@@ -86,6 +86,8 @@ export class AudioService {
   private masterGain: GainNode | null = null;
   private currentVolume: number = 0.3; // 0..1
   private initializationError: Error | null = null;
+  private audioBufferCache: Map<string, AudioBuffer> = new Map();
+  private currentSampleSource: AudioBufferSourceNode | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -257,6 +259,122 @@ export class AudioService {
     } catch (e) { console.warn(e); }
   }
 
+  /**
+   * Play an audio sample file using Web Audio API (more reliable on iOS Safari)
+   * @param url - URL path to the audio file (e.g., '/audio/strings/violin/violin_A4.mp3')
+   * @param repeatCount - Number of times to play the sample (default 1)
+   * @returns Promise that resolves when playback completes
+   */
+  async playSample(url: string, repeatCount: number = 1): Promise<void> {
+    try {
+      await this.ensureAudioContext();
+      this.ensureAudioAvailable();
+
+      // Stop any currently playing sample
+      if (this.currentSampleSource) {
+        try {
+          this.currentSampleSource.stop();
+          this.currentSampleSource.disconnect();
+        } catch (e) {
+          // Ignore - source may already be stopped
+        }
+        this.currentSampleSource = null;
+      }
+
+      // Check cache first
+      let audioBuffer = this.audioBufferCache.get(url);
+
+      if (!audioBuffer) {
+        // Fetch and decode the audio file
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new AudioError(`Failed to fetch audio file: ${url}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+        
+        // Cache the buffer for future use
+        this.audioBufferCache.set(url, audioBuffer);
+      }
+
+      // Play the sample the specified number of times
+      let playCount = 0;
+      
+      const playOnce = (): Promise<void> => {
+        return new Promise((resolve) => {
+          const source = this.audioContext!.createBufferSource();
+          source.buffer = audioBuffer!;
+          source.connect(this.masterGain!);
+          
+          this.currentSampleSource = source;
+          
+          source.onended = () => {
+            playCount++;
+            if (playCount < repeatCount) {
+              // Small delay between repeats
+              setTimeout(() => {
+                playOnce().then(resolve);
+              }, 100);
+            } else {
+              this.currentSampleSource = null;
+              resolve();
+            }
+          };
+          
+          source.start(0);
+        });
+      };
+
+      await playOnce();
+    } catch (error) {
+      console.error(`Failed to play sample ${url}:`, error);
+      throw error instanceof AudioError ? error : new AudioError(`Failed to play sample: ${error}`);
+    }
+  }
+
+  /**
+   * Stop any currently playing sample
+   */
+  stopSample(): void {
+    if (this.currentSampleSource) {
+      try {
+        this.currentSampleSource.stop();
+        this.currentSampleSource.disconnect();
+      } catch (e) {
+        // Ignore - source may already be stopped
+      }
+      this.currentSampleSource = null;
+    }
+  }
+
+  /**
+   * Preload audio samples into cache for faster playback
+   * @param urls - Array of audio file URLs to preload
+   */
+  async preloadSamples(urls: string[]): Promise<void> {
+    await this.ensureAudioContext();
+    
+    const loadPromises = urls.map(async (url) => {
+      if (this.audioBufferCache.has(url)) {
+        return; // Already cached
+      }
+      
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.warn(`Failed to preload audio: ${url}`);
+          return;
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+        this.audioBufferCache.set(url, audioBuffer);
+      } catch (e) {
+        console.warn(`Failed to preload audio: ${url}`, e);
+      }
+    });
+
+    await Promise.all(loadPromises);
+  }
 
   /**
    * Play two notes sequentially

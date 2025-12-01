@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Music, Play, ArrowLeft, ArrowRight, ArrowDown, RefreshCw, Sparkles, Star } from "lucide-react";
@@ -195,67 +195,28 @@ export default function InstrumentCraneGame() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [hasPlayedSound, setHasPlayedSound] = useState(false); // Track if user has played sound this round
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const decorativeOrbs = generateDecorativeOrbs();
 
   // Fixed positions for 4 items
   const POSITIONS = [20, 40, 60, 80];
 
-  // Play instrument sound - defined first so it can be used by startRound
-  const playInstrumentSound = useCallback((path: string) => {
+  // Play instrument sound using Web Audio API (same method as crane sounds - works on iOS)
+  const playInstrumentSound = useCallback(async (path: string) => {
     // Stop any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.onended = null;
-      audioRef.current.onerror = null;
-    }
+    audioService.stopSample();
     
     // Mark that sound has been played this round
     setHasPlayedSound(true);
-    
-    // Play the sound 3 times so short clips are easier to hear
-    const PLAY_COUNT = 3;
-    let playNumber = 0;
-    
-    // Reuse or create the audio element
-    // On iOS, reusing the same element after user interaction is more reliable
-    const audio = audioRef.current || new Audio();
-    audio.src = path;
-    audio.load(); // Explicitly load the new source
-    audioRef.current = audio;
     setIsPlayingAudio(true);
     
-    const handleEnded = () => {
-      playNumber++;
-      if (playNumber < PLAY_COUNT) {
-        audio.currentTime = 0;
-        // Use a small delay to help iOS process the replay
-        setTimeout(() => {
-          audio.play().catch(e => {
-            console.error(`Audio replay failed for ${path}:`, e);
-            setIsPlayingAudio(false);
-          });
-        }, 50);
-      } else {
-        setIsPlayingAudio(false);
-      }
-    };
-    
-    const handleError = (e: Event) => {
-      console.error(`Audio error for ${path}:`, e);
+    try {
+      // Play the sound 3 times so short clips are easier to hear
+      // Uses Web Audio API which is more reliable on iOS Safari
+      await audioService.playSample(path, 3);
+    } catch (e) {
+      console.error(`Audio play failed for ${path}:`, e);
+    } finally {
       setIsPlayingAudio(false);
-    };
-    
-    audio.onended = handleEnded;
-    audio.onerror = handleError;
-    
-    // Play with user gesture context preserved
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(e => {
-        console.error(`Audio play failed for ${path}:`, e);
-        setIsPlayingAudio(false);
-      });
     }
   }, []);
 
