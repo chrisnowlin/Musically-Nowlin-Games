@@ -193,6 +193,7 @@ export default function InstrumentCraneGame() {
   const [caughtTargetId, setCaughtTargetId] = useState<string | null>(null); // ID of target caught by crane
   const [feedback, setFeedback] = useState<{ show: boolean; isCorrect: boolean; message: string } | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [hasPlayedSound, setHasPlayedSound] = useState(false); // Track if user has played sound this round
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const decorativeOrbs = generateDecorativeOrbs();
@@ -201,7 +202,7 @@ export default function InstrumentCraneGame() {
   const POSITIONS = [20, 40, 60, 80];
 
   // Initialize Round
-  const startRound = useCallback(() => {
+  const startRound = useCallback((autoPlay: boolean = false) => {
     // Pick random target instrument
     const targetInst = INSTRUMENTS[Math.floor(Math.random() * INSTRUMENTS.length)];
     setCurrentInstrument(targetInst);
@@ -224,55 +225,81 @@ export default function InstrumentCraneGame() {
     setCraneState('idle');
     setCaughtTargetId(null);
     setFeedback(null);
+    setHasPlayedSound(false); // Reset sound played state for new round
     
-    // Play sound after small delay
-    setGameTimeout(() => {
-      playInstrumentSound(targetInst.audioPath);
-    }, 500);
-  }, [setGameTimeout]);
+    // Only auto-play on first round (triggered by user's Start button)
+    // Subsequent rounds should not auto-play to avoid iOS audio restrictions
+    if (autoPlay) {
+      setHasPlayedSound(true);
+      setGameTimeout(() => {
+        playInstrumentSound(targetInst.audioPath);
+      }, 500);
+    }
+  }, [setGameTimeout, playInstrumentSound]);
 
   const handleStartGame = () => {
     audioService.playClickSound();
     setGameStarted(true);
-    startRound();
+    // Pass true to auto-play on first round - user just clicked Start button
+    startRound(true);
   };
 
-  const playInstrumentSound = (path: string) => {
+  const playInstrumentSound = useCallback((path: string) => {
+    // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
     }
+    
+    // Mark that sound has been played this round
+    setHasPlayedSound(true);
     
     // Play the sound 3 times so short clips are easier to hear
     const PLAY_COUNT = 3;
     let playNumber = 0;
     
-    const audio = new Audio(path);
+    // Reuse or create the audio element
+    // On iOS, reusing the same element after user interaction is more reliable
+    const audio = audioRef.current || new Audio();
+    audio.src = path;
+    audio.load(); // Explicitly load the new source
     audioRef.current = audio;
     setIsPlayingAudio(true);
     
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .catch(e => {
-          console.error(`Audio play failed for ${path}:`, e);
-          setIsPlayingAudio(false);
-        });
-    }
-    
-    audio.onended = () => {
+    const handleEnded = () => {
       playNumber++;
       if (playNumber < PLAY_COUNT) {
         audio.currentTime = 0;
-        audio.play().catch(e => {
-          console.error(`Audio replay failed for ${path}:`, e);
-          setIsPlayingAudio(false);
-        });
+        // Use a small delay to help iOS process the replay
+        setTimeout(() => {
+          audio.play().catch(e => {
+            console.error(`Audio replay failed for ${path}:`, e);
+            setIsPlayingAudio(false);
+          });
+        }, 50);
       } else {
         setIsPlayingAudio(false);
       }
     };
-  };
+    
+    const handleError = (e: Event) => {
+      console.error(`Audio error for ${path}:`, e);
+      setIsPlayingAudio(false);
+    };
+    
+    audio.onended = handleEnded;
+    audio.onerror = handleError;
+    
+    // Play with user gesture context preserved
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(e => {
+        console.error(`Audio play failed for ${path}:`, e);
+        setIsPlayingAudio(false);
+      });
+    }
+  }, []);
 
   // Crane Controls
   const moveCrane = (direction: 'left' | 'right') => {
@@ -635,18 +662,27 @@ export default function InstrumentCraneGame() {
           <div className="bg-gray-200 mt-[-20px] pt-8 pb-6 px-8 rounded-b-2xl border-t-4 border-gray-300 shadow-inner flex items-center justify-center gap-8 relative z-20">
              
              {/* Play Sound Button (Square Arcade Style) */}
-             <Button 
-                onClick={() => currentInstrument && playInstrumentSound(currentInstrument.audioPath)}
-                disabled={isPlayingAudio}
-                className={`
-                  w-20 h-20 rounded-lg bg-blue-500 hover:bg-blue-400 border-b-8 border-blue-700 
-                  text-white shadow-lg active:border-b-0 active:translate-y-2 transition-all
-                  flex flex-col items-center justify-center gap-1
-                `}
-             >
-               {isPlayingAudio ? <Music className="w-8 h-8 animate-spin" /> : <Play className="w-8 h-8" />}
-               <span className="text-xs font-bold uppercase">Listen</span>
-             </Button>
+             <div className="relative">
+               {/* Pulsing ring when user hasn't played sound yet */}
+               {!hasPlayedSound && !isPlayingAudio && (
+                 <div className="absolute inset-0 rounded-lg bg-blue-400 animate-ping opacity-75" />
+               )}
+               <Button 
+                  onClick={() => currentInstrument && playInstrumentSound(currentInstrument.audioPath)}
+                  disabled={isPlayingAudio}
+                  className={`
+                    w-20 h-20 rounded-lg border-b-8 relative
+                    text-white shadow-lg active:border-b-0 active:translate-y-2 transition-all
+                    flex flex-col items-center justify-center gap-1
+                    ${!hasPlayedSound && !isPlayingAudio 
+                      ? 'bg-yellow-500 hover:bg-yellow-400 border-yellow-700 ring-4 ring-yellow-300' 
+                      : 'bg-blue-500 hover:bg-blue-400 border-blue-700'}
+                  `}
+               >
+                 {isPlayingAudio ? <Music className="w-8 h-8 animate-spin" /> : <Play className="w-8 h-8" />}
+                 <span className="text-xs font-bold uppercase">{!hasPlayedSound ? 'Listen!' : 'Listen'}</span>
+               </Button>
+             </div>
 
              {/* Joystick Area */}
              <div className="bg-gray-300 p-4 rounded-full shadow-inner border border-gray-400 flex items-center justify-center gap-2">
