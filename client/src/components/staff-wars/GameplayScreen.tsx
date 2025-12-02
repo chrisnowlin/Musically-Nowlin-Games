@@ -26,10 +26,10 @@ interface GameplayScreenProps {
 
 const NOTE_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
-// Calculate speed based on level with 20% increase per level
+// Calculate speed based on level with 25% increase per level
 const calculateSpeed = (level: number): number => {
   const baseSpeed = 50;
-  const speedIncrease = 0.20; // 20% increase per level
+  const speedIncrease = 0.25; // 25% increase per level
   return Math.round(baseSpeed * Math.pow(1 + speedIncrease, level - 1));
 };
 
