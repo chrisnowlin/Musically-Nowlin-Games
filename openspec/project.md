@@ -115,10 +115,54 @@
 ### Git Workflow
 
 #### Branching Strategy
-- **main** - Production-ready code
-- **feature/[name]** - New features (e.g., `feature/add-rhythm-game`)
-- **fix/[name]** - Bug fixes
-- **refactor/[name]** - Code improvements without behavior changes
+
+```
+main (protected)     → Production (deploy on tags only)
+├── develop          → Integration & staging
+├── feature/*        → New features (from develop)
+├── fix/*            → Bug fixes (from develop)
+├── refactor/*       → Code improvements (from develop)
+└── hotfix/*         → Critical production fixes (from main)
+```
+
+**Branch Purposes:**
+- **main** - Production-ready code. Only receives merges from `develop` or `hotfix/*`. Deployments triggered by version tags (e.g., `v1.2.3`).
+- **develop** - Integration branch for testing features together. Staging deployments run here.
+- **feature/[name]** - New features (e.g., `feature/add-rhythm-game`). Branch from `develop`, merge back to `develop`.
+- **fix/[name]** - Bug fixes. Branch from `develop`, merge back to `develop`.
+- **refactor/[name]** - Code improvements without behavior changes. Branch from `develop`, merge back to `develop`.
+- **hotfix/[name]** - Critical production fixes. Branch from `main`, merge to both `main` AND `develop`.
+
+#### Release Process
+
+1. **Feature Development**
+   - Create branch from `develop`: `git checkout -b feature/new-game develop`
+   - Develop and test locally
+   - Create PR to merge into `develop`
+   - CI runs tests automatically
+
+2. **Integration Testing**
+   - Features merged to `develop` are built and tested
+   - Staging deployment allows testing before production
+
+3. **Production Release**
+   - When `develop` is stable, merge to `main`: `git checkout main && git merge develop`
+   - Create a version tag: `git tag -a v1.2.3 -m "Release v1.2.3"`
+   - Push the tag: `git push origin v1.2.3`
+   - GitHub Actions automatically deploys to production
+
+4. **Hotfixes**
+   - For critical production bugs: `git checkout -b hotfix/critical-bug main`
+   - Fix and test
+   - Merge to `main` AND `develop`
+   - Tag a patch release: `git tag -a v1.2.4 -m "Hotfix v1.2.4"`
+
+#### Semantic Versioning
+
+Use [Semantic Versioning](https://semver.org/) for release tags:
+- **MAJOR** (v2.0.0) - Breaking changes
+- **MINOR** (v1.1.0) - New features, backward compatible
+- **PATCH** (v1.0.1) - Bug fixes, backward compatible
 
 #### Commit Conventions
 - Use conventional commits format:
@@ -130,12 +174,13 @@
   - `chore: update dependencies`
 
 #### Pull Request Process
-1. Create feature branch from main
+1. Create feature branch from `develop` (or `main` for hotfixes)
 2. Implement changes following OpenSpec proposals (if applicable)
-3. Run `npm run check` and `npm test`
-4. Create PR with clear description
-5. Wait for approval before merging
-6. Squash and merge to main
+3. Run `bun run check` and `bun test`
+4. Create PR with clear description targeting `develop` (or `main` for hotfixes)
+5. CI must pass before merging
+6. Squash and merge to target branch
+7. For releases: merge `develop` → `main`, then tag
 
 ## Domain Context
 
