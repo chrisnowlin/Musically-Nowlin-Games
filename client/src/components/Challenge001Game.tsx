@@ -332,7 +332,7 @@ const Challenge001GameComponent: React.FC = () => {
 
       // Escape to go back to main menu
       if (event.key === 'Escape') {
-        setLocation("/");
+        setLocation("/games");
       }
     };
 
@@ -612,7 +612,7 @@ const Challenge001GameComponent: React.FC = () => {
         Use number keys 1-4 to select answers, arrow keys to navigate, Enter or Space to select focused answer, and Escape to return to main menu.
       </div>
       <button
-        onClick={() => setLocation("/")}
+        onClick={() => setLocation("/games")}
         className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
       >
         <ChevronLeft size={24} />

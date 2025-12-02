@@ -6,7 +6,7 @@ export const Rhythm002Page: React.FC = () => {
   const [, setLocation] = useLocation();
 
   const handleBack = () => {
-    setLocation("/");
+    setLocation("/games");
   };
 
   return <TempoPulseMasterGame onBack={handleBack} />;

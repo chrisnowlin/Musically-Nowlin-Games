@@ -34,7 +34,7 @@ export const Harmony002Game: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 p-4 relative">
       <div className="flex items-center justify-between mb-6">
         <button
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation("/games")}
           className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
         >
           <ChevronLeft size={24} />

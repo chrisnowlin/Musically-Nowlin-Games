@@ -164,7 +164,7 @@ const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
           <div className="text-center">
             <Button
               variant="ghost"
-              onClick={() => setLocation("/")}
+              onClick={() => setLocation("/games")}
               className="mb-4"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
@@ -226,7 +226,7 @@ const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => setLocation("/")}
+            onClick={() => setLocation("/games")}
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Back

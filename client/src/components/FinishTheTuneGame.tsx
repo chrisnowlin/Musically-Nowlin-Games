@@ -315,7 +315,7 @@ export default function FinishTheTuneGame() {
     return (
       <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
         <button
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation("/games")}
           className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
         >
           <ChevronLeft size={24} />
@@ -383,7 +383,7 @@ export default function FinishTheTuneGame() {
       {/* Header */}
       <div className="w-full max-w-4xl mx-auto flex items-center justify-between mb-6 relative z-10">
           <button
-            onClick={() => setLocation("/")}
+            onClick={() => setLocation("/games")}
             className="flex items-center gap-2 text-purple-700 hover:text-purple-900 font-bold bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-all"
           >
             <ChevronLeft size={20} />

@@ -3,7 +3,7 @@ import { games, getGameById } from "@/config/games";
 import { Button } from "@/components/ui/button";
 
 function slugFromRoute(route: string) {
-  const parts = route.split("/");
+  const parts = route.split("/games");
   return parts[parts.length - 1] || "";
 }
 
@@ -43,7 +43,7 @@ export default function PlaceholderGame() {
             <div>Route: <span className="font-semibold">{route}</span></div>
           </div>
           <div className="mt-6 flex gap-3">
-            <Link href="/">
+            <Link href="/games">
               <Button className="rounded-full">Back to Games</Button>
             </Link>
           </div>

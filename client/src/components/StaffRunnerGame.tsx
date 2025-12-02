@@ -346,7 +346,7 @@ export default function StaffRunnerGame() {
     >
       {/* Back button */}
       <button
-        onClick={() => setLocation("/")}
+        onClick={() => setLocation("/games")}
         className="absolute z-50 flex items-center text-teal-700 hover:text-teal-900 font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg hover:shadow-xl transition-all touch-target"
         style={{
           top: `${layout.padding}px`,

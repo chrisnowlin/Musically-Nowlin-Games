@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -105,7 +105,12 @@ function Router() {
   return (
     <Suspense fallback={<GameLoadingFallback />}>
       <Switch>
-      <Route path="/" component={LandingPage} />
+      {/* Redirect root to /games */}
+      <Route path="/">{() => <Redirect to="/games" />}</Route>
+      {/* Landing page routes */}
+      <Route path="/home" component={LandingPage} />
+      <Route path="/games" component={LandingPage} />
+      {/* Game routes */}
       <Route path="/games/pitch-match" component={PitchMatchGame} />
       <Route path="/games/same-or-different" component={SameOrDifferentGamePage} />
       <Route path="/games/rhythm-echo-challenge" component={RhythmEchoChallengeGamePage} />

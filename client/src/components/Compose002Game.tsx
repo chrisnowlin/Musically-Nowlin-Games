@@ -569,7 +569,7 @@ export const Compose002Game: React.FC = () => {
         <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => setLocation("/")}
+            onClick={() => setLocation("/games")}
             className="flex items-center gap-1 text-purple-700 hover:text-purple-900"
           >
             <ChevronLeft size={20} />
