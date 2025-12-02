@@ -28,6 +28,55 @@ interface Instrument {
 // This ensures audio files are loaded from the correct URL in all environments
 const BASE_URL = import.meta.env.BASE_URL || '/';
 
+// Volume normalization multipliers per instrument (matching Instrument Detective)
+// These values compensate for the natural loudness differences in the Philharmonia samples
+// All values tuned for maximum audibility
+const INSTRUMENT_VOLUME_NORMALIZATION: Record<string, number> = {
+  // Strings - generally well balanced
+  'violin': 9.0,
+  'viola': 9.9,
+  'cello': 8.7,
+  'double-bass': 11.4,
+  
+  // Woodwinds - varied loudness
+  'flute': 7.8,
+  'clarinet': 8.1,
+  'oboe': 7.2,
+  'bassoon': 9.9,
+  'saxophone': 6.9,
+  
+  // Brass - naturally loud instruments
+  'trumpet': 6.0,
+  'french-horn': 7.8,
+  'trombone': 6.3,
+  'tuba': 8.1,
+  
+  // Pitched Percussion
+  'timpani': 12.0,
+  'xylophone': 7.2,
+  'glockenspiel': 5.4,
+  
+  // Unpitched Percussion - boosted for audibility
+  'snare-drum': 8.0,
+  'bass-drum': 10.0,
+  'triangle': 6.0,
+  'tambourine': 7.0,
+  'cowbell': 7.5,
+  'woodblock': 7.0,
+  'castanets': 7.0,
+  'sleigh-bells': 8.0,
+  'cymbals': 6.5,
+  'wind-chimes': 8.0,
+};
+
+// Get normalized volume for an instrument
+// Web Audio API allows gain > 1.0 for amplification
+const getNormalizedVolume = (instrumentId: string): number => {
+  const baseVolume = 0.5; // 50% base volume
+  const normalizer = INSTRUMENT_VOLUME_NORMALIZATION[instrumentId] || 1.0;
+  return baseVolume * normalizer;
+};
+
 // Map instrument IDs to their icon components
 const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   'violin': ViolinIcon,
@@ -115,15 +164,29 @@ function buildInstrumentsFromLibrary(): Instrument[] {
   
   // Add percussion instruments that aren't pitched (manually configured)
   // These use the Philharmonia percussion samples with correct paths
+  // Each instrument includes a rich variety of articulations, dynamics, and rhythm patterns
   const unpitchedPercussion: Instrument[] = [
     {
       id: 'snare-drum',
       name: 'Snare Drum',
       Icon: SnareDrumIcon,
       audioPaths: [
+        // Single hits at different dynamics
         `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__025_forte_with-snares.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__025_fortissimo_with-snares.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__025_mezzo-forte_with-snares.mp3`,
+        // Rolls
         `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__long_forte_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__long_mezzo-forte_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__very-long_cresc-decresc_roll.mp3`,
+        // Rhythm patterns
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__long_mezzo-forte_rhythm.mp3`,
         `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__phrase_mezzo-forte_rhythm.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__phrase_cresc-decresc_rhythm.mp3`,
+        // Special techniques
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__phrase_crescendo_flam.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__phrase_decrescendo_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__phrase_mezzo-forte_without-snares.mp3`,
       ],
       color: 'bg-red-500',
     },
@@ -132,9 +195,29 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Bass Drum',
       Icon: BassDrumIcon,
       audioPaths: [
+        // Single hits - various dynamics
         `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_fortissimo_struck-singly.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_mezzo-piano_struck-singly.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_pianissimo_struck-singly.mp3`,
+        // Mallet hits
         `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__025_forte_bass-drum-mallet.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__025_mezzo-forte_bass-drum-mallet.mp3`,
         `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_mezzo-forte_bass-drum-mallet.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__long_crescendo_bass-drum-mallet.mp3`,
+        // Flams (double strokes)
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_mezzo-forte_flam.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_mezzo-piano_flam.mp3`,
+        // Rute (brush) technique
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__025_mezzo-forte_rute.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__05_mezzo-forte_rute.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__phrase_forte_rute.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__phrase_mezzo-forte_rute.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__phrase_mezzo-piano_rute.mp3`,
+        // Rhythm patterns
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__15_mezzo-piano_rhythm.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__15_pianissimo_rhythm.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__phrase_mezzo-piano_rhythm.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__phrase_mezzo-forte_sticks.mp3`,
       ],
       color: 'bg-red-800',
     },
@@ -143,9 +226,15 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Triangle',
       Icon: TriangleIcon,
       audioPaths: [
+        // Single strikes
         `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__long_piano_struck-singly.mp3`,
+        // Rolls
         `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__very-long_mezzo-forte_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__long_decrescendo_roll.mp3`,
+        // Rhythm patterns
         `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__phrase_mezzo-piano_rhythm.mp3`,
+        // Special techniques
+        `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__phrase_mezzo-piano_damped.mp3`,
       ],
       color: 'bg-slate-300',
     },
@@ -154,9 +243,21 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Tambourine',
       Icon: TambourineIcon,
       audioPaths: [
+        // Hand hits at different dynamics
         `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__025_forte_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__025_fortissimo_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__05_forte_hand.mp3`,
+        // Hand rhythm patterns
         `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_forte_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_mezzo-forte_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_crescendo_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_decrescendo_hand.mp3`,
+        // Shaken technique
         `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__1_mezzo-piano_shaken.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_mezzo-piano_shaken.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__long_cresc-decresc_shaken.mp3`,
+        // Body hits
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_mezzo-forte_body.mp3`,
       ],
       color: 'bg-orange-400',
     },
@@ -165,8 +266,11 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Cowbell',
       Icon: CowbellIcon,
       audioPaths: [
+        // Single hits
         `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__1_forte_undamped.mp3`,
         `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__1_mezzo-forte_undamped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__025_mezzo-forte_damped.mp3`,
+        // Rhythm pattern
         `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__long_mezzo-forte_rhythm.mp3`,
       ],
       color: 'bg-zinc-400',
@@ -176,7 +280,9 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Woodblock',
       Icon: WoodblockIcon,
       audioPaths: [
+        // Single hit
         `${BASE_URL}audio/philharmonia/percussion/woodblock/woodblock__025_mezzo-forte_struck-singly.mp3`,
+        // Rhythm pattern
         `${BASE_URL}audio/philharmonia/percussion/woodblock/woodblock__phrase_mezzo-piano_rhythm.mp3`,
       ],
       color: 'bg-amber-700',
@@ -186,9 +292,13 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Castanets',
       Icon: CastanetsIcon,
       audioPaths: [
+        // Single click
         `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__025_mezzo-forte_struck-singly.mp3`,
-        `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__phrase_forte_rhythm.mp3`,
+        // Rolls
         `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__long_mezzo-forte_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__phrase_mezzo-forte_roll.mp3`,
+        // Rhythm pattern
+        `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__phrase_forte_rhythm.mp3`,
       ],
       color: 'bg-stone-700',
     },
@@ -197,9 +307,11 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Sleigh Bells',
       Icon: SleighBellsIcon,
       audioPaths: [
+        // Different shake durations and dynamics
         `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__05_mezzo-forte_shaken.mp3`,
         `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__long_forte_shaken.mp3`,
         `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__long_mezzo-forte_shaken.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__very-long_mezzo-forte_shaken.mp3`,
       ],
       color: 'bg-yellow-300',
     },
@@ -208,9 +320,15 @@ function buildInstrumentsFromLibrary(): Instrument[] {
       name: 'Clash Cymbals',
       Icon: CymbalsIcon,
       audioPaths: [
+        // Single crashes - various dynamics
         `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__15_fortissimo_struck-together.mp3`,
-        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__long_forte_undamped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__1_piano_struck-together.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__025_mezzo-forte_undamped.mp3`,
+        // Damped vs undamped
         `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__1_forte_damped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__05_forte_damped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__long_forte_undamped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__long_fortissimo_struck-together.mp3`,
       ],
       color: 'bg-yellow-500',
     },
@@ -225,9 +343,14 @@ function buildInstrumentsFromLibrary(): Instrument[] {
     },
   ];
   
-  // Add unpitched percussion if they don't already exist in the library instruments
+  // Add unpitched percussion - REPLACE any existing library versions with our richer manual configs
+  // This ensures bass-drum and snare-drum use our full sample sets instead of library's single samples
   for (const perc of unpitchedPercussion) {
-    if (!instruments.find(i => i.id === perc.id)) {
+    const existingIndex = instruments.findIndex(i => i.id === perc.id);
+    if (existingIndex !== -1) {
+      // Replace the library version with our richer manual version
+      instruments[existingIndex] = perc;
+    } else {
       instruments.push(perc);
     }
   }
@@ -237,6 +360,17 @@ function buildInstrumentsFromLibrary(): Instrument[] {
 
 // Generate instruments once at module load
 const INSTRUMENTS: Instrument[] = buildInstrumentsFromLibrary();
+
+// Debug: Log instruments and check for duplicates
+console.log('[InstrumentCrane] INSTRUMENTS loaded:', INSTRUMENTS.map(i => ({ id: i.id, name: i.name })));
+const idCounts = INSTRUMENTS.reduce((acc, i) => {
+  acc[i.id] = (acc[i.id] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+const duplicates = Object.entries(idCounts).filter(([, count]) => count > 1);
+if (duplicates.length > 0) {
+  console.error('[InstrumentCrane] DUPLICATE INSTRUMENTS FOUND:', duplicates);
+}
 
 interface Target {
   id: string;
@@ -257,7 +391,13 @@ export default function InstrumentCraneGame() {
   const [craneIndex, setCraneIndex] = useState(1); // 0-3 positions
   const [craneState, setCraneState] = useState<'idle' | 'moving' | 'dropping' | 'grabbing' | 'rising' | 'returning'>('idle');
   const [caughtTargetId, setCaughtTargetId] = useState<string | null>(null); // ID of target caught by crane
-  const [feedback, setFeedback] = useState<{ show: boolean; isCorrect: boolean; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ 
+    show: boolean; 
+    isCorrect: boolean; 
+    message: string;
+    clickedName?: string;
+    correctName?: string;
+  } | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [hasPlayedSound, setHasPlayedSound] = useState(false); // Track if user has played sound this round
 
@@ -282,9 +422,9 @@ export default function InstrumentCraneGame() {
   // Fixed positions for 4 items
   const POSITIONS = [20, 40, 60, 80];
 
-  // Play instrument sound - plays a melodic phrase using multiple notes
+  // Play instrument sound - plays a characteristic phrase using available samples
   // This makes the instrument more recognizable and educational
-  const playInstrumentSound = useCallback(async (audioPaths: string[]) => {
+  const playInstrumentSound = useCallback(async (instrumentId: string, audioPaths: string[]) => {
     // Stop any currently playing audio
     audioService.stopSample();
 
@@ -299,17 +439,42 @@ export default function InstrumentCraneGame() {
         await audioService.initialize();
       }
 
-      // Play a melodic phrase using available samples
-      // If instrument has multiple notes, play them in sequence for better recognition
-      if (audioPaths.length >= 3) {
-        // Play a short melodic phrase: root, up, root (or similar pattern)
+      // Set normalized volume for this instrument (matching Instrument Detective)
+      const normalizedVolume = getNormalizedVolume(instrumentId);
+      audioService.setVolume(normalizedVolume);
+
+      // Determine if this is likely an unpitched percussion instrument
+      // by checking if paths contain rhythm patterns or special articulations
+      const isPercussion = audioPaths.some(p => 
+        p.includes('rhythm') || p.includes('roll') || p.includes('shaken') || 
+        p.includes('struck') || p.includes('hand') || p.includes('flam')
+      );
+
+      if (isPercussion && audioPaths.length >= 3) {
+        // For percussion: Play a varied selection showcasing different techniques
+        // Pick 2-3 contrasting samples to demonstrate the instrument's character
+        const singleHit = audioPaths.find(p => p.includes('025') || p.includes('struck-singly') || p.includes('_1_')) || audioPaths[0];
+        const rhythmOrRoll = audioPaths.find(p => p.includes('rhythm') || p.includes('roll') || p.includes('shaken') || p.includes('phrase')) || audioPaths[1];
+        
+        // Play: single hit, then rhythm/roll pattern
+        await audioService.playSample(singleHit, 1);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await audioService.playSample(rhythmOrRoll, 1);
+      } else if (audioPaths.length >= 3) {
+        // For melodic instruments: Play a short melodic phrase
+        // root, up, root pattern for recognition
         const phrase = [audioPaths[0], audioPaths[Math.min(1, audioPaths.length - 1)], audioPaths[0]];
         for (const path of phrase) {
           await audioService.playSample(path, 1);
-          await new Promise(resolve => setTimeout(resolve, 200)); // Brief gap between notes
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
+      } else if (audioPaths.length === 2) {
+        // Two samples: play both
+        await audioService.playSample(audioPaths[0], 1);
+        await new Promise(resolve => setTimeout(resolve, 250));
+        await audioService.playSample(audioPaths[1], 1);
       } else {
-        // For instruments with fewer samples, repeat the primary note
+        // Single sample: play it twice
         await audioService.playSample(audioPaths[0], 2);
       }
     } catch (e) {
@@ -353,7 +518,7 @@ export default function InstrumentCraneGame() {
     if (autoPlay) {
       setHasPlayedSound(true);
       setGameTimeout(() => {
-        playInstrumentSound(targetInst.audioPaths);
+        playInstrumentSound(targetInst.id, targetInst.audioPaths);
       }, 500);
     }
   }, [setGameTimeout, playInstrumentSound]);
@@ -427,16 +592,36 @@ export default function InstrumentCraneGame() {
         setCraneState('rising');
         
         setGameTimeout(() => {
+          // Debug logging to catch comparison issues
+          console.log('[InstrumentCrane] Comparison check:', {
+            hitTargetId: hitTarget?.instrument.id,
+            hitTargetName: hitTarget?.instrument.name,
+            currentInstrumentId: currentInstrument?.id,
+            currentInstrumentName: currentInstrument?.name,
+            areEqual: hitTarget?.instrument.id === currentInstrument?.id
+          });
+          
           // Check win condition after rising
           if (hitTarget && hitTarget.instrument.id === currentInstrument.id) {
             // Correct!
             setScore(s => s + 1);
-            setFeedback({ show: true, isCorrect: true, message: `Great job! That's the ${hitTarget.instrument.name}!` });
+            setFeedback({ 
+              show: true, 
+              isCorrect: true, 
+              message: `Great job! That's the`,
+              correctName: hitTarget.instrument.name
+            });
             audioService.playSuccessTone();
           } else {
             // Wrong or Missed
             if (hitTarget) {
-               setFeedback({ show: true, isCorrect: false, message: `Oops! That was the ${hitTarget.instrument.name}. Listen again!` });
+               setFeedback({ 
+                 show: true, 
+                 isCorrect: false, 
+                 message: `Oops! You picked`,
+                 clickedName: hitTarget.instrument.name,
+                 correctName: currentInstrument.name
+               });
             } else {
                setFeedback({ show: true, isCorrect: false, message: "Missed! Try aiming closer." });
             }
@@ -448,7 +633,7 @@ export default function InstrumentCraneGame() {
 
           setGameTimeout(() => {
              startRound();
-          }, 2500);
+          }, 4500); // Extended feedback display time for better readability
 
         }, 1000); // Rising time
       }, 500); // Grabbing time
@@ -727,7 +912,22 @@ export default function InstrumentCraneGame() {
                   `}>
                      <div className="text-7xl mb-4 animate-bounce">{feedback.isCorrect ? '🌟' : '🤔'}</div>
                      <h3 className={`text-3xl font-black mb-2 ${feedback.isCorrect ? 'text-green-700' : 'text-red-700'}`}>{feedback.isCorrect ? 'Excellent!' : 'Try Again'}</h3>
-                     <p className="text-xl font-bold text-gray-700">{feedback.message}</p>
+                     <div className="text-xl font-bold text-gray-700">
+                       {feedback.isCorrect ? (
+                         <>
+                           {feedback.message} <span className="text-green-600 bg-green-200 px-2 py-1 rounded-lg">{feedback.correctName}</span>!
+                         </>
+                       ) : feedback.clickedName ? (
+                         <>
+                           {feedback.message} <span className="text-red-600 bg-red-200 px-2 py-1 rounded-lg">{feedback.clickedName}</span>
+                           <br />
+                           <span className="text-gray-500">The correct answer was</span>{' '}
+                           <span className="text-green-600 bg-green-200 px-2 py-1 rounded-lg">{feedback.correctName}</span>
+                         </>
+                       ) : (
+                         feedback.message
+                       )}
+                     </div>
                   </div>
                </div>
             )}
@@ -744,7 +944,7 @@ export default function InstrumentCraneGame() {
                  <div className="absolute inset-0 rounded-lg bg-blue-400 animate-ping opacity-75" />
                )}
                <Button 
-                  onClick={() => currentInstrument && playInstrumentSound(currentInstrument.audioPaths)}
+                  onClick={() => currentInstrument && playInstrumentSound(currentInstrument.id, currentInstrument.audioPaths)}
                   disabled={isPlayingAudio}
                   className={`
                     w-20 h-20 rounded-lg border-b-8 relative

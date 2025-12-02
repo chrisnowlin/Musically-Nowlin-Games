@@ -371,16 +371,36 @@ export class AudioService {
 
   /**
    * Play a mechanical motor sound for crane movement
+   * Volume reduced by a third for better balance with instrument sounds
    */
   async playCraneMoveSound(): Promise<void> {
     try {
-       // Low frequency sawtooth for motor buzz
-       await this.playNote(100, 0.2, 'sawtooth');
+      await this.ensureAudioContext();
+      const oscillator = this.audioContext!.createOscillator();
+      const gainNode = this.audioContext!.createGain();
+      
+      // Low frequency sawtooth for motor buzz
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(100, this.audioContext!.currentTime);
+      
+      // Reduced volume (0.13 instead of 0.2 - reduced by a third)
+      const now = this.audioContext!.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.13, now + 0.03); // Attack
+      gainNode.gain.setValueAtTime(0.13, now + 0.15); // Sustain
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2); // Release
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.masterGain!);
+      
+      oscillator.start(now);
+      oscillator.stop(now + 0.2);
     } catch (e) { console.warn(e); }
   }
 
   /**
    * Play a sliding sound for crane dropping
+   * Volume reduced by a third for better balance with instrument sounds
    */
   async playCraneDropSound(): Promise<void> {
     try {
@@ -392,7 +412,8 @@ export class AudioService {
       oscillator.frequency.setValueAtTime(300, this.audioContext!.currentTime);
       oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext!.currentTime + 0.6);
       
-      gainNode.gain.setValueAtTime(0.2, this.audioContext!.currentTime);
+      // Reduced volume (0.13 instead of 0.2 - reduced by a third)
+      gainNode.gain.setValueAtTime(0.13, this.audioContext!.currentTime);
       gainNode.gain.linearRampToValueAtTime(0, this.audioContext!.currentTime + 0.6);
 
       oscillator.connect(gainNode);
@@ -405,11 +426,29 @@ export class AudioService {
 
   /**
    * Play a metallic clank for grabbing
+   * Volume reduced by a third for better balance with instrument sounds
    */
   async playCraneGrabSound(): Promise<void> {
     try {
+      await this.ensureAudioContext();
+      const oscillator = this.audioContext!.createOscillator();
+      const gainNode = this.audioContext!.createGain();
+      
       // Short high pitch metallic ping
-      await this.playNote(1200, 0.1, 'square');
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(1200, this.audioContext!.currentTime);
+      
+      // Reduced volume (0.13 instead of 0.2 - reduced by a third)
+      const now = this.audioContext!.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(0.13, now + 0.01); // Fast attack
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1); // Quick decay
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.masterGain!);
+      
+      oscillator.start(now);
+      oscillator.stop(now + 0.1);
     } catch (e) { console.warn(e); }
   }
 
