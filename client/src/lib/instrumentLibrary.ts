@@ -72,7 +72,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'violin_C5_05_forte_arco-normal.mp3',
-          path: 'strings/violin/violin_C5_05_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/violin/violin_C5_05_forte_arco-normal.mp3',
         },
         {
           instrument: 'violin',
@@ -83,7 +83,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'violin_D5_1_forte_arco-normal.mp3',
-          path: 'strings/violin/violin_D5_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/violin/violin_D5_1_forte_arco-normal.mp3',
         },
         {
           instrument: 'violin',
@@ -94,7 +94,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'violin_E5_1_forte_arco-normal.mp3',
-          path: 'strings/violin/violin_E5_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/violin/violin_E5_1_forte_arco-normal.mp3',
         },
         {
           instrument: 'violin',
@@ -105,7 +105,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'violin_G4_1_forte_arco-normal.mp3',
-          path: 'strings/violin/violin_G4_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/violin/violin_G4_1_forte_arco-normal.mp3',
         },
         {
           instrument: 'violin',
@@ -116,7 +116,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'violin_A4_05_forte_arco-normal.mp3',
-          path: 'strings/violin/violin_A4_05_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/violin/violin_A4_05_forte_arco-normal.mp3',
         },
       ],
     });
@@ -139,7 +139,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'cello_C3_1_forte_arco-normal.mp3',
-          path: 'strings/cello/cello_C3_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/cello/cello_C3_1_forte_arco-normal.mp3',
         },
         {
           instrument: 'cello',
@@ -150,7 +150,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'cello_E3_1_forte_arco-normal.mp3',
-          path: 'strings/cello/cello_E3_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/cello/cello_E3_1_forte_arco-normal.mp3',
         },
         {
           instrument: 'cello',
@@ -161,7 +161,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'cello_G3_1_forte_arco-normal.mp3',
-          path: 'strings/cello/cello_G3_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/cello/cello_G3_1_forte_arco-normal.mp3',
         },
         {
           instrument: 'cello',
@@ -172,52 +172,52 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'cello_C4_1_forte_arco-normal.mp3',
-          path: 'strings/cello/cello_C4_1_forte_arco-normal.mp3',
+          path: 'philharmonia/strings/cello/cello_C4_1_forte_arco-normal.mp3',
         },
       ],
     });
 
     this.registerInstrument({
-      name: 'harp',
+      name: 'guitar',
       family: 'strings',
-      displayName: 'Harp',
-      description: 'Plucked string instrument with a magical, ethereal sound',
-      range: { low: 'C1', high: 'G7' },
+      displayName: 'Guitar',
+      description: 'Plucked string instrument with a warm, intimate sound',
+      range: { low: 'E2', high: 'E6' },
       animalCharacter: 'Swan',
-      emoji: '🦢',
+      emoji: '🎸',
       samples: [
         {
-          instrument: 'harp',
+          instrument: 'guitar',
           family: 'strings',
           note: 'C3',
           octave: 3,
           frequency: 131,
           dynamic: 'forte',
           articulation: 'normal',
-          filename: 'harp_C3_forte.mp3',
-          path: 'strings/harp/harp_C3_forte.mp3',
+          filename: 'guitar_C3_very-long_forte_normal.mp3',
+          path: 'philharmonia/strings/guitar/guitar_C3_very-long_forte_normal.mp3',
         },
         {
-          instrument: 'harp',
+          instrument: 'guitar',
           family: 'strings',
           note: 'E3',
           octave: 3,
           frequency: 165,
           dynamic: 'forte',
           articulation: 'normal',
-          filename: 'harp_E3_forte.mp3',
-          path: 'strings/harp/harp_E3_forte.mp3',
+          filename: 'guitar_E3_very-long_forte_normal.mp3',
+          path: 'philharmonia/strings/guitar/guitar_E3_very-long_forte_normal.mp3',
         },
         {
-          instrument: 'harp',
+          instrument: 'guitar',
           family: 'strings',
           note: 'G3',
           octave: 3,
           frequency: 196,
           dynamic: 'forte',
           articulation: 'normal',
-          filename: 'harp_G3_forte.mp3',
-          path: 'strings/harp/harp_G3_forte.mp3',
+          filename: 'guitar_G3_very-long_forte_normal.mp3',
+          path: 'philharmonia/strings/guitar/guitar_G3_very-long_forte_normal.mp3',
         },
       ],
     });
@@ -241,7 +241,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'flute_C5_1_forte_normal.mp3',
-          path: 'woodwinds/flute/flute_C5_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/flute/flute_C5_1_forte_normal.mp3',
         },
         {
           instrument: 'flute',
@@ -252,7 +252,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'flute_D5_1_forte_normal.mp3',
-          path: 'woodwinds/flute/flute_D5_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/flute/flute_D5_1_forte_normal.mp3',
         },
         {
           instrument: 'flute',
@@ -263,7 +263,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'flute_E5_1_forte_normal.mp3',
-          path: 'woodwinds/flute/flute_E5_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/flute/flute_E5_1_forte_normal.mp3',
         },
         {
           instrument: 'flute',
@@ -274,7 +274,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'flute_G5_1_forte_normal.mp3',
-          path: 'woodwinds/flute/flute_G5_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/flute/flute_G5_1_forte_normal.mp3',
         },
         {
           instrument: 'flute',
@@ -285,7 +285,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'flute_A5_1_forte_normal.mp3',
-          path: 'woodwinds/flute/flute_A5_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/flute/flute_A5_1_forte_normal.mp3',
         },
       ],
     });
@@ -308,7 +308,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'clarinet_C4_1_forte_normal.mp3',
-          path: 'woodwinds/clarinet/clarinet_C4_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/clarinet/clarinet_C4_1_forte_normal.mp3',
         },
         {
           instrument: 'clarinet',
@@ -319,7 +319,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'clarinet_E4_1_forte_normal.mp3',
-          path: 'woodwinds/clarinet/clarinet_E4_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/clarinet/clarinet_E4_1_forte_normal.mp3',
         },
         {
           instrument: 'clarinet',
@@ -330,7 +330,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'clarinet_G4_1_forte_normal.mp3',
-          path: 'woodwinds/clarinet/clarinet_G4_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/clarinet/clarinet_G4_1_forte_normal.mp3',
         },
       ],
     });
@@ -353,7 +353,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'oboe_C4_1_forte_normal.mp3',
-          path: 'woodwinds/oboe/oboe_C4_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/oboe/oboe_C4_1_forte_normal.mp3',
         },
         {
           instrument: 'oboe',
@@ -364,7 +364,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'oboe_E4_1_forte_normal.mp3',
-          path: 'woodwinds/oboe/oboe_E4_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/oboe/oboe_E4_1_forte_normal.mp3',
         },
         {
           instrument: 'oboe',
@@ -375,7 +375,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'oboe_G4_1_forte_normal.mp3',
-          path: 'woodwinds/oboe/oboe_G4_1_forte_normal.mp3',
+          path: 'philharmonia/woodwinds/oboe/oboe_G4_1_forte_normal.mp3',
         },
       ],
     });
@@ -399,7 +399,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'trumpet_C4_1_forte_normal.mp3',
-          path: 'brass/trumpet/trumpet_C4_1_forte_normal.mp3',
+          path: 'philharmonia/brass/trumpet/trumpet_C4_1_forte_normal.mp3',
         },
         {
           instrument: 'trumpet',
@@ -410,7 +410,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'trumpet_E4_1_forte_normal.mp3',
-          path: 'brass/trumpet/trumpet_E4_1_forte_normal.mp3',
+          path: 'philharmonia/brass/trumpet/trumpet_E4_1_forte_normal.mp3',
         },
         {
           instrument: 'trumpet',
@@ -421,7 +421,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'trumpet_G4_1_forte_normal.mp3',
-          path: 'brass/trumpet/trumpet_G4_1_forte_normal.mp3',
+          path: 'philharmonia/brass/trumpet/trumpet_G4_1_forte_normal.mp3',
         },
       ],
     });
@@ -444,7 +444,7 @@ export class InstrumentLibrary {
           dynamic: 'mezzo-forte',
           articulation: 'normal',
           filename: 'french-horn_C3_1_mezzo-forte_normal.mp3',
-          path: 'brass/french horn/french-horn_C3_1_mezzo-forte_normal.mp3',
+          path: 'philharmonia/brass/french horn/french-horn_C3_1_mezzo-forte_normal.mp3',
         },
         {
           instrument: 'french-horn',
@@ -455,7 +455,7 @@ export class InstrumentLibrary {
           dynamic: 'mezzo-forte',
           articulation: 'normal',
           filename: 'french-horn_E3_1_mezzo-forte_normal.mp3',
-          path: 'brass/french horn/french-horn_E3_1_mezzo-forte_normal.mp3',
+          path: 'philharmonia/brass/french horn/french-horn_E3_1_mezzo-forte_normal.mp3',
         },
         {
           instrument: 'french-horn',
@@ -466,7 +466,7 @@ export class InstrumentLibrary {
           dynamic: 'mezzo-forte',
           articulation: 'normal',
           filename: 'french-horn_G3_1_mezzo-forte_normal.mp3',
-          path: 'brass/french horn/french-horn_G3_1_mezzo-forte_normal.mp3',
+          path: 'philharmonia/brass/french horn/french-horn_G3_1_mezzo-forte_normal.mp3',
         },
       ],
     });
@@ -486,10 +486,10 @@ export class InstrumentLibrary {
           note: 'C3',
           octave: 3,
           frequency: 131,
-          dynamic: 'forte',
+          dynamic: 'mezzo-forte',
           articulation: 'normal',
-          filename: 'trombone_C3_forte_normal.mp3',
-          path: 'brass/trombone/trombone_C3_forte_normal.mp3',
+          filename: 'trombone_C3_1_mezzo-forte_normal.mp3',
+          path: 'philharmonia/brass/trombone/trombone_C3_1_mezzo-forte_normal.mp3',
         },
         {
           instrument: 'trombone',
@@ -497,10 +497,44 @@ export class InstrumentLibrary {
           note: 'E3',
           octave: 3,
           frequency: 165,
+          dynamic: 'mezzo-forte',
+          articulation: 'normal',
+          filename: 'trombone_E3_1_mezzo-forte_normal.mp3',
+          path: 'philharmonia/brass/trombone/trombone_E3_1_mezzo-forte_normal.mp3',
+        },
+      ],
+    });
+
+    this.registerInstrument({
+      name: 'tuba',
+      family: 'brass',
+      displayName: 'Tuba',
+      description: 'Deep, powerful brass instrument providing the foundation',
+      range: { low: 'E1', high: 'F4' },
+      animalCharacter: 'Elephant',
+      emoji: '🐘',
+      samples: [
+        {
+          instrument: 'tuba',
+          family: 'brass',
+          note: 'A1',
+          octave: 1,
+          frequency: 55,
           dynamic: 'forte',
           articulation: 'normal',
-          filename: 'trombone_E3_forte_normal.mp3',
-          path: 'brass/trombone/trombone_E3_forte_normal.mp3',
+          filename: 'tuba_A1_1_forte_normal.mp3',
+          path: 'philharmonia/brass/tuba/tuba_A1_1_forte_normal.mp3',
+        },
+        {
+          instrument: 'tuba',
+          family: 'brass',
+          note: 'A2',
+          octave: 2,
+          frequency: 110,
+          dynamic: 'forte',
+          articulation: 'normal',
+          filename: 'tuba_A2_1_forte_normal.mp3',
+          path: 'philharmonia/brass/tuba/tuba_A2_1_forte_normal.mp3',
         },
       ],
     });
@@ -524,7 +558,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'timpani_C2_forte_hits_normal.mp3',
-          path: 'percussion/timpani/timpani_C2_forte_hits_normal.mp3',
+          path: 'philharmonia/percussion/timpani/timpani_C2_forte_hits_normal.mp3',
         },
         {
           instrument: 'timpani',
@@ -535,7 +569,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'timpani_E2_forte_hits_normal.mp3',
-          path: 'percussion/timpani/timpani_E2_forte_hits_normal.mp3',
+          path: 'philharmonia/percussion/timpani/timpani_E2_forte_hits_normal.mp3',
         },
         {
           instrument: 'timpani',
@@ -546,7 +580,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'timpani_G2_forte_hits_normal.mp3',
-          path: 'percussion/timpani/timpani_G2_forte_hits_normal.mp3',
+          path: 'philharmonia/percussion/timpani/timpani_G2_forte_hits_normal.mp3',
         },
       ],
     });
@@ -566,10 +600,10 @@ export class InstrumentLibrary {
           note: 'A0',
           octave: 0,
           frequency: 27.5,
-          dynamic: 'forte',
+          dynamic: 'fortissimo',
           articulation: 'normal',
-          filename: 'bass-drum_A0_very-long_forte_normal.mp3',
-          path: 'percussion/bass-drum/bass-drum_A0_very-long_forte_normal.mp3',
+          filename: 'bass-drum__1_fortissimo_struck-singly.mp3',
+          path: 'philharmonia/percussion/bass drum/bass-drum__1_fortissimo_struck-singly.mp3',
         },
       ],
     });
@@ -591,8 +625,8 @@ export class InstrumentLibrary {
           frequency: 55,
           dynamic: 'forte',
           articulation: 'normal',
-          filename: 'snare-drum_A1_forte_hits_normal.mp3',
-          path: 'percussion/snare-drum/snare-drum_A1_forte_hits_normal.mp3',
+          filename: 'snare-drum__025_forte_with-snares.mp3',
+          path: 'philharmonia/percussion/snare drum/snare-drum__025_forte_with-snares.mp3',
         },
       ],
     });
@@ -615,7 +649,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'glockenspiel_C6_forte.mp3',
-          path: 'percussion/glockenspiel/glockenspiel_C6_forte.mp3',
+          path: 'philharmonia/percussion/glockenspiel/glockenspiel_C6_forte.mp3',
         },
         {
           instrument: 'glockenspiel',
@@ -626,7 +660,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'glockenspiel_E6_forte.mp3',
-          path: 'percussion/glockenspiel/glockenspiel_E6_forte.mp3',
+          path: 'philharmonia/percussion/glockenspiel/glockenspiel_E6_forte.mp3',
         },
         {
           instrument: 'glockenspiel',
@@ -637,7 +671,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'glockenspiel_G6_forte.mp3',
-          path: 'percussion/glockenspiel/glockenspiel_G6_forte.mp3',
+          path: 'philharmonia/percussion/glockenspiel/glockenspiel_G6_forte.mp3',
         },
       ],
     });
@@ -660,7 +694,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'xylophone_C5_forte.mp3',
-          path: 'percussion/xylophone/xylophone_C5_forte.mp3',
+          path: 'philharmonia/percussion/xylophone/xylophone_C5_forte.mp3',
         },
         {
           instrument: 'xylophone',
@@ -671,7 +705,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'xylophone_E5_forte.mp3',
-          path: 'percussion/xylophone/xylophone_E5_forte.mp3',
+          path: 'philharmonia/percussion/xylophone/xylophone_E5_forte.mp3',
         },
         {
           instrument: 'xylophone',
@@ -682,7 +716,7 @@ export class InstrumentLibrary {
           dynamic: 'forte',
           articulation: 'normal',
           filename: 'xylophone_G5_forte.mp3',
-          path: 'percussion/xylophone/xylophone_G5_forte.mp3',
+          path: 'philharmonia/percussion/xylophone/xylophone_G5_forte.mp3',
         },
       ],
     });
@@ -734,11 +768,15 @@ export class InstrumentLibrary {
   }
 
   /**
-   * Get sample path for loading
+   * Get sample path for loading (uses BASE_URL for GitHub Pages compatibility)
    */
   getSamplePath(instrumentName: string, note: string): string | undefined {
     const sample = this.getSample(instrumentName, note);
-    return sample ? `/audio/${sample.path}` : undefined;
+    if (!sample) return undefined;
+    const basePath = typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL 
+      ? import.meta.env.BASE_URL 
+      : '/';
+    return `${basePath}audio/${sample.path}`;
   }
 
   /**
@@ -746,7 +784,10 @@ export class InstrumentLibrary {
    */
   getSamplePaths(instrumentName: string): string[] {
     const samples = this.getSamples(instrumentName);
-    return samples.map(s => `/audio/${s.path}`);
+    const basePath = typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL 
+      ? import.meta.env.BASE_URL 
+      : '/';
+    return samples.map(s => `${basePath}audio/${s.path}`);
   }
 
   /**

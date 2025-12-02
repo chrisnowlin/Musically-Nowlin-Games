@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { instrumentLibrary, Instrument, InstrumentSample } from '@/lib/instrumentLibrary';
 import { sampleAudioService } from '@/lib/sampleAudioService';
 
@@ -93,7 +93,9 @@ export function usePhilharmoniaInstruments(
         }
 
         for (const sample of samples) {
-          const path = `/audio/${sample.path}`;
+          // Use import.meta.env.BASE_URL for correct path resolution on GitHub Pages
+          const basePath = import.meta.env.BASE_URL || '/';
+          const path = `${basePath}audio/${sample.path}`;
           const sampleName = instrumentLibrary.getSampleName(sample.instrument, sample.note);
           allSamplesToLoad.push({ path, sampleName, instrumentName });
         }
@@ -151,6 +153,9 @@ export function usePhilharmoniaInstruments(
     }
   }, []);
 
+  // Memoize instrument names to prevent infinite re-renders when array is passed inline
+  const instrumentNamesKey = useMemo(() => instrumentNames.join(','), [instrumentNames]);
+  
   /**
    * Auto-load instruments on mount if enabled
    */
@@ -158,7 +163,9 @@ export function usePhilharmoniaInstruments(
     if (autoLoad && instrumentNames.length > 0) {
       loadInstruments(instrumentNames);
     }
-  }, [autoLoad, instrumentNames, loadInstruments]);
+    // Use instrumentNamesKey (string) instead of instrumentNames (array) to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoLoad, instrumentNamesKey, loadInstruments]);
 
   /**
    * Play the first available note of an instrument

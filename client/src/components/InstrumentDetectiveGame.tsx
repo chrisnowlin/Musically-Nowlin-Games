@@ -29,26 +29,27 @@ interface InstrumentSound {
 }
 
 // Instrument family sounds with characteristic patterns using Philharmonia Orchestra samples
+// Notes are mapped to actual available samples in instrumentLibrary
 const INSTRUMENT_SOUNDS: InstrumentSound[] = [
   // Strings - warm, sustained tones
   {
     family: "strings",
     name: "Violin",
-    notes: ["A4", "B4", "C5", "D5", "E5"],
+    notes: ["G4", "A4", "C5", "D5", "E5"],  // Available: G4, A4, C5, D5, E5
     pattern: "melody",
     philharmoniaName: "violin"
   },
   {
     family: "strings",
     name: "Cello",
-    notes: ["C3", "D3", "E3", "F3", "G3"],
+    notes: ["C3", "E3", "G3", "C4"],  // Available: C3, E3, G3, C4
     pattern: "sustained",
     philharmoniaName: "cello"
   },
   {
     family: "strings",
     name: "Violin Pizzicato",
-    notes: ["C4", "E4", "G4"],
+    notes: ["G4", "C5", "E5"],  // Available: G4, C5, E5
     pattern: "pizzicato",
     philharmoniaName: "violin"
   },
@@ -56,21 +57,21 @@ const INSTRUMENT_SOUNDS: InstrumentSound[] = [
   {
     family: "woodwinds",
     name: "Flute",
-    notes: ["C5", "D5", "E5", "F5", "G5"],
+    notes: ["C5", "D5", "E5", "G5", "A5"],  // Available: C5, D5, E5, G5, A5
     pattern: "melody",
     philharmoniaName: "flute"
   },
   {
     family: "woodwinds",
     name: "Clarinet",
-    notes: ["D4", "E4", "F#4", "G4", "A4"],
+    notes: ["C4", "E4", "G4"],  // Available: C4, E4, G4
     pattern: "melody",
     philharmoniaName: "clarinet"
   },
   {
     family: "woodwinds",
     name: "Oboe",
-    notes: ["E4", "F#4", "G#4", "A4", "B4"],
+    notes: ["C4", "E4", "G4"],  // Available: C4, E4, G4
     pattern: "sustained",
     philharmoniaName: "oboe"
   },
@@ -78,21 +79,21 @@ const INSTRUMENT_SOUNDS: InstrumentSound[] = [
   {
     family: "brass",
     name: "Trumpet",
-    notes: ["E4", "G4", "A4", "B4", "C5"],
+    notes: ["C4", "E4", "G4"],  // Available: C4, E4, G4
     pattern: "melody",
     philharmoniaName: "trumpet"
   },
   {
     family: "brass",
     name: "French Horn",
-    notes: ["A3", "B3", "C4", "D4", "E4"],
+    notes: ["C3", "E3", "G3"],  // Available: C3, E3, G3
     pattern: "sustained",
     philharmoniaName: "french-horn"
   },
   {
     family: "brass",
     name: "Tuba",
-    notes: ["D2", "E2", "F#2", "G2", "A2"],
+    notes: ["A1", "A2", "A2"],  // Available: A1, A2
     pattern: "sustained",
     philharmoniaName: "tuba"
   },
@@ -100,21 +101,21 @@ const INSTRUMENT_SOUNDS: InstrumentSound[] = [
   {
     family: "percussion",
     name: "Timpani",
-    notes: ["A2", "A2", "A2", "A2"],
+    notes: ["C2", "E2", "G2", "C2"],  // Available: C2, E2, G2
     pattern: "rhythm",
     philharmoniaName: "timpani"
   },
   {
     family: "percussion",
     name: "Xylophone",
-    notes: ["C5", "D5", "E5", "F5"],
+    notes: ["C5", "E5", "G5"],  // Available: C5, E5, G5
     pattern: "pizzicato",
     philharmoniaName: "xylophone"
   },
   {
     family: "percussion",
     name: "Glockenspiel",
-    notes: ["C6", "D6", "E6", "F6"],
+    notes: ["C6", "E6", "G6"],  // Available: C6, E6, G6
     pattern: "sustained",
     philharmoniaName: "glockenspiel"
   },
