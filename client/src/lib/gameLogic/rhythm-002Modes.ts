@@ -86,6 +86,7 @@ export const TEMPO_MARKINGS = {
 };
 
 export const TEMPO_CHANGE_TYPES = {
+  'steady': { name: 'Steady', description: 'Tempo remains constant', direction: 'steady' },
   'accelerando': { name: 'Accelerando', description: 'Gradually getting faster', direction: 'faster' },
   'ritardando': { name: 'Ritardando', description: 'Gradually getting slower', direction: 'slower' },
   'a-tempo': { name: 'A Tempo', description: 'Return to original tempo', direction: 'steady' },
