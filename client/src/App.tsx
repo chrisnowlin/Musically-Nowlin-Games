@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { lazy, Suspense, useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,6 +10,15 @@ import { Loader2 } from "lucide-react";
 
 // Get base path from Vite config for GitHub Pages
 const base = import.meta.env.BASE_URL;
+
+// Redirect component for wouter
+function Redirect({ to }: { to: string }) {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    setLocation(to);
+  }, [to, setLocation]);
+  return null;
+}
 
 // Loading fallback component
 function GameLoadingFallback() {
@@ -65,7 +74,6 @@ const Rhythm006Page = lazy(() => import("@/pages/games/Rhythm006Page"));
 const Rhythm007Page = lazy(() => import("@/pages/games/Rhythm007Page"));
 const Rhythm002Page = lazy(() => import("@/pages/games/Rhythm002Page"));
 const Pitch001Page = lazy(() => import("@/pages/games/Pitch001Page"));
-const Pitch002Page = lazy(() => import("@/pages/games/Pitch002Page"));
 const Pitch003Page = lazy(() => import("@/pages/games/Pitch003Page"));
 const Pitch004Page = lazy(() => import("@/pages/games/Pitch004Page"));
 const Pitch005Page = lazy(() => import("@/pages/games/Pitch005Page"));
@@ -74,7 +82,6 @@ const Rhythm001Page = lazy(() => import("@/pages/games/Rhythm001Page"));
 const Rhythm003Page = lazy(() => import("@/pages/games/Rhythm003Page"));
 const Rhythm004Page = lazy(() => import("@/pages/games/Rhythm004Page"));
 const Rhythm005Page = lazy(() => import("@/pages/games/Rhythm005Page"));
-const Harmony001Page = lazy(() => import("@/pages/games/Harmony001Page"));
 const Harmony002Page = lazy(() => import("@/pages/games/Harmony002Page"));
 const Harmony003Page = lazy(() => import("@/pages/games/Harmony003Page"));
 const Harmony004Page = lazy(() => import("@/pages/games/Harmony004Page"));
@@ -106,7 +113,7 @@ function Router() {
     <Suspense fallback={<GameLoadingFallback />}>
       <Switch>
       {/* Redirect root to /games */}
-      <Route path="/">{() => <Redirect to="/games" />}</Route>
+      <Route path="/"><Redirect to="/games" /></Route>
       {/* Landing page routes */}
       <Route path="/home" component={LandingPage} />
       <Route path="/games" component={LandingPage} />
@@ -147,7 +154,6 @@ function Router() {
       <Route path="/games/tempo-and-pulse-master" component={Rhythm002Page} />
       <Route path="/games/rhythm-master" component={Rhythm001Page} />
       <Route path="/games/pitch-001" component={Pitch001Page} />
-      <Route path="/games/pitch-002" component={Pitch002Page} />
       <Route path="/games/pitch-003" component={Pitch003Page} />
       <Route path="/games/pitch-004" component={Pitch004Page} />
       <Route path="/games/pitch-005" component={Pitch005Page} />
@@ -156,7 +162,6 @@ function Router() {
       <Route path="/games/rhythm-003" component={Rhythm003Page} />
       <Route path="/games/rhythm-004" component={Rhythm004Page} />
       <Route path="/games/rhythm-005" component={Rhythm005Page} />
-      <Route path="/games/harmony-001" component={Harmony001Page} />
       <Route path="/games/harmony-002" component={Harmony002Page} />
       <Route path="/games/harmony-003" component={Harmony003Page} />
       <Route path="/games/harmony-004" component={Harmony004Page} />
