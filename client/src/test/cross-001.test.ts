@@ -154,11 +154,11 @@ describe('cross-001 logic', () => {
       expect(hasMathKeyword).toBe(true);
     });
 
-    it.skip('has math-related answer options', () => {
+    it('has math-related answer options', () => {
       const round = generateRound('math', 1);
       const hasMathOption = round.options.some(option => 
         option.includes('beat') || 
-        option.includes('fraction') || 
+        option.match(/[0-9]+\/[0-9]+/) || 
         option.includes('pattern') ||
         option.includes('sequence') ||
         option.includes('notes')

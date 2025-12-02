@@ -338,7 +338,7 @@ describe('Rhythm-002 Tempo & Pulse Master Game Logic', () => {
       }
     });
 
-    it.skip('should generate identify-change questions', () => {
+    it('should generate identify-change questions', () => {
       const rounds = Array.from({ length: 20 }, (_, i) =>
         Rhythm002Logic.generateRound(tempoChangesMode, 2, i, 20)
       );
@@ -421,7 +421,7 @@ describe('Rhythm-002 Tempo & Pulse Master Game Logic', () => {
     });
   });
 
-  describe.skip('Round Generation Edge Cases', () => {
+  describe('Round Generation Edge Cases', () => {
     it('should handle different difficulty levels', () => {
       [1, 2, 3].forEach(difficulty => {
         const round = Rhythm002Logic.generateRound(tempoChangesMode, difficulty, 0, 15);
