@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "transformation" | "pattern" | "articulation";
+  type?: "transformation" | "pattern" | "articulation";
   melodyName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];

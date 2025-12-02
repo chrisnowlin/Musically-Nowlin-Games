@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "binary" | "ternary" | "rondo" | "sonata" | "fugue" | "canon";
+  type?: "binary" | "ternary" | "rondo" | "sonata" | "fugue" | "canon";
   formName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];

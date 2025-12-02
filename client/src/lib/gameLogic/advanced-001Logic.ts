@@ -136,7 +136,7 @@ export function generateRound(mode: string, difficulty: number): GameRound {
     options: randomQuestion.options,
     difficulty,
     notes: randomQuestion.notes,
-    pattern: randomQuestion.pattern,
+    pattern: (randomQuestion as any).pattern,
     description: randomQuestion.description,
   };
 }
