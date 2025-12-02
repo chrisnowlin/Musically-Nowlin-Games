@@ -117,7 +117,7 @@ export default function ToneColorMatchGame() {
     if (gameStarted && !gameState.targetMelody) {
       generateNewQuestion();
     }
-  }, [gameStarted, generateNewQuestion]);
+  }, [gameStarted]);
 
   const playMelody = useCallback(async (melody: Melody, instrument: Instrument) => {
     const masterVolume = gameState.volume / 100;

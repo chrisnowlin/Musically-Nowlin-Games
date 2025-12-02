@@ -65,7 +65,7 @@ export default function RhythmPuzzleBuilderGame() {
     if (gameStarted && gameState.targetPattern.length === 0) {
       generateNewPattern();
     }
-  }, [gameStarted, generateNewPattern]);
+  }, [gameStarted]);
 
   const playNote = useCallback(async (duration: number) => {
     if (!audioContext.current) return;

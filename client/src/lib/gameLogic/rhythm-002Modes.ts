@@ -338,7 +338,7 @@ export const generateSubdivisionPattern = (
   measures: number,
   beatsPerMeasure: number
 ): number[] => {
-  const pattern = SUBDIVISION_PATTERNS[subdivisionType];
+  const pattern = SUBDIVISION_PATTERNS[subdivisionType as keyof typeof SUBDIVISION_PATTERNS];
   if (!pattern) return [];
 
   const totalBeats = measures * beatsPerMeasure;

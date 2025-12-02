@@ -5,19 +5,37 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { playfulShapes, playfulTypography, playfulColors } from "@/theme/playful";
 
-interface ScoreDisplayProps {
+export interface ScoreDisplayProps {
   score: number;
-  totalQuestions: number;
-  onReset: () => void;
-  volume: number; // 0..100
-  onVolumeChange: (v: number) => void;
+  /** @deprecated Use totalQuestions instead */
+  total?: number;
+  totalQuestions?: number;
+  onReset?: () => void;
+  volume?: number; // 0..100
+  onVolumeChange?: (v: number) => void;
 }
 
 /**
- * ScoreDisplay component - shows game score, accuracy, and volume control
+ * ScoreDisplay component - shows game score, accuracy, and optional volume control
  * Memoized to prevent unnecessary re-renders
+ * 
+ * Can be used in two modes:
+ * 1. Simple mode: just pass `score` and optionally `total` or `totalQuestions`
+ * 2. Full mode: pass all props including `onReset`, `volume`, and `onVolumeChange`
  */
-function ScoreDisplay({ score, totalQuestions, onReset, volume, onVolumeChange }: ScoreDisplayProps) {
+function ScoreDisplay({ 
+  score, 
+  total, 
+  totalQuestions: totalQuestionsProp, 
+  onReset, 
+  volume = 50, 
+  onVolumeChange 
+}: ScoreDisplayProps) {
+  // Support both 'total' (legacy) and 'totalQuestions' props
+  const totalQuestions = totalQuestionsProp ?? total ?? 0;
+  const showVolumeControl = onVolumeChange !== undefined;
+  const showResetButton = onReset !== undefined;
+  
   return (
     <div className="flex items-center gap-4 justify-between w-full max-w-screen-2xl mx-auto px-4 lg:px-8">
       {/* Score counter */}
@@ -46,51 +64,56 @@ function ScoreDisplay({ score, totalQuestions, onReset, volume, onVolumeChange }
         )}
       </div>
 
-      {/* Volume control */}
-      <div className="hidden md:flex items-center gap-3 ml-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-3 rounded-full border-4 border-pink-300 dark:border-pink-700 shadow-lg">
-        <Label htmlFor="volume" className="font-nunito text-sm text-purple-800 dark:text-purple-200 sr-only">Volume</Label>
-        <Volume2 aria-hidden className="w-5 h-5 text-purple-600" />
-        <Slider
+      {/* Volume control - only shown if onVolumeChange is provided */}
+      {showVolumeControl && (
+        <div className="hidden md:flex items-center gap-3 ml-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-3 rounded-full border-4 border-pink-300 dark:border-pink-700 shadow-lg">
+          <Label htmlFor="volume" className="font-nunito text-sm text-purple-800 dark:text-purple-200 sr-only">Volume</Label>
+          <Volume2 aria-hidden className="w-5 h-5 text-purple-600" />
+          <Slider
+            size="lg"
+            aria-label="Volume"
+            id="volume"
+            className="w-[clamp(10rem,20vw,22rem)]"
+            value={[volume]}
+            max={100}
+            step={1}
+            onValueChange={(v) => onVolumeChange?.(v[0])}
+          />
+          <span className={`${playfulTypography.body.small} text-purple-800 dark:text-purple-200 font-semibold tabular-nums w-10 text-right`}>{volume}%</span>
+        </div>
+      )}
+
+      {/* Reset button - only shown if onReset is provided */}
+      {showResetButton && (
+        <Button
+          onClick={onReset}
           size="lg"
-          aria-label="Volume"
-          id="volume"
-          className="w-[clamp(10rem,20vw,22rem)]"
-          value={[volume]}
-          max={100}
-          step={1}
-          onValueChange={(v) => onVolumeChange(v[0])}
-        />
-        <span className={`${playfulTypography.body.small} text-purple-800 dark:text-purple-200 font-semibold tabular-nums w-10 text-right`}>{volume}%</span>
-      </div>
+          data-testid="button-reset"
+          className={`gap-2 ${playfulShapes.rounded.button} ${playfulShapes.shadows.button} ${playfulColors.gradients.buttonPrimary} font-fredoka font-bold text-base md:text-lg text-white border-0`}
+        >
+          <RotateCcw className="w-5 h-5" />
+          New Game
+        </Button>
+      )}
 
-      {/* Reset button */}
-      <Button
-        onClick={onReset}
-        size="lg"
-        data-testid="button-reset"
-        className={`gap-2 ${playfulShapes.rounded.button} ${playfulShapes.shadows.button} ${playfulColors.gradients.buttonPrimary} font-fredoka font-bold text-base md:text-lg text-white border-0`}
-      >
-        <RotateCcw className="w-5 h-5" />
-        New Game
-      </Button>
-
-    {/* Mobile volume control */}
-    <div className="md:hidden w-full max-w-screen-2xl mx-auto px-4 mt-3">
-      <div className="flex items-center gap-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-3 rounded-full border-4 border-pink-300 dark:border-pink-700 shadow-lg">
-        <Volume2 aria-hidden className="w-5 h-5 text-purple-600" />
-        <Slider
-          size="lg"
-          aria-label="Volume"
-          className="w-full"
-          value={[volume]}
-          max={100}
-          step={1}
-          onValueChange={(v) => onVolumeChange(v[0])}
-        />
-        <span className={`${playfulTypography.body.small} text-purple-800 dark:text-purple-200 font-semibold tabular-nums w-10 text-right`}>{volume}%</span>
-      </div>
-    </div>
-
+      {/* Mobile volume control - only shown if onVolumeChange is provided */}
+      {showVolumeControl && (
+        <div className="md:hidden w-full max-w-screen-2xl mx-auto px-4 mt-3">
+          <div className="flex items-center gap-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-3 rounded-full border-4 border-pink-300 dark:border-pink-700 shadow-lg">
+            <Volume2 aria-hidden className="w-5 h-5 text-purple-600" />
+            <Slider
+              size="lg"
+              aria-label="Volume"
+              className="w-full"
+              value={[volume]}
+              max={100}
+              step={1}
+              onValueChange={(v) => onVolumeChange?.(v[0])}
+            />
+            <span className={`${playfulTypography.body.small} text-purple-800 dark:text-purple-200 font-semibold tabular-nums w-10 text-right`}>{volume}%</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

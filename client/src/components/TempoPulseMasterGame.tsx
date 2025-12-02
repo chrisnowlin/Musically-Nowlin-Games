@@ -259,7 +259,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
           {onBack && (
             <button
               onClick={onBack}
-              className={`${playfulComponents.button.base} ${playfulComponents.button.secondary} mb-8 flex items-center gap-2`}
+              className={`${playfulComponents.button.secondary} mb-8 flex items-center gap-2 px-4 py-2 rounded-full`}
             >
               <ChevronLeft size={20} />
               Back
@@ -267,10 +267,10 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
           )}
 
           <div className="text-center mb-12">
-            <h1 className={`${playfulTypography.display} text-6xl mb-4 ${playfulColors.text.primary}`}>
+            <h1 className={`${playfulTypography.headings.h1} mb-4 ${playfulColors.gradients.title}`}>
               Tempo & Pulse Master
             </h1>
-            <p className={`${playfulTypography.body} text-xl text-gray-600`}>
+            <p className={`${playfulTypography.body.large} text-gray-600`}>
               Master tempo recognition and rhythmic subdivisions
             </p>
           </div>
@@ -281,17 +281,17 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                 key={mode.id}
                 onClick={() => startGame(mode)}
                 className={`
-                  ${playfulComponents.card}
-                  cursor-pointer
+                  ${playfulComponents.card.base}
+                  cursor-pointer p-6
                   transform transition-all duration-300 hover:scale-105 hover:shadow-2xl
                   bg-white border-4 border-transparent hover:border-orange-400
                 `}
               >
                 <div className="text-6xl mb-4">{mode.icon}</div>
-                <h3 className={`${playfulTypography.heading} text-2xl mb-3`}>
+                <h3 className={`${playfulTypography.headings.h3} mb-3`}>
                   {mode.name}
                 </h3>
-                <p className={`${playfulTypography.body} text-gray-600 mb-4`}>
+                <p className={`${playfulTypography.body.medium} text-gray-600 mb-4`}>
                   {mode.description}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -299,7 +299,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                   <Badge variant="outline">{mode.ageRange}</Badge>
                   <Badge variant="outline">{mode.maxRounds} rounds</Badge>
                 </div>
-                <p className={`${playfulTypography.caption} text-gray-500`}>
+                <p className={`${playfulTypography.body.small} text-gray-500`}>
                   {mode.instructions}
                 </p>
               </div>
@@ -326,7 +326,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
               setGameState(null);
               setCurrentRound(null);
             }}
-            className={`${playfulComponents.button.base} ${playfulComponents.button.secondary} flex items-center gap-2`}
+            className={`${playfulComponents.button.secondary} flex items-center gap-2 px-4 py-2 rounded-full`}
           >
             <ChevronLeft size={20} />
             Change Mode
@@ -338,7 +338,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                 <Heart key={i} className="w-6 h-6 fill-red-500 text-red-500" />
               ))}
             </div>
-            <div className={`${playfulComponents.badge} bg-purple-500 text-white text-xl px-6 py-2`}>
+            <div className={`${playfulComponents.badge.base} ${playfulComponents.badge.purple} text-xl px-6 py-2`}>
               <Star className="w-5 h-5 inline mr-2" />
               {gameState.score}
             </div>
@@ -346,15 +346,15 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
         </div>
 
         {/* Progress */}
-        <Card className={playfulComponents.card}>
+        <Card className={playfulComponents.card.base}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <span className={`${playfulTypography.body} font-semibold`}>
+              <span className={`${playfulTypography.body.medium} font-semibold`}>
                 Round {gameState.currentRound + 1} / {gameState.totalRounds}
               </span>
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-orange-600" />
-                <span className={`${playfulTypography.body} font-bold text-orange-600`}>
+                <span className={`${playfulTypography.body.medium} font-bold text-orange-600`}>
                   {timeRemaining}s
                 </span>
               </div>
@@ -366,7 +366,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
             {gameState.streak > 0 && (
               <div className="mt-2 flex items-center gap-2 text-orange-600">
                 <Zap className="w-4 h-4" />
-                <span className={playfulTypography.caption}>
+                <span className={playfulTypography.body.small}>
                   {gameState.streak} streak!
                 </span>
               </div>
@@ -375,13 +375,13 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
         </Card>
 
         {/* Question Card */}
-        <Card className={`${playfulComponents.card} mt-6`}>
+        <Card className={`${playfulComponents.card.base} mt-6`}>
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <Badge className={`${selectedMode.color} text-white mb-4 text-lg px-6 py-2`}>
                 {selectedMode.name}
               </Badge>
-              <h2 className={`${playfulTypography.heading} text-3xl mb-4`}>
+              <h2 className={`${playfulTypography.headings.h3} mb-4`}>
                 {currentRound.question}
               </h2>
 
@@ -389,7 +389,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                 <Button
                   onClick={playRoundAudio}
                   disabled={isPlaying}
-                  className={`${playfulComponents.button.base} ${playfulComponents.button.primary} flex items-center gap-2`}
+                  className={`${playfulComponents.button.primary} flex items-center gap-2`}
                 >
                   {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                   {isPlaying ? 'Playing...' : 'Play Audio'}
@@ -398,7 +398,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                 <Button
                   onClick={() => setShowHint(!showHint)}
                   variant="outline"
-                  className={playfulComponents.button.base}
+                  className="flex items-center gap-2"
                 >
                   <HelpCircle size={20} />
                   Hint
@@ -407,7 +407,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
 
               {showHint && currentRound.hint && (
                 <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-6">
-                  <p className={`${playfulTypography.body} text-yellow-900`}>
+                  <p className={`${playfulTypography.body.medium} text-yellow-900`}>
                     💡 {currentRound.hint}
                   </p>
                 </div>
@@ -422,7 +422,6 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                   onClick={() => setSelectedAnswer(option)}
                   disabled={!!feedback}
                   className={`
-                    ${playfulComponents.button.base}
                     p-6 text-lg font-semibold rounded-xl border-4 transition-all
                     ${selectedAnswer === option
                       ? 'bg-blue-500 text-white border-blue-600 shadow-lg scale-105'
@@ -458,7 +457,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                   ) : (
                     <XCircle className="w-8 h-8 text-red-600" />
                   )}
-                  <p className={`${playfulTypography.body} text-xl font-semibold ${
+                  <p className={`${playfulTypography.body.large} font-semibold ${
                     feedback.correct ? 'text-green-900' : 'text-red-900'
                   }`}>
                     {feedback.message}
@@ -473,7 +472,7 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
                 <Button
                   onClick={submitAnswer}
                   disabled={!selectedAnswer}
-                  className={`${playfulComponents.button.base} ${playfulComponents.button.primary} text-xl px-12 py-6`}
+                  className={`${playfulComponents.button.primary} text-xl px-12 py-6`}
                 >
                   Submit Answer
                 </Button>
@@ -483,26 +482,26 @@ const TempoPulseMasterGame: React.FC<TempoPulseMasterGameProps> = ({ onGameCompl
         </Card>
 
         {/* Game Info */}
-        <Card className={`${playfulComponents.card} mt-6`}>
+        <Card className={`${playfulComponents.card.base} mt-6`}>
           <CardContent className="p-6">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className={`${playfulTypography.caption} text-gray-600 mb-1`}>Difficulty</p>
-                <p className={`${playfulTypography.body} text-2xl font-bold text-purple-600`}>
+                <p className={`${playfulTypography.body.small} text-gray-600 mb-1`}>Difficulty</p>
+                <p className={`${playfulTypography.body.large} font-bold text-purple-600`}>
                   Level {gameState.difficulty}
                 </p>
               </div>
               <div>
-                <p className={`${playfulTypography.caption} text-gray-600 mb-1`}>Accuracy</p>
-                <p className={`${playfulTypography.body} text-2xl font-bold text-blue-600`}>
+                <p className={`${playfulTypography.body.small} text-gray-600 mb-1`}>Accuracy</p>
+                <p className={`${playfulTypography.body.large} font-bold text-blue-600`}>
                   {gameState.currentRound > 0
                     ? Math.round((gameState.answers.filter(a => a.isCorrect).length / gameState.currentRound) * 100)
                     : 0}%
                 </p>
               </div>
               <div>
-                <p className={`${playfulTypography.caption} text-gray-600 mb-1`}>Best Streak</p>
-                <p className={`${playfulTypography.body} text-2xl font-bold text-orange-600`}>
+                <p className={`${playfulTypography.body.small} text-gray-600 mb-1`}>Best Streak</p>
+                <p className={`${playfulTypography.body.large} font-bold text-orange-600`}>
                   {Math.max(gameState.streak, ...gameState.answers.map((_, i) => {
                     let streak = 0;
                     for (let j = i; j >= 0 && gameState.answers[j].isCorrect; j--) streak++;

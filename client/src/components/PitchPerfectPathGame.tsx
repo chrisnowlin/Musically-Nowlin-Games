@@ -70,7 +70,7 @@ export default function PitchPerfectPathGame() {
     const noteDuration = 500; // 0.5 seconds in ms
 
     for (const freq of frequencies) {
-      await audio.playNote(freq, noteDuration, gameState.volume / 100);
+      await audio.playNoteWithDynamics(freq, noteDuration, gameState.volume / 100);
     }
   }, [gameState.volume, audio]);
 

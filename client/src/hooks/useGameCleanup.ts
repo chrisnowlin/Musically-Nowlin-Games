@@ -39,8 +39,10 @@ export function useGameCleanup() {
 
   /**
    * Create a timeout that will be automatically cleared on unmount
+   * Supports both () => void and (value: unknown) => void callbacks
+   * to work with Promise resolve functions
    */
-  const createTimeout = (callback: () => void, delay: number): NodeJS.Timeout => {
+  const createTimeout = <T = void>(callback: (value?: T) => void, delay: number): NodeJS.Timeout => {
     const id = globalThis.setTimeout(() => {
       timeoutsRef.current.delete(id);
       callback();
@@ -134,4 +136,3 @@ export function useGameCleanup() {
     clearAll,
   };
 }
-

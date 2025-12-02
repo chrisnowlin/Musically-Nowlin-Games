@@ -72,7 +72,7 @@ export default function ComposeYourSongGame() {
   };
 
   const playNote = useCallback(async (frequency: number, duration: number = 0.4) => {
-    await audio.playNote(frequency, duration * 1000, gameState.volume / 100);
+    await audio.playNoteWithDynamics(frequency, duration, gameState.volume / 100);
   }, [gameState.volume, audio]);
 
   const handleAddNote = useCallback((noteIndex: number) => {

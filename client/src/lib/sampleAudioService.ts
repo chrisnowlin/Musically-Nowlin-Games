@@ -27,9 +27,9 @@ export class SampleAudioService {
       const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         this.audioContext = new AudioCtx();
-        this.masterGain = this.audioContext.createGain();
+        this.masterGain = this.audioContext!.createGain();
         this.masterGain.gain.value = this.currentVolume;
-        this.masterGain.connect(this.audioContext.destination);
+        this.masterGain!.connect(this.audioContext!.destination);
       }
     }
   }
@@ -39,9 +39,9 @@ export class SampleAudioService {
       const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         this.audioContext = new AudioCtx();
-        this.masterGain = this.audioContext.createGain();
+        this.masterGain = this.audioContext!.createGain();
         this.masterGain.gain.value = this.currentVolume;
-        this.masterGain.connect(this.audioContext.destination);
+        this.masterGain!.connect(this.audioContext!.destination);
       }
     }
     await this.ensureAudioContext();

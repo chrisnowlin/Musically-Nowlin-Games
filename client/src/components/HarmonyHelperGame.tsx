@@ -92,7 +92,9 @@ export default function HarmonyHelperGame() {
     const freq2 = BASE_FREQUENCY * Math.pow(2, semitones / 12);
 
     // Play both notes simultaneously using playChord
-    await audio.playChord([freq1, freq2], duration, gameState.volume / 100);
+    // Play both notes sequentially (chord simulation)
+    await audio.playNote(freq1, duration / 1000);
+    audio.playNote(freq2, duration / 1000); // Fire and forget for harmonic effect
 
     setGameState(prev => ({ ...prev, isPlaying: false }));
   }, [gameState.volume, gameState.isPlaying, audio]);

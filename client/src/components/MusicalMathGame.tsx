@@ -71,7 +71,7 @@ export default function MusicalMathGame() {
 
   const playNote = useCallback(async (duration: number) => {
     const frequency = 440; // A4
-    await audio.playNote(frequency, duration * 1000, gameState.volume / 100);
+    await audio.playNoteWithDynamics(frequency, duration, gameState.volume / 100);
     // Add small pause after note
     await new Promise(resolve => setGameTimeout(resolve, 200));
   }, [gameState.volume, audio, setGameTimeout]);

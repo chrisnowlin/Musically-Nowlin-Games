@@ -269,7 +269,7 @@ export class AudioService {
       try {
         await this.audioContext.resume();
         // Mark as unlocked once context is successfully resumed
-        if (this.audioContext.state === 'running') {
+        if ((this.audioContext.state as string) === "running") {
           this.isUnlocked = true;
         }
       } catch (error) {

@@ -73,7 +73,7 @@ export default function MusicalSimonSaysGame() {
     const note = NOTES[noteId];
     setActiveNote(noteId);
 
-    await audio.playNote(note.frequency, duration * 1000, gameState.volume / 100);
+    await audio.playNoteWithDynamics(note.frequency, duration, gameState.volume / 100);
 
     setActiveNote(null);
     await new Promise(resolve => setGameTimeout(resolve, 200)); // Gap between notes

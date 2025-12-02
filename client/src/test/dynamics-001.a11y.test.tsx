@@ -188,7 +188,7 @@ describe('Dynamics Master - Accessibility', () => {
     it('should have accessible answer options', async () => {
       await waitFor(() => {
         const answerOptions = screen.getAllByRole('button').filter(button => 
-          button.textContent && button.textContent.includes('P -') || button.textContent.includes('F -')
+          button.textContent && (button.textContent.includes('P -') || button.textContent.includes('F -'))
         );
         
         expect(answerOptions.length).toBeGreaterThan(0);

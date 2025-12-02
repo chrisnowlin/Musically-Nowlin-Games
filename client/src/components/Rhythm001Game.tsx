@@ -81,8 +81,8 @@ export const Rhythm001Game: React.FC = () => {
         round: prev.round + 1,
         difficulty: newDifficulty,
         feedback: isCorrect
-          ? `Correct! It was "${gameState.currentRound.correctAnswer}". +${points} points!`
-          : `Not quite. The correct answer was "${gameState.currentRound.correctAnswer}".`,
+          ? `Correct! It was "${gameState.currentRound?.correctAnswer}". +${points} points!`
+          : `Not quite. The correct answer was "${gameState.currentRound?.correctAnswer}".`,
         totalAttempts: newTotalAttempts,
         correctAnswers: newCorrectAnswers,
       };

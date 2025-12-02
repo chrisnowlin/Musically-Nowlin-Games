@@ -206,11 +206,11 @@ export function usePhilharmoniaInstruments(
       // Fallback to synthesized tone
       const sample = instrumentLibrary.getSample(instrumentName, note);
       if (sample) {
-        await sampleAudioService.playNote(
-          sample.frequency,
-          options.duration ?? 0.5,
-          options.volume ?? 1.0
-        );
+        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
+        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
+        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
+        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
+        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
       }
     }
   }, []);

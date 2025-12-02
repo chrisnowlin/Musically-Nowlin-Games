@@ -104,7 +104,7 @@ export const Timbre002Game: React.FC = () => {
   const handleAnswer = (answer: string) => {
     if (!gameState.currentRound) return;
 
-    const isCorrect = validateAnswer(answer, gameState.currentRound.correctAnswer);
+    const isCorrect = validateAnswer(answer, gameState.currentRound?.correctAnswer);
     const points = calculateScore(isCorrect, 0, gameState.difficulty);
 
     setGameState(prev => {
@@ -128,8 +128,8 @@ export const Timbre002Game: React.FC = () => {
         round: prev.round + 1,
         difficulty: newDifficulty,
         feedback: isCorrect
-          ? `Correct! It was "${gameState.currentRound.correctAnswer}". +${points} points!`
-          : `Not quite. The correct answer was "${gameState.currentRound.correctAnswer}".`,
+          ? `Correct! It was "${gameState.currentRound?.correctAnswer}". +${points} points!`
+          : `Not quite. The correct answer was "${gameState.currentRound?.correctAnswer}".`,
         totalAttempts: newTotalAttempts,
         correctAnswers: newCorrectAnswers,
       };
