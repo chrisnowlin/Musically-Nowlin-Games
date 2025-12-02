@@ -18,16 +18,19 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "basic" | "complex";
+  type?: "basic" | "complex";
   chordName: string;
   description: string;
+    chordNotes?: { root: number; third: number; fifth: number; };
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];
     characteristics: string[];
     description: string;
+    chordNotes?: { root: number; third: number; fifth: number; };
   };
 }
 
@@ -273,7 +276,7 @@ export const Theory003Game: React.FC = () => {
       
       if (instrument && instrument.samples.length > 0) {
         // Get all chord note frequencies
-        const noteFrequencies = Object.values(chordNotes).filter(freq => typeof freq === 'number') as number[];
+        const noteFrequencies = chordNotes ? Object.values(chordNotes).filter(freq => typeof freq === "number") as number[] : [];
         
         // Create audio context for precise simultaneous timing
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();

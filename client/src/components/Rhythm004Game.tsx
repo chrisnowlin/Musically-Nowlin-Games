@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "value" | "tuplet" | "conversion" | "speed";
+  type?: "value" | "tuplet" | "conversion" | "speed";
   rhythmName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];
