@@ -25,6 +25,7 @@ All documentation is in the root directory:
 
 | Document | Purpose | Start Here If... |
 |----------|---------|------------------|
+| **SOUND_AND_MELODY_SYSTEMS.md** | ⭐ Sound library, melody library, volume system | You're implementing audio in a game |
 | **AUDIO_SYSTEM_SUMMARY.md** | Complete overview | You want the big picture |
 | **INSTRUMENT_LIBRARY_GUIDE.md** | Developer API & examples | You're building a game |
 | **SAMPLE_AUDIO_POC.md** | POC walkthrough | You want to understand how it works |
@@ -52,12 +53,14 @@ All documentation is in the root directory:
 
 ✅ **Directory Structure** - Organized and ready
 ```
-client/public/sounds/philharmonia/
-├── strings/ (violin, cello, harp)
-├── woodwinds/ (flute, clarinet, oboe)
-├── brass/ (trumpet, french-horn, trombone)
-└── percussion/ (timpani, drums, xylophone, glockenspiel)
+client/public/audio/philharmonia/
+├── strings/ (violin, viola, cello, double bass)
+├── woodwinds/ (flute, clarinet, oboe, bassoon, saxophone)
+├── brass/ (trumpet, french-horn, trombone, tuba)
+└── percussion/ (timpani, xylophone, glockenspiel)
 ```
+
+> **Note**: The sound library has been reorganized. See `SOUND_AND_MELODY_SYSTEMS.md` for current structure.
 
 ---
 
@@ -354,6 +357,7 @@ Happy coding! 🎵🎮
 ## 📞 Need Help?
 
 Refer to:
+- `SOUND_AND_MELODY_SYSTEMS.md` for sound library, melody library, and volume system ⭐
 - `INSTRUMENT_LIBRARY_GUIDE.md` for API details
 - `SAMPLE_AUDIO_POC.md` for technical implementation
 - `AUDIO_SYSTEM_SUMMARY.md` for complete overview

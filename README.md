@@ -43,11 +43,22 @@ Our comprehensive rhythm training game featuring **5 distinct modes**:
 - **Runtime**: Bun 1.3 (fast JavaScript runtime)
 - **Framework**: React 18 + TypeScript 5.6
 - **Build Tool**: Vite 5
-- **Audio**: Web Audio API + Tone.js
+- **Audio**: Web Audio API + Tone.js + Philharmonia Orchestra Samples
 - **Music Notation**: VexFlow 5
 - **Styling**: TailwindCSS 4
 - **UI Components**: Radix UI
 - **Routing**: Wouter 3
+
+## Audio System
+
+This project features a comprehensive audio system with real orchestra samples:
+
+- **15 Professional Instruments** from Philharmonia Orchestra (strings, woodwinds, brass, percussion)
+- **Centralized Sound Library** at `client/public/audio/philharmonia/`
+- **Melody Library** with 60+ reusable musical patterns
+- **Volume Normalization** to balance instrument loudness
+
+📖 See [SOUND_AND_MELODY_SYSTEMS.md](./SOUND_AND_MELODY_SYSTEMS.md) for detailed documentation.
 
 ## Prerequisites
 
