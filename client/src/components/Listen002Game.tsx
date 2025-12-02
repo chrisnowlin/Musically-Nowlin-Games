@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "period" | "genre" | "region";
+  type?: "period" | "genre" | "region";
   styleName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];

@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "composer" | "era" | "style";
+  type?: "composer" | "era" | "style";
   composerName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];

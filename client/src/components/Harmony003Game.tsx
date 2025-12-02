@@ -423,7 +423,7 @@ const Harmony003Game: React.FC = () => {
                     switch (currentRound.questionType) {
                       case 'progression':
                         const prog = CHORD_PROGRESSIONS[opt as keyof typeof CHORD_PROGRESSIONS];
-                        return prog?.name || opt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        return (prog as any)?.name || opt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                       case 'feature':
                         const feat = HARMONIC_FEATURES[opt as keyof typeof HARMONIC_FEATURES];
                         return feat?.name || opt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());

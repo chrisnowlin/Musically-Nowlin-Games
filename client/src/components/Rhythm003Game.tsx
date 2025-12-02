@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "meter" | "type" | "feature";
+  type?: "meter" | "type" | "feature";
   meterName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];

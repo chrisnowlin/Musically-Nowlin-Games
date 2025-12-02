@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { generateRound, validateAnswer, calculateScore, GameRound } from "@/lib/gameLogic/advanced-001Logic";
 import { sampleAudioService } from "@/lib/sampleAudioService";
 import { Button } from "@/components/ui/button";
-import { getAdvanced001Mode } from "@/lib/gameLogic/advanced-001Modes";
+import { getAdvanced001Mode, type Advanced001ModeId } from "@/lib/gameLogic/advanced-001Modes";
 
 const LS_KEYS = {
   lastMode: "advanced-001:lastMode",
@@ -70,7 +70,7 @@ export const Advanced001Game: React.FC = () => {
   }, []);
 
   const getDifficultyForLevel = useCallback((modeId: string, level: number) => {
-    const curve = getAdvanced001Mode(modeId)?.difficultyCurve ?? ((l: number) => ({ difficulty: Math.min(5, Math.max(1, l)) }));
+    const curve = getAdvanced001Mode(modeId as Advanced001ModeId)?.difficultyCurve ?? ((l: number) => ({ difficulty: Math.min(5, Math.max(1, l)) }));
     return curve(level).difficulty;
   }, []);
 

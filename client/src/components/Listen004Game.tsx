@@ -18,11 +18,12 @@ interface GameState {
 
 interface Question {
   id: string;
-  type: "texture" | "range" | "development";
+  type?: "texture" | "range" | "development";
   elementName: string;
   description: string;
   options: string[];
   correctAnswer: number;
+  question: string;
   explanation: string;
   audioExample?: {
     instruments: string[];
