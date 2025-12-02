@@ -511,20 +511,22 @@ export default function InstrumentDetectiveGame() {
   // Start Screen
   if (!gameStarted) {
     return (
-      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
-        <button
-          onClick={() => setLocation("/")}
-          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
-        >
-          <ChevronLeft size={24} />
-          Main Menu
-        </button>
+      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col p-4 relative overflow-hidden`}>
+        <div className="w-full flex justify-start z-50 mb-4">
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+          >
+            <ChevronLeft size={24} />
+            Main Menu
+          </button>
+        </div>
 
         {decorativeOrbs.map((orb) => (
           <div key={orb.key} className={orb.className} />
         ))}
 
-        <div className="text-center space-y-8 z-10 max-w-4xl w-full">
+        <div className="text-center space-y-8 z-10 max-w-4xl w-full flex-1 flex flex-col justify-center items-center mx-auto">
           <div className="space-y-4 animate-fade-in-down">
             <h1 className={`${playfulTypography.headings.hero} ${playfulColors.gradients.title}`}>
               🔍 Instrument Detective
