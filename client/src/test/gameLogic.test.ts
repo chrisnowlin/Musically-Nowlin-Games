@@ -6,15 +6,15 @@ import { generateNewRound, validateAnswer, calculateScore } from '../lib/gameUti
 describe('Game Logic - generateNewRound', () => {
   it('should generate two different pitches', () => {
     const round = generateNewRound();
-    expect(round.pitch1).not.toBe(round.pitch2);
+    expect(round.pitches[0]).not.toBe(round.pitches[1]);
   });
 
   it('should generate pitches from the valid MUSICAL_NOTES range', () => {
     const validFrequencies = MUSICAL_NOTES.map(note => note.frequency);
     const round = generateNewRound();
     
-    expect(validFrequencies).toContain(round.pitch1);
-    expect(validFrequencies).toContain(round.pitch2);
+    expect(validFrequencies).toContain(round.pitches[0]);
+    expect(validFrequencies).toContain(round.pitches[1]);
   });
 
   it('should generate either "higher" or "lower" question', () => {
@@ -34,9 +34,9 @@ describe('Game Logic - generateNewRound', () => {
       
       if (round.question === 'higher') {
         if (round.correctAnswer === 1) {
-          expect(round.pitch1).toBeGreaterThan(round.pitch2);
+          expect(round.pitches[0]).toBeGreaterThan(round.pitches[1]);
         } else {
-          expect(round.pitch2).toBeGreaterThan(round.pitch1);
+          expect(round.pitches[1]).toBeGreaterThan(round.pitches[0]);
         }
       }
     }
@@ -49,28 +49,26 @@ describe('Game Logic - generateNewRound', () => {
       
       if (round.question === 'lower') {
         if (round.correctAnswer === 1) {
-          expect(round.pitch1).toBeLessThan(round.pitch2);
+          expect(round.pitches[0]).toBeLessThan(round.pitches[1]);
         } else {
-          expect(round.pitch2).toBeLessThan(round.pitch1);
+          expect(round.pitches[1]).toBeLessThan(round.pitches[0]);
         }
       }
     }
   });
 
-  it('should use consistent character assignments', () => {
+  it('should assign two different characters', () => {
     const round = generateNewRound();
-    expect(round.character1.name).toBe('Ellie Elephant');
-    expect(round.character2.name).toBe('Gary Giraffe');
+    expect(round.characters).toHaveLength(2);
+    expect(round.characters[0].name).not.toBe(round.characters[1].name);
   });
 });
 
 describe('Game Logic - Answer Validation', () => {
   it('should correctly validate a correct answer with validateAnswer', () => {
     const round: GameRound = {
-      character1: ANIMAL_CHARACTERS[0],
-      pitch1: 440,
-      character2: ANIMAL_CHARACTERS[1],
-      pitch2: 330,
+      characters: [ANIMAL_CHARACTERS[0], ANIMAL_CHARACTERS[1]],
+      pitches: [440, 330],
       question: "higher",
       correctAnswer: 1,
     };
@@ -81,10 +79,8 @@ describe('Game Logic - Answer Validation', () => {
 
   it('should correctly validate an incorrect answer with validateAnswer', () => {
     const round: GameRound = {
-      character1: ANIMAL_CHARACTERS[0],
-      pitch1: 440,
-      pitch2: 330,
-      character2: ANIMAL_CHARACTERS[1],
+      characters: [ANIMAL_CHARACTERS[0], ANIMAL_CHARACTERS[1]],
+      pitches: [440, 330],
       question: "higher",
       correctAnswer: 1,
     };
@@ -95,15 +91,13 @@ describe('Game Logic - Answer Validation', () => {
 
   it('should handle "lower" question correctly', () => {
     const round: GameRound = {
-      character1: ANIMAL_CHARACTERS[0],
-      pitch1: 330,
-      character2: ANIMAL_CHARACTERS[1],
-      pitch2: 440,
+      characters: [ANIMAL_CHARACTERS[0], ANIMAL_CHARACTERS[1]],
+      pitches: [330, 440],
       question: "lower",
       correctAnswer: 1,
     };
 
-    expect(round.pitch1).toBeLessThan(round.pitch2);
+    expect(round.pitches[0]).toBeLessThan(round.pitches[1]);
     expect(round.correctAnswer).toBe(1);
   });
 });
@@ -140,10 +134,8 @@ describe('Game Logic - Score Calculation', () => {
 describe('Game Logic - Character Click Handling', () => {
   it('should correctly determine if answer is correct when character 1 is clicked', () => {
     const round: GameRound = {
-      character1: ANIMAL_CHARACTERS[0],
-      pitch1: 500,
-      character2: ANIMAL_CHARACTERS[1],
-      pitch2: 300,
+      characters: [ANIMAL_CHARACTERS[0], ANIMAL_CHARACTERS[1]],
+      pitches: [500, 300],
       question: "higher",
       correctAnswer: 1,
     };
@@ -156,10 +148,8 @@ describe('Game Logic - Character Click Handling', () => {
 
   it('should correctly determine if answer is incorrect when wrong character is clicked', () => {
     const round: GameRound = {
-      character1: ANIMAL_CHARACTERS[0],
-      pitch1: 300,
-      character2: ANIMAL_CHARACTERS[1],
-      pitch2: 500,
+      characters: [ANIMAL_CHARACTERS[0], ANIMAL_CHARACTERS[1]],
+      pitches: [300, 500],
       question: "higher",
       correctAnswer: 2,
     };

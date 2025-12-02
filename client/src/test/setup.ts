@@ -1,4 +1,4 @@
-import { expect, afterEach, vi } from 'vitest';
+import { expect, afterEach, vi, beforeEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
@@ -6,10 +6,11 @@ expect.extend(matchers);
 
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
 });
 
 // Mock AudioContext for tests
-const mockAudioContext = {
+const createMockAudioContext = () => ({
   createOscillator: vi.fn(() => ({
     connect: vi.fn(),
     disconnect: vi.fn(),
@@ -18,6 +19,7 @@ const mockAudioContext = {
     frequency: { setValueAtTime: vi.fn(), value: 440 },
     type: 'sine',
     addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   })),
   createGain: vi.fn(() => ({
     connect: vi.fn(),
@@ -51,31 +53,36 @@ const mockAudioContext = {
   currentTime: 0,
   state: 'running',
   resume: vi.fn(() => Promise.resolve()),
-  close: vi.fn(),
-};
+  suspend: vi.fn(() => Promise.resolve()),
+  close: vi.fn(() => Promise.resolve()),
+});
 
 // @ts-ignore
-global.AudioContext = vi.fn(() => mockAudioContext);
+global.AudioContext = vi.fn(() => createMockAudioContext());
 // @ts-ignore
-global.webkitAudioContext = vi.fn(() => mockAudioContext);
+global.webkitAudioContext = vi.fn(() => createMockAudioContext());
 
 // Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(() => null),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(() => null),
-};
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    removeItem: vi.fn((key: string) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
+    get length() { return Object.keys(store).length; },
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+  };
+})();
 Object.defineProperty(global, 'localStorage', { value: localStorageMock });
 
-// Mock fetch for audio files
 // @ts-ignore - mock fetch for tests
 global.fetch = vi.fn(() =>
   Promise.resolve({
     ok: true,
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
   } as Response)
 );
 
@@ -92,4 +99,40 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+});
+
+// Mock HTMLMediaElement
+Object.defineProperty(window.HTMLMediaElement.prototype, 'load', {
+  configurable: true,
+  value: vi.fn(),
+});
+
+Object.defineProperty(window.HTMLMediaElement.prototype, 'play', {
+  configurable: true,
+  value: vi.fn(() => Promise.resolve()),
+});
+
+Object.defineProperty(window.HTMLMediaElement.prototype, 'pause', {
+  configurable: true,
+  value: vi.fn(),
+});
+
+// Mock ResizeObserver
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock IntersectionObserver
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Suppress console errors during tests (optional - can be removed for debugging)
+beforeEach(() => {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });

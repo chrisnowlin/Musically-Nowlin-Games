@@ -10,49 +10,8 @@ vi.mock('wouter', () => ({
   useLocation: () => [() => {}, vi.fn()],
 }));
 
-// Mock Web Audio API
-const mockAudioContext = {
-  createOscillator: vi.fn(() => ({
-    type: 'square',
-    frequency: { setValueAtTime: vi.fn() },
-    connect: vi.fn(),
-    start: vi.fn(),
-    stop: vi.fn(),
-  })),
-  createGain: vi.fn(() => ({
-    gain: { 
-      setValueAtTime: vi.fn(),
-      exponentialRampToValueAtTime: vi.fn(),
-    },
-    connect: vi.fn(),
-  })),
-  destination: {},
-  currentTime: 0,
-};
-
-(global as any).AudioContext = vi.fn(() => mockAudioContext);
-(global as any).webkitAudioContext = vi.fn(() => mockAudioContext);
-
 // Mock performance.now
-const mockPerformanceNow = vi.fn();
-Object.defineProperty(global, 'performance', {
-  value: {
-    now: mockPerformanceNow,
-  },
-  writable: true,
-});
-
-// Mock window.setInterval and clearInterval
-const mockSetInterval = vi.fn();
-const mockClearInterval = vi.fn();
-Object.defineProperty(global, 'window', {
-  value: {
-    setInterval: mockSetInterval,
-    clearInterval: mockClearInterval,
-    setTimeout: vi.fn(),
-  },
-  writable: true,
-});
+vi.spyOn(performance, 'now').mockReturnValue(0);
 
 describe('rhythm-006 Logic', () => {
   beforeEach(() => {
@@ -131,9 +90,11 @@ describe('rhythm-006 Logic', () => {
 });
 
 describe('Rhythm006Game Component', () => {
+  let performanceNowSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPerformanceNow.mockReturnValue(0);
+    performanceNowSpy = vi.spyOn(performance, 'now').mockReturnValue(0);
   });
 
   afterEach(() => {
@@ -214,7 +175,7 @@ describe('Rhythm006Game Component', () => {
     });
 
     it('should show timing error after tapping', () => {
-      mockPerformanceNow.mockReturnValue(1000);
+      performanceNowSpy.mockReturnValue(1000);
       
       const tapButton = screen.getByText('Tap');
       fireEvent.click(tapButton);
@@ -237,7 +198,7 @@ describe('Rhythm006Game Component', () => {
     });
 
     it('should show silent timing error after tapping', () => {
-      mockPerformanceNow.mockReturnValue(1000);
+      performanceNowSpy.mockReturnValue(1000);
       
       const tapButton = screen.getByText('Tap');
       fireEvent.click(tapButton);
@@ -270,7 +231,7 @@ describe('Rhythm006Game Component', () => {
     });
 
     it('should show timing error after tapping', () => {
-      mockPerformanceNow.mockReturnValue(1000);
+      performanceNowSpy.mockReturnValue(1000);
       
       const tapButton = screen.getByText('Tap');
       fireEvent.click(tapButton);
@@ -297,7 +258,7 @@ describe('Rhythm006Game Component', () => {
       const tapTimes = [1000, 1500, 2000, 2500, 3000];
       
       tapTimes.forEach((time: number) => {
-        mockPerformanceNow.mockReturnValue(time);
+        performanceNowSpy.mockReturnValue(time);
         const tapButton = screen.getByText('Tap');
         fireEvent.click(tapButton);
       });
