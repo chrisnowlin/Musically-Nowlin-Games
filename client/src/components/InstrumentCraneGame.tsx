@@ -1,24 +1,26 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Music, Play, ArrowLeft, ArrowRight, ArrowDown, RefreshCw, Sparkles, Star } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import { audioService } from "@/lib/audioService";
+import { instrumentLibrary } from "@/lib/instrumentLibrary";
 
-// Instrument definitions
+// Instrument icon imports
 import { 
   ViolinIcon, CelloIcon, FluteIcon, TrumpetIcon, FrenchHornIcon, 
   ClarinetIcon, OboeIcon, SaxophoneIcon, BassoonIcon, ViolaIcon,
   TromboneIcon, TubaIcon, DoubleBassIcon, SnareDrumIcon, BassDrumIcon,
-  TriangleIcon, TambourineIcon, TimpaniIcon, XylophoneIcon, GlockenspielIcon, HarpIcon 
+  TriangleIcon, TambourineIcon, TimpaniIcon, XylophoneIcon, GlockenspielIcon,
+  CowbellIcon, WoodblockIcon, CastanetsIcon, SleighBellsIcon, CymbalsIcon, WindChimesIcon
 } from '@/components/icons/InstrumentIcons';
 
 interface Instrument {
   id: string;
   name: string;
   Icon: React.FC<{ className?: string }>;
-  audioPath: string;
+  audioPaths: string[]; // Multiple melodic samples for richer sound
   color: string;
 }
 
@@ -26,155 +28,215 @@ interface Instrument {
 // This ensures audio files are loaded from the correct URL in all environments
 const BASE_URL = import.meta.env.BASE_URL || '/';
 
-const INSTRUMENTS: Instrument[] = [
-  {
-    id: 'violin',
-    name: 'Violin',
-    Icon: ViolinIcon,
-    audioPath: `${BASE_URL}audio/strings/violin/violin_A4_05_forte_arco-normal.mp3`,
-    color: 'bg-amber-500'
-  },
-  {
-    id: 'cello',
-    name: 'Cello',
-    Icon: CelloIcon,
-    audioPath: `${BASE_URL}audio/strings/cello/cello_C3_1_forte_arco-normal.mp3`,
-    color: 'bg-orange-800'
-  },
-  {
-    id: 'flute',
-    name: 'Flute',
-    Icon: FluteIcon,
-    audioPath: `${BASE_URL}audio/woodwinds/flute/flute_A5_1_forte_normal.mp3`,
-    color: 'bg-slate-400'
-  },
-  {
-    id: 'trumpet',
-    name: 'Trumpet',
-    Icon: TrumpetIcon,
-    audioPath: `${BASE_URL}audio/brass/trumpet/trumpet_C4_1_forte_normal.mp3`,
-    color: 'bg-yellow-500'
-  },
-  {
-    id: 'french-horn',
-    name: 'French Horn',
-    Icon: FrenchHornIcon,
-    audioPath: `${BASE_URL}audio/brass/french horn/french-horn_C3_1_mezzo-forte_normal.mp3`,
-    color: 'bg-amber-600'
-  },
-  {
-    id: 'clarinet',
-    name: 'Clarinet',
-    Icon: ClarinetIcon,
-    audioPath: `${BASE_URL}audio/woodwinds/clarinet/clarinet_C4_1_forte_normal.mp3`,
-    color: 'bg-gray-800'
-  },
-  {
-    id: 'oboe',
-    name: 'Oboe',
-    Icon: OboeIcon,
-    audioPath: `${BASE_URL}audio/woodwinds/oboe/oboe_C4_1_forte_normal.mp3`,
-    color: 'bg-stone-500'
-  },
-  {
-    id: 'saxophone',
-    name: 'Saxophone',
-    Icon: SaxophoneIcon,
-    audioPath: `${BASE_URL}audio/woodwinds/saxophone/saxophone_A3_1_forte_normal.mp3`,
-    color: 'bg-yellow-400'
-  },
-  {
-    id: 'bassoon',
-    name: 'Bassoon',
-    Icon: BassoonIcon,
-    audioPath: `${BASE_URL}audio/woodwinds/bassoon/bassoon_A2_1_forte_normal.mp3`,
-    color: 'bg-amber-900'
-  },
-  {
-    id: 'viola',
-    name: 'Viola',
-    Icon: ViolaIcon,
-    audioPath: `${BASE_URL}audio/strings/viola/viola_C4_1_fortissimo_arco-normal.mp3`,
-    color: 'bg-violet-500'
-  },
-  {
-    id: 'trombone',
-    name: 'Trombone',
-    Icon: TromboneIcon,
-    audioPath: `${BASE_URL}audio/brass/trombone/trombone_A3_1_forte_normal.mp3`,
-    color: 'bg-yellow-600'
-  },
-  {
-    id: 'tuba',
-    name: 'Tuba',
-    Icon: TubaIcon,
-    audioPath: `${BASE_URL}audio/brass/tuba/tuba_A2_1_forte_normal.mp3`,
-    color: 'bg-zinc-600'
-  },
-  {
-    id: 'double-bass',
-    name: 'Double Bass',
-    Icon: DoubleBassIcon,
-    audioPath: `${BASE_URL}audio/strings/double-bass/double-bass_A2_1_forte_arco-normal.mp3`,
-    color: 'bg-amber-800'
-  },
-  {
-    id: 'snare-drum',
-    name: 'Snare Drum',
-    Icon: SnareDrumIcon,
-    audioPath: `${BASE_URL}audio/percussion/snare-drum/snare-drum__025_forte_with-snares.mp3`,
-    color: 'bg-red-500'
-  },
-  {
-    id: 'bass-drum',
-    name: 'Bass Drum',
-    Icon: BassDrumIcon,
-    audioPath: `${BASE_URL}audio/percussion/bass-drum/bass-drum__1_fortissimo_struck-singly.mp3`,
-    color: 'bg-red-800'
-  },
-  {
-    id: 'triangle',
-    name: 'Triangle',
-    Icon: TriangleIcon,
-    audioPath: `${BASE_URL}audio/percussion/triangle/triangle__long_piano_struck-singly.mp3`,
-    color: 'bg-slate-300'
-  },
-  {
-    id: 'tambourine',
-    name: 'Tambourine',
-    Icon: TambourineIcon,
-    audioPath: `${BASE_URL}audio/percussion/tambourine/tambourine__025_forte_hand.mp3`,
-    color: 'bg-orange-400'
-  },
-  {
-    id: 'timpani',
-    name: 'Timpani',
-    Icon: TimpaniIcon,
-    audioPath: `${BASE_URL}audio/percussion/timpani/timpani_C2_forte_hits_normal.mp3`,
-    color: 'bg-rose-700'
-  },
-  {
-    id: 'xylophone',
-    name: 'Xylophone',
-    Icon: XylophoneIcon,
-    audioPath: `${BASE_URL}audio/percussion/xylophone/xylophone_C5_forte.mp3`,
-    color: 'bg-pink-400'
-  },
-  {
-    id: 'glockenspiel',
-    name: 'Glockenspiel',
-    Icon: GlockenspielIcon,
-    audioPath: `${BASE_URL}audio/percussion/glockenspiel/glockenspiel_C6_forte.mp3`,
-    color: 'bg-cyan-300'
-  },
-  {
-    id: 'harp',
-    name: 'Harp',
-    Icon: HarpIcon,
-    audioPath: `${BASE_URL}audio/strings/harp/harp_C3_forte.mp3`,
-    color: 'bg-emerald-400'
+// Map instrument IDs to their icon components
+const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
+  'violin': ViolinIcon,
+  'cello': CelloIcon,
+  'viola': ViolaIcon,
+  'double-bass': DoubleBassIcon,
+  'flute': FluteIcon,
+  'clarinet': ClarinetIcon,
+  'oboe': OboeIcon,
+  'bassoon': BassoonIcon,
+  'saxophone': SaxophoneIcon,
+  'trumpet': TrumpetIcon,
+  'french-horn': FrenchHornIcon,
+  'trombone': TromboneIcon,
+  'tuba': TubaIcon,
+  'timpani': TimpaniIcon,
+  'xylophone': XylophoneIcon,
+  'glockenspiel': GlockenspielIcon,
+  'snare-drum': SnareDrumIcon,
+  'bass-drum': BassDrumIcon,
+  'triangle': TriangleIcon,
+  'tambourine': TambourineIcon,
+  'cowbell': CowbellIcon,
+  'woodblock': WoodblockIcon,
+  'castanets': CastanetsIcon,
+  'sleigh-bells': SleighBellsIcon,
+  'cymbals': CymbalsIcon,
+  'wind-chimes': WindChimesIcon,
+};
+
+// Color map for instruments
+const COLOR_MAP: Record<string, string> = {
+  'violin': 'bg-amber-500',
+  'cello': 'bg-orange-800',
+  'viola': 'bg-violet-500',
+  'double-bass': 'bg-amber-800',
+  'flute': 'bg-sky-400',
+  'clarinet': 'bg-gray-800',
+  'oboe': 'bg-stone-500',
+  'bassoon': 'bg-amber-900',
+  'saxophone': 'bg-yellow-400',
+  'trumpet': 'bg-yellow-500',
+  'french-horn': 'bg-amber-600',
+  'trombone': 'bg-yellow-600',
+  'tuba': 'bg-zinc-600',
+  'timpani': 'bg-rose-700',
+  'xylophone': 'bg-pink-400',
+  'glockenspiel': 'bg-cyan-300',
+  'snare-drum': 'bg-red-500',
+  'bass-drum': 'bg-red-800',
+  'triangle': 'bg-slate-300',
+  'tambourine': 'bg-orange-400',
+  'cowbell': 'bg-zinc-400',
+  'woodblock': 'bg-amber-700',
+  'castanets': 'bg-stone-700',
+  'sleigh-bells': 'bg-yellow-300',
+  'cymbals': 'bg-yellow-500',
+  'wind-chimes': 'bg-teal-400',
+};
+
+// Build instruments from the instrumentLibrary for correct paths
+// Note: Harp, Guitar, Banjo have been removed due to sample issues (see INSTRUMENT_LIBRARY_GUIDE.md)
+function buildInstrumentsFromLibrary(): Instrument[] {
+  const instruments: Instrument[] = [];
+  
+  // Get all available instruments from the library
+  const libraryInstruments = instrumentLibrary.getAllInstruments();
+  
+  for (const libInst of libraryInstruments) {
+    const Icon = ICON_MAP[libInst.name];
+    if (!Icon) continue; // Skip instruments without icons
+    
+    // Get all sample paths for melodic variety
+    const audioPaths = instrumentLibrary.getSamplePaths(libInst.name);
+    if (audioPaths.length === 0) continue; // Skip if no samples
+    
+    instruments.push({
+      id: libInst.name,
+      name: libInst.displayName,
+      Icon,
+      audioPaths,
+      color: COLOR_MAP[libInst.name] || 'bg-gray-500',
+    });
   }
-];
+  
+  // Add percussion instruments that aren't pitched (manually configured)
+  // These use the Philharmonia percussion samples with correct paths
+  const unpitchedPercussion: Instrument[] = [
+    {
+      id: 'snare-drum',
+      name: 'Snare Drum',
+      Icon: SnareDrumIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__025_forte_with-snares.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__long_forte_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/snare drum/snare-drum__phrase_mezzo-forte_rhythm.mp3`,
+      ],
+      color: 'bg-red-500',
+    },
+    {
+      id: 'bass-drum',
+      name: 'Bass Drum',
+      Icon: BassDrumIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_fortissimo_struck-singly.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__025_forte_bass-drum-mallet.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/bass drum/bass-drum__1_mezzo-forte_bass-drum-mallet.mp3`,
+      ],
+      color: 'bg-red-800',
+    },
+    {
+      id: 'triangle',
+      name: 'Triangle',
+      Icon: TriangleIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__long_piano_struck-singly.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__very-long_mezzo-forte_roll.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/triangle/triangle__phrase_mezzo-piano_rhythm.mp3`,
+      ],
+      color: 'bg-slate-300',
+    },
+    {
+      id: 'tambourine',
+      name: 'Tambourine',
+      Icon: TambourineIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__025_forte_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__phrase_forte_hand.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/tambourine/tambourine__1_mezzo-piano_shaken.mp3`,
+      ],
+      color: 'bg-orange-400',
+    },
+    {
+      id: 'cowbell',
+      name: 'Cowbell',
+      Icon: CowbellIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__1_forte_undamped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__1_mezzo-forte_undamped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/cowbell/cowbell__long_mezzo-forte_rhythm.mp3`,
+      ],
+      color: 'bg-zinc-400',
+    },
+    {
+      id: 'woodblock',
+      name: 'Woodblock',
+      Icon: WoodblockIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/woodblock/woodblock__025_mezzo-forte_struck-singly.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/woodblock/woodblock__phrase_mezzo-piano_rhythm.mp3`,
+      ],
+      color: 'bg-amber-700',
+    },
+    {
+      id: 'castanets',
+      name: 'Castanets',
+      Icon: CastanetsIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__025_mezzo-forte_struck-singly.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__phrase_forte_rhythm.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/castanets/castanets__long_mezzo-forte_roll.mp3`,
+      ],
+      color: 'bg-stone-700',
+    },
+    {
+      id: 'sleigh-bells',
+      name: 'Sleigh Bells',
+      Icon: SleighBellsIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__05_mezzo-forte_shaken.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__long_forte_shaken.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/sleigh bells/sleigh-bells__long_mezzo-forte_shaken.mp3`,
+      ],
+      color: 'bg-yellow-300',
+    },
+    {
+      id: 'cymbals',
+      name: 'Clash Cymbals',
+      Icon: CymbalsIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__15_fortissimo_struck-together.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__long_forte_undamped.mp3`,
+        `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__1_forte_damped.mp3`,
+      ],
+      color: 'bg-yellow-500',
+    },
+    {
+      id: 'wind-chimes',
+      name: 'Wind Chimes',
+      Icon: WindChimesIcon,
+      audioPaths: [
+        `${BASE_URL}audio/philharmonia/percussion/wind chimes/wind-chimes__long_mezzo-piano_hand.mp3`,
+      ],
+      color: 'bg-teal-400',
+    },
+  ];
+  
+  // Add unpitched percussion if they don't already exist in the library instruments
+  for (const perc of unpitchedPercussion) {
+    if (!instruments.find(i => i.id === perc.id)) {
+      instruments.push(perc);
+    }
+  }
+  
+  return instruments;
+}
+
+// Generate instruments once at module load
+const INSTRUMENTS: Instrument[] = buildInstrumentsFromLibrary();
 
 interface Target {
   id: string;
@@ -203,14 +265,15 @@ export default function InstrumentCraneGame() {
 
   // Preload all instrument sounds on mount
   useEffect(() => {
-    const allAudioPaths = INSTRUMENTS.map(i => i.audioPath);
+    // Flatten all audio paths from all instruments
+    const allAudioPaths = INSTRUMENTS.flatMap(i => i.audioPaths);
     // Load in chunks to avoid overwhelming network
     const preloadChunk = async () => {
-       // Preload first 5 (likely to be used)
-       await audioService.preloadSamples(allAudioPaths.slice(0, 5));
+       // Preload first 10 paths (likely to be used)
+       await audioService.preloadSamples(allAudioPaths.slice(0, 10));
        // Preload rest in background
        setTimeout(() => {
-         audioService.preloadSamples(allAudioPaths.slice(5));
+         audioService.preloadSamples(allAudioPaths.slice(10));
        }, 2000);
     };
     preloadChunk();
@@ -219,8 +282,9 @@ export default function InstrumentCraneGame() {
   // Fixed positions for 4 items
   const POSITIONS = [20, 40, 60, 80];
 
-  // Play instrument sound using Web Audio API (same method as crane sounds - works on iOS)
-  const playInstrumentSound = useCallback(async (path: string) => {
+  // Play instrument sound - plays a melodic phrase using multiple notes
+  // This makes the instrument more recognizable and educational
+  const playInstrumentSound = useCallback(async (audioPaths: string[]) => {
     // Stop any currently playing audio
     audioService.stopSample();
 
@@ -235,11 +299,21 @@ export default function InstrumentCraneGame() {
         await audioService.initialize();
       }
 
-      // Play the sound 3 times so short clips are easier to hear
-      // Uses Web Audio API with HTML5 Audio fallback for iOS Safari
-      await audioService.playSample(path, 3);
+      // Play a melodic phrase using available samples
+      // If instrument has multiple notes, play them in sequence for better recognition
+      if (audioPaths.length >= 3) {
+        // Play a short melodic phrase: root, up, root (or similar pattern)
+        const phrase = [audioPaths[0], audioPaths[Math.min(1, audioPaths.length - 1)], audioPaths[0]];
+        for (const path of phrase) {
+          await audioService.playSample(path, 1);
+          await new Promise(resolve => setTimeout(resolve, 200)); // Brief gap between notes
+        }
+      } else {
+        // For instruments with fewer samples, repeat the primary note
+        await audioService.playSample(audioPaths[0], 2);
+      }
     } catch (e) {
-      console.error(`Audio play failed for ${path}:`, e);
+      console.error(`Audio play failed:`, e);
     } finally {
       setIsPlayingAudio(false);
     }
@@ -272,14 +346,14 @@ export default function InstrumentCraneGame() {
     setHasPlayedSound(false); // Reset sound played state for new round
     
     // Preload the target instrument audio
-    audioService.preloadSamples([targetInst.audioPath]);
+    audioService.preloadSamples(targetInst.audioPaths);
 
     // Only auto-play on first round (triggered by user's Start button)
     // Subsequent rounds should not auto-play to avoid iOS audio restrictions
     if (autoPlay) {
       setHasPlayedSound(true);
       setGameTimeout(() => {
-        playInstrumentSound(targetInst.audioPath);
+        playInstrumentSound(targetInst.audioPaths);
       }, 500);
     }
   }, [setGameTimeout, playInstrumentSound]);
@@ -294,7 +368,7 @@ export default function InstrumentCraneGame() {
     }
 
     // Now audio should be unlocked, preload all instrument sounds
-    const allAudioPaths = INSTRUMENTS.map(i => i.audioPath);
+    const allAudioPaths = INSTRUMENTS.flatMap(i => i.audioPaths);
     audioService.preloadSamples(allAudioPaths);
 
     audioService.playClickSound();
@@ -670,7 +744,7 @@ export default function InstrumentCraneGame() {
                  <div className="absolute inset-0 rounded-lg bg-blue-400 animate-ping opacity-75" />
                )}
                <Button 
-                  onClick={() => currentInstrument && playInstrumentSound(currentInstrument.audioPath)}
+                  onClick={() => currentInstrument && playInstrumentSound(currentInstrument.audioPaths)}
                   disabled={isPlayingAudio}
                   className={`
                     w-20 h-20 rounded-lg border-b-8 relative

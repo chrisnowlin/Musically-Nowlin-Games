@@ -611,3 +611,145 @@ export const TambourineIcon: React.FC<InstrumentIconProps> = ({ className }) => 
     ))}
   </svg>
 );
+
+export const CowbellIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Cowbell body - trapezoidal shape */}
+    <path d="M30 25 L 70 25 L 80 75 L 20 75 Z" fill="#C0C0C0" stroke="#757575" strokeWidth="2"/>
+    {/* Highlight */}
+    <path d="M35 30 L 50 30 L 55 70 L 25 70 Z" fill="#E0E0E0" opacity="0.5"/>
+    {/* Handle/mount */}
+    <rect x="42" y="10" width="16" height="15" rx="2" fill="#333"/>
+    <rect x="45" y="5" width="10" height="8" rx="1" fill="#666"/>
+    {/* Beater */}
+    <line x1="85" y1="20" x2="55" y2="50" stroke="#DEB887" strokeWidth="4" strokeLinecap="round"/>
+    <circle cx="52" cy="53" r="4" fill="#DEB887"/>
+  </svg>
+);
+
+export const WoodblockIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="woodBlockGrain" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#8B4513" />
+        <stop offset="50%" stopColor="#D2691E" />
+        <stop offset="100%" stopColor="#8B4513" />
+      </linearGradient>
+    </defs>
+    {/* Wooden block */}
+    <rect x="15" y="35" width="70" height="40" rx="3" fill="url(#woodBlockGrain)" stroke="#5D4037" strokeWidth="2"/>
+    {/* Slot/resonating chamber */}
+    <rect x="25" y="50" width="50" height="8" rx="2" fill="#2F1810"/>
+    {/* Wood grain lines */}
+    <line x1="20" y1="42" x2="80" y2="42" stroke="#5D4037" strokeWidth="0.5" opacity="0.5"/>
+    <line x1="20" y1="68" x2="80" y2="68" stroke="#5D4037" strokeWidth="0.5" opacity="0.5"/>
+    {/* Mallet */}
+    <line x1="75" y1="10" x2="55" y2="38" stroke="#DEB887" strokeWidth="4" strokeLinecap="round"/>
+    <circle cx="53" cy="41" r="5" fill="#111"/>
+  </svg>
+);
+
+export const CastanetsIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="castanetWood" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#3E2723" />
+        <stop offset="50%" stopColor="#5D4037" />
+        <stop offset="100%" stopColor="#3E2723" />
+      </linearGradient>
+    </defs>
+    {/* Left castanet (top) */}
+    <ellipse cx="35" cy="40" rx="22" ry="16" fill="url(#castanetWood)" stroke="#2F1810" strokeWidth="1"/>
+    <ellipse cx="35" cy="40" rx="16" ry="10" fill="#2F1810" opacity="0.6"/>
+    {/* Right castanet (top) */}
+    <ellipse cx="65" cy="40" rx="22" ry="16" fill="url(#castanetWood)" stroke="#2F1810" strokeWidth="1"/>
+    <ellipse cx="65" cy="40" rx="16" ry="10" fill="#2F1810" opacity="0.6"/>
+    {/* Left castanet (bottom) */}
+    <ellipse cx="35" cy="60" rx="22" ry="16" fill="url(#castanetWood)" stroke="#2F1810" strokeWidth="1"/>
+    <ellipse cx="35" cy="60" rx="16" ry="10" fill="#2F1810" opacity="0.6"/>
+    {/* Right castanet (bottom) */}
+    <ellipse cx="65" cy="60" rx="22" ry="16" fill="url(#castanetWood)" stroke="#2F1810" strokeWidth="1"/>
+    <ellipse cx="65" cy="60" rx="16" ry="10" fill="#2F1810" opacity="0.6"/>
+    {/* Connecting cord */}
+    <path d="M35 30 Q 50 20 65 30" stroke="#8B4513" strokeWidth="2" fill="none"/>
+    <path d="M35 70 Q 50 80 65 70" stroke="#8B4513" strokeWidth="2" fill="none"/>
+  </svg>
+);
+
+export const SleighBellsIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Handle strap */}
+    <path d="M20 25 L 80 25 L 80 35 L 20 35 Z" fill="#8B4513" stroke="#5D4037" strokeWidth="1"/>
+    {/* Handle grip */}
+    <rect x="5" y="20" width="15" height="20" rx="3" fill="#A0522D" stroke="#5D4037" strokeWidth="1"/>
+    {/* Bells - row 1 */}
+    {[30, 50, 70].map((cx, i) => (
+      <g key={`row1-${i}`}>
+        <circle cx={cx} cy="50" r="10" fill="#FFD700" stroke="#B8860B" strokeWidth="1"/>
+        <ellipse cx={cx} cy="55" rx="6" ry="3" fill="#B8860B" opacity="0.5"/>
+        <circle cx={cx} cy="48" r="2" fill="#FFF" opacity="0.6"/>
+        <line x1={cx} y1="35" x2={cx} y2="40" stroke="#5D4037" strokeWidth="2"/>
+      </g>
+    ))}
+    {/* Bells - row 2 */}
+    {[40, 60].map((cx, i) => (
+      <g key={`row2-${i}`}>
+        <circle cx={cx} cy="75" r="10" fill="#FFD700" stroke="#B8860B" strokeWidth="1"/>
+        <ellipse cx={cx} cy="80" rx="6" ry="3" fill="#B8860B" opacity="0.5"/>
+        <circle cx={cx} cy="73" r="2" fill="#FFF" opacity="0.6"/>
+        <line x1={cx} y1="35" x2={cx} y2="65" stroke="#5D4037" strokeWidth="2"/>
+      </g>
+    ))}
+  </svg>
+);
+
+export const CymbalsIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="cymbalShine" cx="30%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#FFD700" />
+        <stop offset="50%" stopColor="#DAA520" />
+        <stop offset="100%" stopColor="#B8860B" />
+      </radialGradient>
+    </defs>
+    {/* Left cymbal */}
+    <ellipse cx="35" cy="50" rx="30" ry="15" fill="url(#cymbalShine)" stroke="#B8860B" strokeWidth="1"/>
+    <ellipse cx="35" cy="50" rx="8" ry="4" fill="#8B4513"/>
+    <circle cx="35" cy="50" r="3" fill="#333"/>
+    {/* Left handle */}
+    <rect x="32" y="30" width="6" height="15" rx="2" fill="#DEB887"/>
+    {/* Right cymbal (overlapping) */}
+    <ellipse cx="65" cy="50" rx="30" ry="15" fill="url(#cymbalShine)" stroke="#B8860B" strokeWidth="1"/>
+    <ellipse cx="65" cy="50" rx="8" ry="4" fill="#8B4513"/>
+    <circle cx="65" cy="50" r="3" fill="#333"/>
+    {/* Right handle */}
+    <rect x="62" y="30" width="6" height="15" rx="2" fill="#DEB887"/>
+    {/* Cymbal grooves */}
+    <ellipse cx="35" cy="50" rx="20" ry="10" stroke="#DAA520" strokeWidth="0.5" fill="none" opacity="0.5"/>
+    <ellipse cx="65" cy="50" rx="20" ry="10" stroke="#DAA520" strokeWidth="0.5" fill="none" opacity="0.5"/>
+  </svg>
+);
+
+export const WindChimesIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Top bar */}
+    <rect x="20" y="10" width="60" height="8" rx="2" fill="#8B4513" stroke="#5D4037" strokeWidth="1"/>
+    {/* Hanging strings and tubes */}
+    {[
+      {x: 28, h: 55, delay: 0},
+      {x: 38, h: 65, delay: 1},
+      {x: 50, h: 70, delay: 2},
+      {x: 62, h: 60, delay: 3},
+      {x: 72, h: 50, delay: 4}
+    ].map((tube, i) => (
+      <g key={i}>
+        <line x1={tube.x} y1="18" x2={tube.x} y2={25 + tube.h * 0.1} stroke="#333" strokeWidth="1"/>
+        <rect x={tube.x - 3} y={25} width="6" height={tube.h} rx="1" fill="#C0C0C0" stroke="#757575" strokeWidth="0.5"/>
+        <rect x={tube.x - 2} y={27} width="2" height={tube.h - 4} fill="#FFF" opacity="0.3"/>
+      </g>
+    ))}
+    {/* Clapper/striker in center */}
+    <line x1="50" y1="18" x2="50" y2="60" stroke="#333" strokeWidth="1"/>
+    <circle cx="50" cy="65" r="5" fill="#8B4513"/>
+  </svg>
+);
