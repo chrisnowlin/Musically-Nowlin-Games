@@ -42,12 +42,14 @@ export default function Game() {
   const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup all timeouts on unmount
+  // Cleanup all timeouts and audio on unmount
   useEffect(() => {
     return () => {
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
       if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
       if (autoPlayTimeoutRef.current) clearTimeout(autoPlayTimeoutRef.current);
+      // Stop all audio when navigating away from the game
+      audioService.stopAll();
     };
   }, []);
 

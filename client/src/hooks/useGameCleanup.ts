@@ -1,25 +1,32 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
+import { audioService } from '@/lib/audioService';
 
 /**
- * Custom hook for managing game cleanup (timeouts, intervals, etc.)
- * 
- * Automatically clears all registered timeouts/intervals on unmount
- * to prevent memory leaks and "setState on unmounted component" warnings.
- * 
- * @returns Object with methods to create auto-cleaning timeouts and intervals
- * 
+ * Custom hook for managing game cleanup (timeouts, intervals, audio, etc.)
+ *
+ * Automatically clears all registered timeouts/intervals and stops audio on unmount
+ * to prevent memory leaks, "setState on unmounted component" warnings, and
+ * audio continuing to play after navigating away from a game.
+ *
+ * @returns Object with methods to create auto-cleaning timeouts and intervals, plus audio control
+ *
  * @example
  * ```tsx
  * function MyGame() {
- *   const { setTimeout, setInterval, clearAll } = useGameCleanup();
- *   
+ *   const { setTimeout, setInterval, stopAudio, clearAll } = useGameCleanup();
+ *
  *   const handlePlay = () => {
  *     setTimeout(() => {
  *       console.log('This will auto-cleanup on unmount');
  *     }, 1000);
  *   };
- *   
- *   // Manually clear all if needed
+ *
+ *   // Manually stop audio
+ *   const handleStopAudio = () => {
+ *     stopAudio();
+ *   };
+ *
+ *   // Manually clear all (including audio) if needed
  *   const handleStop = () => {
  *     clearAll();
  *   };
@@ -69,13 +76,21 @@ export function useGameCleanup() {
   };
 
   /**
-   * Clear all timeouts and intervals
+   * Stop all currently playing audio (samples and oscillator notes)
+   */
+  const stopAudio = useCallback((): void => {
+    audioService.stopAll();
+  }, []);
+
+  /**
+   * Clear all timeouts, intervals, and stop audio
    */
   const clearAll = (): void => {
     timeoutsRef.current.forEach(id => globalThis.clearTimeout(id));
     intervalsRef.current.forEach(id => globalThis.clearInterval(id));
     timeoutsRef.current.clear();
     intervalsRef.current.clear();
+    audioService.stopAll();
   };
 
   /**
@@ -92,24 +107,29 @@ export function useGameCleanup() {
      * Create a timeout that auto-cleans on unmount
      */
     setTimeout: createTimeout,
-    
+
     /**
      * Create an interval that auto-cleans on unmount
      */
     setInterval: createInterval,
-    
+
     /**
      * Clear a specific timeout
      */
     clearTimeout: clearTimeoutById,
-    
+
     /**
      * Clear a specific interval
      */
     clearInterval: clearIntervalById,
-    
+
     /**
-     * Clear all timeouts and intervals
+     * Stop all currently playing audio
+     */
+    stopAudio,
+
+    /**
+     * Clear all timeouts, intervals, and stop audio
      */
     clearAll,
   };

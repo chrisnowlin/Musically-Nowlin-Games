@@ -92,6 +92,7 @@ export class AudioService {
   private scratchBuffer: AudioBuffer | null = null; // Silent buffer for iOS unlock
   private html5AudioPool: HTMLAudioElement[] = []; // Pool of unlocked HTML5 Audio elements
   private unlockListenersAttached: boolean = false;
+  private activeOscillators: Set<OscillatorNode> = new Set(); // Track active oscillators for cleanup
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -335,8 +336,12 @@ export class AudioService {
       gainNode.connect(lowShelf);
       lowShelf.connect(this.masterGain!);
 
+      // Track this oscillator for cleanup
+      this.activeOscillators.add(oscillator);
+
       // Cleanup on end
       oscillator.addEventListener('ended', () => {
+        this.activeOscillators.delete(oscillator);
         try {
           oscillator.disconnect();
           gainNode.disconnect();
@@ -622,6 +627,31 @@ export class AudioService {
   }
 
   /**
+   * Stop all currently playing oscillator notes
+   * Call this on component unmount to prevent sounds from continuing
+   */
+  stopAllNotes(): void {
+    this.activeOscillators.forEach(oscillator => {
+      try {
+        oscillator.stop();
+        oscillator.disconnect();
+      } catch (e) {
+        // Ignore - oscillator may already be stopped
+      }
+    });
+    this.activeOscillators.clear();
+  }
+
+  /**
+   * Stop all audio (samples and notes)
+   * Call this on game/component unmount to fully clean up audio
+   */
+  stopAll(): void {
+    this.stopSample();
+    this.stopAllNotes();
+  }
+
+  /**
    * Preload audio samples into cache for faster playback
    * @param urls - Array of audio file URLs to preload
    */
@@ -762,8 +792,12 @@ export class AudioService {
       gainNode.connect(lowShelf);
       lowShelf.connect(this.masterGain!);
 
+      // Track this oscillator for cleanup
+      this.activeOscillators.add(oscillator);
+
       // Cleanup on end
       oscillator.addEventListener('ended', () => {
+        this.activeOscillators.delete(oscillator);
         try {
           oscillator.disconnect();
           gainNode.disconnect();
