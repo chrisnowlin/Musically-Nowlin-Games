@@ -26,8 +26,8 @@
 
 ## 5. Testing
 
-- [ ] 5.1 Verify Recruit mode only spawns line notes (E, G, B, D, F)
-- [ ] 5.2 Verify Cadet mode only spawns space notes (F, A, C, E)
-- [ ] 5.3 Verify existing modes (Beginner, Intermediate, Advanced) are unaffected
-- [ ] 5.4 Test mode selection persists correctly through game flow
-- [ ] 5.5 Verify note distribution is reasonable within filtered sets
+- [x] 5.1 Verify Recruit mode only spawns line notes (E, G, B, D, F)
+- [x] 5.2 Verify Cadet mode only spawns space notes (F, A, C, E)
+- [x] 5.3 Verify existing modes (Beginner, Intermediate, Advanced) are unaffected
+- [x] 5.4 Test mode selection persists correctly through game flow
+- [x] 5.5 Verify note distribution is reasonable within filtered sets
