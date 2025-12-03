@@ -570,8 +570,7 @@ export default function AnimalOrchestraConductorGameWithSamples() {
   const [showPresets, setShowPresets] = useState(false);
   const [showTip, setShowTip] = useState<string | null>(null);
   const [conductorMode, setConductorMode] = useState(false);
-  const [beatCount, setBeatCount] = useState(0);
-  const [streak, setStreak] = useState(0);
+    const [streak, setStreak] = useState(0);
 
   const [layers, setLayers] = useState<OrchestraLayer[]>([
     {
@@ -660,43 +659,7 @@ export default function AnimalOrchestraConductorGameWithSamples() {
   const intervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const animationFrameRef = useRef<Map<string, number>>(new Map());
   const isPlayingRef = useRef<Map<string, boolean>>(new Map());
-  const beatIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const decorativeOrbs = generateDecorativeOrbs();
-
-  // Beat counter for visual sync
-  // Use a derived value to avoid re-running effect when unrelated layer state changes
-  const isAnyLayerPlaying = layers.some(l => l.isPlaying);
-  
-  useEffect(() => {
-    if (isAnyLayerPlaying) {
-      // Clear any existing interval first
-      if (beatIntervalRef.current) {
-        clearInterval(beatIntervalRef.current);
-      }
-      
-      // Calculate beat interval: 400ms base * tempo multiplier
-      // At tempo 100, this is 400ms per beat (150 BPM feel)
-      const beatInterval = 400 * (100 / tempo);
-      
-      const interval = setInterval(() => {
-        setBeatCount(prev => (prev + 1) % 4); // Keep it cycling 0-3
-      }, beatInterval);
-      
-      beatIntervalRef.current = interval;
-      
-      return () => {
-        clearInterval(interval);
-        beatIntervalRef.current = null;
-      };
-    } else {
-      // No layers playing - reset beat count
-      if (beatIntervalRef.current) {
-        clearInterval(beatIntervalRef.current);
-        beatIntervalRef.current = null;
-      }
-      setBeatCount(0);
-    }
-  }, [isAnyLayerPlaying, tempo]);
+    const decorativeOrbs = generateDecorativeOrbs();
 
   const loadSamples = useCallback(async () => {
     setLoadingProgress(10);
@@ -966,10 +929,7 @@ export default function AnimalOrchestraConductorGameWithSamples() {
       activeSourcesRef.current.clear();
       animationFrameRef.current.forEach(frame => cancelAnimationFrame(frame));
       animationFrameRef.current.clear();
-      if (beatIntervalRef.current) {
-        clearInterval(beatIntervalRef.current);
-      }
-    };
+          };
   }, []);
 
   const toggleLayer = useCallback(async (layerId: string) => {
@@ -1324,22 +1284,6 @@ export default function AnimalOrchestraConductorGameWithSamples() {
             {activeLayers === 4 && "Almost there! One more instrument! 🥁"}
             {activeLayers === 5 && "🎉 FULL ORCHESTRA! You're a master conductor! 🎉"}
           </p>
-          
-          {/* Beat Indicator */}
-          {activeLayers > 0 && (
-            <div className="flex justify-center gap-2 mt-2">
-              {[0, 1, 2, 3].map(i => (
-                <div
-                  key={i}
-                  className={`w-4 h-4 rounded-full transition-all duration-100 ${
-                    beatCount % 4 === i
-                      ? 'bg-yellow-400 scale-125 shadow-lg shadow-yellow-400/50'
-                      : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Master Controls */}
