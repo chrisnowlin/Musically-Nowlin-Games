@@ -611,6 +611,22 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
       onNoteTimeoutRef.current = onNoteTimeout;
     }, [onNoteSpawned, onNoteTimeout]);
 
+
+    // Clef-specific line and space notes for filtering
+    const CLEF_LINE_NOTES: Record<string, string[]> = {
+      treble: ['E4', 'G4', 'B4', 'D5', 'F5'],   // EGBDF - "Every Good Boy Does Fine"
+      bass: ['G2', 'B2', 'D3', 'F3', 'A3'],     // GBDFA - "Good Boys Do Fine Always"
+      alto: ['F3', 'A3', 'C4', 'E4', 'G4'],     // FACEG - "Fat Alley Cats Eat Garbage"
+      grand: ['E4', 'G4', 'B4', 'D5', 'F5'],    // Use treble for grand staff
+    };
+
+    const CLEF_SPACE_NOTES: Record<string, string[]> = {
+      treble: ['F4', 'A4', 'C5', 'E5'],         // FACE
+      bass: ['A2', 'C3', 'E3', 'G3'],           // ACEG - "All Cows Eat Grass"
+      alto: ['G3', 'B3', 'D4', 'F4'],           // GBDF
+      grand: ['F4', 'A4', 'C5', 'E5'],          // Use treble for grand staff
+    };
+
     // Generate note range based on config
     const getNoteRange = (): string[] => {
       const noteNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -639,15 +655,15 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
         }
       }
 
-      // Apply note filtering if specified
+      // Apply clef-aware note filtering if specified
       if (config.noteFilter === 'lines') {
-        // Line notes: E, G, B, D, F (Every Good Boy Does Fine) - specific octaves only
-        const lineNotes = ['E4', 'G4', 'B4', 'D5', 'F5'];
-        return allNotes.filter(note => lineNotes.includes(note));
+        // Get line notes for the selected clef
+        const lineNotes = CLEF_LINE_NOTES[config.clef] || CLEF_LINE_NOTES.treble;
+        return lineNotes.filter(note => allNotes.includes(note));
       } else if (config.noteFilter === 'spaces') {
-        // Space notes: F, A, C, E (FACE) - specific octaves only
-        const spaceNotes = ['F4', 'A4', 'C5', 'E5'];
-        return allNotes.filter(note => spaceNotes.includes(note));
+        // Get space notes for the selected clef
+        const spaceNotes = CLEF_SPACE_NOTES[config.clef] || CLEF_SPACE_NOTES.treble;
+        return spaceNotes.filter(note => allNotes.includes(note));
       }
 
       return allNotes;
@@ -664,6 +680,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
       lastNoteRef.current = note;
       return note;
     };
+
 
     // Clear the moving note when currentNote becomes null (note was answered)
     // Clear immediately to allow new note spawning, but store position for feedback

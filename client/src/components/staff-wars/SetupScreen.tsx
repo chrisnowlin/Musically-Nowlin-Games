@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -20,21 +20,123 @@ const CLEF_OPTIONS: { value: Clef; label: string; icon: string }[] = [
   { value: 'alto', label: 'Alto Clef', icon: '𝄡' },
 ];
 
-const RANGE_PRESETS: { label: string; subLabel: string; minNote: string; maxNote: string; color: string; noteFilter?: 'lines' | 'spaces' }[] = [
-  { label: 'Recruit', subLabel: 'Lines Only (EGBDF)', minNote: 'E4', maxNote: 'F5', color: 'bg-orange-500/20 border-orange-500/50 hover:bg-orange-500/30', noteFilter: 'lines' },
-  { label: 'Cadet', subLabel: 'Spaces Only (FACE)', minNote: 'F4', maxNote: 'E5', color: 'bg-teal-500/20 border-teal-500/50 hover:bg-teal-500/30', noteFilter: 'spaces' },
-  { label: 'Beginner', subLabel: 'Staff Notes Only', minNote: 'E4', maxNote: 'F5', color: 'bg-green-500/20 border-green-500/50 hover:bg-green-500/30' },
-  { label: 'Intermediate', subLabel: 'Extended Range', minNote: 'C4', maxNote: 'A5', color: 'bg-blue-500/20 border-blue-500/50 hover:bg-blue-500/30' },
-  { label: 'Advanced', subLabel: 'Full Range', minNote: 'B3', maxNote: 'B5', color: 'bg-purple-500/20 border-purple-500/50 hover:bg-purple-500/30' },
-];
+// Clef-specific note definitions
+const CLEF_NOTES = {
+  treble: {
+    lines: ['E4', 'G4', 'B4', 'D5', 'F5'],      // EGBDF - "Every Good Boy Does Fine"
+    spaces: ['F4', 'A4', 'C5', 'E5'],            // FACE
+    linesMnemonic: 'EGBDF',
+    spacesMnemonic: 'FACE',
+    staffMin: 'E4',
+    staffMax: 'F5',
+    extendedMin: 'C4',
+    extendedMax: 'A5',
+    fullMin: 'B3',
+    fullMax: 'B5',
+  },
+  bass: {
+    lines: ['G2', 'B2', 'D3', 'F3', 'A3'],      // GBDFA - "Good Boys Do Fine Always"
+    spaces: ['A2', 'C3', 'E3', 'G3'],            // ACEG - "All Cows Eat Grass"
+    linesMnemonic: 'GBDFA',
+    spacesMnemonic: 'ACEG',
+    staffMin: 'G2',
+    staffMax: 'A3',
+    extendedMin: 'E2',
+    extendedMax: 'C4',
+    fullMin: 'C2',
+    fullMax: 'D4',
+  },
+  alto: {
+    lines: ['F3', 'A3', 'C4', 'E4', 'G4'],      // FACEG - "Fat Alley Cats Eat Garbage"
+    spaces: ['G3', 'B3', 'D4', 'F4'],            // GBDF
+    linesMnemonic: 'FACEG',
+    spacesMnemonic: 'GBDF',
+    staffMin: 'F3',
+    staffMax: 'G4',
+    extendedMin: 'D3',
+    extendedMax: 'B4',
+    fullMin: 'C3',
+    fullMax: 'C5',
+  },
+  grand: {
+    // Grand staff uses treble clef ranges for now
+    lines: ['E4', 'G4', 'B4', 'D5', 'F5'],
+    spaces: ['F4', 'A4', 'C5', 'E5'],
+    linesMnemonic: 'EGBDF',
+    spacesMnemonic: 'FACE',
+    staffMin: 'E4',
+    staffMax: 'F5',
+    extendedMin: 'C4',
+    extendedMax: 'A5',
+    fullMin: 'B3',
+    fullMax: 'B5',
+  },
+};
+
+interface RangePreset {
+  label: string;
+  subLabel: string;
+  minNote: string;
+  maxNote: string;
+  color: string;
+  noteFilter?: 'lines' | 'spaces';
+}
+
+// Generate range presets based on selected clef
+function getRangePresets(clef: Clef): RangePreset[] {
+  const notes = CLEF_NOTES[clef];
+  
+  return [
+    { 
+      label: 'Recruit', 
+      subLabel: `Lines Only (${notes.linesMnemonic})`, 
+      minNote: notes.staffMin, 
+      maxNote: notes.staffMax, 
+      color: 'bg-orange-500/20 border-orange-500/50 hover:bg-orange-500/30', 
+      noteFilter: 'lines' as const
+    },
+    { 
+      label: 'Cadet', 
+      subLabel: `Spaces Only (${notes.spacesMnemonic})`, 
+      minNote: notes.staffMin, 
+      maxNote: notes.staffMax, 
+      color: 'bg-teal-500/20 border-teal-500/50 hover:bg-teal-500/30', 
+      noteFilter: 'spaces' as const
+    },
+    { 
+      label: 'Beginner', 
+      subLabel: 'Staff Notes Only', 
+      minNote: notes.staffMin, 
+      maxNote: notes.staffMax, 
+      color: 'bg-green-500/20 border-green-500/50 hover:bg-green-500/30' 
+    },
+    { 
+      label: 'Intermediate', 
+      subLabel: 'Extended Range', 
+      minNote: notes.extendedMin, 
+      maxNote: notes.extendedMax, 
+      color: 'bg-blue-500/20 border-blue-500/50 hover:bg-blue-500/30' 
+    },
+    { 
+      label: 'Advanced', 
+      subLabel: 'Full Range', 
+      minNote: notes.fullMin, 
+      maxNote: notes.fullMax, 
+      color: 'bg-purple-500/20 border-purple-500/50 hover:bg-purple-500/30' 
+    },
+  ];
+}
 
 export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer, onToggleShowCorrectAnswer }: SetupScreenProps) {
   const [selectedClef, setSelectedClef] = useState<Clef>('treble');
   const [selectedRange, setSelectedRange] = useState(2); // Default to Beginner (now at index 2)
   const layout = useResponsiveLayout();
 
+  // Get clef-specific range presets
+  const rangePresets = useMemo(() => getRangePresets(selectedClef), [selectedClef]);
+
   const handleStart = () => {
-    const preset = RANGE_PRESETS[selectedRange];
+    const preset = rangePresets[selectedRange];
     onStartGame({
       clef: selectedClef,
       minNote: preset.minNote,
@@ -127,7 +229,7 @@ export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer
               Difficulty Level
             </Label>
             <div className="space-y-2">
-              {RANGE_PRESETS.map((preset, idx) => (
+              {rangePresets.map((preset, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedRange(idx)}
