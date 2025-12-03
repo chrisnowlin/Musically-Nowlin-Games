@@ -12,6 +12,10 @@ import { useResponsiveLayout } from '@/hooks/useViewport';
 export type Clef = 'treble' | 'bass' | 'alto' | 'grand';
 export type GameStatus = 'setup' | 'playing' | 'paused' | 'gameOver';
 
+// Game constants
+export const MAX_LIVES = 3;
+export const CORRECT_ANSWERS_FOR_EXTRA_LIFE = 30;
+
 export interface GameConfig {
   clef: Clef;
   minNote: string;
@@ -46,7 +50,7 @@ const initialState: GameState = {
   status: 'setup',
   config: { clef: 'treble', minNote: 'C4', maxNote: 'C5' },
   score: 0,
-  lives: 3,
+  lives: MAX_LIVES,
   level: 1,
   currentSpeed: 50,
   sfxEnabled: true,
@@ -61,7 +65,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         status: 'playing',
         config: action.config,
         score: 0,
-        lives: 3,
+        lives: MAX_LIVES,
         level: 1,
         currentSpeed: 50,
       };
@@ -84,7 +88,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'LOAD_HIGH_SCORES':
       return { ...state, highScores: action.scores };
     case 'RETURN_TO_SETUP':
-      return { ...state, status: 'setup', score: 0, lives: 3, level: 1, currentSpeed: 50 };
+      return { ...state, status: 'setup', score: 0, lives: MAX_LIVES, level: 1, currentSpeed: 50 };
     default:
       return state;
   }
