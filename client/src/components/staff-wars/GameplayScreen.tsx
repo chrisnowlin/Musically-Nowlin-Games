@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Menu } from 'lucide-react';
-import { Clef, GameConfig } from '../StaffWarsGame';
+import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE } from '../StaffWarsGame';
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/lib/audioService';
 import { useResponsiveLayout } from '@/hooks/useViewport';
@@ -103,6 +103,11 @@ export default function GameplayScreen({
       }
       const newScore = score + 1;
       onUpdateScore(newScore);
+
+      // Restore a life every 30 correct answers (capped at MAX_LIVES)
+      if (newScore > 0 && newScore % CORRECT_ANSWERS_FOR_EXTRA_LIFE === 0 && lives < MAX_LIVES) {
+        onUpdateLives(lives + 1);
+      }
 
       // Calculate new level (every 10 correct answers)
       const newLevel = Math.floor(newScore / 10) + 1;
@@ -206,7 +211,7 @@ export default function GameplayScreen({
                 <Heart className="w-3 h-3 text-red-400" /> Lives
               </div>
               <div className="flex gap-1 mt-1.5">
-                {[...Array(3)].map((_, i) => (
+                {[...Array(MAX_LIVES)].map((_, i) => (
                   <Heart
                     key={i}
                     className={`w-5 h-5 transition-all duration-300 ${
