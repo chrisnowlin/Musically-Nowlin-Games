@@ -41,10 +41,26 @@ export default function Game() {
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Track if component is mounted to cancel async operations
+  const isMountedRef = useRef<boolean>(true);
+  
+  // AbortController for cancelling sound playback
+  const playSoundsAbortRef = useRef<AbortController | null>(null);
 
   // Cleanup all timeouts and audio on unmount
   useEffect(() => {
+    isMountedRef.current = true;
+    
     return () => {
+      isMountedRef.current = false;
+      
+      // Abort any in-progress sound playback
+      if (playSoundsAbortRef.current) {
+        playSoundsAbortRef.current.abort();
+        playSoundsAbortRef.current = null;
+      }
+      
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
       if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
       if (autoPlayTimeoutRef.current) clearTimeout(autoPlayTimeoutRef.current);
@@ -55,23 +71,56 @@ export default function Game() {
 
   // Play sounds for the current round
   const playSounds = useCallback(async (round: GameRound) => {
+    // Cancel any previous playback
+    if (playSoundsAbortRef.current) {
+      playSoundsAbortRef.current.abort();
+    }
+    
+    // Create new abort controller for this playback session
+    const abortController = new AbortController();
+    playSoundsAbortRef.current = abortController;
+    
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
     setCanAnswer(false);
 
     // Play each character's sound in sequence
     for (let i = 0; i < round.characters.length; i++) {
+      // Check if playback was cancelled (component unmounted or new playback started)
+      if (abortController.signal.aborted || !isMountedRef.current) {
+        return;
+      }
+      
       setPlayingCharacter(i + 1);
       await audioService.playNote(round.pitches[i], 1.5);
+      
+      // Check again after note finished
+      if (abortController.signal.aborted || !isMountedRef.current) {
+        return;
+      }
+      
       setPlayingCharacter(null);
       
       // Small pause between sounds (except after the last one)
       if (i < round.characters.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(resolve, 500);
+          // Cancel the timeout if aborted
+          abortController.signal.addEventListener('abort', () => {
+            clearTimeout(timeout);
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        }).catch(() => {
+          // Playback was cancelled, exit silently
+          return;
+        });
       }
     }
 
-    setGameState(prev => ({ ...prev, isPlaying: false }));
-    setCanAnswer(true);
+    // Only update state if still mounted and not aborted
+    if (!abortController.signal.aborted && isMountedRef.current) {
+      setGameState(prev => ({ ...prev, isPlaying: false }));
+      setCanAnswer(true);
+    }
   }, []);
 
   // Start a new round
@@ -100,7 +149,9 @@ export default function Game() {
     
     // Auto-play sounds after a short delay
     autoPlayTimeoutRef.current = setTimeout(() => {
-      playSounds(newRound);
+      if (isMountedRef.current) {
+        playSounds(newRound);
+      }
       autoPlayTimeoutRef.current = null;
     }, 500);
   }, [playSounds, numAnimals]);
@@ -141,13 +192,17 @@ export default function Game() {
 
     // Show loading indicator before next round
     loadingTimeoutRef.current = setTimeout(() => {
-      setIsLoadingNextRound(true);
+      if (isMountedRef.current) {
+        setIsLoadingNextRound(true);
+      }
     }, 2000);
 
     // Auto-advance to next round after feedback
     nextRoundTimeoutRef.current = setTimeout(() => {
-      startNewRound();
-      setIsLoadingNextRound(false);
+      if (isMountedRef.current) {
+        startNewRound();
+        setIsLoadingNextRound(false);
+      }
       loadingTimeoutRef.current = null;
       nextRoundTimeoutRef.current = null;
     }, 2500);
@@ -155,6 +210,12 @@ export default function Game() {
 
   // Reset the game
   const resetGame = useCallback(() => {
+    // Abort any in-progress sound playback
+    if (playSoundsAbortRef.current) {
+      playSoundsAbortRef.current.abort();
+      playSoundsAbortRef.current = null;
+    }
+    
     // Clear all pending timeouts
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
@@ -168,6 +229,9 @@ export default function Game() {
       clearTimeout(autoPlayTimeoutRef.current);
       autoPlayTimeoutRef.current = null;
     }
+    
+    // Stop all audio
+    audioService.stopAll();
     
     setGameState({
       currentRound: null,
