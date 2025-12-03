@@ -664,17 +664,39 @@ export default function AnimalOrchestraConductorGameWithSamples() {
   const decorativeOrbs = generateDecorativeOrbs();
 
   // Beat counter for visual sync
+  // Use a derived value to avoid re-running effect when unrelated layer state changes
+  const isAnyLayerPlaying = layers.some(l => l.isPlaying);
+  
   useEffect(() => {
-    if (layers.some(l => l.isPlaying)) {
+    if (isAnyLayerPlaying) {
+      // Clear any existing interval first
+      if (beatIntervalRef.current) {
+        clearInterval(beatIntervalRef.current);
+      }
+      
+      // Calculate beat interval: 400ms base * tempo multiplier
+      // At tempo 100, this is 400ms per beat (150 BPM feel)
+      const beatInterval = 400 * (100 / tempo);
+      
       const interval = setInterval(() => {
-        setBeatCount(prev => prev + 1);
-      }, 400 * (100 / tempo));
+        setBeatCount(prev => (prev + 1) % 4); // Keep it cycling 0-3
+      }, beatInterval);
+      
       beatIntervalRef.current = interval;
-      return () => clearInterval(interval);
+      
+      return () => {
+        clearInterval(interval);
+        beatIntervalRef.current = null;
+      };
     } else {
+      // No layers playing - reset beat count
+      if (beatIntervalRef.current) {
+        clearInterval(beatIntervalRef.current);
+        beatIntervalRef.current = null;
+      }
       setBeatCount(0);
     }
-  }, [layers, tempo]);
+  }, [isAnyLayerPlaying, tempo]);
 
   const loadSamples = useCallback(async () => {
     setLoadingProgress(10);
