@@ -16,10 +16,13 @@ export type GameStatus = 'setup' | 'playing' | 'paused' | 'gameOver';
 export const MAX_LIVES = 3;
 export const CORRECT_ANSWERS_FOR_EXTRA_LIFE = 30;
 
+export type NoteFilter = 'all' | 'lines' | 'spaces';
+
 export interface GameConfig {
   clef: Clef;
   minNote: string;
   maxNote: string;
+  noteFilter?: NoteFilter;
 }
 
 export interface GameState {

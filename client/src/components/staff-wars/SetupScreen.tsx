@@ -20,7 +20,9 @@ const CLEF_OPTIONS: { value: Clef; label: string; icon: string }[] = [
   { value: 'alto', label: 'Alto Clef', icon: '𝄡' },
 ];
 
-const RANGE_PRESETS: { label: string; subLabel: string; minNote: string; maxNote: string; color: string }[] = [
+const RANGE_PRESETS: { label: string; subLabel: string; minNote: string; maxNote: string; color: string; noteFilter?: 'lines' | 'spaces' }[] = [
+  { label: 'Recruit', subLabel: 'Lines Only (EGBDF)', minNote: 'E4', maxNote: 'F5', color: 'bg-orange-500/20 border-orange-500/50 hover:bg-orange-500/30', noteFilter: 'lines' },
+  { label: 'Cadet', subLabel: 'Spaces Only (FACE)', minNote: 'F4', maxNote: 'E5', color: 'bg-teal-500/20 border-teal-500/50 hover:bg-teal-500/30', noteFilter: 'spaces' },
   { label: 'Beginner', subLabel: 'Staff Notes Only', minNote: 'E4', maxNote: 'F5', color: 'bg-green-500/20 border-green-500/50 hover:bg-green-500/30' },
   { label: 'Intermediate', subLabel: 'Extended Range', minNote: 'C4', maxNote: 'A5', color: 'bg-blue-500/20 border-blue-500/50 hover:bg-blue-500/30' },
   { label: 'Advanced', subLabel: 'Full Range', minNote: 'B3', maxNote: 'B5', color: 'bg-purple-500/20 border-purple-500/50 hover:bg-purple-500/30' },
@@ -28,7 +30,7 @@ const RANGE_PRESETS: { label: string; subLabel: string; minNote: string; maxNote
 
 export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer, onToggleShowCorrectAnswer }: SetupScreenProps) {
   const [selectedClef, setSelectedClef] = useState<Clef>('treble');
-  const [selectedRange, setSelectedRange] = useState(0); // Default to Beginner
+  const [selectedRange, setSelectedRange] = useState(2); // Default to Beginner (now at index 2)
   const layout = useResponsiveLayout();
 
   const handleStart = () => {
@@ -37,6 +39,7 @@ export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer
       clef: selectedClef,
       minNote: preset.minNote,
       maxNote: preset.maxNote,
+      noteFilter: preset.noteFilter,
     });
   };
 

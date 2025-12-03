@@ -639,6 +639,15 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
         }
       }
 
+      // Apply note filtering if specified
+      if (config.noteFilter === 'lines') {
+        // Line notes: E, G, B, D, F (Every Good Boy Does Fine)
+        return allNotes.filter(note => ['E', 'G', 'B', 'D', 'F'].includes(note.charAt(0)));
+      } else if (config.noteFilter === 'spaces') {
+        // Space notes: F, A, C, E (FACE)
+        return allNotes.filter(note => ['F', 'A', 'C', 'E'].includes(note.charAt(0)));
+      }
+
       return allNotes;
     };
 
