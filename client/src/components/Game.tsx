@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { GameState, GameRound } from "@/lib/schema";
 import { audioService } from "@/lib/audioService";
 import { generateNewRound as generateRound, validateAnswer, calculateScore } from "@/lib/gameUtils";
 import AnimalCharacter from "@/components/AnimalCharacter";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import { Play, HelpCircle, Music2, Loader2, Star, Sparkles } from "lucide-react";
+import { Play, HelpCircle, Music2, Star, Sparkles } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes } from "@/theme/playful";
 import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/components/ResponsiveGameLayout";
 import { useResponsiveLayout } from "@/hooks/useViewport";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 const FEEDBACK_OPTIONS = [
   { title: "Correct!", message: "You're a music master! 🎵" },
@@ -37,108 +38,42 @@ export default function Game() {
   const [isLoadingNextRound, setIsLoadingNextRound] = useState(false);
   const [volume, setVolume] = useState<number>(30); // 0..100
   
-  // Track timeout IDs for cleanup using refs (doesn't trigger re-renders)
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Track if component is mounted to cancel async operations
-  const isMountedRef = useRef<boolean>(true);
-  
-  // AbortController for cancelling sound playback
-  const playSoundsAbortRef = useRef<AbortController | null>(null);
-
-  // Cleanup all timeouts and audio on unmount
-  useEffect(() => {
-    isMountedRef.current = true;
-    
-    return () => {
-      isMountedRef.current = false;
-      
-      // Abort any in-progress sound playback
-      if (playSoundsAbortRef.current) {
-        playSoundsAbortRef.current.abort();
-        playSoundsAbortRef.current = null;
-      }
-      
-      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-      if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-      if (autoPlayTimeoutRef.current) clearTimeout(autoPlayTimeoutRef.current);
-      // Stop all audio when navigating away from the game
-      audioService.stopAll();
-    };
-  }, []);
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, clearAll, isMounted } = useGameCleanup();
 
   // Play sounds for the current round
   const playSounds = useCallback(async (round: GameRound) => {
-    // Cancel any previous playback
-    if (playSoundsAbortRef.current) {
-      playSoundsAbortRef.current.abort();
-    }
-    
-    // Create new abort controller for this playback session
-    const abortController = new AbortController();
-    playSoundsAbortRef.current = abortController;
-    
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
     setCanAnswer(false);
 
     // Play each character's sound in sequence
     for (let i = 0; i < round.characters.length; i++) {
-      // Check if playback was cancelled (component unmounted or new playback started)
-      if (abortController.signal.aborted || !isMountedRef.current) {
-        return;
-      }
+      // Check if component unmounted - exit early to stop the loop
+      if (!isMounted.current) return;
       
       setPlayingCharacter(i + 1);
       await audioService.playNote(round.pitches[i], 1.5);
       
       // Check again after note finished
-      if (abortController.signal.aborted || !isMountedRef.current) {
-        return;
-      }
+      if (!isMounted.current) return;
       
       setPlayingCharacter(null);
       
       // Small pause between sounds (except after the last one)
       if (i < round.characters.length - 1) {
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(resolve, 500);
-          // Cancel the timeout if aborted
-          abortController.signal.addEventListener('abort', () => {
-            clearTimeout(timeout);
-            reject(new DOMException('Aborted', 'AbortError'));
-          });
-        }).catch(() => {
-          // Playback was cancelled, exit silently
-          return;
-        });
+        await new Promise<void>(resolve => setTimeout(resolve, 500));
       }
     }
 
-    // Only update state if still mounted and not aborted
-    if (!abortController.signal.aborted && isMountedRef.current) {
+    // Only update state if still mounted
+    if (isMounted.current) {
       setGameState(prev => ({ ...prev, isPlaying: false }));
       setCanAnswer(true);
     }
-  }, []);
+  }, [isMounted, setTimeout]);
 
   // Start a new round
   const startNewRound = useCallback(async () => {
-    // Clear any pending timeouts to avoid overlapping timers
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
-    if (autoPlayTimeoutRef.current) {
-      clearTimeout(autoPlayTimeoutRef.current);
-      autoPlayTimeoutRef.current = null;
-    }
-    
     const newRound = generateRound(numAnimals);
     setGameState(prev => ({
       ...prev,
@@ -147,14 +82,9 @@ export default function Game() {
     }));
     setCanAnswer(false);
     
-    // Auto-play sounds after a short delay
-    autoPlayTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        playSounds(newRound);
-      }
-      autoPlayTimeoutRef.current = null;
-    }, 500);
-  }, [playSounds, numAnimals]);
+    // Auto-play sounds after a short delay (auto-cleaned on unmount)
+    setTimeout(() => playSounds(newRound), 500);
+  }, [playSounds, numAnimals, setTimeout]);
 
   // Handle character selection (answer)
   const handleCharacterClick = useCallback((characterPosition: number) => {
@@ -180,58 +110,20 @@ export default function Game() {
       audioService.playErrorTone();
     }
 
-    // Clear any existing timeouts
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
+    // Show loading indicator before next round (auto-cleaned on unmount)
+    setTimeout(() => setIsLoadingNextRound(true), 2000);
 
-    // Show loading indicator before next round
-    loadingTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        setIsLoadingNextRound(true);
-      }
-    }, 2000);
-
-    // Auto-advance to next round after feedback
-    nextRoundTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        startNewRound();
-        setIsLoadingNextRound(false);
-      }
-      loadingTimeoutRef.current = null;
-      nextRoundTimeoutRef.current = null;
+    // Auto-advance to next round after feedback (auto-cleaned on unmount)
+    setTimeout(() => {
+      startNewRound();
+      setIsLoadingNextRound(false);
     }, 2500);
-  }, [canAnswer, gameState.currentRound, gameState.feedback, startNewRound]);
+  }, [canAnswer, gameState.currentRound, gameState.feedback, startNewRound, setTimeout]);
 
   // Reset the game
   const resetGame = useCallback(() => {
-    // Abort any in-progress sound playback
-    if (playSoundsAbortRef.current) {
-      playSoundsAbortRef.current.abort();
-      playSoundsAbortRef.current = null;
-    }
-    
-    // Clear all pending timeouts
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
-    if (autoPlayTimeoutRef.current) {
-      clearTimeout(autoPlayTimeoutRef.current);
-      autoPlayTimeoutRef.current = null;
-    }
-    
-    // Stop all audio
-    audioService.stopAll();
+    // Clear all pending timeouts and stop audio
+    clearAll();
     
     setGameState({
       currentRound: null,
@@ -244,7 +136,7 @@ export default function Game() {
     setPlayingCharacter(null);
     setGameStarted(false);
     setIsLoadingNextRound(false);
-  }, []);
+  }, [clearAll]);
 
   // Reset game when numAnimals changes
   useEffect(() => {

@@ -13,12 +13,20 @@ import { audioService } from '@/lib/audioService';
  * @example
  * ```tsx
  * function MyGame() {
- *   const { setTimeout, setInterval, stopAudio, clearAll } = useGameCleanup();
+ *   const { setTimeout, setInterval, stopAudio, clearAll, isMounted } = useGameCleanup();
  *
  *   const handlePlay = () => {
  *     setTimeout(() => {
  *       console.log('This will auto-cleanup on unmount');
  *     }, 1000);
+ *   };
+ *
+ *   // Check isMounted in async loops to stop when component unmounts
+ *   const playSounds = async () => {
+ *     for (const sound of sounds) {
+ *       if (!isMounted.current) return; // Exit early if unmounted
+ *       await playSound(sound);
+ *     }
  *   };
  *
  *   // Manually stop audio
@@ -36,6 +44,7 @@ import { audioService } from '@/lib/audioService';
 export function useGameCleanup() {
   const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
   const intervalsRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  const isMountedRef = useRef<boolean>(true);
 
   /**
    * Create a timeout that will be automatically cleared on unmount
@@ -96,10 +105,12 @@ export function useGameCleanup() {
   };
 
   /**
-   * Cleanup on unmount
+   * Set mounted state and cleanup on unmount
    */
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       clearAll();
     };
   }, []);
@@ -134,5 +145,18 @@ export function useGameCleanup() {
      * Clear all timeouts, intervals, and stop audio
      */
     clearAll,
+
+    /**
+     * Ref that tracks if component is mounted.
+     * Use in async loops to exit early when component unmounts.
+     * @example
+     * ```tsx
+     * for (const item of items) {
+     *   if (!isMounted.current) return;
+     *   await doAsyncWork(item);
+     * }
+     * ```
+     */
+    isMounted: isMountedRef,
   };
 }
