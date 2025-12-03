@@ -6,6 +6,8 @@ import { playfulShapes, playfulTypography } from "@/theme/playful";
 import monkeySvg from "@assets/monkey.svg";
 import birdSvg from "@assets/bird.svg";
 import lionSvg from "@assets/lion.svg";
+import elephantSvg from "@assets/elephant.svg";
+import giraffeSvg from "@assets/giraffe.svg";
 
 interface AnimalCharacterProps {
   character: CharacterType;
@@ -33,8 +35,8 @@ function AnimalCharacter({
   // Get sprite/image based on character ID - use SVGs for all characters
   const getCharacterImage = () => {
     const imageMap: Record<string, string> = {
-      elephant: lionSvg, // Use lion as fallback for elephant
-      giraffe: birdSvg, // Use bird as fallback for giraffe
+      elephant: elephantSvg,
+      giraffe: giraffeSvg,
       monkey: monkeySvg,
       bird: birdSvg,
       lion: lionSvg,
