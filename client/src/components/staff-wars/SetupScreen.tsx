@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Clef, GameConfig } from '../StaffWarsGame';
 import { useResponsiveLayout } from '@/hooks/useViewport';
-import { Music, Trophy, Info, Play, Check } from 'lucide-react';
+import { Music, Trophy, Info, Play, Check, Eye } from 'lucide-react';
 
 interface SetupScreenProps {
   onStartGame: (config: GameConfig) => void;
   highScores: number[];
+  showCorrectAnswer: boolean;
+  onToggleShowCorrectAnswer: () => void;
 }
 
 const CLEF_OPTIONS: { value: Clef; label: string; icon: string }[] = [
@@ -23,7 +26,7 @@ const RANGE_PRESETS: { label: string; subLabel: string; minNote: string; maxNote
   { label: 'Advanced', subLabel: 'Full Range', minNote: 'B3', maxNote: 'B5', color: 'bg-purple-500/20 border-purple-500/50 hover:bg-purple-500/30' },
 ];
 
-export default function SetupScreen({ onStartGame, highScores }: SetupScreenProps) {
+export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer, onToggleShowCorrectAnswer }: SetupScreenProps) {
   const [selectedClef, setSelectedClef] = useState<Clef>('treble');
   const [selectedRange, setSelectedRange] = useState(1); // Index into RANGE_PRESETS
   const layout = useResponsiveLayout();
@@ -149,6 +152,33 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
             </div>
           </div>
 
+          {/* Learning Options */}
+          <div className="space-y-3">
+            <Label className="text-slate-300 font-semibold uppercase text-xs tracking-wider ml-1">
+              Learning Options
+            </Label>
+            <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Eye className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-white text-sm">Show Correct Answer</div>
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      Display the correct note when you guess wrong
+                    </div>
+                  </div>
+                </div>
+                <Switch
+                  checked={showCorrectAnswer}
+                  onCheckedChange={onToggleShowCorrectAnswer}
+                  className="data-[state=checked]:bg-cyan-500"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* High Scores */}
           {highScores.length > 0 && (
             <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4 space-y-3">
@@ -198,4 +228,3 @@ export default function SetupScreen({ onStartGame, highScores }: SetupScreenProp
     </div>
   );
 }
-

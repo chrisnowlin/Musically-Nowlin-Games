@@ -10,6 +10,7 @@ interface StaffCanvasProps {
   speed: number;
   isPaused: boolean;
   feedback: 'correct' | 'incorrect' | null;
+  correctAnswerDisplay: string | null;
   gameLoopRef: React.MutableRefObject<number | null>;
 }
 
@@ -36,6 +37,51 @@ interface LaserBeam {
   endY: number;
   startTime: number;
   duration: number;
+}
+
+function drawCorrectAnswerDisplay(ctx: CanvasRenderingContext2D, x: number, y: number, noteName: string, currentTime: number) {
+  ctx.save();
+  
+  // Animated glow effect
+  const pulse = (Math.sin(currentTime * 0.008) + 1) / 2;
+  const glowSize = 20 + pulse * 10;
+  
+  // Draw glowing background circle
+  const gradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize);
+  gradient.addColorStop(0, 'rgba(6, 182, 212, 0.8)'); // Cyan-500
+  gradient.addColorStop(0.5, 'rgba(6, 182, 212, 0.4)');
+  gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw outer ring
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.arc(x, y, 25, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  
+  // Draw note name text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 10;
+  ctx.fillText(noteName, x, y);
+  
+  // Draw "Correct!" label below
+  ctx.font = 'bold 14px Arial';
+  ctx.fillStyle = '#06b6d4';
+  ctx.fillText('Correct!', x, y + 35);
+  
+  ctx.restore();
 }
 
 function drawSpaceStation(ctx: CanvasRenderingContext2D, x: number, y: number, clef: Clef, time: number) {
@@ -513,6 +559,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
       speed,
       isPaused,
       feedback,
+      correctAnswerDisplay,
       gameLoopRef,
     },
     ref
@@ -803,6 +850,17 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
           drawExplosion(ctx, particlesRef.current);
         }
 
+        // Draw correct answer display if active
+        if (correctAnswerDisplay && lastNotePositionRef.current && staffData) {
+          drawCorrectAnswerDisplay(
+            ctx, 
+            lastNotePositionRef.current.x, 
+            lastNotePositionRef.current.y, 
+            correctAnswerDisplay, 
+            currentTime
+          );
+        }
+
         gameLoopRef.current = requestAnimationFrame(gameLoop);
       };
 
@@ -813,7 +871,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
           cancelAnimationFrame(gameLoopRef.current);
         }
       };
-    }, [config, speed, isPaused, gameLoopRef]);
+    }, [config, speed, isPaused, gameLoopRef, correctAnswerDisplay]);
 
     return (
       <div className="w-full h-full">
@@ -830,4 +888,3 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
 StaffCanvas.displayName = 'StaffCanvas';
 
 export default StaffCanvas;
-

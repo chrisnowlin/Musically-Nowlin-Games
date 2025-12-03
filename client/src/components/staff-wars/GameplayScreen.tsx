@@ -13,6 +13,7 @@ interface GameplayScreenProps {
   level: number;
   currentSpeed: number;
   sfxEnabled: boolean;
+  showCorrectAnswer: boolean;
   isPaused: boolean;
   onPause: () => void;
   onGameOver: (finalScore: number) => void;
@@ -33,6 +34,9 @@ const calculateSpeed = (level: number): number => {
   return Math.round(baseSpeed * Math.pow(1 + speedIncrease, level - 1));
 };
 
+// Duration to show correct answer feedback (in ms)
+const CORRECT_ANSWER_DISPLAY_DURATION = 1500;
+
 export default function GameplayScreen({
   config,
   score,
@@ -40,6 +44,7 @@ export default function GameplayScreen({
   level,
   currentSpeed,
   sfxEnabled,
+  showCorrectAnswer,
   isPaused,
   onPause,
   onGameOver,
@@ -53,6 +58,8 @@ export default function GameplayScreen({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentNote, setCurrentNote] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [correctAnswerDisplay, setCorrectAnswerDisplay] = useState<string | null>(null);
+  const [isShowingCorrectAnswer, setIsShowingCorrectAnswer] = useState(false);
   const layout = useResponsiveLayout();
 
   // Initialize audio on first interaction
@@ -78,8 +85,8 @@ export default function GameplayScreen({
         return;
       }
 
-      // Note input (only when not paused)
-      if (!isPaused && NOTE_NAMES.includes(key)) {
+      // Note input (only when not paused and not showing correct answer)
+      if (!isPaused && !isShowingCorrectAnswer && NOTE_NAMES.includes(key)) {
         e.preventDefault();
         handleNoteAnswer(key);
       }
@@ -87,10 +94,10 @@ export default function GameplayScreen({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentNote, isPaused, onPause, onToggleSFX]);
+  }, [currentNote, isPaused, isShowingCorrectAnswer, onPause, onToggleSFX]);
 
   const handleNoteAnswer = async (noteName: string) => {
-    if (!currentNote || isPaused) return;
+    if (!currentNote || isPaused || isShowingCorrectAnswer) return;
 
     // Extract just the letter from the current note (e.g., "G4" -> "G")
     const currentNoteLetter = currentNote.charAt(0);
@@ -126,32 +133,77 @@ export default function GameplayScreen({
       setCurrentNote(null);
       setTimeout(() => setFeedback(null), 300);
     } else {
+      // Wrong answer
       setFeedback('incorrect');
       if (sfxEnabled) {
         await audioService.playErrorTone();
       }
+      
       const newLives = lives - 1;
       onUpdateLives(newLives);
 
-      if (newLives <= 0) {
-        onGameOver(score);
+      // Show correct answer if setting is enabled
+      if (showCorrectAnswer) {
+        setCorrectAnswerDisplay(currentNoteLetter);
+        setIsShowingCorrectAnswer(true);
+        
+        // Keep the note visible during feedback, then dismiss after delay
+        setTimeout(() => {
+          setCorrectAnswerDisplay(null);
+          setIsShowingCorrectAnswer(false);
+          setCurrentNote(null);
+          setFeedback(null);
+          
+          if (newLives <= 0) {
+            onGameOver(score);
+          }
+        }, CORRECT_ANSWER_DISPLAY_DURATION);
+      } else {
+        // No correct answer display - dismiss immediately
+        setCurrentNote(null);
+        setTimeout(() => setFeedback(null), 300);
+        
+        if (newLives <= 0) {
+          onGameOver(score);
+        }
       }
-
-      setCurrentNote(null);
-      setTimeout(() => setFeedback(null), 300);
     }
   };
 
   const handleNoteTimeout = async () => {
-    setCurrentNote(null);
+    // Don't process timeout if we're already showing correct answer
+    if (isShowingCorrectAnswer) return;
+    
     if (sfxEnabled) {
       await audioService.playErrorTone();
     }
+    
     const newLives = lives - 1;
     onUpdateLives(newLives);
 
-    if (newLives <= 0) {
-      onGameOver(score);
+    // Show correct answer on timeout if setting is enabled
+    if (showCorrectAnswer && currentNote) {
+      const currentNoteLetter = currentNote.charAt(0);
+      setCorrectAnswerDisplay(currentNoteLetter);
+      setIsShowingCorrectAnswer(true);
+      setFeedback('incorrect');
+      
+      setTimeout(() => {
+        setCorrectAnswerDisplay(null);
+        setIsShowingCorrectAnswer(false);
+        setCurrentNote(null);
+        setFeedback(null);
+        
+        if (newLives <= 0) {
+          onGameOver(score);
+        }
+      }, CORRECT_ANSWER_DISPLAY_DURATION);
+    } else {
+      setCurrentNote(null);
+      
+      if (newLives <= 0) {
+        onGameOver(score);
+      }
     }
   };
 
@@ -253,8 +305,9 @@ export default function GameplayScreen({
             onNoteSpawned={setCurrentNote}
             onNoteTimeout={handleNoteTimeout}
             speed={currentSpeed}
-            isPaused={isPaused}
+            isPaused={isPaused || isShowingCorrectAnswer}
             feedback={feedback}
+            correctAnswerDisplay={correctAnswerDisplay}
             gameLoopRef={gameLoopRef}
           />
         </div>
@@ -264,15 +317,18 @@ export default function GameplayScreen({
           <div className="flex justify-center gap-2 flex-wrap">
             {NOTE_NAMES.map((note) => {
               const isMatching = currentNote === note;
+              const isCorrectAnswer = correctAnswerDisplay === note;
               return (
                 <button
                   key={note}
                   onClick={() => handleNoteAnswer(note)}
-                  disabled={!currentNote || isPaused}
+                  disabled={!currentNote || isPaused || isShowingCorrectAnswer}
                   className={`
                     relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-xl sm:text-2xl transition-all duration-150
                     active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
-                    ${isMatching
+                    ${isCorrectAnswer
+                      ? 'bg-cyan-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.8)] scale-110 z-10 ring-2 ring-white animate-pulse'
+                      : isMatching
                       ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.6)] scale-110 z-10 ring-2 ring-white'
                       : 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300 shadow-lg border border-slate-600 hover:border-slate-400 hover:text-white'
                     }
@@ -284,11 +340,10 @@ export default function GameplayScreen({
             })}
           </div>
           <div className="text-center mt-2 text-[10px] text-slate-500 uppercase tracking-widest">
-            Tap note to fire
+            {isShowingCorrectAnswer ? 'The correct answer was highlighted' : 'Tap note to fire'}
           </div>
         </div>
       </div>
     </div>
   );
 }
-

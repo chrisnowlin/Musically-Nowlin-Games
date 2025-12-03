@@ -30,6 +30,7 @@ export interface GameState {
   level: number;
   currentSpeed: number;
   sfxEnabled: boolean;
+  showCorrectAnswer: boolean;
   highScores: number[];
 }
 
@@ -43,6 +44,7 @@ type GameAction =
   | { type: 'UPDATE_SPEED'; speed: number }
   | { type: 'GAME_OVER' }
   | { type: 'TOGGLE_SFX' }
+  | { type: 'TOGGLE_SHOW_CORRECT_ANSWER' }
   | { type: 'LOAD_HIGH_SCORES'; scores: number[] }
   | { type: 'RETURN_TO_SETUP' };
 
@@ -54,6 +56,7 @@ const initialState: GameState = {
   level: 1,
   currentSpeed: 50,
   sfxEnabled: true,
+  showCorrectAnswer: true,
   highScores: [],
 };
 
@@ -85,6 +88,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, status: 'gameOver' };
     case 'TOGGLE_SFX':
       return { ...state, sfxEnabled: !state.sfxEnabled };
+    case 'TOGGLE_SHOW_CORRECT_ANSWER':
+      return { ...state, showCorrectAnswer: !state.showCorrectAnswer };
     case 'LOAD_HIGH_SCORES':
       return { ...state, highScores: action.scores };
     case 'RETURN_TO_SETUP':
@@ -100,7 +105,7 @@ export default function StaffWarsGame() {
   const gameLoopRef = useRef<number | null>(null);
   const layout = useResponsiveLayout();
 
-  // Load high scores on mount
+  // Load high scores and preferences on mount
   useEffect(() => {
     const saved = localStorage.getItem('staffWarsHighScores');
     if (saved) {
@@ -118,6 +123,12 @@ export default function StaffWarsGame() {
       dispatch({ type: 'TOGGLE_SFX' });
       audioService.setVolume(0);
     }
+
+    // Load show correct answer preference (default to true)
+    const showCorrectPref = localStorage.getItem('staffWarsShowCorrectAnswer');
+    if (showCorrectPref === 'false') {
+      dispatch({ type: 'TOGGLE_SHOW_CORRECT_ANSWER' });
+    }
   }, []);
 
   // Save high scores when they change
@@ -130,6 +141,11 @@ export default function StaffWarsGame() {
     localStorage.setItem('staffWarsSFX', String(state.sfxEnabled));
     audioService.setVolume(state.sfxEnabled ? 0.3 : 0);
   }, [state.sfxEnabled]);
+
+  // Save show correct answer preference
+  useEffect(() => {
+    localStorage.setItem('staffWarsShowCorrectAnswer', String(state.showCorrectAnswer));
+  }, [state.showCorrectAnswer]);
 
   const handleStartGame = (config: GameConfig) => {
     dispatch({ type: 'START_GAME', config });
@@ -170,6 +186,10 @@ export default function StaffWarsGame() {
     dispatch({ type: 'TOGGLE_SFX' });
   };
 
+  const handleToggleShowCorrectAnswer = () => {
+    dispatch({ type: 'TOGGLE_SHOW_CORRECT_ANSWER' });
+  };
+
   // Cleanup game loop on unmount
   useEffect(() => {
     return () => {
@@ -199,7 +219,12 @@ export default function StaffWarsGame() {
       )}
 
       {state.status === 'setup' && (
-        <SetupScreen onStartGame={handleStartGame} highScores={state.highScores} />
+        <SetupScreen
+          onStartGame={handleStartGame}
+          highScores={state.highScores}
+          showCorrectAnswer={state.showCorrectAnswer}
+          onToggleShowCorrectAnswer={handleToggleShowCorrectAnswer}
+        />
       )}
       
       {(state.status === 'playing' || state.status === 'paused') && (
@@ -211,6 +236,7 @@ export default function StaffWarsGame() {
             level={state.level}
             currentSpeed={state.currentSpeed}
             sfxEnabled={state.sfxEnabled}
+            showCorrectAnswer={state.showCorrectAnswer}
             isPaused={state.status === 'paused'}
             onPause={handlePause}
             onGameOver={handleGameOver}
@@ -242,4 +268,3 @@ export default function StaffWarsGame() {
     </div>
   );
 }
-

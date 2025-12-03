@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-**Music Learning Games** is an educational web application designed to teach musical concepts to children (ages 4-10) through interactive, gamified experiences. The platform features animal characters as musical guides, making learning fun and engaging while building foundational music skills like pitch recognition, rhythm, melody memory, and instrument identification.
+**Musically Nowlin Games** is an educational web application designed to teach musical concepts to children (ages 4-12) through interactive, gamified experiences. The platform features animal characters as musical guides, making learning fun and engaging while building foundational music skills like pitch recognition, rhythm, melody memory, harmony, dynamics, and instrument identification.
 
 **Primary Goals:**
 - Make music education accessible and fun for young learners
@@ -11,34 +11,43 @@
 
 ## Tech Stack
 
+### Runtime & Build
+- **Bun 1.3** - Fast JavaScript runtime (3x faster installs, 2x faster dev server)
+- **Vite 5** - Fast build tool and dev server
+- **TypeScript 5.6** - Type-safe development with strict mode
+
 ### Frontend
 - **React 18** - UI framework with hooks-based architecture
-- **TypeScript 5.6** - Type-safe development
-- **Vite 5** - Fast build tool and dev server
 - **Wouter 3** - Lightweight client-side routing
 - **TanStack Query 5** - Server state management
-- **Tailwind CSS 4** - Utility-first styling with custom theme
+- **Tailwind CSS 3.4** - Utility-first styling with custom theme
 - **Radix UI** - Accessible component primitives
 - **Framer Motion** - Animation library
 - **Lucide React** - Icon library
+- **VexFlow 5** - Music notation rendering (for Staff Wars and theory games)
 
-### Backend
+### Audio System
+- **Web Audio API** - Browser-native audio synthesis
+- **Philharmonia Orchestra Samples** - 15 professional instrument samples
+  - Strings: violin, viola, cello, double bass
+  - Woodwinds: flute, oboe, clarinet, bassoon
+  - Brass: trumpet, french horn, trombone, tuba
+  - Percussion: timpani, xylophone, snare drum
+- **Custom audio service** for tone generation and playback
+- **Melody Library** - 60+ reusable musical patterns
+
+### Backend (Optional)
 - **Node.js** with **Express 4** - REST API server
 - **TypeScript** - Shared types between client/server
 - **Drizzle ORM** - Type-safe database queries
 - **PostgreSQL** (via Neon) - Database for session persistence
 - **Express Session** - Session management (optional)
 
-### Audio
-- **Web Audio API** - Browser-native audio synthesis
-- Custom audio service for tone generation and playback
-
-### Development Tools
+### Development & Testing
 - **Vitest** - Unit testing framework
+- **Playwright** - End-to-end testing
 - **Testing Library** - React component testing
-- **tsx** - TypeScript execution for development
-- **esbuild** - Production bundling
-- **Drizzle Kit** - Database migrations
+- **jest-axe** - Accessibility testing
 
 ## Project Conventions
 
@@ -59,9 +68,21 @@
 #### Monorepo Structure
 ```
 /client       - React frontend (SPA)
+  /src
+    /components   - Game components and UI
+    /pages        - Route pages
+    /hooks        - Custom React hooks
+    /lib          - Utilities and services
+    /config       - Game registry
+    /theme        - Theme configuration
+  /public
+    /audio        - Philharmonia samples
+    /images       - Game assets
 /server       - Express backend (API + SSR in dev)
 /shared       - Shared types, schemas, constants
 /openspec     - Specification-driven development docs
+/docs         - Project documentation
+/scripts      - Build and utility scripts
 ```
 
 #### Frontend Architecture
@@ -98,19 +119,22 @@
 - **Unit tests** for game logic (`gameLogic.test.ts`)
 - **Vitest** as test runner with jsdom environment
 - **Testing Library** for React component testing
-- **Type checking** via `npm run check` (tsc --noEmit)
+- **Playwright** for end-to-end testing
+- **jest-axe** for accessibility testing
+- **Type checking** via `bun run check` (tsc --noEmit)
 
 #### Testing Requirements
 - All game logic functions must have unit tests
 - Test edge cases (e.g., score boundaries, invalid inputs)
 - Mock audio APIs in tests (Web Audio API not available in jsdom)
 - Test accessibility features (keyboard navigation, ARIA labels)
-- Run tests before committing: `npm test`
+- Run tests before committing: `bun test`
 
 #### Test File Locations
 - Unit tests: `client/src/test/*.test.ts`
+- Hook tests: `client/src/hooks/__tests__/*.test.ts`
+- E2E tests: Root level `*.test.ts` files
 - Test setup: `client/src/test/setup.ts`
-- Component tests: Co-located with components (future)
 
 ### Git Workflow
 
@@ -188,36 +212,78 @@ Use [Semantic Versioning](https://semver.org/) for release tags:
 - **Pitch** - Frequency of sound (measured in Hz), perceived as "high" or "low"
 - **Musical notes** - Standard pitch values (C4 = 261.63 Hz, A4 = 440 Hz, etc.)
 - **Octaves** - Doubling of frequency (C4 to C5 is one octave)
+- **Intervals** - Distance between two pitches (unison, third, fifth, octave, etc.)
 - **Rhythm** - Patterns of sound duration and timing
+- **Meter** - Organization of beats (4/4, 3/4, 6/8, etc.)
 - **Melody** - Sequence of pitches forming a musical phrase
+- **Harmony** - Multiple pitches sounding together (chords, consonance/dissonance)
+- **Dynamics** - Volume levels (piano, forte, crescendo, diminuendo)
 - **Timbre** - Quality/color of sound (what makes instruments sound different)
+- **Form** - Structure of music (ABA, rondo, verse-chorus, etc.)
 
 ### Educational Approach
 - **Scaffolded learning** - Start with simple concepts (high/low) before complex ones
 - **Immediate feedback** - Visual and audio cues for correct/incorrect answers
 - **Gamification** - Points, characters, and progression to maintain engagement
-- **Age-appropriate** - Games designed for specific age ranges (4-7, 6-9, 7-10)
+- **Age-appropriate** - Games designed for specific age ranges (4-7, 6-9, 7-12)
 - **Multi-sensory** - Combine audio, visual, and interactive elements
+- **Progressive difficulty** - Easy, medium, and hard modes for all skill levels
 
 ### Animal Characters
-- **Ellie Elephant** - Plays trumpet, represents lower/mid-range sounds
-- **Gary Giraffe** - Plays violin, represents higher-range sounds
+- **Bella Bird** - Represents high-pitched sounds, cheerful personality
+- **Leo Lion** - Represents low-pitched sounds, confident and strong
+- **Milo Monkey** - Represents mid-range sounds, playful and curious
 - Characters provide personality and relatability for young learners
 
-### Game Mechanics
+### Game Categories (70+ Games)
+
+#### Pitch & Melody
 - **High or Low?** - Compare two pitches, identify which is higher/lower
-- **Rhythm Repeat** (planned) - Listen and reproduce rhythm patterns
-- **Melody Memory** (planned) - Match melodic sequences
-- **Sound Safari** (planned) - Explore instrument timbres
-- **Pitch Perfect** (planned) - Advanced pitch training
-- **Music Quiz** (planned) - Test musical knowledge
+- **Pitch Ladder Jump** - Identify pitch direction (up, down, same)
+- **Interval Trainer** - Recognize melodic and harmonic intervals
+- **Melody Master** - Transposition, inversion, retrograde patterns
+- **Scale Climber** - Identify ascending/descending scales
+- **Contour Master** - Analyze melodic shape and direction
+
+#### Rhythm & Tempo
+- **Rhythm Echo Challenge** - Listen and reproduce rhythm patterns
+- **Beat Keeper Challenge** - Tap along with steady beat
+- **Beat & Pulse Trainer** - 5 modes for comprehensive rhythm training
+- **Meter Master** - Identify time signatures (4/4, 3/4, 6/8)
+- **Rhythm Notation Master** - Read and write rhythmic notation
+- **Polyrhythm Master** - Layer multiple rhythms simultaneously
+
+#### Harmony & Theory
+- **Harmony Helper** - Identify consonance vs dissonance
+- **Chord Master** - Triads, seventh chords, extended chords
+- **Scale Builder** - Construct major, minor, and modal scales
+- **Key Signature Master** - Identify keys and accidentals
+- **Staff Wars** - Note reading game with scrolling staff
+
+#### Timbre & Dynamics
+- **Instrument Detective** - Identify instrument families by sound
+- **Loud or Quiet Safari** - Compare dynamic levels
+- **Tone Color Match** - Match melodies across different instruments
+- **Expression Master** - Phrasing and articulation
+
+#### Listening & Analysis
+- **Musical Form Explorer** - ABA, rondo, verse-chorus structures
+- **Musical Style Detective** - Period and genre identification
+- **Composer Detective** - Recognize composer styles
+- **Same or Different?** - Compare musical phrases
+
+#### Creative & Cross-Curricular
+- **Compose Your Song** - Arrange notes to create melodies
+- **Animal Orchestra Conductor** - Layer parts to build arrangements
+- **Musical Math** - Add and subtract note durations
+- **Music & Movement Studio** - Connect music to physical gesture
 
 ## Important Constraints
 
 ### Technical Constraints
 - **Browser compatibility** - Must support modern browsers (Chrome, Firefox, Safari, Edge)
 - **Web Audio API** - Required for sound generation (no fallback for older browsers)
-- **No external audio files** - All sounds generated programmatically via Web Audio API
+- **Philharmonia samples** - Real instrument audio files in `/client/public/audio/philharmonia/`
 - **Client-side rendering** - SPA architecture, no SSR in production
 - **Mobile responsive** - Must work on tablets and phones (touch-friendly)
 - **Performance** - Smooth animations at 60fps, audio latency < 100ms
@@ -257,11 +323,19 @@ Use [Semantic Versioning](https://semver.org/) for release tags:
 - **Lucide Icons** - Icon library for game UI
 - **Framer Motion** - Animation library for engaging interactions
 - **Tailwind CSS** - Utility-first styling framework
+- **VexFlow** - Music notation rendering for staff-based games
+
+### Audio Assets
+- **Philharmonia Orchestra** - Professional instrument samples
+  - Located in `client/public/audio/philharmonia/`
+  - Organized by instrument family and note
+  - Volume-normalized for consistent playback
 
 ### Development Services
-- **npm registry** - Package management
+- **Bun** - Package management and runtime
 - **Vite dev server** - Hot module replacement during development
 - **TypeScript compiler** - Type checking and compilation
+- **GitHub Actions** - CI/CD pipelines
 
 ### Future Dependencies (Planned)
 - **Authentication provider** (optional) - For user accounts and progress tracking
