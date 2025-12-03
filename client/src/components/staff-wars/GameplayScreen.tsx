@@ -60,11 +60,27 @@ export default function GameplayScreen({
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [correctAnswerDisplay, setCorrectAnswerDisplay] = useState<string | null>(null);
   const [isShowingCorrectAnswer, setIsShowingCorrectAnswer] = useState(false);
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const layout = useResponsiveLayout();
 
   // Initialize audio on first interaction
   useEffect(() => {
     audioService.initialize();
+  }, []);
+
+  // Clear any pending feedback timeout
+  const clearFeedbackTimeout = () => {
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      clearFeedbackTimeout();
+    };
   }, []);
 
   // Handle keyboard input
@@ -98,6 +114,9 @@ export default function GameplayScreen({
 
   const handleNoteAnswer = async (noteName: string) => {
     if (!currentNote || isPaused || isShowingCorrectAnswer) return;
+
+    // Clear any existing timeout
+    clearFeedbackTimeout();
 
     // Extract just the letter from the current note (e.g., "G4" -> "G")
     const currentNoteLetter = currentNote.charAt(0);
@@ -148,11 +167,12 @@ export default function GameplayScreen({
         setIsShowingCorrectAnswer(true);
         
         // Keep the note visible during feedback, then dismiss after delay
-        setTimeout(() => {
+        feedbackTimeoutRef.current = setTimeout(() => {
           setCorrectAnswerDisplay(null);
           setIsShowingCorrectAnswer(false);
           setCurrentNote(null);
           setFeedback(null);
+          feedbackTimeoutRef.current = null;
           
           if (newLives <= 0) {
             onGameOver(score);
@@ -174,6 +194,9 @@ export default function GameplayScreen({
     // Don't process timeout if we're already showing correct answer
     if (isShowingCorrectAnswer) return;
     
+    // Clear any existing timeout
+    clearFeedbackTimeout();
+    
     if (sfxEnabled) {
       await audioService.playErrorTone();
     }
@@ -188,11 +211,12 @@ export default function GameplayScreen({
       setIsShowingCorrectAnswer(true);
       setFeedback('incorrect');
       
-      setTimeout(() => {
+      feedbackTimeoutRef.current = setTimeout(() => {
         setCorrectAnswerDisplay(null);
         setIsShowingCorrectAnswer(false);
         setCurrentNote(null);
         setFeedback(null);
+        feedbackTimeoutRef.current = null;
         
         if (newLives <= 0) {
           onGameOver(score);
