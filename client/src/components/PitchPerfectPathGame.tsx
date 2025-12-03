@@ -46,7 +46,7 @@ export default function PitchPerfectPathGame() {
 
   // Use audio service and cleanup hooks
   const { audio, isReady, error, initialize } = useAudioService();
-  const { setTimeout: setGameTimeout } = useGameCleanup();
+  const { setTimeout: setGameTimeout, isMounted } = useGameCleanup();
 
   // Handle audio errors
   if (error) {
@@ -70,9 +70,11 @@ export default function PitchPerfectPathGame() {
     const noteDuration = 500; // 0.5 seconds in ms
 
     for (const freq of frequencies) {
+      if (!isMounted.current) return; // Exit early if unmounted
       await audio.playNoteWithDynamics(freq, noteDuration, gameState.volume / 100);
+      if (!isMounted.current) return; // Check again after note
     }
-  }, [gameState.volume, audio]);
+  }, [gameState.volume, audio, isMounted]);
 
   const generateNewSequence = useCallback(() => {
     const direction = ["ascending", "descending", "same"][Math.floor(Math.random() * 3)] as PitchDirection;
@@ -106,8 +108,11 @@ export default function PitchPerfectPathGame() {
 
     await playSequence(gameState.currentSequence.frequencies);
 
-    setGameState(prev => ({ ...prev, isPlaying: false }));
-  }, [gameState.currentSequence, gameState.isPlaying, gameState.feedback, playSequence]);
+    // Only update state if still mounted
+    if (isMounted.current) {
+      setGameState(prev => ({ ...prev, isPlaying: false }));
+    }
+  }, [gameState.currentSequence, gameState.isPlaying, gameState.feedback, playSequence, isMounted]);
 
   const handleAnswer = useCallback((selectedDirection: PitchDirection) => {
     if (!gameState.currentSequence || !gameState.hasPlayed || gameState.feedback) return;

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Play, HelpCircle, Loader2, Star, Sparkles, ChevronLeft } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import { LeoLion, MiloMonkey, BellaBird } from "@/components/characters";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 const CHARACTERS = [
   { Component: LeoLion, name: "Leo Lion", id: "leo" },
@@ -81,10 +82,12 @@ function generateRound(): Round {
   };
 }
 
-async function playMelodyAtTempo(melody: number[], tempo: number): Promise<void> {
+async function playMelodyAtTempo(melody: number[], tempo: number, isMounted: React.MutableRefObject<boolean>, setTimeout: <T = void>(callback: (value?: T) => void, delay: number) => NodeJS.Timeout): Promise<void> {
   for (const freq of melody) {
+    if (!isMounted.current) return; // Exit early if unmounted
     await audioService.playNote(freq, tempo * 0.8);
-    await new Promise(resolve => setTimeout(resolve, tempo * 200));
+    if (!isMounted.current) return; // Check again after note
+    await new Promise<void>(resolve => setTimeout(resolve, tempo * 200));
   }
 }
 
@@ -103,15 +106,8 @@ export default function FastOrSlowRaceGame() {
   const [playingCharacter, setPlayingCharacter] = useState<1 | 2 | null>(null);
   const [volume, setVolume] = useState(75);
 
-  const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-    };
-  }, []);
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, clearAll, isMounted } = useGameCleanup();
 
   // Update volume when changed
   useEffect(() => {
@@ -119,6 +115,9 @@ export default function FastOrSlowRaceGame() {
   }, [volume]);
 
   const handleReset = useCallback(() => {
+    // Clear all pending timeouts and stop audio
+    clearAll();
+    
     setGameState({
       currentRound: null,
       score: 0,
@@ -127,36 +126,32 @@ export default function FastOrSlowRaceGame() {
       feedback: null,
     });
     setGameStarted(false);
-    if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-  }, []);
+  }, [clearAll]);
 
   const playBothMelodies = useCallback(async (round: Round) => {
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
 
     setPlayingCharacter(1);
-    await playMelodyAtTempo(round.melody, round.tempo1);
+    await playMelodyAtTempo(round.melody, round.tempo1, isMounted, setTimeout);
     setPlayingCharacter(null);
 
+    // Check if still mounted before pause
+    if (!isMounted.current) return;
     await new Promise(resolve => setTimeout(resolve, 800));
 
+    // Check if still mounted before second melody
+    if (!isMounted.current) return;
     setPlayingCharacter(2);
-    await playMelodyAtTempo(round.melody, round.tempo2);
+    await playMelodyAtTempo(round.melody, round.tempo2, isMounted, setTimeout);
     setPlayingCharacter(null);
 
-    setGameState(prev => ({ ...prev, isPlaying: false }));
-  }, []);
+    // Only update state if still mounted
+    if (isMounted.current) {
+      setGameState(prev => ({ ...prev, isPlaying: false }));
+    }
+  }, [isMounted, setTimeout]);
 
   const startNewRound = useCallback(async () => {
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-
     const newRound = generateRound();
     setGameState(prev => ({
       ...prev,
@@ -165,7 +160,7 @@ export default function FastOrSlowRaceGame() {
     }));
 
     setTimeout(() => playBothMelodies(newRound), 500);
-  }, [playBothMelodies]);
+  }, [playBothMelodies, setTimeout]);
 
   const handleAnswer = useCallback((answer: 1 | 2) => {
     if (!gameState.currentRound || gameState.feedback || gameState.isPlaying) return;
@@ -185,14 +180,16 @@ export default function FastOrSlowRaceGame() {
       audioService.playErrorTone();
     }
 
-    nextRoundTimeoutRef.current = setTimeout(() => {
-      setIsLoadingNextRound(true);
-      loadingTimeoutRef.current = setTimeout(() => {
-        setIsLoadingNextRound(false);
-        startNewRound();
-        loadingTimeoutRef.current = null;
-      }, 500);
-      nextRoundTimeoutRef.current = null;
+    setTimeout(() => {
+      if (isMounted.current) {
+        setIsLoadingNextRound(true);
+        setTimeout(() => {
+          if (isMounted.current) {
+            setIsLoadingNextRound(false);
+            startNewRound();
+          }
+        }, 500);
+      }
     }, 2500);
   }, [gameState, startNewRound]);
 

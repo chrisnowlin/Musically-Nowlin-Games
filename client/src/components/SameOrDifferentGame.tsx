@@ -7,6 +7,7 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Music2, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, generateDecorativeOrbs } from "@/theme/playful";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 interface GameState {
   currentRound: SameOrDifferentRound | null;
@@ -35,19 +36,8 @@ export default function SameOrDifferentGame() {
   const [isLoadingNextRound, setIsLoadingNextRound] = useState(false);
   const [volume, setVolume] = useState<number>(30);
 
-  // Track timeout IDs for cleanup
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Cleanup all timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-      if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-      if (autoPlayTimeoutRef.current) clearTimeout(autoPlayTimeoutRef.current);
-    };
-  }, []);
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, clearAll, isMounted } = useGameCleanup();
 
   // Play phrases for the current round
   const playPhrases = useCallback(async (round: SameOrDifferentRound) => {
@@ -56,6 +46,7 @@ export default function SameOrDifferentGame() {
 
     try {
       // Play first phrase
+      if (!isMounted.current) return; // Exit early if unmounted
       await audioService.playPhrase(
         round.phrase1,
         round.phraseDurations1,
@@ -63,8 +54,14 @@ export default function SameOrDifferentGame() {
         0.05
       );
 
+      // Check if still mounted before pause
+      if (!isMounted.current) return;
+
       // Pause between phrases
       await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Check if still mounted before second phrase
+      if (!isMounted.current) return;
 
       // Play second phrase
       await audioService.playPhrase(
@@ -74,29 +71,21 @@ export default function SameOrDifferentGame() {
         0.05
       );
 
-      setGameState(prev => ({ ...prev, isPlaying: false }));
-      setCanAnswer(true);
+      // Only update state if still mounted
+      if (isMounted.current) {
+        setGameState(prev => ({ ...prev, isPlaying: false }));
+        setCanAnswer(true);
+      }
     } catch (error) {
       console.error('Error playing phrases:', error);
-      setGameState(prev => ({ ...prev, isPlaying: false }));
+      if (isMounted.current) {
+        setGameState(prev => ({ ...prev, isPlaying: false }));
+      }
     }
-  }, []);
+  }, [isMounted]);
 
   // Start a new round
   const startNewRound = useCallback(async () => {
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
-    if (autoPlayTimeoutRef.current) {
-      clearTimeout(autoPlayTimeoutRef.current);
-      autoPlayTimeoutRef.current = null;
-    }
-
     const newRound = generateSameOrDifferentRound();
     setGameState(prev => ({
       ...prev,
@@ -106,11 +95,10 @@ export default function SameOrDifferentGame() {
     setCanAnswer(false);
 
     // Auto-play phrases after a short delay
-    autoPlayTimeoutRef.current = setTimeout(() => {
+    setTimeout(() => {
       playPhrases(newRound);
-      autoPlayTimeoutRef.current = null;
     }, 500);
-  }, [playPhrases]);
+  }, [playPhrases, setTimeout]);
 
   // Handle answer selection
   const handleAnswerClick = useCallback((answer: "same" | "different") => {
@@ -136,33 +124,26 @@ export default function SameOrDifferentGame() {
       audioService.playErrorTone();
     }
 
-    // Clear existing timeouts
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
-
     // Show loading indicator
-    loadingTimeoutRef.current = setTimeout(() => {
-      setIsLoadingNextRound(true);
+    setTimeout(() => {
+      if (isMounted.current) {
+        setIsLoadingNextRound(true);
+      }
     }, 2000);
 
     // Auto-advance to next round
-    nextRoundTimeoutRef.current = setTimeout(() => {
-      startNewRound();
-      setIsLoadingNextRound(false);
+    setTimeout(() => {
+      if (isMounted.current) {
+        startNewRound();
+        setIsLoadingNextRound(false);
+      }
     }, 2500);
   }, [canAnswer, gameState.currentRound, gameState.feedback, startNewRound]);
 
   // Reset the game
   const resetGame = useCallback(() => {
-    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-    if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-    if (autoPlayTimeoutRef.current) clearTimeout(autoPlayTimeoutRef.current);
+    // Clear all pending timeouts and stop audio
+    clearAll();
 
     setGameState({
       currentRound: null,
@@ -174,7 +155,7 @@ export default function SameOrDifferentGame() {
     setCanAnswer(false);
     setGameStarted(false);
     setIsLoadingNextRound(false);
-  }, []);
+  }, [clearAll]);
 
   // Initialize and start the game
   const handleStartGame = useCallback(async () => {

@@ -5,6 +5,7 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, TrendingUp, TrendingDown, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 type ScaleType = "complete-ascending" | "complete-descending" | "incomplete-ascending" | "incomplete-descending";
 
@@ -53,6 +54,9 @@ export default function ScaleClimberGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, clearAll, isMounted } = useGameCleanup();
+
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
@@ -97,10 +101,12 @@ export default function ScaleClimberGame() {
     const noteDuration = 0.4;
 
     for (const noteIndex of scale.noteIndices) {
+      if (!isMounted.current) return; // Exit early if unmounted
       const note = SCALE_NOTES[noteIndex];
       await playNote(note.freq, noteDuration);
+      if (!isMounted.current) return; // Check again after note
     }
-  }, [playNote]);
+  }, [playNote, isMounted]);
 
   const generateNewScale = useCallback(() => {
     // Randomly choose: complete (70%) or incomplete (30%)
@@ -150,8 +156,11 @@ export default function ScaleClimberGame() {
 
     await playScale(gameState.currentScale);
 
-    setGameState(prev => ({ ...prev, isPlaying: false }));
-  }, [gameState.currentScale, gameState.isPlaying, gameState.feedback, playScale]);
+    // Only update state if still mounted
+    if (isMounted.current) {
+      setGameState(prev => ({ ...prev, isPlaying: false }));
+    }
+  }, [gameState.currentScale, gameState.isPlaying, gameState.feedback, playScale, isMounted]);
 
   const handleAnswer = useCallback((answeredComplete: boolean) => {
     if (!gameState.currentScale || !gameState.hasPlayed || gameState.feedback) return;
@@ -180,6 +189,22 @@ export default function ScaleClimberGame() {
     await audioService.initialize();
     setGameStarted(true);
   };
+
+  const resetGame = useCallback(() => {
+    // Clear all pending timeouts and stop audio
+    clearAll();
+    
+    setGameState({
+      score: 0,
+      totalQuestions: 0,
+      isPlaying: false,
+      feedback: null,
+      currentScale: null,
+      hasPlayed: false,
+      volume: 50,
+    });
+    setGameStarted(false);
+  }, [clearAll]);
 
   const decorativeOrbs = generateDecorativeOrbs();
 

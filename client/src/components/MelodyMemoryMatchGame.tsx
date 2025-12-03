@@ -5,6 +5,7 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Music, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 interface Card {
   id: number;
@@ -61,10 +62,12 @@ function createDeck(): Card[] {
   return cards;
 }
 
-async function playMelody(melody: number[]): Promise<void> {
+async function playMelody(melody: number[], isMounted: React.MutableRefObject<boolean>, setTimeout: <T = void>(callback: (value?: T) => void, delay: number) => NodeJS.Timeout): Promise<void> {
   for (const freq of melody) {
+    if (!isMounted.current) return; // Exit early if unmounted
     await audioService.playNote(freq, 0.3);
-    await new Promise(resolve => setTimeout(resolve, 100));
+    if (!isMounted.current) return; // Check again after note
+    await new Promise<void>(resolve => setTimeout(resolve, 100));
   }
 }
 
@@ -81,13 +84,8 @@ export default function MelodyMemoryMatchGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const [isCheckingMatch, setIsCheckingMatch] = useState(false);
   
-  const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (checkTimeoutRef.current) clearTimeout(checkTimeoutRef.current);
-    };
-  }, []);
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, clearAll, isMounted } = useGameCleanup();
 
   const handleCardClick = useCallback(async (cardId: number) => {
     if (gameState.isPlaying || isCheckingMatch) return;
@@ -108,7 +106,7 @@ export default function MelodyMemoryMatchGame() {
       isPlaying: true,
     }));
     
-    await playMelody(card.melody);
+    await playMelody(card.melody, isMounted, setTimeout);
     
     setGameState(prev => ({ ...prev, isPlaying: false }));
     
@@ -138,7 +136,7 @@ export default function MelodyMemoryMatchGame() {
         // No match - flip cards back after delay
         await audioService.playErrorTone();
         
-        checkTimeoutRef.current = setTimeout(() => {
+        setTimeout(() => {
           setGameState(prev => ({
             ...prev,
             cards: prev.cards.map(c => 
@@ -149,7 +147,6 @@ export default function MelodyMemoryMatchGame() {
             flippedCards: [],
           }));
           setIsCheckingMatch(false);
-          checkTimeoutRef.current = null;
         }, 1000);
       }
     }
@@ -161,6 +158,9 @@ export default function MelodyMemoryMatchGame() {
   };
 
   const handleNewGame = () => {
+    // Clear all pending timeouts and stop audio
+    clearAll();
+    
     setGameState({
       cards: createDeck(),
       flippedCards: [],

@@ -5,6 +5,7 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Music2, Loader2, Star, Sparkles, Drum, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 interface RhythmPattern {
   beats: number[]; // Timestamps in ms relative to start
@@ -90,17 +91,8 @@ export default function RhythmEchoChallengeGame() {
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(null);
   const [showVisualBeats, setShowVisualBeats] = useState<boolean[]>([]);
 
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const nextRoundTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const autoPlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
-      if (nextRoundTimeoutRef.current) clearTimeout(nextRoundTimeoutRef.current);
-      if (autoPlayTimeoutRef.current) clearTimeout(autoPlayTimeoutRef.current);
-    };
-  }, []);
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, clearAll, isMounted } = useGameCleanup();
 
   const playPattern = useCallback(async (pattern: RhythmPattern) => {
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
@@ -109,12 +101,17 @@ export default function RhythmEchoChallengeGame() {
     const startTime = Date.now();
     
     for (let i = 0; i < pattern.beats.length; i++) {
+      if (!isMounted.current) return; // Exit early if unmounted
+      
       const beatTime = pattern.beats[i];
       const delay = beatTime - (Date.now() - startTime);
       
       if (delay > 0) {
         await new Promise(resolve => setTimeout(resolve, delay));
       }
+      
+      // Check if still mounted before playing note
+      if (!isMounted.current) return;
       
       // Show visual feedback
       setShowVisualBeats(prev => {
@@ -125,35 +122,30 @@ export default function RhythmEchoChallengeGame() {
       
       await audioService.playNote(NOTE_FREQUENCY, NOTE_DURATION);
       
+      // Check if still mounted after note
+      if (!isMounted.current) return;
+      
       // Hide visual feedback after a short time
       setTimeout(() => {
-        setShowVisualBeats(prev => {
-          const newBeats = [...prev];
-          newBeats[i] = false;
-          return newBeats;
-        });
+        if (isMounted.current) {
+          setShowVisualBeats(prev => {
+            const newBeats = [...prev];
+            newBeats[i] = false;
+            return newBeats;
+          });
+        }
       }, 200);
     }
     
-    setGameState(prev => ({ ...prev, isPlaying: false, isRecording: true }));
-    setRecordingStartTime(Date.now());
-    setUserTaps([]);
-  }, []);
+    // Only update state if still mounted
+    if (isMounted.current) {
+      setGameState(prev => ({ ...prev, isPlaying: false, isRecording: true }));
+      setRecordingStartTime(Date.now());
+      setUserTaps([]);
+    }
+  }, [isMounted, setTimeout]);
 
   const startNewRound = useCallback(async () => {
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-    if (nextRoundTimeoutRef.current) {
-      clearTimeout(nextRoundTimeoutRef.current);
-      nextRoundTimeoutRef.current = null;
-    }
-    if (autoPlayTimeoutRef.current) {
-      clearTimeout(autoPlayTimeoutRef.current);
-      autoPlayTimeoutRef.current = null;
-    }
-
     const newRound: RhythmRound = {
       pattern: generateRhythmPattern(1),
       difficulty: 1,
@@ -168,11 +160,10 @@ export default function RhythmEchoChallengeGame() {
     setUserTaps([]);
     setRecordingStartTime(null);
     
-    autoPlayTimeoutRef.current = setTimeout(() => {
+    setTimeout(() => {
       playPattern(newRound.pattern);
-      autoPlayTimeoutRef.current = null;
     }, 500);
-  }, [playPattern]);
+  }, [playPattern, setTimeout]);
 
   const handleTap = useCallback(() => {
     if (!gameState.isRecording || !recordingStartTime || !gameState.currentRound) return;
@@ -206,14 +197,16 @@ export default function RhythmEchoChallengeGame() {
         audioService.playErrorTone();
       }
       
-      nextRoundTimeoutRef.current = setTimeout(() => {
-        setIsLoadingNextRound(true);
-        loadingTimeoutRef.current = setTimeout(() => {
-          setIsLoadingNextRound(false);
-          startNewRound();
-          loadingTimeoutRef.current = null;
-        }, 500);
-        nextRoundTimeoutRef.current = null;
+      setTimeout(() => {
+        if (isMounted.current) {
+          setIsLoadingNextRound(true);
+          setTimeout(() => {
+            if (isMounted.current) {
+              setIsLoadingNextRound(false);
+              startNewRound();
+            }
+          }, 500);
+        }
       }, 2000);
     }
   }, [gameState.isRecording, gameState.currentRound, recordingStartTime, userTaps, startNewRound]);
@@ -229,6 +222,25 @@ export default function RhythmEchoChallengeGame() {
       playPattern(gameState.currentRound.pattern);
     }
   };
+
+  const resetGame = useCallback(() => {
+    // Clear all pending timeouts and stop audio
+    clearAll();
+    
+    setGameState({
+      currentRound: null,
+      score: 0,
+      totalQuestions: 0,
+      isPlaying: false,
+      isRecording: false,
+      feedback: null,
+    });
+    setGameStarted(false);
+    setIsLoadingNextRound(false);
+    setUserTaps([]);
+    setRecordingStartTime(null);
+    setShowVisualBeats([]);
+  }, [clearAll]);
 
   const decorativeOrbs = generateDecorativeOrbs();
 

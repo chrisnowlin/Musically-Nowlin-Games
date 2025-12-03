@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Play, Volume2, CheckCircle, XCircle, Calculator, Triangle, GitBranch } from "lucide-react";
 import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
+import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 interface GameState {
   currentMode: "ratios-fractions" | "geometry-symmetry" | "sequences-patterns";
@@ -181,6 +182,9 @@ export const Cross001Game: React.FC = () => {
     { id: "sequences-patterns", name: "Sequences & Patterns", icon: <GitBranch size={20} />, color: "orange" },
   ];
 
+  // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
+  const { setTimeout, isMounted } = useGameCleanup();
+
   useEffect(() => {
     const initializeGame = async () => {
       await audioService.initialize();
@@ -208,19 +212,23 @@ export const Cross001Game: React.FC = () => {
     if (frequencies) {
       // Play frequency relationships
       for (const freq of frequencies) {
+        if (!isMounted.current) return; // Exit early if unmounted
         await audioService.playNote(freq, 0.5);
+        if (!isMounted.current) return; // Check again after note
       }
     } else if (rhythm) {
       // Play rhythm patterns
       for (const beat of rhythm) {
+        if (!isMounted.current) return; // Exit early if unmounted
         if (beat > 0) {
           await audioService.playNote(440, beat * 0.2);
         } else {
           await new Promise(resolve => setTimeout(resolve, 200));
         }
+        if (!isMounted.current) return; // Check again after beat
       }
     }
-  }, [gameState.currentQuestion]);
+  }, [gameState.currentQuestion, isMounted]);
 
   const handleAnswer = (answerIndex: number) => {
     if (!gameState.currentQuestion || gameState.selectedAnswer !== null) return;

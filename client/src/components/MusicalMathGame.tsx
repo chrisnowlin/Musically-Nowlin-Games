@@ -49,7 +49,7 @@ export default function MusicalMathGame() {
 
   // Use audio service and cleanup hooks
   const { audio, isReady, error, initialize } = useAudioService();
-  const { setTimeout: setGameTimeout } = useGameCleanup();
+  const { setTimeout: setGameTimeout, isMounted } = useGameCleanup();
 
   // Handle audio errors
   if (error) {
@@ -80,12 +80,15 @@ export default function MusicalMathGame() {
     if (gameState.isPlaying) return;
 
     for (let i = 0; i < count; i++) {
+      if (!isMounted.current) return; // Exit early if unmounted
       await playNote(duration);
+      if (!isMounted.current) return; // Check again after note
     }
 
     // Pause between groups
+    if (!isMounted.current) return; // Exit early if unmounted
     await new Promise(resolve => setGameTimeout(resolve, 400));
-  }, [playNote, gameState.isPlaying, setGameTimeout]);
+  }, [playNote, gameState.isPlaying, setGameTimeout, isMounted]);
 
   const playProblem = useCallback(async () => {
     if (!gameState.currentProblem || gameState.isPlaying) return;
@@ -98,14 +101,20 @@ export default function MusicalMathGame() {
       gameState.currentProblem.note1Duration
     );
 
+    // Check if still mounted before playing second group
+    if (!isMounted.current) return;
+
     // Play second group of notes
     await playNotesSequence(
       gameState.currentProblem.note2Count,
       gameState.currentProblem.note2Duration
     );
 
-    setGameState(prev => ({ ...prev, isPlaying: false }));
-  }, [gameState.currentProblem, gameState.isPlaying, playNotesSequence]);
+    // Only update state if still mounted
+    if (isMounted.current) {
+      setGameState(prev => ({ ...prev, isPlaying: false }));
+    }
+  }, [gameState.currentProblem, gameState.isPlaying, playNotesSequence, isMounted]);
 
   const generateNewProblem = useCallback(() => {
     // Generate simple addition problems: 2-4 notes + 2-4 notes
