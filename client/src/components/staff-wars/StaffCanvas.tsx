@@ -39,47 +39,69 @@ interface LaserBeam {
   duration: number;
 }
 
-function drawCorrectAnswerDisplay(ctx: CanvasRenderingContext2D, x: number, y: number, noteName: string, currentTime: number) {
+function drawCorrectAnswerDisplay(ctx: CanvasRenderingContext2D, spaceshipX: number, spaceshipY: number, noteName: string, currentTime: number) {
   ctx.save();
+  
+  // Fixed position above the spaceship - consistent location for student feedback
+  const displayX = spaceshipX;
+  const displayY = spaceshipY - 100; // Position well above the spaceship
   
   // Animated glow effect
   const pulse = (Math.sin(currentTime * 0.008) + 1) / 2;
-  const glowSize = 20 + pulse * 10;
+  const glowSize = 35 + pulse * 15;
   
   // Draw glowing background circle
-  const gradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize);
-  gradient.addColorStop(0, 'rgba(6, 182, 212, 0.8)'); // Cyan-500
-  gradient.addColorStop(0.5, 'rgba(6, 182, 212, 0.4)');
+  const gradient = ctx.createRadialGradient(displayX, displayY, 0, displayX, displayY, glowSize);
+  gradient.addColorStop(0, 'rgba(6, 182, 212, 0.9)'); // Cyan-500
+  gradient.addColorStop(0.5, 'rgba(6, 182, 212, 0.5)');
   gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
   
   ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+  ctx.arc(displayX, displayY, glowSize, 0, Math.PI * 2);
   ctx.fill();
   
   // Draw outer ring
   ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4;
   ctx.shadowColor = '#06b6d4';
-  ctx.shadowBlur = 15;
+  ctx.shadowBlur = 25;
   ctx.beginPath();
-  ctx.arc(x, y, 25, 0, Math.PI * 2);
+  ctx.arc(displayX, displayY, 40, 0, Math.PI * 2);
   ctx.stroke();
   ctx.shadowBlur = 0;
   
-  // Draw note name text
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 24px Arial';
+  // Draw "CORRECT ANSWER" label above
+  ctx.font = 'bold 14px Arial';
+  ctx.fillStyle = '#06b6d4';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.shadowColor = '#06b6d4';
   ctx.shadowBlur = 10;
-  ctx.fillText(noteName, x, y);
+  ctx.fillText('CORRECT ANSWER', displayX, displayY - 55);
   
-  // Draw "Correct!" label below
-  ctx.font = 'bold 14px Arial';
-  ctx.fillStyle = '#06b6d4';
-  ctx.fillText('Correct!', x, y + 35);
+  // Draw note name text (larger for visibility)
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 48px Arial';
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 20;
+  ctx.fillText(noteName, displayX, displayY);
+  
+  // Draw arrow pointing down toward spaceship
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.moveTo(displayX, displayY + 45);
+  ctx.lineTo(displayX - 10, displayY + 55);
+  ctx.lineTo(displayX - 4, displayY + 55);
+  ctx.lineTo(displayX - 4, displayY + 70);
+  ctx.lineTo(displayX + 4, displayY + 70);
+  ctx.lineTo(displayX + 4, displayY + 55);
+  ctx.lineTo(displayX + 10, displayY + 55);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.8)';
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 10;
+  ctx.fill();
   
   ctx.restore();
 }
@@ -850,12 +872,15 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
           drawExplosion(ctx, particlesRef.current);
         }
 
-        // Draw correct answer display if active
-        if (correctAnswerDisplay && lastNotePositionRef.current && staffData) {
+        // Draw correct answer display if active - positioned above spaceship for consistent feedback location
+        if (correctAnswerDisplay && staffData) {
+          const spaceshipX = canvas.offsetWidth / 2;
+          const distanceToBottom = canvas.offsetHeight - staffData.staffY;
+          const spaceshipY = staffData.staffY + (distanceToBottom * 0.6);
           drawCorrectAnswerDisplay(
             ctx, 
-            lastNotePositionRef.current.x, 
-            lastNotePositionRef.current.y, 
+            spaceshipX, 
+            spaceshipY, 
             correctAnswerDisplay, 
             currentTime
           );

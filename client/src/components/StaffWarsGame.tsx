@@ -56,7 +56,7 @@ const initialState: GameState = {
   level: 1,
   currentSpeed: 50,
   sfxEnabled: true,
-  showCorrectAnswer: true,
+  showCorrectAnswer: false, // Default to off for experienced players
   highScores: [],
 };
 
@@ -124,9 +124,9 @@ export default function StaffWarsGame() {
       audioService.setVolume(0);
     }
 
-    // Load show correct answer preference (default to true)
+    // Load show correct answer preference (default to false)
     const showCorrectPref = localStorage.getItem('staffWarsShowCorrectAnswer');
-    if (showCorrectPref === 'false') {
+    if (showCorrectPref === 'true') {
       dispatch({ type: 'TOGGLE_SHOW_CORRECT_ANSWER' });
     }
   }, []);

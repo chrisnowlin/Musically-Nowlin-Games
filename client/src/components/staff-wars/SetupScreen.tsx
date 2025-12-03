@@ -28,7 +28,7 @@ const RANGE_PRESETS: { label: string; subLabel: string; minNote: string; maxNote
 
 export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer, onToggleShowCorrectAnswer }: SetupScreenProps) {
   const [selectedClef, setSelectedClef] = useState<Clef>('treble');
-  const [selectedRange, setSelectedRange] = useState(1); // Index into RANGE_PRESETS
+  const [selectedRange, setSelectedRange] = useState(0); // Default to Beginner
   const layout = useResponsiveLayout();
 
   const handleStart = () => {
