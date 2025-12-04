@@ -7,11 +7,12 @@ import { X, RotateCcw, Trophy, Medal } from 'lucide-react';
 interface GameOverScreenProps {
   score: number;
   highScores: number[];
+  difficultyLabel?: string;
   onRestart: () => void;
   onQuit: () => void;
 }
 
-export default function GameOverScreen({ score, highScores, onRestart, onQuit }: GameOverScreenProps) {
+export default function GameOverScreen({ score, highScores, difficultyLabel, onRestart, onQuit }: GameOverScreenProps) {
   const isNewHighScore = highScores.length > 0 && score === highScores[0];
   const rank = highScores.indexOf(score) + 1;
   const layout = useResponsiveLayout();
@@ -61,6 +62,11 @@ export default function GameOverScreen({ score, highScores, onRestart, onQuit }:
               <p className="font-mono font-bold text-5xl text-white tracking-tighter">
                 {score}
               </p>
+              {difficultyLabel && (
+                <p className="text-slate-400 text-sm mt-2">
+                  Difficulty: <span className="text-white font-semibold">{difficultyLabel}</span>
+                </p>
+              )}
             </div>
 
             {/* Rank */}

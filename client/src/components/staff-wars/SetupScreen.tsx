@@ -142,6 +142,7 @@ export default function SetupScreen({ onStartGame, highScores, showCorrectAnswer
       minNote: preset.minNote,
       maxNote: preset.maxNote,
       noteFilter: preset.noteFilter,
+      difficultyLabel: preset.label,
     });
   };
 

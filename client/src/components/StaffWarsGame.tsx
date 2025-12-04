@@ -23,6 +23,7 @@ export interface GameConfig {
   minNote: string;
   maxNote: string;
   noteFilter?: NoteFilter;
+  difficultyLabel?: string;
 }
 
 export interface GameState {
@@ -264,6 +265,7 @@ export default function StaffWarsGame() {
         <GameOverScreen
           score={state.score}
           highScores={state.highScores}
+          difficultyLabel={state.config.difficultyLabel}
           onRestart={handlePlayAgain}
           onQuit={handleQuitToSetup}
         />
