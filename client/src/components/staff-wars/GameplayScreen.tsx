@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Menu } from 'lucide-react';
+import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Gauge } from 'lucide-react';
 import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE } from '../StaffWarsGame';
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/lib/audioService';
@@ -297,6 +297,18 @@ export default function GameplayScreen({
                 ))}
               </div>
             </div>
+
+            {/* Difficulty */}
+            {config.difficultyLabel && (
+              <div className="flex flex-col">
+                <div className="text-xs uppercase text-slate-400 font-bold tracking-wider flex items-center gap-1">
+                  <Gauge className="w-3 h-3 text-purple-400" /> Difficulty
+                </div>
+                <div className="text-sm font-semibold text-purple-300 mt-1.5 capitalize">
+                  {config.difficultyLabel}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Controls */}
