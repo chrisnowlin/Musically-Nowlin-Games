@@ -61,6 +61,9 @@ export default function GameplayScreen({
   const [correctAnswerDisplay, setCorrectAnswerDisplay] = useState<string | null>(null);
   const [isShowingCorrectAnswer, setIsShowingCorrectAnswer] = useState(false);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Synchronous ref to communicate feedback state to StaffCanvas
+  // This bypasses React's async state updates to prevent race conditions
+  const feedbackBlocksSpawningRef = useRef(false);
   const layout = useResponsiveLayout();
 
   // Initialize audio on first interaction
@@ -124,11 +127,13 @@ export default function GameplayScreen({
 
     if (isCorrect) {
       setFeedback('correct');
-      if (sfxEnabled) {
-        await audioService.playSuccessTone();
-      }
       const newScore = score + 1;
       onUpdateScore(newScore);
+      
+      // Play success sound (non-blocking)
+      if (sfxEnabled) {
+        audioService.playSuccessTone();
+      }
 
       // Restore a life every 30 correct answers (capped at MAX_LIVES)
       if (newScore > 0 && newScore % CORRECT_ANSWERS_FOR_EXTRA_LIFE === 0 && lives < MAX_LIVES) {
@@ -154,20 +159,21 @@ export default function GameplayScreen({
     } else {
       // Wrong answer
       setFeedback('incorrect');
-      if (sfxEnabled) {
-        await audioService.playErrorTone();
-      }
       
       const newLives = lives - 1;
       onUpdateLives(newLives);
 
       // Show correct answer if setting is enabled
       if (showCorrectAnswer) {
+        // Update ref SYNCHRONOUSLY to prevent race condition in spawn check
+        feedbackBlocksSpawningRef.current = true;
         setCorrectAnswerDisplay(currentNoteLetter);
         setIsShowingCorrectAnswer(true);
         
         // Keep the note visible during feedback, then dismiss after delay
         feedbackTimeoutRef.current = setTimeout(() => {
+          // Clear the synchronous ref FIRST
+          feedbackBlocksSpawningRef.current = false;
           setCorrectAnswerDisplay(null);
           setIsShowingCorrectAnswer(false);
           setCurrentNote(null);
@@ -187,6 +193,11 @@ export default function GameplayScreen({
           onGameOver(score);
         }
       }
+
+      // Play error sound AFTER setting state (non-blocking)
+      if (sfxEnabled) {
+        audioService.playErrorTone();
+      }
     }
   };
 
@@ -197,21 +208,32 @@ export default function GameplayScreen({
     // Clear any existing timeout
     clearFeedbackTimeout();
     
-    if (sfxEnabled) {
-      await audioService.playErrorTone();
-    }
-    
     const newLives = lives - 1;
     onUpdateLives(newLives);
 
-    // Show correct answer on timeout if setting is enabled
-    if (showCorrectAnswer && currentNote) {
-      const currentNoteLetter = currentNote.charAt(0);
+    // Determine if we should show correct answer (evaluate once to avoid re-check issues)
+    const shouldShowCorrectAnswer = showCorrectAnswer && !!currentNote;
+    const currentNoteLetter = currentNote ? currentNote.charAt(0) : '';
+    
+    // Play error sound (non-blocking)
+    if (sfxEnabled) {
+      audioService.playErrorTone();
+    }
+
+    if (shouldShowCorrectAnswer) {
+      // Update ref SYNCHRONOUSLY - this is read by the animation loop to prevent race conditions
+      feedbackBlocksSpawningRef.current = true;
+      
+      // Update React state
       setCorrectAnswerDisplay(currentNoteLetter);
       setIsShowingCorrectAnswer(true);
       setFeedback('incorrect');
       
+      // Clear the feedback display after delay
       feedbackTimeoutRef.current = setTimeout(() => {
+        // Clear the synchronous ref FIRST
+        feedbackBlocksSpawningRef.current = false;
+        // Then clear React state
         setCorrectAnswerDisplay(null);
         setIsShowingCorrectAnswer(false);
         setCurrentNote(null);
@@ -223,7 +245,10 @@ export default function GameplayScreen({
         }
       }, CORRECT_ANSWER_DISPLAY_DURATION);
     } else {
+      // No correct answer display - dismiss immediately
+      setFeedback('incorrect');
       setCurrentNote(null);
+      setTimeout(() => setFeedback(null), 300);
       
       if (newLives <= 0) {
         onGameOver(score);
@@ -345,6 +370,7 @@ export default function GameplayScreen({
             feedback={feedback}
             correctAnswerDisplay={correctAnswerDisplay}
             gameLoopRef={gameLoopRef}
+            feedbackBlocksSpawningRef={feedbackBlocksSpawningRef}
           />
         </div>
 

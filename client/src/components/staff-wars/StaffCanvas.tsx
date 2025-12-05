@@ -12,6 +12,8 @@ interface StaffCanvasProps {
   feedback: 'correct' | 'incorrect' | null;
   correctAnswerDisplay: string | null;
   gameLoopRef: React.MutableRefObject<number | null>;
+  // Ref for synchronous feedback state - bypasses React async updates
+  feedbackBlocksSpawningRef?: React.MutableRefObject<boolean>;
 }
 
 interface MovingNote {
@@ -583,6 +585,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
       feedback,
       correctAnswerDisplay,
       gameLoopRef,
+      feedbackBlocksSpawningRef,
     },
     ref
   ) => {
@@ -593,6 +596,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
       lastSpawnTime: 0,
       spawnInterval: 2000, // ms between note spawns
       lastFrameTime: 0,
+      lastTimeoutTime: 0, // Track when last timeout occurred to prevent immediate respawn
     });
     const staffDataRef = useRef<StaffData | null>(null);
     const particlesRef = useRef<Particle[]>([]);
@@ -604,6 +608,7 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
     const lastNotePositionRef = useRef<{ x: number; y: number } | null>(null);
     const onNoteSpawnedRef = useRef(onNoteSpawned);
     const onNoteTimeoutRef = useRef(onNoteTimeout);
+    const prevCurrentNoteRef = useRef<string | null>(currentNote);
 
     // Update callback refs when props change
     useEffect(() => {
@@ -682,23 +687,30 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
     };
 
 
-    // Clear the moving note when currentNote becomes null (note was answered)
-    // Clear immediately to allow new note spawning, but store position for feedback
+    // Clear the moving note when currentNote TRANSITIONS to null (note was answered or cleared)
+    // Also update lastTimeoutTime to prevent immediate respawn race condition
     useEffect(() => {
-      if (currentNote === null && movingNoteRef.current) {
+      // Only run cleanup when currentNote actually TRANSITIONS from a value to null
+      const didTransitionToNull = prevCurrentNoteRef.current !== null && currentNote === null;
+      
+      if (didTransitionToNull) {
         // Store the current position for feedback effects before clearing
-        if (staffDataRef.current && canvasRef.current) {
+        if (movingNoteRef.current && staffDataRef.current && canvasRef.current) {
           const noteX = movingNoteRef.current.x;
           const noteY = getNotePosition(staffDataRef.current, movingNoteRef.current.name);
           lastNotePositionRef.current = { x: noteX, y: noteY };
         }
         
-        // Clear the note immediately to allow spawning new notes
+        // Track when currentNote becomes null to prevent immediate respawn
+        gameStateRef.current.lastTimeoutTime = performance.now();
+        
+        // Clear the note
         movingNoteRef.current = null;
-        // Also clear the last note reference to allow the same note to spawn again
         lastNoteRef.current = null;
       }
-    }, [currentNote]);
+      
+      prevCurrentNoteRef.current = currentNote;
+    }, [currentNote, isPaused]);
 
     // Update feedback ref whenever feedback prop changes
     useEffect(() => {
@@ -839,11 +851,20 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
 
         if (!isPaused) {
           // Spawn new note if needed
-          if (
-            !movingNoteRef.current &&
-            currentTime - gameStateRef.current.lastSpawnTime >
-              gameStateRef.current.spawnInterval
-          ) {
+          // Check the synchronous ref for feedback state (bypasses React async issues)
+          const feedbackBlocksSpawning = feedbackBlocksSpawningRef?.current ?? false;
+          
+          // Add a cooldown after timeout/answer to allow React state to propagate
+          const timeSinceTimeout = currentTime - gameStateRef.current.lastTimeoutTime;
+          const timeoutCooldown = 200; // ms - short cooldown for state propagation
+          const timeSinceSpawn = currentTime - gameStateRef.current.lastSpawnTime;
+          
+          // Block spawning if: feedback is active (ref), cooldown not expired, or no time since last spawn
+          const shouldBlockSpawn = feedbackBlocksSpawning || 
+                                   timeSinceTimeout <= timeoutCooldown || 
+                                   timeSinceSpawn <= gameStateRef.current.spawnInterval;
+          
+          if (!movingNoteRef.current && !shouldBlockSpawn) {
             const newNote = generateNote();
             movingNoteRef.current = {
               name: newNote,
@@ -860,7 +881,9 @@ const StaffCanvas = forwardRef<HTMLCanvasElement, StaffCanvasProps>(
             const newX = movingNoteRef.current.x - pxPerMs * deltaTime;
 
             if (newX < 150) {
-              // Note reached clef - timeout
+              // Note reached danger zone - timeout
+              // Track timeout time to prevent immediate respawn (race condition fix)
+              gameStateRef.current.lastTimeoutTime = currentTime;
               movingNoteRef.current = null;
               onNoteTimeoutRef.current();
             } else {
