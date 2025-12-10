@@ -15,6 +15,7 @@ export type GameStatus = 'setup' | 'playing' | 'paused' | 'gameOver';
 // Game constants
 export const MAX_LIVES = 3;
 export const CORRECT_ANSWERS_FOR_EXTRA_LIFE = 30;
+export const MAX_PAUSES = 2;
 
 export type NoteFilter = 'all' | 'lines' | 'spaces';
 
@@ -36,6 +37,7 @@ export interface GameState {
   sfxEnabled: boolean;
   showCorrectAnswer: boolean;
   highScores: number[];
+  pausesRemaining: number;
 }
 
 type GameAction =
@@ -62,6 +64,7 @@ const initialState: GameState = {
   sfxEnabled: true,
   showCorrectAnswer: false, // Default to off for experienced players
   highScores: [],
+  pausesRemaining: MAX_PAUSES,
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -75,9 +78,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         lives: MAX_LIVES,
         level: 1,
         currentSpeed: 50,
+        pausesRemaining: MAX_PAUSES,
       };
     case 'PAUSE':
-      return { ...state, status: 'paused' };
+      // Only allow pause if pauses remain
+      if (state.pausesRemaining <= 0) return state;
+      return { ...state, status: 'paused', pausesRemaining: state.pausesRemaining - 1 };
     case 'RESUME':
       return { ...state, status: 'playing' };
     case 'UPDATE_SCORE':
@@ -97,7 +103,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'LOAD_HIGH_SCORES':
       return { ...state, highScores: action.scores };
     case 'RETURN_TO_SETUP':
-      return { ...state, status: 'setup', score: 0, lives: MAX_LIVES, level: 1, currentSpeed: 50 };
+      return { ...state, status: 'setup', score: 0, lives: MAX_LIVES, level: 1, currentSpeed: 50, pausesRemaining: MAX_PAUSES };
     default:
       return state;
   }
@@ -242,6 +248,7 @@ export default function StaffWarsGame() {
             sfxEnabled={state.sfxEnabled}
             showCorrectAnswer={state.showCorrectAnswer}
             isPaused={state.status === 'paused'}
+            canPause={state.pausesRemaining > 0}
             onPause={handlePause}
             onGameOver={handleGameOver}
             onUpdateScore={(score) => dispatch({ type: 'UPDATE_SCORE', score })}

@@ -15,6 +15,7 @@ interface GameplayScreenProps {
   sfxEnabled: boolean;
   showCorrectAnswer: boolean;
   isPaused: boolean;
+  canPause: boolean;
   onPause: () => void;
   onGameOver: (finalScore: number) => void;
   onUpdateScore: (score: number) => void;
@@ -46,6 +47,7 @@ export default function GameplayScreen({
   sfxEnabled,
   showCorrectAnswer,
   isPaused,
+  canPause,
   onPause,
   onGameOver,
   onUpdateScore,
@@ -94,7 +96,9 @@ export default function GameplayScreen({
       // Global shortcuts
       if (key === ' ' || e.code === 'Space') {
         e.preventDefault();
-        onPause();
+        if (canPause) {
+          onPause();
+        }
         return;
       }
 
@@ -113,7 +117,7 @@ export default function GameplayScreen({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentNote, isPaused, isShowingCorrectAnswer, onPause, onToggleSFX]);
+  }, [currentNote, isPaused, isShowingCorrectAnswer, canPause, onPause, onToggleSFX]);
 
   const handleNoteAnswer = async (noteName: string) => {
     if (!currentNote || isPaused || isShowingCorrectAnswer) return;
@@ -350,7 +354,8 @@ export default function GameplayScreen({
               onClick={onPause}
               variant="ghost"
               size="icon"
-              className="text-slate-400 hover:text-white hover:bg-slate-700/50"
+              disabled={!canPause}
+              className="text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Pause className="w-5 h-5" />
             </Button>
