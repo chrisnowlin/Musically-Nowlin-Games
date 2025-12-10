@@ -4,7 +4,7 @@ interface InstrumentIconProps {
   className?: string;
 }
 
-// PNG Image Icons (Keeping Violin and Tambourine)
+// PNG Image Icons (Keeping Violin, Tambourine, French Horn, Cowbell, Tuba, Castanets, Clarinet, Bassoon, Timpani, Woodblock, and Bass Drum)
 
 export const ViolinIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
@@ -21,6 +21,96 @@ export const TambourineIcon: React.FC<InstrumentIconProps> = ({ className }) => 
     <img 
       src={`${import.meta.env.BASE_URL}images/tambourine.png`}
       alt="Tambourine"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const FrenchHornIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/french-horn.png`}
+      alt="French Horn"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const CowbellIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/cowbell.png`}
+      alt="Cowbell"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const TubaIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/tuba.png`}
+      alt="Tuba"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const CastanetsIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/castanets.png`}
+      alt="Castanets"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const ClarinetIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/clarinet.png`}
+      alt="Clarinet"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const BassoonIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/bassoon.png`}
+      alt="Bassoon"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const TimpaniIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/timpani.png`}
+      alt="Timpani"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const WoodblockIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/woodblock.png`}
+      alt="Woodblock"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const BassDrumIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/bass-drum.png`}
+      alt="Bass Drum"
       style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
     />
   </div>
@@ -212,38 +302,6 @@ export const FluteIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   </svg>
 );
 
-export const ClarinetIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="blackWood" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#1a1a1a" />
-        <stop offset="40%" stopColor="#333" />
-        <stop offset="100%" stopColor="#000" />
-      </linearGradient>
-    </defs>
-    {/* Body */}
-    <rect x="46" y="5" width="8" height="75" fill="url(#blackWood)" stroke="#000" strokeWidth="0.5"/>
-    
-    {/* Bell */}
-    <path d="M46 80 L 40 95 L 60 95 L 54 80 Z" fill="url(#blackWood)" stroke="#000" strokeWidth="0.5"/>
-    
-    {/* Barrel/Mouthpiece */}
-    <rect x="45" y="10" width="10" height="2" fill="#C0C0C0"/> {/* Barrel ring */}
-    <path d="M46 5 L 47 1 L 53 1 L 54 5 Z" fill="#111"/> {/* Mouthpiece */}
-    
-    {/* Keys & Rods */}
-    <line x1="56" y1="15" x2="56" y2="70" stroke="#C0C0C0" strokeWidth="1"/>
-    {[20, 30, 40, 50, 60].map((cy, i) => (
-      <g key={i}>
-        <circle cx="50" cy={cy} r="2.5" fill="#E0E0E0" stroke="#555" strokeWidth="0.5"/>
-        <line x1="52.5" y1={cy} x2="56" y2={cy} stroke="#C0C0C0" strokeWidth="1"/>
-      </g>
-    ))}
-    {/* Side Keys */}
-    <rect x="54" y="25" width="4" height="2" fill="#E0E0E0" rx="1"/>
-    <rect x="54" y="45" width="4" height="2" fill="#E0E0E0" rx="1"/>
-  </svg>
-);
 
 export const OboeIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -274,35 +332,6 @@ export const OboeIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   </svg>
 );
 
-export const BassoonIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="bassoonWood" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#3E2723" />
-        <stop offset="50%" stopColor="#5D4037" />
-        <stop offset="100%" stopColor="#3E2723" />
-      </linearGradient>
-    </defs>
-    {/* Long Joint */}
-    <rect x="48" y="5" width="6" height="90" fill="url(#bassoonWood)" stroke="#2F1810" strokeWidth="0.5"/>
-    {/* Bell Top */}
-    <rect x="47" y="2" width="8" height="3" fill="#111"/> 
-    <rect x="47" y="5" width="8" height="15" fill="url(#bassoonWood)" stroke="#2F1810" strokeWidth="0.5"/>
-
-    {/* Wing Joint (thinner, alongside) */}
-    <rect x="42" y="25" width="6" height="70" fill="url(#bassoonWood)" stroke="#2F1810" strokeWidth="0.5"/>
-    
-    {/* Boot Joint (Bottom cap) */}
-    <path d="M42 90 L 42 95 Q 48 100 54 95 L 54 90 Z" fill="#C0C0C0"/>
-
-    {/* Bocal (Crook) */}
-    <path d="M45 35 Q 35 40 35 50" stroke="#C0C0C0" strokeWidth="1.5" fill="none"/>
-    <circle cx="35" cy="50" r="1" fill="#D2B48C"/> {/* Reed */}
-
-    {/* Rods/Keys */}
-    <line x1="50" y1="20" x2="50" y2="80" stroke="#C0C0C0" strokeWidth="0.5" strokeDasharray="2 2"/>
-  </svg>
-);
 
 export const SaxophoneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -370,37 +399,6 @@ export const TrumpetIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   </svg>
 );
 
-export const FrenchHornIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="frenchHornBrass" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#F0E68C" />
-        <stop offset="50%" stopColor="#DAA520" />
-        <stop offset="100%" stopColor="#B8860B" />
-      </linearGradient>
-    </defs>
-    {/* Complex Coil - Thickened */}
-    <circle cx="50" cy="50" r="25" stroke="url(#frenchHornBrass)" strokeWidth="12" fill="none"/>
-    <circle cx="50" cy="50" r="25" stroke="#B8860B" strokeWidth="0.5" fill="none"/> {/* Outline */}
-    
-    <circle cx="50" cy="50" r="16" stroke="url(#frenchHornBrass)" strokeWidth="8" fill="none"/>
-    
-    {/* Bell */}
-    <path d="M25 50 Q 15 50 5 30 L 25 10 Q 35 30 50 25" fill="url(#frenchHornBrass)" stroke="#B8860B" strokeWidth="0.5"/>
-    <ellipse cx="15" cy="20" rx="10" ry="15" transform="rotate(-45 15 20)" fill="#333" opacity="0.6"/>
-
-    {/* Valves/Levers */}
-    <rect x="45" y="45" width="10" height="10" fill="#C0C0C0"/>
-    <circle cx="47" cy="47" r="1" fill="#333"/>
-    <circle cx="50" cy="47" r="1" fill="#333"/>
-    <circle cx="53" cy="47" r="1" fill="#333"/>
-
-    {/* Mouthpiece pipe - Thickened */}
-    <path d="M75 50 L 85 60" stroke="#C0C0C0" strokeWidth="5" fill="none"/>
-    <path d="M85 60 L 90 65 L 88 67" fill="#C0C0C0"/>
-  </svg>
-);
-
 export const TromboneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -427,62 +425,7 @@ export const TromboneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   </svg>
 );
 
-export const TubaIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="tubaBrass" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#F0E68C" />
-        <stop offset="50%" stopColor="#DAA520" />
-        <stop offset="100%" stopColor="#B8860B" />
-      </linearGradient>
-    </defs>
-    {/* Large Body Coils - Massive Thicken */}
-    <rect x="25" y="30" width="50" height="60" rx="20" fill="none" stroke="url(#tubaBrass)" strokeWidth="14"/>
-    <rect x="25" y="30" width="50" height="60" rx="20" fill="none" stroke="#B8860B" strokeWidth="0.5"/>
-    
-    {/* Inner piping */}
-    <path d="M50 30 L 50 90" stroke="url(#tubaBrass)" strokeWidth="12"/>
-    
-    {/* Bell Up top */}
-    <path d="M35 30 Q 20 10 5 5 L 95 5 Q 80 10 65 30" fill="url(#tubaBrass)" stroke="#B8860B" strokeWidth="0.5"/>
-    <ellipse cx="50" cy="5" rx="45" ry="5" fill="#333" opacity="0.8"/>
 
-    {/* Valve Block */}
-    <rect x="40" y="55" width="20" height="15" fill="#E0E0E0" stroke="#999" strokeWidth="0.5"/>
-    <circle cx="45" cy="62" r="2" fill="#C0C0C0" stroke="#666"/>
-    <circle cx="50" cy="62" r="2" fill="#C0C0C0" stroke="#666"/>
-    <circle cx="55" cy="62" r="2" fill="#C0C0C0" stroke="#666"/>
-    
-    {/* Mouthpiece - Thickened */}
-    <path d="M65 40 L 80 40 L 85 38" stroke="#C0C0C0" strokeWidth="5" fill="none"/>
-  </svg>
-);
-
-export const TimpaniIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="copperBowl" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
-        <stop offset="0%" stopColor="#D2691E" />
-        <stop offset="100%" stopColor="#8B4513" />
-      </radialGradient>
-    </defs>
-    {/* Bowl */}
-    <path d="M15 35 Q 50 95 85 35" fill="url(#copperBowl)" stroke="#8B4513" strokeWidth="1"/>
-    
-    {/* Head */}
-    <ellipse cx="50" cy="35" rx="35" ry="10" fill="#FFF8DC" stroke="#C0C0C0" strokeWidth="2"/>
-    <ellipse cx="50" cy="35" rx="30" ry="8" fill="none" stroke="#E0E0E0" strokeWidth="1" opacity="0.5"/>
-
-    {/* Tuning Gauges/Struts */}
-    <line x1="20" y1="35" x2="30" y2="80" stroke="#C0C0C0" strokeWidth="1"/>
-    <line x1="80" y1="35" x2="70" y2="80" stroke="#C0C0C0" strokeWidth="1"/>
-    <line x1="50" y1="35" x2="50" y2="85" stroke="#C0C0C0" strokeWidth="1"/>
-
-    {/* Base/Pedal */}
-    <path d="M30 80 L 70 80 L 65 90 L 35 90 Z" fill="#333"/>
-    <rect x="45" y="90" width="10" height="5" fill="#111"/> {/* Pedal */}
-  </svg>
-);
 
 export const SnareDrumIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -510,25 +453,6 @@ export const SnareDrumIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   </svg>
 );
 
-export const BassDrumIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Large Shell (Side View) */}
-    <circle cx="50" cy="50" r="40" fill="#FFF8DC" stroke="#8B4513" strokeWidth="1"/>
-    <circle cx="50" cy="50" r="35" fill="none" stroke="#E0E0E0" strokeWidth="0.5" strokeDasharray="2 2"/> {/* Texture */}
-
-    {/* Hoops */}
-    <circle cx="50" cy="50" r="40" stroke="#8B4513" strokeWidth="4" fill="none"/>
-    
-    {/* Lugs */}
-    {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
-      <rect key={i} x="48" y="10" width="4" height="6" fill="#C0C0C0" transform={`rotate(${angle} 50 50)`} />
-    ))}
-
-    {/* Mallet */}
-    <line x1="85" y1="15" x2="65" y2="35" stroke="#DEB887" strokeWidth="4" strokeLinecap="round"/>
-    <circle cx="62" cy="38" r="8" fill="#F0F0F0" stroke="#999" strokeWidth="1"/>
-  </svg>
-);
 
 export const TriangleIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -547,79 +471,8 @@ export const TriangleIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   </svg>
 );
 
-export const CowbellIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="cowbellMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#C0C0C0" />
-        <stop offset="50%" stopColor="#E0E0E0" />
-        <stop offset="100%" stopColor="#A0A0A0" />
-      </linearGradient>
-    </defs>
-    {/* Body */}
-    <path d="M30 25 L 20 75 L 45 90 L 55 90 L 80 75 L 70 25 Z" fill="url(#cowbellMetal)" stroke="#666" strokeWidth="1"/>
-    
-    {/* Top opening */}
-    <ellipse cx="50" cy="25" rx="20" ry="5" fill="#333"/>
-    
-    {/* Handle */}
-    <path d="M50 15 L 50 5" stroke="#666" strokeWidth="3"/>
-    <circle cx="50" cy="5" r="3" fill="#666"/>
 
-    {/* Stick */}
-    <line x1="75" y1="35" x2="55" y2="55" stroke="#DEB887" strokeWidth="4" strokeLinecap="round"/>
-  </svg>
-);
 
-export const WoodblockIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="woodblockWood" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#8B4513" />
-        <stop offset="50%" stopColor="#CD853F" />
-        <stop offset="100%" stopColor="#8B4513" />
-      </linearGradient>
-    </defs>
-    {/* Block body */}
-    <rect x="20" y="35" width="60" height="30" rx="3" fill="url(#woodblockWood)" stroke="#5D4037" strokeWidth="1"/>
-    
-    {/* Slot/Opening */}
-    <rect x="30" y="45" width="40" height="10" fill="#2F1810" rx="2"/>
-    
-    {/* Wood grain lines */}
-    <line x1="25" y1="40" x2="75" y2="40" stroke="#5D4037" strokeWidth="0.5" opacity="0.5"/>
-    <line x1="25" y1="60" x2="75" y2="60" stroke="#5D4037" strokeWidth="0.5" opacity="0.5"/>
-
-    {/* Mallet */}
-    <line x1="70" y1="20" x2="50" y2="40" stroke="#DEB887" strokeWidth="3" strokeLinecap="round"/>
-    <circle cx="50" cy="40" r="4" fill="#8B4513"/>
-  </svg>
-);
-
-export const CastanetsIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="castanetWood" cx="50%" cy="30%" r="70%">
-        <stop offset="0%" stopColor="#8B4513" />
-        <stop offset="100%" stopColor="#3E2723" />
-      </radialGradient>
-    </defs>
-    {/* Upper castanet */}
-    <ellipse cx="50" cy="35" rx="25" ry="15" fill="url(#castanetWood)" stroke="#2F1810" strokeWidth="1"/>
-    <ellipse cx="50" cy="35" rx="15" ry="8" fill="#1a1a1a" opacity="0.3"/>
-    
-    {/* Lower castanet */}
-    <ellipse cx="50" cy="65" rx="25" ry="15" fill="url(#castanetWood)" stroke="#2F1810" strokeWidth="1"/>
-    <ellipse cx="50" cy="65" rx="15" ry="8" fill="#1a1a1a" opacity="0.3"/>
-    
-    {/* String/Cord */}
-    <path d="M35 35 Q 30 50 35 65" stroke="#333" strokeWidth="2" fill="none"/>
-    <path d="M65 35 Q 70 50 65 65" stroke="#333" strokeWidth="2" fill="none"/>
-    <circle cx="50" cy="15" r="3" fill="#333"/>
-    <line x1="35" y1="35" x2="50" y2="15" stroke="#333" strokeWidth="1"/>
-    <line x1="65" y1="35" x2="50" y2="15" stroke="#333" strokeWidth="1"/>
-  </svg>
-);
 
 export const SleighBellsIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
