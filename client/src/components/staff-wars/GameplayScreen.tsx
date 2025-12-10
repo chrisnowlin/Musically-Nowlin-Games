@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Gauge } from 'lucide-react';
 import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE } from '../StaffWarsGame';
@@ -37,6 +37,48 @@ const calculateSpeed = (level: number): number => {
 
 // Duration to show correct answer feedback (in ms)
 const CORRECT_ANSWER_DISPLAY_DURATION = 1500;
+const SPAWN_DELAY = 300; // Delay before spawning next note
+const DANGER_ZONE_X = 150; // X position where note times out
+
+// Clef-specific line and space notes for filtering
+const CLEF_LINE_NOTES: Record<string, string[]> = {
+  treble: ['E4', 'G4', 'B4', 'D5', 'F5'],
+  bass: ['G2', 'B2', 'D3', 'F3', 'A3'],
+  alto: ['F3', 'A3', 'C4', 'E4', 'G4'],
+  grand: ['E4', 'G4', 'B4', 'D5', 'F5'],
+};
+
+const CLEF_SPACE_NOTES: Record<string, string[]> = {
+  treble: ['F4', 'A4', 'C5', 'E5'],
+  bass: ['A2', 'C3', 'E3', 'G3'],
+  alto: ['G3', 'B3', 'D4', 'F4'],
+  grand: ['F4', 'A4', 'C5', 'E5'],
+};
+
+// State machine phases - explicit phases prevent invalid states
+export type NotePhase =
+  | 'awaiting_spawn'         // No note on screen, waiting to spawn
+  | 'note_active'            // Note moving, player can answer
+  | 'showing_correct_answer'; // 1.5s display phase (wrong answer or timeout)
+
+// Centralized note state - single source of truth
+export interface NoteState {
+  phase: NotePhase;
+  note: string | null;              // e.g., "G4", "C5"
+  noteX: number;                    // Current X position in pixels
+  spawnTime: number;                // When the note was spawned
+  feedback: 'correct' | 'incorrect' | null;
+  correctAnswerToShow: string | null; // Letter to highlight (e.g., "G")
+}
+
+const initialNoteState: NoteState = {
+  phase: 'awaiting_spawn',
+  note: null,
+  noteX: 0,
+  spawnTime: 0,
+  feedback: null,
+  correctAnswerToShow: null,
+};
 
 export default function GameplayScreen({
   config,
@@ -57,36 +99,342 @@ export default function GameplayScreen({
   onToggleSFX,
   gameLoopRef,
 }: GameplayScreenProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [currentNote, setCurrentNote] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
-  const [correctAnswerDisplay, setCorrectAnswerDisplay] = useState<string | null>(null);
-  const [isShowingCorrectAnswer, setIsShowingCorrectAnswer] = useState(false);
-  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Synchronous ref to communicate feedback state to StaffCanvas
-  // This bypasses React's async state updates to prevent race conditions
-  const feedbackBlocksSpawningRef = useRef(false);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [noteState, setNoteState] = useState<NoteState>(initialNoteState);
+  const [canvasWidth, setCanvasWidth] = useState(800);
+  const lastNoteRef = useRef<string | null>(null);
+  const animationRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+  const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Synchronous flag to prevent animation loop from processing during answer handling
+  const processingAnswerRef = useRef(false);
   const layout = useResponsiveLayout();
+
+  // Track canvas width for spawn position
+  useEffect(() => {
+    const updateWidth = () => {
+      if (canvasContainerRef.current) {
+        setCanvasWidth(canvasContainerRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   // Initialize audio on first interaction
   useEffect(() => {
     audioService.initialize();
   }, []);
 
-  // Clear any pending feedback timeout
-  const clearFeedbackTimeout = () => {
-    if (feedbackTimeoutRef.current) {
-      clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = null;
-    }
-  };
+  // Generate note range based on config
+  const getNoteRange = useCallback((): string[] => {
+    const noteNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const allNotes: string[] = [];
 
-  // Cleanup timeout on unmount
+    const minNoteName = config.minNote.charAt(0);
+    const minOctave = parseInt(config.minNote.charAt(1));
+    const maxNoteName = config.maxNote.charAt(0);
+    const maxOctave = parseInt(config.maxNote.charAt(1));
+
+    for (let octave = minOctave; octave <= maxOctave; octave++) {
+      for (const noteName of noteNames) {
+        const note = `${noteName}${octave}`;
+        const noteIndex = noteNames.indexOf(noteName);
+        const minIndex = noteNames.indexOf(minNoteName);
+        const maxIndex = noteNames.indexOf(maxNoteName);
+
+        if (octave === minOctave && noteIndex < minIndex) continue;
+        if (octave === maxOctave && noteIndex > maxIndex) continue;
+
+        allNotes.push(note);
+      }
+    }
+
+    if (config.noteFilter === 'lines') {
+      const lineNotes = CLEF_LINE_NOTES[config.clef] || CLEF_LINE_NOTES.treble;
+      return lineNotes.filter(note => allNotes.includes(note));
+    } else if (config.noteFilter === 'spaces') {
+      const spaceNotes = CLEF_SPACE_NOTES[config.clef] || CLEF_SPACE_NOTES.treble;
+      return spaceNotes.filter(note => allNotes.includes(note));
+    }
+
+    return allNotes;
+  }, [config.minNote, config.maxNote, config.noteFilter, config.clef]);
+
+  // Generate a new random note (avoiding duplicates)
+  const generateNote = useCallback((): string => {
+    const range = getNoteRange();
+    let note: string;
+    let attempts = 0;
+    do {
+      note = range[Math.floor(Math.random() * range.length)];
+      attempts++;
+    } while (note === lastNoteRef.current && attempts < 10);
+    lastNoteRef.current = note;
+    return note;
+  }, [getNoteRange]);
+
+  // Spawn a new note - transition from awaiting_spawn to note_active
+  const spawnNote = useCallback(() => {
+    const newNote = generateNote();
+    setNoteState({
+      phase: 'note_active',
+      note: newNote,
+      noteX: canvasWidth, // Start from right edge
+      spawnTime: performance.now(),
+      feedback: null,
+      correctAnswerToShow: null,
+    });
+  }, [generateNote, canvasWidth]);
+
+  // Handle spawn timing - only spawn when in awaiting_spawn phase
+  useEffect(() => {
+    if (noteState.phase === 'awaiting_spawn' && !isPaused) {
+      spawnTimerRef.current = setTimeout(spawnNote, SPAWN_DELAY);
+      return () => {
+        if (spawnTimerRef.current) {
+          clearTimeout(spawnTimerRef.current);
+        }
+      };
+    }
+  }, [noteState.phase, isPaused, spawnNote]);
+
+  // Handle showing_correct_answer timeout
+  useEffect(() => {
+    if (noteState.phase === 'showing_correct_answer') {
+      feedbackTimerRef.current = setTimeout(() => {
+        setNoteState({
+          phase: 'awaiting_spawn',
+          note: null,
+          noteX: 0,
+          spawnTime: 0,
+          feedback: null,
+          correctAnswerToShow: null,
+        });
+
+        // Check for game over after display completes
+        if (lives <= 0) {
+          onGameOver(score);
+        }
+      }, CORRECT_ANSWER_DISPLAY_DURATION);
+
+      return () => {
+        if (feedbackTimerRef.current) {
+          clearTimeout(feedbackTimerRef.current);
+        }
+      };
+    }
+  }, [noteState.phase, lives, score, onGameOver]);
+
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
-      clearFeedbackTimeout();
+      if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current);
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, []);
+
+  // Ref to track pending timeout (for deferred side effects)
+  const pendingTimeoutRef = useRef<{ noteLetter: string; newLives: number } | null>(null);
+
+  // Animation loop - updates note position
+  useEffect(() => {
+    if (isPaused) {
+      lastTimeRef.current = 0;
+      return;
+    }
+
+    const animate = (currentTime: number) => {
+      if (!lastTimeRef.current) {
+        lastTimeRef.current = currentTime;
+      }
+      const deltaTime = currentTime - lastTimeRef.current;
+      lastTimeRef.current = currentTime;
+
+      setNoteState(prev => {
+        // Only update position in note_active phase
+        if (prev.phase !== 'note_active' || !prev.note) {
+          return prev;
+        }
+
+        const pxPerMs = currentSpeed / 1000;
+        const newX = prev.noteX - pxPerMs * deltaTime;
+
+        // Check if note reached danger zone (timeout)
+        // Skip if an answer is currently being processed (prevents double life loss)
+        if (newX < DANGER_ZONE_X && !processingAnswerRef.current) {
+          // Store timeout info for deferred side effects
+          pendingTimeoutRef.current = {
+            noteLetter: prev.note.charAt(0),
+            newLives: lives - 1,
+          };
+
+          // Transition to showing_correct_answer or awaiting_spawn
+          if (showCorrectAnswer) {
+            return {
+              phase: 'showing_correct_answer',
+              note: prev.note,
+              noteX: DANGER_ZONE_X,
+              spawnTime: prev.spawnTime,
+              feedback: 'incorrect',
+              correctAnswerToShow: prev.note.charAt(0),
+            };
+          } else {
+            return {
+              phase: 'awaiting_spawn',
+              note: null,
+              noteX: 0,
+              spawnTime: 0,
+              feedback: 'incorrect',
+              correctAnswerToShow: null,
+            };
+          }
+        }
+
+        return { ...prev, noteX: newX };
+      });
+
+      // Handle deferred timeout side effects
+      if (pendingTimeoutRef.current) {
+        const { newLives } = pendingTimeoutRef.current;
+        pendingTimeoutRef.current = null;
+
+        // Play error sound
+        if (sfxEnabled) {
+          audioService.playErrorTone();
+        }
+
+        // Defer parent state updates
+        setTimeout(() => {
+          onUpdateLives(newLives);
+          if (newLives <= 0 && !showCorrectAnswer) {
+            onGameOver(score);
+          }
+        }, 0);
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      lastTimeRef.current = 0;
+    };
+  }, [isPaused, currentSpeed, sfxEnabled, showCorrectAnswer, lives, score, onUpdateLives, onGameOver]);
+
+  // Ref to access current noteState synchronously (avoids stale closure issues)
+  const noteStateRef = useRef(noteState);
+  useEffect(() => {
+    noteStateRef.current = noteState;
+  }, [noteState]);
+
+  // Handle note answer - synchronous state transition
+  const handleNoteAnswer = useCallback((noteName: string) => {
+    const currentState = noteStateRef.current;
+
+    // Guard: Only process answers in note_active phase
+    if (currentState.phase !== 'note_active' || !currentState.note) {
+      return;
+    }
+
+    // Set flag to prevent animation loop from processing timeout during answer handling
+    processingAnswerRef.current = true;
+
+    const currentNoteLetter = currentState.note.charAt(0);
+    const isCorrect = noteName === currentNoteLetter;
+
+    if (isCorrect) {
+      // Play success sound
+      if (sfxEnabled) {
+        audioService.playSuccessTone();
+      }
+
+      // Calculate new values
+      const newScore = score + 1;
+      const newLevel = Math.floor(newScore / 10) + 1;
+      const shouldLevelUp = newLevel !== level;
+      const shouldRestoreLife = newScore > 0 && newScore % CORRECT_ANSWERS_FOR_EXTRA_LIFE === 0 && lives < MAX_LIVES;
+
+      // Update note state first
+      setNoteState({
+        phase: 'awaiting_spawn',
+        note: null,
+        noteX: currentState.noteX,
+        spawnTime: 0,
+        feedback: 'correct',
+        correctAnswerToShow: null,
+      });
+
+      // Then update parent state (deferred to avoid render-time updates)
+      setTimeout(() => {
+        onUpdateScore(newScore);
+
+        if (shouldRestoreLife) {
+          onUpdateLives(lives + 1);
+        }
+
+        if (shouldLevelUp) {
+          onUpdateLevel(newLevel);
+          onUpdateSpeed(calculateSpeed(newLevel));
+          if (sfxEnabled) {
+            audioService.playLevelUpSound();
+          }
+        }
+
+        // Clear flag after state updates are committed
+        processingAnswerRef.current = false;
+      }, 0);
+    } else {
+      // Wrong answer
+      if (sfxEnabled) {
+        audioService.playErrorTone();
+      }
+
+      const newLives = lives - 1;
+
+      if (showCorrectAnswer) {
+        // Update note state to showing_correct_answer phase
+        setNoteState({
+          phase: 'showing_correct_answer',
+          note: currentState.note,
+          noteX: currentState.noteX,
+          spawnTime: currentState.spawnTime,
+          feedback: 'incorrect',
+          correctAnswerToShow: currentNoteLetter,
+        });
+      } else {
+        // Immediate transition
+        setNoteState({
+          phase: 'awaiting_spawn',
+          note: null,
+          noteX: 0,
+          spawnTime: 0,
+          feedback: 'incorrect',
+          correctAnswerToShow: null,
+        });
+      }
+
+      // Update lives (deferred)
+      setTimeout(() => {
+        onUpdateLives(newLives);
+
+        if (newLives <= 0 && !showCorrectAnswer) {
+          onGameOver(score);
+        }
+
+        // Clear flag after state updates are committed
+        processingAnswerRef.current = false;
+      }, 0);
+    }
+  }, [score, lives, level, sfxEnabled, showCorrectAnswer, onUpdateScore, onUpdateLives, onUpdateLevel, onUpdateSpeed, onGameOver]);
 
   // Handle keyboard input
   useEffect(() => {
@@ -108,8 +456,8 @@ export default function GameplayScreen({
         return;
       }
 
-      // Note input (only when not paused and not showing correct answer)
-      if (!isPaused && !isShowingCorrectAnswer && NOTE_NAMES.includes(key)) {
+      // Note input (only when not paused and note is active)
+      if (!isPaused && noteState.phase === 'note_active' && NOTE_NAMES.includes(key)) {
         e.preventDefault();
         handleNoteAnswer(key);
       }
@@ -117,153 +465,21 @@ export default function GameplayScreen({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentNote, isPaused, isShowingCorrectAnswer, canPause, onPause, onToggleSFX]);
+  }, [isPaused, noteState.phase, canPause, onPause, onToggleSFX, handleNoteAnswer]);
 
-  const handleNoteAnswer = async (noteName: string) => {
-    if (!currentNote || isPaused || isShowingCorrectAnswer) return;
-
-    // Clear any existing timeout
-    clearFeedbackTimeout();
-
-    // Extract just the letter from the current note (e.g., "G4" -> "G")
-    const currentNoteLetter = currentNote.charAt(0);
-    const isCorrect = noteName === currentNoteLetter;
-
-    if (isCorrect) {
-      setFeedback('correct');
-      const newScore = score + 1;
-      onUpdateScore(newScore);
-      
-      // Play success sound (non-blocking)
-      if (sfxEnabled) {
-        audioService.playSuccessTone();
-      }
-
-      // Restore a life every 30 correct answers (capped at MAX_LIVES)
-      if (newScore > 0 && newScore % CORRECT_ANSWERS_FOR_EXTRA_LIFE === 0 && lives < MAX_LIVES) {
-        onUpdateLives(lives + 1);
-      }
-
-      // Calculate new level (every 10 correct answers)
-      const newLevel = Math.floor(newScore / 10) + 1;
-
-      if (newLevel !== level) {
-        onUpdateLevel(newLevel);
-        const newSpeed = calculateSpeed(newLevel);
-        onUpdateSpeed(newSpeed);
-        
-        // Play level-up sound effect
-        if (sfxEnabled) {
-          audioService.playLevelUpSound();
-        }
-      }
-
-      setCurrentNote(null);
-      setTimeout(() => setFeedback(null), 300);
-    } else {
-      // Wrong answer
-      setFeedback('incorrect');
-      
-      const newLives = lives - 1;
-      onUpdateLives(newLives);
-
-      // Show correct answer if setting is enabled
-      if (showCorrectAnswer) {
-        // Update ref SYNCHRONOUSLY to prevent race condition in spawn check
-        feedbackBlocksSpawningRef.current = true;
-        setCorrectAnswerDisplay(currentNoteLetter);
-        setIsShowingCorrectAnswer(true);
-        
-        // Keep the note visible during feedback, then dismiss after delay
-        feedbackTimeoutRef.current = setTimeout(() => {
-          // Clear the synchronous ref FIRST
-          feedbackBlocksSpawningRef.current = false;
-          setCorrectAnswerDisplay(null);
-          setIsShowingCorrectAnswer(false);
-          setCurrentNote(null);
-          setFeedback(null);
-          feedbackTimeoutRef.current = null;
-          
-          if (newLives <= 0) {
-            onGameOver(score);
-          }
-        }, CORRECT_ANSWER_DISPLAY_DURATION);
-      } else {
-        // No correct answer display - dismiss immediately
-        setCurrentNote(null);
-        setTimeout(() => setFeedback(null), 300);
-        
-        if (newLives <= 0) {
-          onGameOver(score);
-        }
-      }
-
-      // Play error sound AFTER setting state (non-blocking)
-      if (sfxEnabled) {
-        audioService.playErrorTone();
-      }
+  // Clear feedback after a short delay when transitioning to awaiting_spawn
+  useEffect(() => {
+    if (noteState.phase === 'awaiting_spawn' && noteState.feedback) {
+      const timer = setTimeout(() => {
+        setNoteState(prev => ({ ...prev, feedback: null }));
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [noteState.phase, noteState.feedback]);
 
-  const handleNoteTimeout = async () => {
-    // Don't process timeout if we're already showing correct answer
-    if (isShowingCorrectAnswer) return;
-    
-    // Clear any existing timeout
-    clearFeedbackTimeout();
-    
-    const newLives = lives - 1;
-    onUpdateLives(newLives);
-
-    // Determine if we should show correct answer (evaluate once to avoid re-check issues)
-    const shouldShowCorrectAnswer = showCorrectAnswer && !!currentNote;
-    const currentNoteLetter = currentNote ? currentNote.charAt(0) : '';
-    
-    // Play error sound (non-blocking)
-    if (sfxEnabled) {
-      audioService.playErrorTone();
-    }
-
-    if (shouldShowCorrectAnswer) {
-      // Update ref SYNCHRONOUSLY - this is read by the animation loop to prevent race conditions
-      feedbackBlocksSpawningRef.current = true;
-      
-      // Update React state
-      setCorrectAnswerDisplay(currentNoteLetter);
-      setIsShowingCorrectAnswer(true);
-      setFeedback('incorrect');
-      
-      // Clear the feedback display after delay
-      feedbackTimeoutRef.current = setTimeout(() => {
-        // Clear the synchronous ref FIRST
-        feedbackBlocksSpawningRef.current = false;
-        // Then clear React state
-        setCorrectAnswerDisplay(null);
-        setIsShowingCorrectAnswer(false);
-        setCurrentNote(null);
-        setFeedback(null);
-        feedbackTimeoutRef.current = null;
-        
-        if (newLives <= 0) {
-          onGameOver(score);
-        }
-      }, CORRECT_ANSWER_DISPLAY_DURATION);
-    } else {
-      // No correct answer display - dismiss immediately
-      setFeedback('incorrect');
-      setCurrentNote(null);
-      setTimeout(() => setFeedback(null), 300);
-      
-      if (newLives <= 0) {
-        onGameOver(score);
-      }
-    }
-  };
-
-  const handleLevelUp = () => {
-    // Level-up visual feedback is handled in StaffCanvas
-    // This callback can be used for additional effects if needed
-  };
+  // Derived state for UI
+  const canAnswer = noteState.phase === 'note_active';
+  const isShowingCorrectAnswer = noteState.phase === 'showing_correct_answer';
 
   return (
     <div className="w-full h-[100dvh] overflow-hidden flex flex-col bg-gradient-to-b from-slate-900 to-black relative">
@@ -303,7 +519,7 @@ export default function GameplayScreen({
                 <span className="text-slate-500">{score % 10}/10</span>
               </div>
               <div className="h-2 bg-slate-700/50 rounded-full mt-1.5 overflow-hidden border border-slate-600/30">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500 ease-out"
                   style={{ width: `${((score % 10) / 10) * 100}%` }}
                 />
@@ -363,19 +579,15 @@ export default function GameplayScreen({
         </div>
 
         {/* Game Canvas */}
-        <div className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 relative overflow-hidden shadow-inner shadow-black/50">
+        <div
+          ref={canvasContainerRef}
+          className="flex-1 rounded-xl border border-slate-800 bg-slate-900/50 relative overflow-hidden shadow-inner shadow-black/50"
+        >
           <StaffCanvas
-            ref={canvasRef}
             config={config}
-            currentNote={currentNote}
-            onNoteSpawned={setCurrentNote}
-            onNoteTimeout={handleNoteTimeout}
-            speed={currentSpeed}
+            noteState={noteState}
             isPaused={isPaused || isShowingCorrectAnswer}
-            feedback={feedback}
-            correctAnswerDisplay={correctAnswerDisplay}
             gameLoopRef={gameLoopRef}
-            feedbackBlocksSpawningRef={feedbackBlocksSpawningRef}
           />
         </div>
 
@@ -383,20 +595,17 @@ export default function GameplayScreen({
         <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700/50 rounded-xl p-3 shadow-lg">
           <div className="flex justify-center gap-2 flex-wrap">
             {NOTE_NAMES.map((note) => {
-              const isMatching = currentNote === note;
-              const isCorrectAnswer = correctAnswerDisplay === note;
+              const isCorrectAnswer = noteState.correctAnswerToShow === note;
               return (
                 <button
                   key={note}
                   onClick={() => handleNoteAnswer(note)}
-                  disabled={!currentNote || isPaused || isShowingCorrectAnswer}
+                  disabled={!canAnswer || isPaused}
                   className={`
                     relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-xl sm:text-2xl transition-all duration-150
                     active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
                     ${isCorrectAnswer
                       ? 'bg-cyan-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.8)] scale-110 z-10 ring-2 ring-white animate-pulse'
-                      : isMatching
-                      ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.6)] scale-110 z-10 ring-2 ring-white'
                       : 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300 shadow-lg border border-slate-600 hover:border-slate-400 hover:text-white'
                     }
                   `}
