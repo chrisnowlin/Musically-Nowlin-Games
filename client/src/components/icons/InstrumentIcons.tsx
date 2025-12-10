@@ -4,7 +4,7 @@ interface InstrumentIconProps {
   className?: string;
 }
 
-// PNG Image Icons (Keeping Violin, Tambourine, French Horn, Cowbell, Tuba, Castanets, Clarinet, Bassoon, Timpani, Woodblock, and Bass Drum)
+// PNG Image Icons (Keeping Violin, Tambourine, French Horn, Cowbell, Tuba, Castanets, Clarinet, Bassoon, Timpani, Woodblock, Bass Drum, Trumpet, and Saxophone)
 
 export const ViolinIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
@@ -111,6 +111,26 @@ export const BassDrumIcon: React.FC<InstrumentIconProps> = ({ className }) => (
     <img 
       src={`${import.meta.env.BASE_URL}images/bass-drum.png`}
       alt="Bass Drum"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const TrumpetIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/trumpet.png`}
+      alt="Trumpet"
+      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+    />
+  </div>
+);
+
+export const SaxophoneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <img 
+      src={`${import.meta.env.BASE_URL}images/saxophone.png`}
+      alt="Saxophone"
       style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
     />
   </div>
@@ -333,71 +353,7 @@ export const OboeIcon: React.FC<InstrumentIconProps> = ({ className }) => (
 );
 
 
-export const SaxophoneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="brassGold" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#FFD700" />
-        <stop offset="40%" stopColor="#F0E68C" />
-        <stop offset="60%" stopColor="#DAA520" />
-        <stop offset="100%" stopColor="#B8860B" />
-      </linearGradient>
-    </defs>
-    {/* Main Body Curve */}
-    <path d="M35 20 L 35 60 Q 35 90 65 85 L 75 75 L 85 65 L 75 55 L 60 75 Q 45 80 45 60 L 45 20 Z" fill="url(#brassGold)" stroke="#B8860B" strokeWidth="1"/>
-    
-    {/* Bell Interior */}
-    <ellipse cx="80" cy="60" rx="7" ry="5" transform="rotate(-45 80 60)" fill="#333" />
-    
-    {/* Neck */}
-    <path d="M35 20 L 30 10 L 40 15" stroke="#B8860B" strokeWidth="4" fill="none"/>
-    <path d="M30 10 L 25 12" fill="#111" stroke="#111" strokeWidth="3"/> {/* Mouthpiece */}
 
-    {/* Keys with Pearl Inlays */}
-    {[30, 40, 50, 60].map((cy, i) => (
-      <g key={i}>
-        <circle cx="40" cy={cy} r="3.5" fill="#DAA520"/>
-        <circle cx="40" cy={cy} r="2.5" fill="#FFF8DC"/> {/* Pearl */}
-      </g>
-    ))}
-    <circle cx="55" cy="78" r="3.5" fill="#DAA520"/>
-    <circle cx="55" cy="78" r="2.5" fill="#FFF8DC"/>
-  </svg>
-);
-
-export const TrumpetIcon: React.FC<InstrumentIconProps> = ({ className }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="goldBrass" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#F0E68C" />
-        <stop offset="50%" stopColor="#DAA520" />
-        <stop offset="100%" stopColor="#B8860B" />
-      </linearGradient>
-    </defs>
-    {/* Bell Flare */}
-    <path d="M10 35 Q 25 40 30 45 L 30 60 Q 25 65 10 70 L 10 35" fill="url(#goldBrass)" stroke="#B8860B" strokeWidth="0.5"/>
-    <ellipse cx="10" cy="52.5" rx="3" ry="17.5" fill="#333" opacity="0.8"/> {/* Bell Interior */}
-
-    {/* Main Tube Loop - Thickened */}
-    <path d="M30 48 L 75 48 Q 82 48 82 55 L 82 55 Q 82 62 75 62 L 30 62" stroke="url(#goldBrass)" strokeWidth="8" fill="none" strokeLinecap="round"/>
-    <path d="M30 48 L 75 48 Q 82 48 82 55 L 82 55 Q 82 62 75 62 L 30 62" stroke="#B8860B" strokeWidth="0.5" fill="none"/> {/* Outline */}
-
-    {/* Valve Casing - Adjusted for thicker tube */}
-    <rect x="50" y="35" width="16" height="30" fill="url(#goldBrass)" stroke="#B8860B" strokeWidth="0.5"/>
-    <line x1="55.3" y1="35" x2="55.3" y2="65" stroke="#B8860B" strokeWidth="0.5"/>
-    <line x1="60.6" y1="35" x2="60.6" y2="65" stroke="#B8860B" strokeWidth="0.5"/>
-
-    {/* Valve Buttons */}
-    <rect x="51" y="31" width="3" height="4" fill="#C0C0C0"/>
-    <rect x="56.3" y="29" width="3" height="6" fill="#C0C0C0"/> {/* Depressed? */}
-    <rect x="61.6" y="31" width="3" height="4" fill="#C0C0C0"/>
-
-    {/* Mouthpiece Pipe - Thickened */}
-    <path d="M66 52 L 85 52" stroke="url(#goldBrass)" strokeWidth="6"/>
-    <path d="M85 52 L 92 52" stroke="#C0C0C0" strokeWidth="6"/> {/* Receiver */}
-    <path d="M92 52 L 98 50 L 98 54 L 92 52" fill="#C0C0C0"/> {/* Mouthpiece Cup */}
-  </svg>
-);
 
 export const TromboneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
