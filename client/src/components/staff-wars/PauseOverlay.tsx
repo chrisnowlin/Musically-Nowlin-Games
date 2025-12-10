@@ -14,7 +14,7 @@ export default function PauseOverlay({ onResume, onQuit }: PauseOverlayProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black flex items-center justify-center z-50"
       style={{ padding: `${layout.padding}px` }}
     >
       <Card
