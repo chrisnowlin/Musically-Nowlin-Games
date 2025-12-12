@@ -181,6 +181,9 @@ export default function GameplayScreen({
   // Spawn a new note - transition from awaiting_spawn to note_active
   const spawnNote = useCallback(() => {
     const newNote = generateNote();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:spawnNote',message:'Spawn note',data:{newNote,canvasWidth,lastNote:lastNoteRef.current,phase:noteStateRef.current?.phase,note:noteStateRef.current?.note},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H2-ref-lag'})}).catch(()=>{});
+    // #endregion
     setNoteState({
       phase: 'note_active',
       note: newNote,
@@ -268,6 +271,9 @@ export default function GameplayScreen({
         // Check if note reached danger zone (timeout)
         // Skip if an answer is currently being processed (prevents double life loss)
         if (newX < DANGER_ZONE_X && !processingAnswerRef.current) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:animate-timeout',message:'Timeout trigger (note crossed danger zone)',data:{prevPhase:prev.phase,prevNote:prev.note,prevX:prev.noteX,newX,deltaTime,currentSpeed,livesProp:lives,processingAnswer:processingAnswerRef.current,showCorrectAnswer},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H1-timeout-race'})}).catch(()=>{});
+          // #endregion
           // Store timeout info for deferred side effects
           pendingTimeoutRef.current = {
             noteLetter: prev.note.charAt(0),
@@ -304,6 +310,10 @@ export default function GameplayScreen({
         const { newLives } = pendingTimeoutRef.current;
         pendingTimeoutRef.current = null;
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:timeout-side-effects',message:'Applying timeout side effects',data:{newLives,scoreProp:score,livesProp:lives,showCorrectAnswer,sfxEnabled},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H1-timeout-race'})}).catch(()=>{});
+        // #endregion
+
         // Play error sound
         if (sfxEnabled) {
           audioService.playErrorTone();
@@ -333,10 +343,17 @@ export default function GameplayScreen({
   }, [isPaused, currentSpeed, sfxEnabled, showCorrectAnswer, lives, score, onUpdateLives, onGameOver]);
 
   // Ref to access current noteState synchronously (avoids stale closure issues)
+  // FIX: Update ref synchronously during render, not in useEffect, to avoid race condition
+  // where user sees new note on screen but ref still has old note (causing false incorrects)
   const noteStateRef = useRef(noteState);
+  // Synchronous update during render - this runs BEFORE any event handlers can fire
+  noteStateRef.current = noteState;
+  // #region agent log
+  // Log ref updates for debugging (keep in useEffect to avoid excessive logging during rapid renders)
   useEffect(() => {
-    noteStateRef.current = noteState;
+    fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:noteStateRefEffect',message:'noteStateRef updated (sync)',data:{phase:noteState.phase,note:noteState.note,noteX:noteState.noteX,feedback:noteState.feedback,correctAnswerToShow:noteState.correctAnswerToShow},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H2-ref-lag'})}).catch(()=>{});
   }, [noteState]);
+  // #endregion
 
   // Handle note answer - synchronous state transition
   const handleNoteAnswer = useCallback((noteName: string) => {
@@ -352,6 +369,10 @@ export default function GameplayScreen({
 
     const currentNoteLetter = currentState.note.charAt(0);
     const isCorrect = noteName === currentNoteLetter;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:handleNoteAnswer',message:'Handle answer',data:{input:noteName,currentPhase:currentState.phase,currentNote:currentState.note,currentNoteLetter,isCorrect,noteX:currentState.noteX,spawnTime:currentState.spawnTime,processingAnswer:processingAnswerRef.current,scoreProp:score,livesProp:lives,levelProp:level,isPausedProp:isPaused},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:isCorrect?'H3-input-mismatch':'H3-input-mismatch'})}).catch(()=>{});
+    // #endregion
 
     if (isCorrect) {
       // Play success sound
@@ -467,6 +488,9 @@ export default function GameplayScreen({
       // Note input (only when not paused and note is active)
       if (!isPaused && noteState.phase === 'note_active' && NOTE_NAMES.includes(key)) {
         e.preventDefault();
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:handleKeyPress',message:'Keypress note input',data:{key,statePhase:noteState.phase,refPhase:noteStateRef.current?.phase,refNote:noteStateRef.current?.note,refNoteX:noteStateRef.current?.noteX,processingAnswer:processingAnswerRef.current,isPausedProp:isPaused},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H2-ref-lag'})}).catch(()=>{});
+        // #endregion
         handleNoteAnswer(key);
       }
     };
@@ -607,7 +631,12 @@ export default function GameplayScreen({
               return (
                 <button
                   key={note}
-                  onClick={() => handleNoteAnswer(note)}
+                  onClick={() => {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:buttonClick',message:'Button click note input',data:{clickedNote:note,statePhase:noteState.phase,stateNote:noteState.note,refPhase:noteStateRef.current.phase,refNote:noteStateRef.current.note,refNoteX:noteStateRef.current.noteX,canAnswerProp:canAnswer,isPausedProp:isPaused,processingAnswer:processingAnswerRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H4-button-race'})}).catch(()=>{});
+                    // #endregion
+                    handleNoteAnswer(note);
+                  }}
                   disabled={!canAnswer || isPaused}
                   className={`
                     relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-xl sm:text-2xl transition-all duration-150
