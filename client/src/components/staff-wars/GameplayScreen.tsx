@@ -5,6 +5,7 @@ import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE, BACKGROUND
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/lib/audioService';
 import { useResponsiveLayout } from '@/hooks/useViewport';
+import { FIXED_STAFF_WIDTH } from '@/lib/notation/vexflowUtils';
 
 interface GameplayScreenProps {
   config: GameConfig;
@@ -39,7 +40,8 @@ const calculateSpeed = (level: number): number => {
 // Duration to show correct answer feedback (in ms)
 const CORRECT_ANSWER_DISPLAY_DURATION = 1500;
 const SPAWN_DELAY = 300; // Delay before spawning next note
-const DANGER_ZONE_X = 150; // X position where note times out
+// Danger zone is at staffX + 120 (120px from left edge of staff)
+// We'll calculate this dynamically based on canvas width
 
 // Clef-specific line and space notes for filtering
 const CLEF_LINE_NOTES: Record<string, string[]> = {
@@ -181,13 +183,17 @@ export default function GameplayScreen({
   // Spawn a new note - transition from awaiting_spawn to note_active
   const spawnNote = useCallback(() => {
     const newNote = generateNote();
+    // Calculate spawn position at the right edge of the fixed-width staff
+    // Staff is centered: staffX = (canvasWidth - FIXED_STAFF_WIDTH) / 2
+    // Spawn at: staffX + FIXED_STAFF_WIDTH = (canvasWidth + FIXED_STAFF_WIDTH) / 2
+    const spawnX = (canvasWidth + FIXED_STAFF_WIDTH) / 2;
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:spawnNote',message:'Spawn note',data:{newNote,canvasWidth,lastNote:lastNoteRef.current,phase:noteStateRef.current?.phase,note:noteStateRef.current?.note},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H2-ref-lag'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:spawnNote',message:'Spawn note',data:{newNote,canvasWidth,spawnX,lastNote:lastNoteRef.current,phase:noteStateRef.current?.phase,note:noteStateRef.current?.note},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H2-ref-lag'})}).catch(()=>{});
     // #endregion
     setNoteState({
       phase: 'note_active',
       note: newNote,
-      noteX: canvasWidth, // Start from right edge
+      noteX: spawnX, // Start from right edge of fixed-width staff
       spawnTime: performance.now(),
       feedback: null,
       correctAnswerToShow: null,
@@ -268,9 +274,14 @@ export default function GameplayScreen({
         const pxPerMs = currentSpeed / 1000;
         const newX = prev.noteX - pxPerMs * deltaTime;
 
+        // Calculate danger zone position: staffX + 120
+        // staffX = (canvasWidth - FIXED_STAFF_WIDTH) / 2
+        // So danger zone = (canvasWidth - FIXED_STAFF_WIDTH) / 2 + 120
+        const dangerZoneX = (canvasWidth - FIXED_STAFF_WIDTH) / 2 + 120;
+
         // Check if note reached danger zone (timeout)
         // Skip if an answer is currently being processed (prevents double life loss)
-        if (newX < DANGER_ZONE_X && !processingAnswerRef.current) {
+        if (newX < dangerZoneX && !processingAnswerRef.current) {
           // #region agent log
           fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:animate-timeout',message:'Timeout trigger (note crossed danger zone)',data:{prevPhase:prev.phase,prevNote:prev.note,prevX:prev.noteX,newX,deltaTime,currentSpeed,livesProp:lives,processingAnswer:processingAnswerRef.current,showCorrectAnswer},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H1-timeout-race'})}).catch(()=>{});
           // #endregion
@@ -285,7 +296,7 @@ export default function GameplayScreen({
             return {
               phase: 'showing_correct_answer',
               note: prev.note,
-              noteX: DANGER_ZONE_X,
+              noteX: dangerZoneX,
               spawnTime: prev.spawnTime,
               feedback: 'incorrect',
               correctAnswerToShow: prev.note.charAt(0),
@@ -340,7 +351,7 @@ export default function GameplayScreen({
       }
       lastTimeRef.current = 0;
     };
-  }, [isPaused, currentSpeed, sfxEnabled, showCorrectAnswer, lives, score, onUpdateLives, onGameOver]);
+  }, [isPaused, currentSpeed, sfxEnabled, showCorrectAnswer, lives, score, onUpdateLives, onGameOver, canvasWidth]);
 
   // Ref to access current noteState synchronously (avoids stale closure issues)
   // FIX: Update ref synchronously during render, not in useEffect, to avoid race condition

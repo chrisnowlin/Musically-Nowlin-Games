@@ -607,8 +607,12 @@ export default function StaffCanvas({
     canvas.style.height = `${height}px`;
     ctx.scale(dpr, dpr);
 
-    // Initialize staff once
-    if (!staffDataRef.current) {
+    // Initialize or re-initialize staff when canvas size or clef changes
+    // Re-initialization is needed to recalculate staffX for centering when canvas resizes
+    if (!staffDataRef.current || 
+        staffDataRef.current.canvas.offsetWidth !== width || 
+        staffDataRef.current.canvas.offsetHeight !== height ||
+        staffDataRef.current.clef !== config.clef) {
       staffDataRef.current = initializeStaff(canvas, config.clef);
     }
     const staffData = staffDataRef.current;

@@ -9,6 +9,10 @@ export interface StaffData {
   staffWidth: number;
 }
 
+// Fixed staff width for consistent timing across all screen sizes
+// Optimized for iPad landscape orientation (~1024px wide)
+export const FIXED_STAFF_WIDTH = 900;
+
 // Map note names to VexFlow note strings
 const NOTE_MAP: Record<string, string> = {
   'C2': 'c/2', 'D2': 'd/2', 'E2': 'e/2', 'F2': 'f/2', 'G2': 'g/2', 'A2': 'a/2', 'B2': 'b/2',
@@ -25,8 +29,9 @@ export function initializeStaff(canvas: HTMLCanvasElement, clef: Clef): StaffDat
   const width = canvas.offsetWidth;
   const height = canvas.offsetHeight;
   const staffY = height / 2;
-  const staffX = 50;
-  const staffWidth = width - 100;
+  // Center the staff horizontally
+  const staffX = (width - FIXED_STAFF_WIDTH) / 2;
+  const staffWidth = FIXED_STAFF_WIDTH;
 
   // Draw staff lines
   drawStaff(ctx, staffX, staffY, staffWidth, clef);
