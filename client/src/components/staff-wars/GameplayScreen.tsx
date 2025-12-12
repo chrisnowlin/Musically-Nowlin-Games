@@ -111,6 +111,10 @@ export default function GameplayScreen({
   const lastTimeRef = useRef<number>(0);
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Spawn generation/lock: prevents multiple overlapping spawn timers from producing
+  // multiple notes for a single "awaiting_spawn" phase (can happen during rapid re-renders).
+  const spawnGenerationRef = useRef(0);
+  const spawnedForGenerationRef = useRef(false);
   // Synchronous flag to prevent animation loop from processing during answer handling
   const processingAnswerRef = useRef(false);
   const layout = useResponsiveLayout();
@@ -203,10 +207,28 @@ export default function GameplayScreen({
   // Handle spawn timing - only spawn when in awaiting_spawn phase
   useEffect(() => {
     if (noteState.phase === 'awaiting_spawn' && !isPaused) {
-      spawnTimerRef.current = setTimeout(spawnNote, SPAWN_DELAY);
+      // New awaiting_spawn "cycle"
+      spawnGenerationRef.current += 1;
+      spawnedForGenerationRef.current = false;
+      const gen = spawnGenerationRef.current;
+
+      // Defensive: clear any existing timer before scheduling a new one
+      if (spawnTimerRef.current) {
+        clearTimeout(spawnTimerRef.current);
+        spawnTimerRef.current = null;
+      }
+
+      spawnTimerRef.current = setTimeout(() => {
+        // Ignore stale timers / duplicate firings for the same cycle
+        if (gen !== spawnGenerationRef.current) return;
+        if (spawnedForGenerationRef.current) return;
+        spawnedForGenerationRef.current = true;
+        spawnNote();
+      }, SPAWN_DELAY);
       return () => {
         if (spawnTimerRef.current) {
           clearTimeout(spawnTimerRef.current);
+          spawnTimerRef.current = null;
         }
       };
     }
@@ -368,6 +390,12 @@ export default function GameplayScreen({
 
   // Handle note answer - synchronous state transition
   const handleNoteAnswer = useCallback((noteName: string) => {
+    // Guard: prevent double-submission (e.g., rapid taps/keys before UI/state re-renders)
+    // This is especially important when "Show Correct Answer" is enabled, since students
+    // tend to immediately try again after seeing the revealed answer.
+    if (processingAnswerRef.current) {
+      return;
+    }
     const currentState = noteStateRef.current;
 
     // Guard: Only process answers in note_active phase
@@ -497,7 +525,13 @@ export default function GameplayScreen({
       }
 
       // Note input (only when not paused and note is active)
-      if (!isPaused && noteState.phase === 'note_active' && NOTE_NAMES.includes(key)) {
+      // Use refs (not state) to avoid any transient stale-closure windows.
+      if (
+        !isPaused &&
+        NOTE_NAMES.includes(key) &&
+        !processingAnswerRef.current &&
+        noteStateRef.current?.phase === 'note_active'
+      ) {
         e.preventDefault();
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/36199739-8e0a-4920-9ffe-bf7aeb131ed5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameplayScreen.tsx:handleKeyPress',message:'Keypress note input',data:{key,statePhase:noteState.phase,refPhase:noteStateRef.current?.phase,refNote:noteStateRef.current?.note,refNoteX:noteStateRef.current?.noteX,processingAnswer:processingAnswerRef.current,isPausedProp:isPaused},timestamp:Date.now(),sessionId:'debug-session',runId:'sw-run1',hypothesisId:'H2-ref-lag'})}).catch(()=>{});

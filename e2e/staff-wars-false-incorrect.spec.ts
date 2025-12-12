@@ -23,6 +23,15 @@ function safeReadLogLines(): string[] {
   }
 }
 
+function resetDebugLog() {
+  try {
+    fs.mkdirSync('/Users/cnowlin/Developer/Musically-Nowlin-Games/.cursor', { recursive: true });
+    fs.writeFileSync(LOG_PATH, '', 'utf8');
+  } catch {
+    // best-effort; tests will still run but may be affected by stale log lines
+  }
+}
+
 function parseNdjson(lines: string[]): NdjsonLog[] {
   const out: NdjsonLog[] = [];
   for (const line of lines) {
@@ -65,6 +74,7 @@ test.describe('Staff Wars intermittent false incorrect', () => {
   test('presses correct keys immediately after spawn to detect ref/race issues', async ({ page }) => {
     test.setTimeout(3 * 60 * 1000);
 
+    resetDebugLog();
     await page.goto('/games/staff-wars');
 
     // Setup screen loaded
@@ -127,8 +137,10 @@ test.describe('Staff Wars intermittent false incorrect', () => {
 
     // Phase 2: try to reproduce a timeout/answer race by pressing as the note approaches the danger zone.
     // We watch the noisy noteStateRefEffect logs to find when noteX gets close, then press the correct key.
-    const dangerZoneX = 150;
-    const pressWhenXBelow = 170; // a small cushion; still "late" but ideally before the actual timeout boundary
+    // Danger zone is computed in-game as: (canvasWidth - FIXED_STAFF_WIDTH) / 2 + 120
+    // with FIXED_STAFF_WIDTH = 900. We compute it per-trial from the spawn log.
+    const FIXED_STAFF_WIDTH = 900;
+    const pressCushionPx = 20; // press slightly before the actual timeout boundary
 
     for (let t = 0; t < nearTimeoutTrials; t++) {
       const spawn = await waitForNextMatchingLog(
@@ -140,11 +152,22 @@ test.describe('Staff Wars intermittent false incorrect', () => {
       const expectedLetter = newNote.charAt(0).toUpperCase();
       expect(['A', 'B', 'C', 'D', 'E', 'F', 'G']).toContain(expectedLetter);
 
+      const canvasWidth = Number(spawn.data?.canvasWidth ?? NaN);
+      expect(Number.isFinite(canvasWidth)).toBeTruthy();
+      const dangerZoneX = (canvasWidth - FIXED_STAFF_WIDTH) / 2 + 120;
+      const pressWhenXBelow = dangerZoneX + pressCushionPx;
+
       // Wait until the moving note reaches "late" X position.
       await waitForNextMatchingLog(
         cursor,
         (l) => {
-          if (l.message !== 'noteStateRef updated' || l.location !== 'GameplayScreen.tsx:noteStateRefEffect') return false;
+          // Message changed over time; accept both old and new variants.
+          if (
+            (l.message !== 'noteStateRef updated' && l.message !== 'noteStateRef updated (sync)') ||
+            l.location !== 'GameplayScreen.tsx:noteStateRefEffect'
+          ) {
+            return false;
+          }
           const phase = String(l.data?.phase ?? '');
           const note = String(l.data?.note ?? '');
           const noteX = Number(l.data?.noteX ?? NaN);
@@ -182,6 +205,7 @@ test.describe('Staff Wars intermittent false incorrect', () => {
   test('uses button clicks instead of keyboard to detect visual/ref race', async ({ page }) => {
     test.setTimeout(3 * 60 * 1000);
 
+    resetDebugLog();
     await page.goto('/games/staff-wars');
     await expect(page.getByText('Staff Wars')).toBeVisible();
     await page.getByRole('button', { name: 'Start Mission' }).click();
@@ -235,6 +259,68 @@ test.describe('Staff Wars intermittent false incorrect', () => {
           `False incorrect via button click: spawned=${newNote} expected=${expectedLetter} input=${input} ` +
           `currentNote=${currentNote} currentNoteLetter=${currentNoteLetter} ` +
           `clickRefNote=${clickData.refNote} clickStateNote=${clickData.stateNote}`
+        );
+      }
+    }
+  });
+
+  test('does not produce false incorrects when "Show Correct Answer" is enabled', async ({ page }) => {
+    test.setTimeout(3 * 60 * 1000);
+
+    resetDebugLog();
+    // Force the preference on before the app loads.
+    await page.addInitScript(() => {
+      localStorage.setItem('staffWarsShowCorrectAnswer', 'true');
+    });
+
+    await page.goto('/games/staff-wars');
+
+    // Setup screen loaded
+    await expect(page.getByText('Staff Wars')).toBeVisible();
+
+    // Start game
+    await page.getByRole('button', { name: 'Start Mission' }).click();
+
+    // Gameplay HUD loaded
+    await expect(page.getByText('Score')).toBeVisible();
+
+    // Ensure page has focus for keyboard events
+    await page.click('body');
+
+    const cursor = { idx: 0 };
+    const totalTrials = 45;
+    const delaysMs = [0, 5, 15, 30, 60];
+
+    for (let n = 0; n < totalTrials; n++) {
+      const spawn = await waitForNextMatchingLog(
+        cursor,
+        (l) => l.message === 'Spawn note' && l.location === 'GameplayScreen.tsx:spawnNote',
+        30_000
+      );
+
+      const newNote = String(spawn.data?.newNote ?? '');
+      const expectedLetter = newNote.charAt(0).toUpperCase();
+      expect(['A', 'B', 'C', 'D', 'E', 'F', 'G']).toContain(expectedLetter);
+
+      const delay = delaysMs[Math.floor(Math.random() * delaysMs.length)];
+      if (delay) await page.waitForTimeout(delay);
+      await page.keyboard.press(expectedLetter);
+
+      const answer = await waitForNextMatchingLog(
+        cursor,
+        (l) => l.message === 'Handle answer' && l.location === 'GameplayScreen.tsx:handleNoteAnswer',
+        5_000
+      );
+
+      const data = answer.data ?? {};
+      const input = String(data.input ?? '');
+      const currentNote = String(data.currentNote ?? '');
+      const currentNoteLetter = String(data.currentNoteLetter ?? '');
+      const isCorrect = Boolean(data.isCorrect);
+
+      if (input === expectedLetter && !isCorrect) {
+        throw new Error(
+          `False incorrect detected with Show Correct Answer enabled: spawned=${newNote} expected=${expectedLetter} input=${input} currentNote=${currentNote} currentNoteLetter=${currentNoteLetter}`
         );
       }
     }
