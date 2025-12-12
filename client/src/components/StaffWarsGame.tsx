@@ -15,6 +15,7 @@ export type GameStatus = 'setup' | 'playing' | 'paused' | 'gameOver';
 // Game constants
 export const MAX_LIVES = 3;
 export const CORRECT_ANSWERS_FOR_EXTRA_LIFE = 30;
+export const BACKGROUND_MUSIC_UNLOCK_SCORE = 20;
 export const MAX_PAUSES = 2;
 
 export type NoteFilter = 'all' | 'lines' | 'spaces';
@@ -113,6 +114,8 @@ export default function StaffWarsGame() {
   const [, setLocation] = useLocation();
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const gameLoopRef = useRef<number | null>(null);
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  const bgmStartedRef = useRef(false);
   const layout = useResponsiveLayout();
 
   // Load high scores and preferences on mount
@@ -209,6 +212,78 @@ export default function StaffWarsGame() {
     };
   }, []);
 
+  // Initialize background music audio element once (served from /public)
+  useEffect(() => {
+    const audio = new Audio('/audio/galactic-groove.mp3');
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0.25;
+    bgmRef.current = audio;
+
+    return () => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      bgmRef.current = null;
+      bgmStartedRef.current = false;
+    };
+  }, []);
+
+  // Keep background music paused unless actively playing (and enabled via SFX toggle)
+  useEffect(() => {
+    const audio = bgmRef.current;
+    if (!audio) return;
+
+    const shouldPlay =
+      bgmStartedRef.current &&
+      state.status === 'playing' &&
+      state.sfxEnabled;
+
+    if (!shouldPlay) {
+      try {
+        audio.pause();
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
+    void audio.play().catch(() => {
+      // If play fails due to browser gesture rules, we'll retry on next user gesture.
+    });
+  }, [state.status, state.sfxEnabled]);
+
+  // If a new run starts (score reset), reset background music state
+  useEffect(() => {
+    if (state.score !== 0) return;
+    if (!bgmStartedRef.current) return;
+    const audio = bgmRef.current;
+    if (!audio) return;
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch {
+      // ignore
+    }
+    bgmStartedRef.current = false;
+  }, [state.score]);
+
+  // Called from a user gesture (correct answer click/keypress) when score hits the unlock threshold
+  const handleUnlockBackgroundMusic = () => {
+    const audio = bgmRef.current;
+    if (!audio) return;
+    if (bgmStartedRef.current) return;
+    bgmStartedRef.current = true;
+
+    // Best effort: play immediately (this is called from a user gesture)
+    void audio.play().catch(() => {
+      // If blocked, the effect above will retry when possible.
+    });
+  };
+
   return (
     <div className="w-full min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center relative">
       {(state.status === 'setup' || state.status === 'gameOver') && (
@@ -256,6 +331,7 @@ export default function StaffWarsGame() {
             onUpdateLevel={(level) => dispatch({ type: 'UPDATE_LEVEL', level })}
             onUpdateSpeed={(speed) => dispatch({ type: 'UPDATE_SPEED', speed })}
             onToggleSFX={handleToggleSFX}
+            onUnlockBackgroundMusic={handleUnlockBackgroundMusic}
             gameLoopRef={gameLoopRef}
           />
           

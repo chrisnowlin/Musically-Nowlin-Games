@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Gauge } from 'lucide-react';
-import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE } from '../StaffWarsGame';
+import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE, BACKGROUND_MUSIC_UNLOCK_SCORE } from '../StaffWarsGame';
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/lib/audioService';
 import { useResponsiveLayout } from '@/hooks/useViewport';
@@ -23,6 +23,7 @@ interface GameplayScreenProps {
   onUpdateLevel: (level: number) => void;
   onUpdateSpeed: (speed: number) => void;
   onToggleSFX: () => void;
+  onUnlockBackgroundMusic: () => void;
   gameLoopRef: React.MutableRefObject<number | null>;
 }
 
@@ -97,6 +98,7 @@ export default function GameplayScreen({
   onUpdateLevel,
   onUpdateSpeed,
   onToggleSFX,
+  onUnlockBackgroundMusic,
   gameLoopRef,
 }: GameplayScreenProps) {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -363,6 +365,12 @@ export default function GameplayScreen({
       const shouldLevelUp = newLevel !== level;
       const shouldRestoreLife = newScore > 0 && newScore % CORRECT_ANSWERS_FOR_EXTRA_LIFE === 0 && lives < MAX_LIVES;
 
+      // Start background music at the moment the student hits the unlock threshold.
+      // This runs within the same user gesture (click/keypress) to satisfy autoplay rules.
+      if (newScore === BACKGROUND_MUSIC_UNLOCK_SCORE) {
+        onUnlockBackgroundMusic();
+      }
+
       // Update note state first
       setNoteState({
         phase: 'awaiting_spawn',
@@ -434,7 +442,7 @@ export default function GameplayScreen({
         processingAnswerRef.current = false;
       }, 0);
     }
-  }, [score, lives, level, sfxEnabled, showCorrectAnswer, onUpdateScore, onUpdateLives, onUpdateLevel, onUpdateSpeed, onGameOver]);
+  }, [score, lives, level, sfxEnabled, showCorrectAnswer, onUnlockBackgroundMusic, onUpdateScore, onUpdateLives, onUpdateLevel, onUpdateSpeed, onGameOver]);
 
   // Handle keyboard input
   useEffect(() => {

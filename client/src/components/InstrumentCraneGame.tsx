@@ -317,7 +317,7 @@ function buildInstrumentsFromLibrary(): Instrument[] {
     },
     {
       id: 'cymbals',
-      name: 'Clash Cymbals',
+      name: 'Crash Cymbals',
       Icon: CymbalsIcon,
       audioPaths: [
         // Single crashes - various dynamics
