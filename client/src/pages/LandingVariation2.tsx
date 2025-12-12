@@ -1,8 +1,16 @@
-import { Link } from "wouter";
-import { games } from "@/config/games";
+import { Link, useLocation } from "wouter";
+import { games, GameConfig } from "@/config/games";
 import { Button } from "@/components/ui/button";
-import { Music, Star, Sparkles, Lock, Play } from "lucide-react";
+import { Music, Star, Sparkles, Lock, Play, KeyRound } from "lucide-react";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 /**
  * Variation 2: Playful Dashboard
@@ -14,8 +22,37 @@ import { useState } from "react";
  * - Character-driven design with mascot elements
  * - Emphasis on joy and discovery
  */
+const PLAYTEST_PASSCODE = "games";
+
 export default function LandingVariation2() {
   const [hoveredGame, setHoveredGame] = useState<string | null>(null);
+  const [passcodeModalOpen, setPasscodeModalOpen] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<GameConfig | null>(null);
+  const [passcodeInput, setPasscodeInput] = useState("");
+  const [passcodeError, setPasscodeError] = useState(false);
+  const [, setLocation] = useLocation();
+
+  const handlePlaytestClick = (game: GameConfig) => {
+    setSelectedGame(game);
+    setPasscodeInput("");
+    setPasscodeError(false);
+    setPasscodeModalOpen(true);
+  };
+
+  const handlePasscodeSubmit = () => {
+    if (passcodeInput === PLAYTEST_PASSCODE && selectedGame) {
+      setPasscodeModalOpen(false);
+      setLocation(selectedGame.route);
+    } else {
+      setPasscodeError(true);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handlePasscodeSubmit();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-pink-900 relative overflow-hidden">
@@ -252,28 +289,15 @@ export default function LandingVariation2() {
                       {game.description}
                     </p>
 
-                    {/* Status Indicator */}
-                    {isAvailable ? (
-                      <Link href={game.route}>
-                        <Button
-                          className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg"
-                          size="lg"
-                        >
-                          <Play className="w-6 h-6 mr-2" />
-                          Let's Play!
-                        </Button>
-                      </Link>
-                    ) : isLocked ? (
-                      <div className="w-full py-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-fredoka text-xl flex items-center justify-center gap-2">
-                        <Lock className="w-5 h-5" />
-                        Coming Later
-                      </div>
-                    ) : (
-                      <div className="w-full py-6 rounded-full bg-gradient-to-r from-orange-200 to-yellow-200 dark:from-orange-900 dark:to-yellow-900 text-orange-800 dark:text-orange-200 font-fredoka text-xl flex items-center justify-center gap-2">
-                        <Sparkles className="w-5 h-5" />
-                        Coming Soon!
-                      </div>
-                    )}
+                    {/* Status Indicator - Playtest Button with Passcode Lock */}
+                    <Button
+                      onClick={() => handlePlaytestClick(game)}
+                      className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+                      size="lg"
+                    >
+                      <KeyRound className="w-6 h-6 mr-2" />
+                      Playtest
+                    </Button>
                   </div>
                 </div>
 
@@ -300,6 +324,50 @@ export default function LandingVariation2() {
         </div>
         </section>
       </main>
+
+      {/* Passcode Modal */}
+      <Dialog open={passcodeModalOpen} onOpenChange={setPasscodeModalOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl border-4 border-amber-400">
+          <DialogHeader>
+            <DialogTitle className="font-fredoka text-2xl text-center text-amber-800 dark:text-amber-200">
+              <KeyRound className="w-8 h-8 inline-block mr-2 text-amber-500" />
+              Playtest Access
+            </DialogTitle>
+            <DialogDescription className="font-nunito text-center">
+              Enter the passcode to playtest <span className="font-bold">{selectedGame?.title}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <Input
+              type="password"
+              placeholder="Enter passcode..."
+              value={passcodeInput}
+              onChange={(e) => {
+                setPasscodeInput(e.target.value);
+                setPasscodeError(false);
+              }}
+              onKeyDown={handleKeyDown}
+              className={`font-nunito text-lg py-6 text-center rounded-xl ${
+                passcodeError ? "border-red-500 border-2" : ""
+              }`}
+              autoFocus
+            />
+            {passcodeError && (
+              <p className="text-red-500 text-center font-nunito text-sm">
+                Incorrect passcode. Please try again.
+              </p>
+            )}
+            <Button
+              onClick={handlePasscodeSubmit}
+              className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+              size="lg"
+            >
+              <Play className="w-6 h-6 mr-2" />
+              Start Playtest
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Fun Footer */}
       <footer className="py-8 px-4 text-center relative z-10">
