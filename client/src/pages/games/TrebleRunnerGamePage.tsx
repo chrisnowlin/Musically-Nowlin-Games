@@ -176,7 +176,7 @@ const Staff = ({ children }: { children: React.ReactNode }) => {
   const linePositions = [-4, -2, 0, 2, 4]; // E, G, B, D, F lines
   
   return (
-    <svg viewBox="0 0 400 120" className="w-full h-32 bg-gradient-to-b from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200">
+    <svg viewBox="0 0 400 120" className="w-full h-32 bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-xl overflow-visible">
       {/* Staff lines */}
       {linePositions.map((pos, idx) => (
         <line
@@ -297,6 +297,18 @@ const HealthBar = ({ health, maxHealth }: { health: number; maxHealth: number })
         }`}
         style={{ width: `${(health / maxHealth) * 100}%` }}
       />
+    </div>
+  </div>
+);
+
+// Game Wrapper for 16:9 aspect ratio
+const GameWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+    <div 
+      className="relative w-full max-w-[177.78vh] aspect-video bg-cover bg-center shadow-2xl overflow-hidden"
+      style={{ backgroundImage: "url('/images/treble-runner-bg.jpeg')" }}
+    >
+      {children}
     </div>
   </div>
 );
@@ -531,59 +543,74 @@ export default function TrebleRunner() {
   // Menu Screen
   if (gameState === 'menu') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4 relative">
-        <button
-          onClick={() => setLocation("/games")}
-          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
-        >
-          <ChevronLeft size={24} />
-          Main Menu
-        </button>
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">🎵 Treble Runner</h1>
-          <p className="text-indigo-200 text-lg">Master the treble clef!</p>
-        </div>
-        
-        <div className="bg-white/10 backdrop-blur rounded-2xl p-6 w-full max-w-md">
-          <h2 className="text-xl font-semibold text-white mb-4 text-center">Select Level</h2>
+      <GameWrapper>
+        <div className="w-full h-full flex flex-col items-center justify-center p-8 relative bg-black/20 backdrop-blur-[2px]">
+          <button
+            onClick={() => setLocation("/games")}
+            className="absolute top-6 left-6 z-50 flex items-center gap-2 text-indigo-900 font-bold bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+          >
+            <ChevronLeft size={24} />
+            Back
+          </button>
           
-          <div className="space-y-3">
-            {Object.entries(LEVELS).map(([level, config]) => (
-              <button
-                key={level}
-                onClick={() => startGame(Number(level))}
-                className="w-full p-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 rounded-xl text-white text-left transition-all hover:scale-102 active:scale-98 shadow-lg"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-bold text-lg">Level {level}: {config.name}</div>
-                    <div className="text-indigo-200 text-sm">{config.subtitle}</div>
-                  </div>
-                  {highScores[`level${level}`] && (
-                    <div className="text-right">
-                      <div className="text-xs text-indigo-200">Best</div>
-                      <div className="font-bold">{highScores[`level${level}`]}</div>
+          <div className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
+            <h1 className="text-7xl font-black text-white mb-4 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tight">
+              Treble Runner
+            </h1>
+            <p className="text-indigo-100 text-2xl font-medium drop-shadow-md bg-black/30 px-6 py-2 rounded-full inline-block backdrop-blur-sm">
+              Master the notes on the staff! 🎼
+            </p>
+          </div>
+          
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-500">
+            <h2 className="text-2xl font-bold text-indigo-900 mb-6 flex items-center gap-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 text-sm">1</span>
+              Select Difficulty Level
+            </h2>
+            
+            <div className="grid gap-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+              {Object.entries(LEVELS).map(([level, config]) => (
+                <button
+                  key={level}
+                  onClick={() => startGame(Number(level))}
+                  className="group relative w-full p-4 bg-gradient-to-r from-indigo-50 to-white hover:from-indigo-500 hover:to-purple-600 border-2 border-indigo-100 hover:border-transparent rounded-2xl text-left transition-all hover:shadow-lg hover:-translate-y-0.5"
+                >
+                  <div className="flex justify-between items-center relative z-10">
+                    <div>
+                      <div className="font-bold text-xl text-indigo-900 group-hover:text-white transition-colors">
+                        Level {level}: {config.name}
+                      </div>
+                      <div className="text-indigo-500 group-hover:text-indigo-100 font-medium mt-1 transition-colors">
+                        {config.subtitle}
+                      </div>
                     </div>
-                  )}
-                </div>
+                    {highScores[`level${level}`] && (
+                      <div className="text-right bg-white/50 group-hover:bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm transition-colors">
+                        <div className="text-xs text-indigo-600 group-hover:text-indigo-100 uppercase font-bold tracking-wider">Best</div>
+                        <div className="font-bold text-xl text-indigo-900 group-hover:text-white">{highScores[`level${level}`]}</div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            <div className="mt-8 flex justify-center border-t border-indigo-100 pt-6">
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`
+                  flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all
+                  ${soundEnabled 
+                    ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' 
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}
+                `}
+              >
+                {soundEnabled ? '🔊 Sound Effects On' : '🔇 Sound Effects Off'}
               </button>
-            ))}
-          </div>
-          
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="px-4 py-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-colors"
-            >
-              {soundEnabled ? '🔊 Sound On' : '🔇 Sound Off'}
-            </button>
+            </div>
           </div>
         </div>
-        
-        <p className="text-indigo-300 text-sm mt-6 text-center max-w-md">
-          Identify the notes before they pass! Tap the correct note name to keep running.
-        </p>
-      </div>
+      </GameWrapper>
     );
   }
 
@@ -592,171 +619,168 @@ export default function TrebleRunner() {
     const isNewHighScore = score > (highScores[`level${currentLevel}`] || 0);
     
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4 relative">
-        <button
-          onClick={() => setLocation("/games")}
-          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
-        >
-          <ChevronLeft size={24} />
-          Main Menu
-        </button>
-        <div className="bg-white/10 backdrop-blur rounded-2xl p-8 w-full max-w-md text-center">
-          <h2 className="text-3xl font-bold text-white mb-2">Game Over!</h2>
-          
-          {isNewHighScore && (
-            <div className="text-yellow-400 text-xl mb-4 animate-pulse">🏆 New High Score! 🏆</div>
-          )}
-          
-          <div className="text-6xl font-bold text-white mb-6">{score}</div>
-          
-          <div className="grid grid-cols-2 gap-4 mb-6 text-white">
-            <div className="bg-white/10 rounded-lg p-3">
-              <div className="text-2xl font-bold text-green-400">{stats.correct}</div>
-              <div className="text-sm text-indigo-200">Correct</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3">
-              <div className="text-2xl font-bold text-red-400">{stats.wrong}</div>
-              <div className="text-sm text-indigo-200">Missed</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3 col-span-2">
-              <div className="text-2xl font-bold">{accuracy}%</div>
-              <div className="text-sm text-indigo-200">Accuracy</div>
-            </div>
-          </div>
-          
-          {Object.keys(stats.notesPlayed).length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-white text-sm mb-2">Notes Breakdown</h3>
-              <div className="flex flex-wrap justify-center gap-2">
-                {Object.entries(stats.notesPlayed).map(([note, data]) => (
-                  <div key={note} className="bg-white/10 rounded px-3 py-1 text-sm">
-                    <span className="text-white font-bold">{note}</span>
-                    <span className="text-green-400 ml-2">{data.correct || 0}✓</span>
-                    <span className="text-red-400 ml-1">{data.wrong || 0}✗</span>
-                  </div>
-                ))}
+      <GameWrapper>
+        <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 w-full max-w-lg text-center shadow-2xl animate-in zoom-in-95 duration-300 border-4 border-white/50">
+            <h2 className="text-4xl font-black text-indigo-900 mb-2 uppercase tracking-wide">Game Over</h2>
+            
+            {isNewHighScore && (
+              <div className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-bold text-lg mb-6 inline-flex items-center gap-2 animate-bounce">
+                🏆 New High Score!
+              </div>
+            )}
+            
+            <div className="bg-indigo-900 text-white rounded-2xl p-6 mb-8 shadow-inner relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-800 to-indigo-950"></div>
+              <div className="relative z-10">
+                <div className="text-indigo-300 text-sm font-bold uppercase tracking-widest mb-1">Final Score</div>
+                <div className="text-7xl font-black tabular-nums tracking-tight group-hover:scale-110 transition-transform duration-300">{score}</div>
               </div>
             </div>
-          )}
-          
-          <div className="space-y-3">
-            <button
-              onClick={() => startGame(currentLevel)}
-              className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 rounded-xl text-white font-bold text-lg transition-all"
-            >
-              Play Again
-            </button>
-            <button
-              onClick={endGame}
-              className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white font-bold transition-all"
-            >
-              Level Select
-            </button>
+            
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                <div className="text-2xl font-bold text-green-600">{stats.correct}</div>
+                <div className="text-xs font-bold text-green-800 uppercase tracking-wide">Correct</div>
+              </div>
+              <div className="bg-red-50 rounded-xl p-3 border border-red-100">
+                <div className="text-2xl font-bold text-red-500">{stats.wrong}</div>
+                <div className="text-xs font-bold text-red-800 uppercase tracking-wide">Missed</div>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                <div className="text-2xl font-bold text-blue-600">{accuracy}%</div>
+                <div className="text-xs font-bold text-blue-800 uppercase tracking-wide">Accuracy</div>
+              </div>
+            </div>
+            
+            {Object.keys(stats.notesPlayed).length > 0 && (
+              <div className="mb-8 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wide mb-3">Performance by Note</h3>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {Object.entries(stats.notesPlayed).map(([note, data]) => (
+                    <div key={note} className="bg-white border border-gray-200 rounded-lg px-3 py-1 text-sm shadow-sm flex items-center gap-2">
+                      <span className="font-bold text-gray-700 w-4">{note}</span>
+                      <div className="flex gap-1 text-xs">
+                        <span className="text-green-600 font-bold">{data.correct || 0}</span>
+                        <span className="text-gray-300">/</span>
+                        <span className="text-red-500 font-bold">{data.wrong || 0}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => startGame(currentLevel)}
+                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 rounded-2xl text-white font-bold text-xl transition-all hover:shadow-lg hover:-translate-y-1 active:translate-y-0"
+              >
+                Play Again
+              </button>
+              <button
+                onClick={endGame}
+                className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xl transition-all hover:shadow-lg"
+              >
+                Menu
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </GameWrapper>
     );
   }
 
   // Playing Screen
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-300 to-green-400 flex flex-col relative">
-      <button
-        onClick={() => setLocation("/games")}
-        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
-      >
-        <ChevronLeft size={24} />
-        Main Menu
-      </button>
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur shadow-md p-3">
-        <div className="flex justify-between items-center max-w-lg mx-auto">
-          <div className="flex items-center gap-4">
-            <div className="text-2xl font-bold text-indigo-900">{score}</div>
-            {streak >= 3 && (
-              <div className="text-orange-500 font-bold animate-pulse">
-                🔥 {streak}
+    <GameWrapper>
+      <div className="w-full h-full flex flex-col relative">
+        <button
+          onClick={() => setLocation("/games")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-indigo-900 font-bold bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Exit
+        </button>
+        {/* Header */}
+        <div className="bg-white/90 backdrop-blur-md shadow-sm p-4 border-b border-indigo-50 z-20">
+          <div className="flex justify-between items-center max-w-4xl mx-auto w-full">
+            <div className="flex items-center gap-6">
+              <div className="bg-indigo-900 text-white px-4 py-1 rounded-lg font-mono font-bold text-2xl shadow-inner min-w-[100px] text-center">
+                {score}
               </div>
-            )}
+              {streak >= 3 && (
+                <div className="flex items-center gap-1 text-orange-500 font-black animate-pulse bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
+                  <span className="text-xl">🔥</span>
+                  <span>{streak}</span>
+                </div>
+              )}
+            </div>
+            <HealthBar health={health} maxHealth={MAX_HEALTH} />
+            <button
+              onClick={() => setGameState('gameOver')}
+              className="px-4 py-2 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 rounded-lg font-bold transition-colors border border-gray-200 hover:border-red-200"
+            >
+              Quit
+            </button>
           </div>
-          <HealthBar health={health} maxHealth={MAX_HEALTH} />
-          <button
-            onClick={() => setGameState('gameOver')}
-            className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition-colors"
-          >
-            Quit
-          </button>
-        </div>
-      </div>
-      
-      {/* Level indicator */}
-      <div className="text-center py-2 text-white font-medium drop-shadow">
-        Level {currentLevel}: {LEVELS[currentLevel].name}
-      </div>
-      
-      {/* Game area */}
-      <div className="flex-1 flex flex-col justify-center px-4 max-w-lg mx-auto w-full">
-        {/* Staff with notes */}
-        <div className="relative mb-4">
-          <Staff>
-            {/* Answer zone indicator */}
-            <rect x="60" y="10" width="108" height="100" fill="rgba(59, 130, 246, 0.1)" rx="5" />
-            
-            {/* Notes */}
-            {notes.map(note => (
-              <StaffNote
-                key={note.id}
-                position={note.position}
-                x={note.x}
-                isActive={note.x >= 60 && note.x <= 168 && !note.answered}
-                feedback={note.feedback}
-              />
-            ))}
-          </Staff>
         </div>
         
-        {/* Runner track */}
-        <div className="relative h-20 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 rounded-lg overflow-hidden border-4 border-amber-700 shadow-inner">
-          {/* Ground pattern */}
-          <div className="absolute inset-0 opacity-30">
-            {[...Array(20)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute top-0 h-full w-1 bg-amber-800"
-                style={{ left: `${i * 5}%`, transform: `translateX(${-(animFrame * 2) % 50}px)` }}
+        {/* Level indicator */}
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white px-6 py-1 rounded-full text-sm font-bold shadow-lg border border-white/20 z-10">
+          Level {currentLevel}: {LEVELS[currentLevel].name}
+        </div>
+        
+        {/* Game area */}
+        <div className="flex-1 flex flex-col justify-center px-4 max-w-4xl mx-auto w-full relative z-0">
+          {/* Staff with notes */}
+          <div className="relative mb-0 translate-y-8 z-10">
+            <Staff>
+              {/* Answer zone indicator */}
+              <rect x="60" y="10" width="108" height="100" fill="rgba(59, 130, 246, 0.15)" rx="12" stroke="rgba(59, 130, 246, 0.3)" strokeWidth="2" strokeDasharray="6 4" />
+              
+              {/* Notes */}
+              {notes.map(note => (
+                <StaffNote
+                  key={note.id}
+                  position={note.position}
+                  x={note.x}
+                  isActive={note.x >= 60 && note.x <= 168 && !note.answered}
+                  feedback={note.feedback}
+                />
+              ))}
+            </Staff>
+          </div>
+          
+          {/* Runner track - Adjusted visual to float */}
+          <div className="relative h-24 mt-[-20px]">
+            {/* Runner */}
+            <Runner 
+              isJumping={runnerState.isJumping} 
+              isStumbling={runnerState.isStumbling}
+              frame={animFrame}
+            />
+          </div>
+        </div>
+        
+        {/* Note buttons */}
+        <div className="bg-white/80 backdrop-blur-xl border-t border-white/50 p-6 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] mt-auto z-20">
+          <div className="flex justify-center gap-3 max-w-4xl mx-auto">
+            {NOTE_BUTTONS.map(note => (
+              <NoteButton
+                key={note}
+                note={note}
+                onPress={handleNotePress}
+                disabled={gameState !== 'playing'}
+                isPressed={pressedNote === note}
               />
             ))}
           </div>
-          
-          {/* Runner */}
-          <Runner 
-            isJumping={runnerState.isJumping} 
-            isStumbling={runnerState.isStumbling}
-            frame={animFrame}
-          />
-          
-          {/* Grass on top */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-green-500 to-transparent" />
+          <div className="text-center text-sm font-medium text-indigo-800 mt-4 bg-indigo-50 inline-block mx-auto px-4 py-1 rounded-full">
+            Tap the note name when it enters the blue zone!
+          </div>
         </div>
       </div>
-      
-      {/* Note buttons */}
-      <div className="bg-white/90 backdrop-blur-sm p-4 shadow-lg mt-auto">
-        <div className="flex justify-center gap-2 max-w-lg mx-auto">
-          {NOTE_BUTTONS.map(note => (
-            <NoteButton
-              key={note}
-              note={note}
-              onPress={handleNotePress}
-              disabled={gameState !== 'playing'}
-              isPressed={pressedNote === note}
-            />
-          ))}
-        </div>
-        <div className="text-center text-xs text-gray-500 mt-2">
-          Tap the note name when it enters the blue zone!
-        </div>
-      </div>
-    </div>
+    </GameWrapper>
   );
 }
