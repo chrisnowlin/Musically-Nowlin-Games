@@ -5,11 +5,12 @@ import { generateNewRound as generateRound, validateAnswer, calculateScore } fro
 import AnimalCharacter from "@/components/AnimalCharacter";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import { Play, HelpCircle, Music2, Star, Sparkles } from "lucide-react";
+import { Play, HelpCircle, Music2, Star, Sparkles, ChevronLeft } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes } from "@/theme/playful";
 import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/components/ResponsiveGameLayout";
 import { useResponsiveLayout } from "@/hooks/useViewport";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { useLocation } from "wouter";
 
 const FEEDBACK_OPTIONS = [
   { title: "Correct!", message: "You're a music master! 🎵" },
@@ -23,6 +24,7 @@ const FEEDBACK_OPTIONS = [
 ];
 
 export default function Game() {
+  const [, setLocation] = useLocation();
   const [gameState, setGameState] = useState<GameState>({
     currentRound: null,
     score: 0,
@@ -171,6 +173,13 @@ export default function Game() {
 
   return (
     <ResponsiveGameLayout showDecorations={true}>
+      <button
+        onClick={() => setLocation("/games")}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+      >
+        <ChevronLeft size={24} />
+        Main Menu
+      </button>
 
       {/* ARIA live region for screen reader announcements */}
       <div

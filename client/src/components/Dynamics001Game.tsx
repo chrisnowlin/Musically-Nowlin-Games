@@ -374,6 +374,14 @@ const Dynamics001Game: React.FC = () => {
   if (gameState.showModeSelection) {
     return (
       <ResponsiveGameLayout showDecorations={false}>
+        <button
+          onClick={() => setLocation("/games")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
+
         {/* Decorative Background */}
         {decorativeOrbs.map((orb) => (
           <div key={orb.key} className={orb.className} />
@@ -381,16 +389,7 @@ const Dynamics001Game: React.FC = () => {
 
         <GameSection variant="header">
           <div className="flex flex-col items-center gap-4 w-full">
-            <div className="flex items-center justify-between w-full max-w-6xl">
-               <Button
-                onClick={() => setLocation('/games')}
-                variant="outline"
-                className={`${playfulShapes.rounded.button} gap-2 border-2 border-purple-300 text-purple-700 hover:bg-purple-50`}
-              >
-                <ChevronLeft className="w-5 h-5" />
-                Back to Games
-              </Button>
-
+            <div className="flex items-center justify-end w-full max-w-6xl">
               <div className="flex items-center gap-4 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-200 shadow-sm">
                 {gameState.volume > 0 ? (
                   <Volume2 className="w-5 h-5 text-purple-600" />

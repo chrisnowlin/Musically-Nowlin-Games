@@ -26,25 +26,6 @@ async function testGameUX() {
     }
   }
 
-  // Test StaffRunnerGame
-  console.log('\n🎮 Testing StaffRunnerGame...');
-  await page.goto(`${baseUrl}/games/staff-runner`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1000);
-
-  const staffStartBtn = page.locator('button:has-text("Start")').first();
-  if (await staffStartBtn.isVisible()) {
-    await staffStartBtn.click();
-    await page.waitForTimeout(1000);
-
-    // Check if game canvas is visible
-    const canvas = page.locator('canvas').first();
-    if (await canvas.isVisible()) {
-      console.log('  ✓ Game canvas rendered');
-    } else {
-      issues.push({ game: 'StaffRunnerGame', issue: 'Canvas not visible after start' });
-    }
-  }
-
   // Test RhythmPuzzleBuilderGame
   console.log('\n🎮 Testing RhythmPuzzleBuilderGame...');
   await page.goto(`${baseUrl}/games/rhythm-puzzle-builder`, { waitUntil: 'networkidle' });

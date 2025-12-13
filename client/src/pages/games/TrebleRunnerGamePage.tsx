@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ChevronLeft } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 // Note definitions with staff positions (0 = middle line B, positive = up, negative = down)
 const NOTE_DEFINITIONS: Record<string, { name: string; position: number; ledger: boolean }> = {
@@ -301,6 +303,7 @@ const HealthBar = ({ health, maxHealth }: { health: number; maxHealth: number })
 
 // Main Game Component
 export default function TrebleRunner() {
+  const [, setLocation] = useLocation();
   const [gameState, setGameState] = useState('menu'); // menu, playing, paused, gameOver
   const [currentLevel, setCurrentLevel] = useState(1);
   const [score, setScore] = useState(0);
@@ -528,7 +531,14 @@ export default function TrebleRunner() {
   // Menu Screen
   if (gameState === 'menu') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4 relative">
+        <button
+          onClick={() => setLocation("/games")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">🎵 Treble Runner</h1>
           <p className="text-indigo-200 text-lg">Master the treble clef!</p>
@@ -582,7 +592,14 @@ export default function TrebleRunner() {
     const isNewHighScore = score > (highScores[`level${currentLevel}`] || 0);
     
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-900 flex flex-col items-center justify-center p-4 relative">
+        <button
+          onClick={() => setLocation("/games")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
         <div className="bg-white/10 backdrop-blur rounded-2xl p-8 w-full max-w-md text-center">
           <h2 className="text-3xl font-bold text-white mb-2">Game Over!</h2>
           
@@ -643,7 +660,14 @@ export default function TrebleRunner() {
 
   // Playing Screen
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-300 to-green-400 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-300 to-green-400 flex flex-col relative">
+      <button
+        onClick={() => setLocation("/games")}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+      >
+        <ChevronLeft size={24} />
+        Main Menu
+      </button>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur shadow-md p-3">
         <div className="flex justify-between items-center max-w-lg mx-auto">

@@ -7,7 +7,6 @@ async function testGamesUX() {
   const baseUrl = 'http://localhost:5173';
   const games = [
     { name: 'ToneColorMatchGame', path: '/games/tone-color-match-001' },
-    { name: 'StaffRunnerGame', path: '/games/staff-runner' },
     { name: 'RhythmPuzzleBuilderGame', path: '/games/rhythm-puzzle-builder-001' },
     { name: 'ComposeYourSongGame', path: '/games/compose-your-song-001' },
     { name: 'RhythmEchoChallengeGame', path: '/games/rhythm-echo-challenge-001' },

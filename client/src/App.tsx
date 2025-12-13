@@ -69,7 +69,6 @@ const AnimalOrchestraConductorGamePage = lazy(() => import("@/pages/games/Animal
 const PitchPerfectPathGamePage = lazy(() => import("@/pages/games/PitchPerfectPathGamePage"));
 const WorldMusicExplorerGamePage = lazy(() => import("@/pages/games/WorldMusicExplorerGamePage"));
 const StaffWarsGamePage = lazy(() => import("@/pages/games/StaffWarsGamePage"));
-const StaffRunnerGamePage = lazy(() => import("@/pages/games/StaffRunnerGamePage"));
 const Rhythm006Page = lazy(() => import("@/pages/games/Rhythm006Page"));
 const Rhythm007Page = lazy(() => import("@/pages/games/Rhythm007Page"));
 const Rhythm002Page = lazy(() => import("@/pages/games/Rhythm002Page"));
@@ -106,6 +105,7 @@ const Cross002Page = lazy(() => import("@/pages/games/Cross002Page"));
 const Cross003Page = lazy(() => import("@/pages/games/Cross003Page"));
 const Advanced001Page = lazy(() => import("@/pages/games/Advanced001Page"));
 const Challenge001Page = lazy(() => import("@/pages/games/Challenge001Page"));
+const TrebleRunnerGamePage = lazy(() => import("@/pages/games/TrebleRunnerGamePage"));
 const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
 
 function Router() {
@@ -186,12 +186,12 @@ function Router() {
       <Route path="/games/cross-003" component={Cross003Page} />
       <Route path="/games/advanced-001" component={Advanced001Page} />
       <Route path="/games/challenge-001" component={Challenge001Page} />
+      <Route path="/games/treble-runner" component={TrebleRunnerGamePage} />
 
 
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-wars" component={StaffWarsGamePage} />
-      <Route path="/games/staff-runner" component={StaffRunnerGamePage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
       <Route component={NotFound} />
       </Switch>

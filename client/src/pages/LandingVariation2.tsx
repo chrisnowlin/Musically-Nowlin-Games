@@ -190,24 +190,6 @@ export default function LandingVariation2() {
                     )}
                   </div>
                 </div>
-
-                {/* Difficulty Stars */}
-                {game.difficulty && (
-                  <div className="flex justify-center gap-1 mt-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          (game.difficulty === "easy" && i === 0) ||
-                          (game.difficulty === "medium" && i <= 1) ||
-                          (game.difficulty === "hard" && i <= 2)
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-gray-300 dark:text-gray-600"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -300,24 +282,6 @@ export default function LandingVariation2() {
                     </Button>
                   </div>
                 </div>
-
-                {/* Difficulty Stars */}
-                {game.difficulty && (
-                  <div className="flex justify-center gap-1 mt-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          (game.difficulty === "easy" && i === 0) ||
-                          (game.difficulty === "medium" && i <= 1) ||
-                          (game.difficulty === "hard" && i <= 2)
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-gray-300 dark:text-gray-600"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -373,7 +337,7 @@ export default function LandingVariation2() {
       <footer className="py-8 px-4 text-center relative z-10">
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl max-w-2xl mx-auto py-6 px-8 shadow-lg border-4 border-purple-300">
           <p className="font-fredoka text-xl text-purple-800 dark:text-purple-200 mb-2">
-            🌟 New games every month! 🌟
+            🌟 Check back for new games! 🌟
           </p>
           <p className="font-nunito text-muted-foreground">
             Keep practicing and become a music superstar!

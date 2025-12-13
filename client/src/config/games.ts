@@ -812,18 +812,16 @@ export const games: GameConfig[] = [
     ageRange: "8-12 years",
   },
   {
-    id: "staff-runner",
-    title: "Staff Runner",
-    description: "Run along the musical staff and collect notes while avoiding obstacles!",
-    route: "/games/staff-runner",
+    id: "treble-runner",
+    title: "Treble Runner",
+    description: "Master the treble clef! Identify notes as they run across the screen.",
+    route: "/games/treble-runner",
     status: "available",
     icon: Music2,
-    color: "bg-teal-500",
+    color: "bg-indigo-600",
     difficulty: "medium",
-    ageRange: "6-10 years",
+    ageRange: "7-12 years",
   },
-
-
 ];
 
 export const getGameById = (id: string): GameConfig | undefined => {

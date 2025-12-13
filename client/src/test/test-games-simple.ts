@@ -7,7 +7,6 @@ async function testGames() {
 
   const games = [
     { name: 'ToneColorMatchGame', path: '/games/tone-color-match' },
-    { name: 'StaffRunnerGame', path: '/games/staff-runner' },
     { name: 'RhythmPuzzleBuilderGame', path: '/games/rhythm-puzzle-builder' },
     { name: 'RhythmEchoChallengeGame', path: '/games/rhythm-echo-challenge' },
   ];
