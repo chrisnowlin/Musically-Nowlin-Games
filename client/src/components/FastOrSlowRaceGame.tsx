@@ -1,22 +1,23 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
-import { Play, HelpCircle, Loader2, Star, Sparkles, ChevronLeft } from "lucide-react";
-import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
+import { Play, Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CHARACTERS = [
-  { image: "/images/leo-lion.jpeg", name: "Leo Lion", id: "leo" },
-  { image: "/images/milo-monkey.jpeg", name: "Milo Monkey", id: "milo" },
-  { image: "/images/bella-bird.jpeg", name: "Bella Bird", id: "bella" },
+  { image: "/images/leo-lion.jpeg", name: "Leo Lion", id: "leo", color: "bg-orange-500" },
+  { image: "/images/milo-monkey.jpeg", name: "Milo Monkey", id: "milo", color: "bg-yellow-500" },
+  { image: "/images/bella-bird.jpeg", name: "Bella Bird", id: "bella", color: "bg-blue-500" },
 ];
 
 interface Character {
   image: string;
   name: string;
   id: string;
+  color: string;
 }
 
 type QuestionType = "faster" | "slower";
@@ -118,6 +119,7 @@ export default function FastOrSlowRaceGame() {
   const [isLoadingNextRound, setIsLoadingNextRound] = useState(false);
   const [playingCharacter, setPlayingCharacter] = useState<1 | 2 | null>(null);
   const [volume, setVolume] = useState(75);
+  const [winner, setWinner] = useState<1 | 2 | null>(null);
 
   // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
   const { setTimeout, clearAll, isMounted } = useGameCleanup();
@@ -139,10 +141,12 @@ export default function FastOrSlowRaceGame() {
       feedback: null,
     });
     setGameStarted(false);
+    setWinner(null);
   }, [clearAll]);
 
   const playBothMelodies = useCallback(async (round: Round) => {
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
+    setWinner(null); // Reset winner animation position
 
     setPlayingCharacter(1);
     await playMelodyAtTempo(round.melody, round.tempo1, isMounted, setTimeout);
@@ -171,6 +175,7 @@ export default function FastOrSlowRaceGame() {
       currentRound: newRound,
       feedback: null,
     }));
+    setWinner(null);
 
     setTimeout(() => playBothMelodies(newRound), 500);
   }, [playBothMelodies, setTimeout]);
@@ -189,8 +194,10 @@ export default function FastOrSlowRaceGame() {
 
     if (isCorrect) {
       audioService.playSuccessTone();
+      setWinner(answer); // The correct answer character "wins" the race to the finish line
     } else {
       audioService.playErrorTone();
+      setWinner(gameState.currentRound.correctAnswer); // Show who actually won
     }
 
     setTimeout(() => {
@@ -203,8 +210,8 @@ export default function FastOrSlowRaceGame() {
           }
         }, 500);
       }
-    }, 2500);
-  }, [gameState, startNewRound]);
+    }, 3000); // Slightly longer delay to enjoy the race animation
+  }, [gameState, startNewRound, isMounted, setTimeout]);
 
   const handleStartGame = async () => {
     await audioService.initialize();
@@ -212,50 +219,53 @@ export default function FastOrSlowRaceGame() {
     startNewRound();
   };
 
-  const decorativeOrbs = generateDecorativeOrbs();
-
   if (!gameStarted) {
     return (
-      <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
+      <div className={`min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
+        {/* Background Patterns */}
+        <div className="absolute inset-0 opacity-10" style={{
+            backgroundImage: "repeating-linear-gradient(45deg, #000 0, #000 10px, #444 10px, #444 20px)"
+        }}></div>
+
         <button
           onClick={() => setLocation("/games")}
-          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-white hover:text-orange-400 font-semibold bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg transition-all border border-white/20"
         >
           <ChevronLeft size={24} />
           Main Menu
         </button>
 
-        {decorativeOrbs.map((orb) => (
-          <div key={orb.key} className={orb.className} />
-        ))}
-        
         <div className="text-center space-y-8 z-10 max-w-2xl">
-          <div className="space-y-4">
-            <h1 className={`${playfulTypography.headings.hero} ${playfulColors.gradients.title}`}>
-              Fast or Slow Race
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="space-y-4"
+          >
+            <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 tracking-tighter italic uppercase drop-shadow-2xl">
+              Fast or Slow<br/>Race
             </h1>
-            <p className={`${playfulTypography.body.large} text-gray-700 dark:text-gray-300`}>
-              Which animal played the melody faster or slower?
+            <p className="text-2xl text-gray-300 font-medium">
+              Start your engines! Who will cross the line?
             </p>
-          </div>
+          </motion.div>
 
-          <div className={`bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm ${playfulShapes.rounded.container} p-8 ${playfulShapes.shadows.card} space-y-6`}>
-            <div className="flex items-center gap-3 text-lg">
-              <HelpCircle className="w-6 h-6 text-orange-600" />
-              <span className={playfulTypography.body.medium}>How to Play:</span>
+          <div className="bg-black/60 backdrop-blur-md rounded-3xl p-8 border border-white/10 shadow-2xl space-y-6">
+            <div className="flex items-center gap-3 text-xl font-bold text-white">
+              <Flag className="w-6 h-6 text-green-500" />
+              <span>How to Race:</span>
             </div>
-            <ul className="text-left space-y-3 text-base">
-              <li className="flex items-start gap-2">
-                <span className="text-2xl">🎵</span>
-                <span>Listen to both animals play the same melody</span>
+            <ul className="text-left space-y-4 text-lg text-gray-200">
+              <li className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
+                <span className="text-3xl">👂</span>
+                <span>Listen to the <strong>engine melody</strong> of both racers</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-2xl">⚡</span>
-                <span>Decide which one played faster or slower</span>
+              <li className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
+                <span className="text-3xl">🏎️</span>
+                <span>Pick the one that was <strong>FASTER</strong> or <strong>SLOWER</strong></span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-2xl">🏁</span>
-                <span>Tap the correct animal to score!</span>
+              <li className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
+                <span className="text-3xl">🏆</span>
+                <span>Watch them race to the finish line!</span>
               </li>
             </ul>
           </div>
@@ -263,10 +273,10 @@ export default function FastOrSlowRaceGame() {
           <Button
             onClick={handleStartGame}
             size="lg"
-            className={`${playfulComponents.button.primary} transform ${playfulAnimations.hover.scale}`}
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white text-2xl font-bold py-8 px-12 rounded-2xl shadow-lg transform hover:scale-105 transition-all border-b-4 border-green-700 active:border-b-0 active:translate-y-1"
           >
-            <Play className="w-8 h-8 mr-3" />
-            Start Playing!
+            <Play className="w-8 h-8 mr-3 fill-current" />
+            START RACE
           </Button>
         </div>
       </div>
@@ -274,146 +284,219 @@ export default function FastOrSlowRaceGame() {
   }
 
   return (
-    <div className={`min-h-screen ${playfulColors.gradients.background} flex flex-col p-4 relative overflow-hidden`}>
-      {decorativeOrbs.map((orb) => (
-        <div key={orb.key} className={orb.className} />
-      ))}
-      
-      <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-4xl mx-auto w-full">
-        <ScoreDisplay 
-          score={gameState.score} 
-          totalQuestions={gameState.totalQuestions}
-          onReset={handleReset}
-          volume={volume}
-          onVolumeChange={setVolume}
-        />
+    <div className="min-h-screen bg-green-600 flex flex-col p-4 relative overflow-hidden">
+        {/* Grass texture overlay */}
+        <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+        }}></div>
 
-        <div className="mt-8 mb-8">
-          <h2 className={`${playfulTypography.headings.h2} text-center text-gray-800 dark:text-gray-200`}>
-            Which animal played{" "}
-            <span className={`font-bold ${gameState.currentRound?.questionType === "faster" ? "text-orange-600" : "text-blue-600"}`}>
-              {gameState.currentRound?.questionType === "faster" ? "FASTER" : "SLOWER"}
-            </span>?
-          </h2>
+      <div className="flex-1 flex flex-col z-10 w-full max-w-6xl mx-auto">
+        <div className="flex justify-between items-start mb-4">
+             <button
+              onClick={() => setLocation("/games")}
+              className="flex items-center gap-2 text-white hover:text-green-100 font-bold bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full transition-all"
+            >
+              <ChevronLeft size={20} />
+              Quit
+            </button>
+            <ScoreDisplay 
+            score={gameState.score} 
+            totalQuestions={gameState.totalQuestions}
+            onReset={handleReset}
+            volume={volume}
+            onVolumeChange={setVolume}
+            className="bg-black/80 text-white border-white/20"
+            />
         </div>
 
-        {gameState.currentRound && (
-          <div className="w-full space-y-8">
-            <div className="grid grid-cols-2 gap-8 max-w-3xl mx-auto">
-              {/* Character 1 */}
-              <button
-                onClick={() => handleAnswer(1)}
-                disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
-                className={`
-                  ${playfulShapes.rounded.card} ${playfulShapes.shadows.card} p-6 pb-8
-                  transition-all duration-300 transform relative overflow-hidden
-                  ${playingCharacter === 1 ? 'scale-105 bg-orange-100 dark:bg-orange-900/30 ring-4 ring-orange-400' : 'bg-white dark:bg-gray-800'}
-                  ${gameState.feedback?.show && gameState.currentRound.correctAnswer === 1 
-                    ? 'bg-green-100 dark:bg-green-900/50 border-4 border-green-500 scale-105' 
-                    : gameState.feedback?.show && gameState.feedback.isCorrect === false && playingCharacter !== 1
-                    ? 'opacity-50 grayscale'
-                    : 'hover:scale-105'
-                  }
-                  disabled:cursor-not-allowed
-                  flex flex-col items-center gap-4 group
-                `}
-              >
-                <div className="w-48 h-48 relative overflow-hidden rounded-2xl">
-                   <img
-                     src={gameState.currentRound.character1.image}
-                     alt={gameState.currentRound.character1.name}
-                     className={`w-full h-full object-cover transition-transform duration-300 ${playingCharacter === 1 ? 'scale-110' : ''}`}
-                   />
-                   {/* Speed indicator when playing */}
-                   {playingCharacter === 1 && (
-                     <div className="absolute -top-4 -right-4 bg-yellow-400 text-white p-2 rounded-full animate-bounce">
-                       <span className="text-2xl">🎵</span>
-                     </div>
-                   )}
-                </div>
-                <span className={`${playfulTypography.headings.h3} group-hover:text-orange-600 transition-colors`}>
-                  {gameState.currentRound.character1.name}
-                </span>
-              </button>
+        {/* Question Header */}
+        <div className="mt-2 mb-8 text-center bg-black/80 backdrop-blur-md rounded-2xl p-6 border-4 border-white shadow-xl mx-auto max-w-2xl transform -skew-x-12">
+            <h2 className="transform skew-x-12 text-3xl font-black text-white uppercase tracking-wider">
+            Who was{" "}
+            <span className={`text-4xl px-2 ${gameState.currentRound?.questionType === "faster" ? "text-yellow-400 animate-pulse" : "text-blue-400"}`}>
+                {gameState.currentRound?.questionType === "faster" ? "FASTER" : "SLOWER"}
+            </span>?
+            </h2>
+        </div>
 
-              {/* Character 2 */}
-              <button
-                onClick={() => handleAnswer(2)}
-                disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
-                className={`
-                  ${playfulShapes.rounded.card} ${playfulShapes.shadows.card} p-6 pb-8
-                  transition-all duration-300 transform relative overflow-hidden
-                  ${playingCharacter === 2 ? 'scale-105 bg-orange-100 dark:bg-orange-900/30 ring-4 ring-orange-400' : 'bg-white dark:bg-gray-800'}
-                  ${gameState.feedback?.show && gameState.currentRound.correctAnswer === 2 
-                    ? 'bg-green-100 dark:bg-green-900/50 border-4 border-green-500 scale-105' 
-                    : gameState.feedback?.show && gameState.feedback.isCorrect === false && playingCharacter !== 2
-                    ? 'opacity-50 grayscale'
-                    : 'hover:scale-105'
-                  }
-                  disabled:cursor-not-allowed
-                  flex flex-col items-center gap-4 group
-                `}
-              >
-                <div className="w-48 h-48 relative overflow-hidden rounded-2xl">
-                   <img
-                     src={gameState.currentRound.character2.image}
-                     alt={gameState.currentRound.character2.name}
-                     className={`w-full h-full object-cover transition-transform duration-300 ${playingCharacter === 2 ? 'scale-110' : ''}`}
-                   />
-                   {/* Speed indicator when playing */}
-                   {playingCharacter === 2 && (
-                     <div className="absolute -top-4 -right-4 bg-yellow-400 text-white p-2 rounded-full animate-bounce">
-                       <span className="text-2xl">🎵</span>
-                     </div>
-                   )}
-                </div>
-                <span className={`${playfulTypography.headings.h3} group-hover:text-orange-600 transition-colors`}>
-                  {gameState.currentRound.character2.name}
-                </span>
-              </button>
+        {/* Race Track Area */}
+        <div className="flex-1 relative flex flex-col justify-center gap-8 py-8">
+            {/* Start Line Graphic */}
+            <div className="absolute left-[15%] top-0 bottom-0 w-8 flex flex-col opacity-50 z-0">
+                 {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-black' : 'bg-white'}`}></div>
+                 ))}
+            </div>
+            {/* Finish Line Graphic */}
+            <div className="absolute right-[10%] top-0 bottom-0 w-8 flex flex-col z-0">
+                 {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-white' : 'bg-black'}`}></div>
+                 ))}
             </div>
 
-            <div className="flex justify-center">
-              <Button
-                onClick={() => playBothMelodies(gameState.currentRound!)}
+            {gameState.currentRound && (
+                <>
+                {/* Lane 1 */}
+                <div className="relative h-40 bg-gray-800 rounded-r-full border-y-4 border-gray-600 flex items-center shadow-2xl">
+                     <div className="absolute inset-0 flex items-center">
+                        <div className="w-full h-0 border-t-2 border-dashed border-gray-500 opacity-50"></div>
+                     </div>
+                     
+                     <div className="absolute left-4 z-20">
+                         <Button 
+                            onClick={() => handleAnswer(1)}
+                            disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
+                            className={`
+                                h-auto py-2 px-6 rounded-xl font-bold text-xl uppercase tracking-wider border-b-4 active:border-b-0 active:translate-y-1 transition-all
+                                ${gameState.currentRound.correctAnswer === 1 && gameState.feedback?.show ? 'bg-green-500 hover:bg-green-600 border-green-700' : 'bg-gray-200 text-gray-800 hover:bg-white border-gray-400'}
+                            `}
+                         >
+                            Select
+                         </Button>
+                     </div>
+
+                     <motion.div
+                        className="absolute left-[15%] z-10"
+                        animate={{
+                            x: winner === 1 ? "calc(80vw - 250px)" : (playingCharacter === 1 ? [0, 10, -5, 5, 0] : 0),
+                            scale: playingCharacter === 1 ? [1, 1.1, 1] : 1,
+                        }}
+                        transition={{
+                            x: { duration: winner === 1 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
+                            scale: { duration: 0.2, repeat: playingCharacter === 1 ? Infinity : 0 }
+                        }}
+                     >
+                        <div className={`relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden ${gameState.currentRound.character1.color} group cursor-pointer`}
+                             onClick={() => !gameState.feedback && handleAnswer(1)}
+                        >
+                             <img 
+                                src={gameState.currentRound.character1.image} 
+                                alt={gameState.currentRound.character1.name}
+                                className="w-full h-full object-cover"
+                             />
+                             {/* Engine Exhaust Effect */}
+                             {playingCharacter === 1 && (
+                                <motion.div 
+                                    className="absolute -left-8 bottom-4 w-12 h-12 bg-white/50 rounded-full blur-xl"
+                                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
+                                    transition={{ repeat: Infinity, duration: 0.5 }}
+                                />
+                             )}
+                        </div>
+                        <div className="text-center mt-2 bg-black/50 backdrop-blur text-white px-2 rounded-full font-bold">
+                            {gameState.currentRound.character1.name}
+                        </div>
+                     </motion.div>
+                </div>
+
+                {/* Lane 2 */}
+                <div className="relative h-40 bg-gray-800 rounded-r-full border-y-4 border-gray-600 flex items-center shadow-2xl mt-4">
+                     <div className="absolute inset-0 flex items-center">
+                        <div className="w-full h-0 border-t-2 border-dashed border-gray-500 opacity-50"></div>
+                     </div>
+
+                     <div className="absolute left-4 z-20">
+                         <Button 
+                            onClick={() => handleAnswer(2)}
+                            disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
+                            className={`
+                                h-auto py-2 px-6 rounded-xl font-bold text-xl uppercase tracking-wider border-b-4 active:border-b-0 active:translate-y-1 transition-all
+                                ${gameState.currentRound.correctAnswer === 2 && gameState.feedback?.show ? 'bg-green-500 hover:bg-green-600 border-green-700' : 'bg-gray-200 text-gray-800 hover:bg-white border-gray-400'}
+                            `}
+                         >
+                            Select
+                         </Button>
+                     </div>
+
+                     <motion.div
+                        className="absolute left-[15%] z-10"
+                        animate={{
+                            x: winner === 2 ? "calc(80vw - 250px)" : (playingCharacter === 2 ? [0, 10, -5, 5, 0] : 0),
+                            scale: playingCharacter === 2 ? [1, 1.1, 1] : 1,
+                        }}
+                        transition={{
+                            x: { duration: winner === 2 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
+                            scale: { duration: 0.2, repeat: playingCharacter === 2 ? Infinity : 0 }
+                        }}
+                     >
+                        <div className={`relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden ${gameState.currentRound.character2.color} group cursor-pointer`}
+                             onClick={() => !gameState.feedback && handleAnswer(2)}
+                        >
+                             <img 
+                                src={gameState.currentRound.character2.image} 
+                                alt={gameState.currentRound.character2.name}
+                                className="w-full h-full object-cover"
+                             />
+                              {/* Engine Exhaust Effect */}
+                             {playingCharacter === 2 && (
+                                <motion.div 
+                                    className="absolute -left-8 bottom-4 w-12 h-12 bg-white/50 rounded-full blur-xl"
+                                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
+                                    transition={{ repeat: Infinity, duration: 0.5 }}
+                                />
+                             )}
+                        </div>
+                        <div className="text-center mt-2 bg-black/50 backdrop-blur text-white px-2 rounded-full font-bold">
+                            {gameState.currentRound.character2.name}
+                        </div>
+                     </motion.div>
+                </div>
+                </>
+            )}
+        </div>
+
+        {/* Controls */}
+        <div className="flex justify-center p-8 bg-black/20 backdrop-blur-sm rounded-t-3xl">
+             <Button
+                onClick={() => gameState.currentRound && playBothMelodies(gameState.currentRound)}
                 disabled={gameState.isPlaying || isLoadingNextRound}
                 size="lg"
-                variant="outline"
-                className={`${playfulShapes.rounded.button} min-w-[200px]`}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-6 px-8 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
               >
                 {gameState.isPlaying ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                    Listening...
+                    Racing...
                   </>
                 ) : (
                   <>
                     <Play className="w-6 h-6 mr-2" />
-                    Play Again
+                    Replay Engines
                   </>
                 )}
               </Button>
-            </div>
+        </div>
 
+        {/* Feedback Overlay */}
+        <AnimatePresence>
             {gameState.feedback?.show && (
-              <div className={`text-center p-6 ${playfulShapes.rounded.container} ${
-                gameState.feedback.isCorrect ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'
-              } max-w-xl mx-auto transform animate-in fade-in slide-in-from-bottom-4 duration-300`}>
-                <p className={playfulTypography.headings.h3}>
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-8 rounded-3xl shadow-2xl border-4 ${
+                gameState.feedback.isCorrect ? 'bg-green-500 border-green-300' : 'bg-red-500 border-red-300'
+              } text-white text-center max-w-lg w-full`}
+              >
+                <h3 className="text-4xl font-black mb-4 uppercase italic">
                   {gameState.feedback.isCorrect ? (
                     <>
-                      <Star className="inline w-8 h-8 mr-2 text-yellow-500 animate-spin-slow" />
-                      Correct! {gameState.currentRound.correctAnswer === 1 ? gameState.currentRound.character1.name : gameState.currentRound.character2.name} was {gameState.currentRound.questionType}!
-                      <Sparkles className="inline w-8 h-8 ml-2 text-yellow-500 animate-pulse" />
+                      <Trophy className="inline w-12 h-12 mr-2 text-yellow-300 animate-bounce" />
+                      Winner!
                     </>
                   ) : (
-                    <>Try again! Listen carefully to the tempo of each melody.</>
+                    "False Start!"
                   )}
+                </h3>
+                <p className="text-xl font-medium">
+                  {gameState.feedback.isCorrect 
+                    ? `Great job! That was definitely ${gameState.currentRound?.questionType}!`
+                    : `Oops! That wasn't the ${gameState.currentRound?.questionType} one.`}
                 </p>
-              </div>
+              </motion.div>
             )}
-          </div>
-        )}
+        </AnimatePresence>
+
       </div>
     </div>
   );
