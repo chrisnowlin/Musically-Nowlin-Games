@@ -321,17 +321,14 @@ export default function FastOrSlowRaceGame() {
 
         {/* Race Track Area */}
         <div 
-          className="flex-1 relative flex flex-col justify-center gap-8 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4"
+          className="flex-1 relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4 max-w-5xl mx-auto w-full"
           style={{ backgroundImage: 'url(/images/race-track-bg.jpeg)' }}
         >
             {/* Start Line Graphic */}
-            <div className="absolute left-[15%] top-0 bottom-0 w-8 flex flex-col opacity-80 z-0 shadow-lg">
-                 {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-black' : 'bg-white'}`}></div>
-                 ))}
-            </div>
+            <div className="absolute left-[20%] top-0 bottom-0 w-4 bg-white/50 z-0"></div>
+            
             {/* Finish Line Graphic */}
-            <div className="absolute right-[10%] top-0 bottom-0 w-8 flex flex-col z-0 shadow-lg">
+            <div className="absolute right-[10%] top-0 bottom-0 w-8 flex flex-col z-0">
                  {Array.from({ length: 20 }).map((_, i) => (
                     <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-white' : 'bg-black'}`}></div>
                  ))}
@@ -340,109 +337,119 @@ export default function FastOrSlowRaceGame() {
             {gameState.currentRound && (
                 <>
                 {/* Lane 1 */}
-                <div className="relative h-40 bg-black/30 backdrop-blur-[2px] rounded-r-full border-y-2 border-white/10 flex items-center shadow-lg">
-                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full h-0 border-t-2 border-dashed border-white/30 opacity-50"></div>
-                     </div>
+                <div className="relative h-48 w-full flex items-center">
+                     {/* Lane marking */}
+                     <div className="absolute inset-x-0 h-32 bg-black/20 backdrop-blur-[1px] top-1/2 -translate-y-1/2 border-y border-white/10"></div>
                      
-                     <div className="absolute left-4 z-20">
+                     {/* Character 1 */}
+                     <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
+                        <motion.div
+                            animate={{
+                                x: winner === 1 ? "calc(60vw - 100px)" : (playingCharacter === 1 ? [0, 5, -2, 2, 0] : 0),
+                                scale: playingCharacter === 1 ? [1, 1.05, 1] : 1,
+                            }}
+                            transition={{
+                                x: { duration: winner === 1 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
+                                scale: { duration: 0.2, repeat: playingCharacter === 1 ? Infinity : 0 }
+                            }}
+                        >
+                            <div 
+                                className={`relative w-36 h-36 rounded-full border-4 border-white shadow-xl overflow-hidden ${gameState.currentRound.character1.color} cursor-pointer hover:scale-105 transition-transform`}
+                                onClick={() => !gameState.feedback && handleAnswer(1)}
+                            >
+                                <img 
+                                    src={gameState.currentRound.character1.image} 
+                                    alt={gameState.currentRound.character1.name}
+                                    className="w-full h-full object-cover"
+                                />
+                                {playingCharacter === 1 && (
+                                    <motion.div 
+                                        className="absolute -left-6 bottom-4 w-10 h-10 bg-white/40 rounded-full blur-lg"
+                                        animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
+                                        transition={{ repeat: Infinity, duration: 0.4 }}
+                                    />
+                                )}
+                            </div>
+                            <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold border border-white/20 whitespace-nowrap">
+                                {gameState.currentRound.character1.name}
+                            </div>
+                        </motion.div>
+                     </div>
+
+                     {/* Select Button 1 */}
+                     <div className="absolute left-4 z-30">
                          <Button 
                             onClick={() => handleAnswer(1)}
                             disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
                             className={`
-                                h-auto py-2 px-6 rounded-xl font-bold text-xl uppercase tracking-wider border-b-4 active:border-b-0 active:translate-y-1 transition-all
-                                ${gameState.currentRound.correctAnswer === 1 && gameState.feedback?.show ? 'bg-green-500 hover:bg-green-600 border-green-700' : 'bg-gray-200 text-gray-800 hover:bg-white border-gray-400'}
+                                h-auto py-3 px-6 rounded-xl font-bold text-lg uppercase tracking-wider border-b-4 active:border-b-0 active:translate-y-1 transition-all shadow-lg
+                                ${gameState.currentRound.correctAnswer === 1 && gameState.feedback?.show 
+                                    ? 'bg-green-500 hover:bg-green-600 border-green-700 text-white' 
+                                    : 'bg-white text-gray-900 hover:bg-gray-100 border-gray-300'
+                                }
                             `}
                          >
                             Select
                          </Button>
                      </div>
-
-                     <motion.div
-                        className="absolute left-[15%] z-10"
-                        animate={{
-                            x: winner === 1 ? "calc(80vw - 250px)" : (playingCharacter === 1 ? [0, 10, -5, 5, 0] : 0),
-                            scale: playingCharacter === 1 ? [1, 1.1, 1] : 1,
-                        }}
-                        transition={{
-                            x: { duration: winner === 1 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
-                            scale: { duration: 0.2, repeat: playingCharacter === 1 ? Infinity : 0 }
-                        }}
-                     >
-                        <div className={`relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden ${gameState.currentRound.character1.color} group cursor-pointer`}
-                             onClick={() => !gameState.feedback && handleAnswer(1)}
-                        >
-                             <img 
-                                src={gameState.currentRound.character1.image} 
-                                alt={gameState.currentRound.character1.name}
-                                className="w-full h-full object-cover"
-                             />
-                             {/* Engine Exhaust Effect */}
-                             {playingCharacter === 1 && (
-                                <motion.div 
-                                    className="absolute -left-8 bottom-4 w-12 h-12 bg-white/50 rounded-full blur-xl"
-                                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
-                                    transition={{ repeat: Infinity, duration: 0.5 }}
-                                />
-                             )}
-                        </div>
-                        <div className="text-center mt-2 bg-black/50 backdrop-blur text-white px-2 rounded-full font-bold">
-                            {gameState.currentRound.character1.name}
-                        </div>
-                     </motion.div>
                 </div>
 
                 {/* Lane 2 */}
-                <div className="relative h-40 bg-black/30 backdrop-blur-[2px] rounded-r-full border-y-2 border-white/10 flex items-center shadow-lg mt-4">
-                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full h-0 border-t-2 border-dashed border-white/30 opacity-50"></div>
+                <div className="relative h-48 w-full flex items-center">
+                     {/* Lane marking */}
+                     <div className="absolute inset-x-0 h-32 bg-black/20 backdrop-blur-[1px] top-1/2 -translate-y-1/2 border-y border-white/10"></div>
+
+                     {/* Character 2 */}
+                     <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
+                        <motion.div
+                            animate={{
+                                x: winner === 2 ? "calc(60vw - 100px)" : (playingCharacter === 2 ? [0, 5, -2, 2, 0] : 0),
+                                scale: playingCharacter === 2 ? [1, 1.05, 1] : 1,
+                            }}
+                            transition={{
+                                x: { duration: winner === 2 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
+                                scale: { duration: 0.2, repeat: playingCharacter === 2 ? Infinity : 0 }
+                            }}
+                        >
+                            <div 
+                                className={`relative w-36 h-36 rounded-full border-4 border-white shadow-xl overflow-hidden ${gameState.currentRound.character2.color} cursor-pointer hover:scale-105 transition-transform`}
+                                onClick={() => !gameState.feedback && handleAnswer(2)}
+                            >
+                                <img 
+                                    src={gameState.currentRound.character2.image} 
+                                    alt={gameState.currentRound.character2.name}
+                                    className="w-full h-full object-cover"
+                                />
+                                {playingCharacter === 2 && (
+                                    <motion.div 
+                                        className="absolute -left-6 bottom-4 w-10 h-10 bg-white/40 rounded-full blur-lg"
+                                        animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
+                                        transition={{ repeat: Infinity, duration: 0.4 }}
+                                    />
+                                )}
+                            </div>
+                            <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold border border-white/20 whitespace-nowrap">
+                                {gameState.currentRound.character2.name}
+                            </div>
+                        </motion.div>
                      </div>
 
-                     <div className="absolute left-4 z-20">
+                     {/* Select Button 2 */}
+                     <div className="absolute left-4 z-30">
                          <Button 
                             onClick={() => handleAnswer(2)}
                             disabled={gameState.isPlaying || gameState.feedback !== null || isLoadingNextRound}
                             className={`
-                                h-auto py-2 px-6 rounded-xl font-bold text-xl uppercase tracking-wider border-b-4 active:border-b-0 active:translate-y-1 transition-all
-                                ${gameState.currentRound.correctAnswer === 2 && gameState.feedback?.show ? 'bg-green-500 hover:bg-green-600 border-green-700' : 'bg-gray-200 text-gray-800 hover:bg-white border-gray-400'}
+                                h-auto py-3 px-6 rounded-xl font-bold text-lg uppercase tracking-wider border-b-4 active:border-b-0 active:translate-y-1 transition-all shadow-lg
+                                ${gameState.currentRound.correctAnswer === 2 && gameState.feedback?.show 
+                                    ? 'bg-green-500 hover:bg-green-600 border-green-700 text-white' 
+                                    : 'bg-white text-gray-900 hover:bg-gray-100 border-gray-300'
+                                }
                             `}
                          >
                             Select
                          </Button>
                      </div>
-
-                     <motion.div
-                        className="absolute left-[15%] z-10"
-                        animate={{
-                            x: winner === 2 ? "calc(80vw - 250px)" : (playingCharacter === 2 ? [0, 10, -5, 5, 0] : 0),
-                            scale: playingCharacter === 2 ? [1, 1.1, 1] : 1,
-                        }}
-                        transition={{
-                            x: { duration: winner === 2 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
-                            scale: { duration: 0.2, repeat: playingCharacter === 2 ? Infinity : 0 }
-                        }}
-                     >
-                        <div className={`relative w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden ${gameState.currentRound.character2.color} group cursor-pointer`}
-                             onClick={() => !gameState.feedback && handleAnswer(2)}
-                        >
-                             <img 
-                                src={gameState.currentRound.character2.image} 
-                                alt={gameState.currentRound.character2.name}
-                                className="w-full h-full object-cover"
-                             />
-                              {/* Engine Exhaust Effect */}
-                             {playingCharacter === 2 && (
-                                <motion.div 
-                                    className="absolute -left-8 bottom-4 w-12 h-12 bg-white/50 rounded-full blur-xl"
-                                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
-                                    transition={{ repeat: Infinity, duration: 0.5 }}
-                                />
-                             )}
-                        </div>
-                        <div className="text-center mt-2 bg-black/50 backdrop-blur text-white px-2 rounded-full font-bold">
-                            {gameState.currentRound.character2.name}
-                        </div>
-                     </motion.div>
                 </div>
                 </>
             )}
