@@ -320,15 +320,18 @@ export default function FastOrSlowRaceGame() {
         </div>
 
         {/* Race Track Area */}
-        <div className="flex-1 relative flex flex-col justify-center gap-8 py-8">
+        <div 
+          className="flex-1 relative flex flex-col justify-center gap-8 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4"
+          style={{ backgroundImage: 'url(/images/race-track-bg.jpeg)' }}
+        >
             {/* Start Line Graphic */}
-            <div className="absolute left-[15%] top-0 bottom-0 w-8 flex flex-col opacity-50 z-0">
+            <div className="absolute left-[15%] top-0 bottom-0 w-8 flex flex-col opacity-80 z-0 shadow-lg">
                  {Array.from({ length: 20 }).map((_, i) => (
                     <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-black' : 'bg-white'}`}></div>
                  ))}
             </div>
             {/* Finish Line Graphic */}
-            <div className="absolute right-[10%] top-0 bottom-0 w-8 flex flex-col z-0">
+            <div className="absolute right-[10%] top-0 bottom-0 w-8 flex flex-col z-0 shadow-lg">
                  {Array.from({ length: 20 }).map((_, i) => (
                     <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-white' : 'bg-black'}`}></div>
                  ))}
@@ -337,9 +340,9 @@ export default function FastOrSlowRaceGame() {
             {gameState.currentRound && (
                 <>
                 {/* Lane 1 */}
-                <div className="relative h-40 bg-gray-800 rounded-r-full border-y-4 border-gray-600 flex items-center shadow-2xl">
+                <div className="relative h-40 bg-black/30 backdrop-blur-[2px] rounded-r-full border-y-2 border-white/10 flex items-center shadow-lg">
                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full h-0 border-t-2 border-dashed border-gray-500 opacity-50"></div>
+                        <div className="w-full h-0 border-t-2 border-dashed border-white/30 opacity-50"></div>
                      </div>
                      
                      <div className="absolute left-4 z-20">
@@ -390,9 +393,9 @@ export default function FastOrSlowRaceGame() {
                 </div>
 
                 {/* Lane 2 */}
-                <div className="relative h-40 bg-gray-800 rounded-r-full border-y-4 border-gray-600 flex items-center shadow-2xl mt-4">
+                <div className="relative h-40 bg-black/30 backdrop-blur-[2px] rounded-r-full border-y-2 border-white/10 flex items-center shadow-lg mt-4">
                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full h-0 border-t-2 border-dashed border-gray-500 opacity-50"></div>
+                        <div className="w-full h-0 border-t-2 border-dashed border-white/30 opacity-50"></div>
                      </div>
 
                      <div className="absolute left-4 z-20">
