@@ -13,7 +13,7 @@ import {
   ClarinetIcon, OboeIcon, SaxophoneIcon, BassoonIcon, ViolaIcon,
   TromboneIcon, TubaIcon, DoubleBassIcon, SnareDrumIcon, BassDrumIcon,
   TriangleIcon, TambourineIcon, TimpaniIcon, XylophoneIcon, GlockenspielIcon,
-  CowbellIcon, WoodblockIcon, CastanetsIcon, SleighBellsIcon, CymbalsIcon, WindChimesIcon
+  CowbellIcon, WoodblockIcon, CastanetsIcon, SleighBellsIcon, CymbalsIcon
 } from '@/components/icons/InstrumentIcons';
 
 interface Instrument {
@@ -66,7 +66,6 @@ const INSTRUMENT_VOLUME_NORMALIZATION: Record<string, number> = {
   'castanets': 7.0,
   'sleigh-bells': 8.0,
   'cymbals': 6.5,
-  'wind-chimes': 8.0,
 };
 
 // Get normalized volume for an instrument
@@ -104,7 +103,6 @@ const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   'castanets': CastanetsIcon,
   'sleigh-bells': SleighBellsIcon,
   'cymbals': CymbalsIcon,
-  'wind-chimes': WindChimesIcon,
 };
 
 // Color map for instruments
@@ -134,7 +132,6 @@ const COLOR_MAP: Record<string, string> = {
   'castanets': 'bg-stone-700',
   'sleigh-bells': 'bg-yellow-300',
   'cymbals': 'bg-yellow-500',
-  'wind-chimes': 'bg-teal-400',
 };
 
 // Build instruments from the instrumentLibrary for correct paths
@@ -331,15 +328,6 @@ function buildInstrumentsFromLibrary(): Instrument[] {
         `${BASE_URL}audio/philharmonia/percussion/clash cymbals/clash-cymbals__long_fortissimo_struck-together.mp3`,
       ],
       color: 'bg-yellow-500',
-    },
-    {
-      id: 'wind-chimes',
-      name: 'Wind Chimes',
-      Icon: WindChimesIcon,
-      audioPaths: [
-        `${BASE_URL}audio/philharmonia/percussion/wind chimes/wind-chimes__long_mezzo-piano_hand.mp3`,
-      ],
-      color: 'bg-teal-400',
     },
   ];
   

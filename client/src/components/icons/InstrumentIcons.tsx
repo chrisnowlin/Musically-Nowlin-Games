@@ -161,7 +161,7 @@ export const DoubleBassIcon: React.FC<InstrumentIconProps> = ({ className }) => 
     <img
       src={`${import.meta.env.BASE_URL}images/double-bass.png`}
       alt="Double Bass"
-      style={{ objectFit: 'contain', width: '100%', height: '100%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '115%', height: '115%', maxWidth: 'none' }}
     />
   </div>
 );
@@ -268,10 +268,10 @@ export const XylophoneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
 
 export const GlockenspielIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/glockenspiel.png`}
       alt="Glockenspiel"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '120%', height: '120%', maxWidth: 'none' }}
     />
   </div>
 );
