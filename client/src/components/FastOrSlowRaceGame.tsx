@@ -333,11 +333,11 @@ export default function FastOrSlowRaceGame() {
                      <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
                         <motion.div
                             animate={{
-                                x: winner === 1 ? "calc(60vw - 100px)" : (playingCharacter === 1 ? [0, 5, -2, 2, 0] : 0),
+                                x: winner === 1 ? "calc(70vw - 100px)" : (playingCharacter === 1 ? [0, 5, -2, 2, 0] : 0),
                                 scale: playingCharacter === 1 ? [1, 1.05, 1] : 1,
                             }}
                             transition={{
-                                x: { duration: winner === 1 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
+                                x: { duration: winner === 1 ? 2.5 : 0.3, type: "spring", stiffness: 30 },
                                 scale: { duration: 0.2, repeat: playingCharacter === 1 ? Infinity : 0 }
                             }}
                         >
@@ -389,11 +389,11 @@ export default function FastOrSlowRaceGame() {
                      <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
                         <motion.div
                             animate={{
-                                x: winner === 2 ? "calc(60vw - 100px)" : (playingCharacter === 2 ? [0, 5, -2, 2, 0] : 0),
+                                x: winner === 2 ? "calc(70vw - 100px)" : (playingCharacter === 2 ? [0, 5, -2, 2, 0] : 0),
                                 scale: playingCharacter === 2 ? [1, 1.05, 1] : 1,
                             }}
                             transition={{
-                                x: { duration: winner === 2 ? 1.5 : 0.3, type: "spring", stiffness: 50 },
+                                x: { duration: winner === 2 ? 2.5 : 0.3, type: "spring", stiffness: 30 },
                                 scale: { duration: 0.2, repeat: playingCharacter === 2 ? Infinity : 0 }
                             }}
                         >
