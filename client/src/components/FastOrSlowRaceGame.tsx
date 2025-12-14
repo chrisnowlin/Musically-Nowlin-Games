@@ -322,7 +322,7 @@ export default function FastOrSlowRaceGame() {
         {/* Race Track Area */}
         <div 
           className="flex-1 relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4 max-w-5xl mx-auto w-full"
-          style={{ backgroundImage: 'url(/images/race-track-bg.jpeg)' }}
+          style={{ backgroundImage: 'url(/images/race-track-bg-v2.jpeg)' }}
         >
             {/* Start Line Graphic */}
             <div className="absolute left-[20%] top-0 bottom-0 w-4 bg-white/50 z-0"></div>
