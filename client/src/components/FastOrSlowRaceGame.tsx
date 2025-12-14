@@ -11,6 +11,8 @@ const CHARACTERS = [
   { image: "/images/leo-lion.jpeg", name: "Leo Lion", id: "leo", color: "bg-orange-500" },
   { image: "/images/milo-monkey.jpeg", name: "Milo Monkey", id: "milo", color: "bg-yellow-500" },
   { image: "/images/bella-bird.jpeg", name: "Bella Bird", id: "bella", color: "bg-blue-500" },
+  { image: "/images/ellie-elephant.jpeg", name: "Ellie Elephant", id: "ellie", color: "bg-purple-500" },
+  { image: "/images/gary-giraffe.jpeg", name: "Gary Giraffe", id: "gary", color: "bg-green-500" },
 ];
 
 interface Character {
