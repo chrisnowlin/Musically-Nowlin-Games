@@ -366,6 +366,28 @@ export default function FastOrSlowRaceGame() {
         >
             {gameState.currentRound && (
                 <>
+                {/* Replay Controls (Centered) */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+                     <Button
+                        onClick={() => gameState.currentRound && playBothMelodies(gameState.currentRound)}
+                        disabled={gameState.isPlaying || isLoadingNextRound}
+                        size="lg"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-6 px-8 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
+                      >
+                        {gameState.isPlaying ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                            Running...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-6 h-6 mr-2" />
+                            Replay Race
+                          </>
+                        )}
+                      </Button>
+                </div>
+
                 {/* Lane 1 */}
                 <div className="relative h-48 w-full flex items-center">
                      
@@ -481,28 +503,6 @@ export default function FastOrSlowRaceGame() {
                 </div>
                 </>
             )}
-        </div>
-
-        {/* Controls */}
-        <div className="flex justify-center p-8 bg-black/20 backdrop-blur-sm rounded-t-3xl">
-             <Button
-                onClick={() => gameState.currentRound && playBothMelodies(gameState.currentRound)}
-                disabled={gameState.isPlaying || isLoadingNextRound}
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-6 px-8 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
-              >
-                {gameState.isPlaying ? (
-                  <>
-                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-6 h-6 mr-2" />
-                    Replay Race
-                  </>
-                )}
-              </Button>
         </div>
 
       </div>
