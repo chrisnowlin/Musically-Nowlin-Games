@@ -221,10 +221,10 @@ export default function FastOrSlowRaceGame() {
 
   if (!gameStarted) {
     return (
-      <div className={`min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
+      <div className={`min-h-screen bg-gradient-to-br from-green-500 to-green-700 flex flex-col items-center justify-center p-4 relative overflow-hidden`}>
         {/* Background Patterns */}
         <div className="absolute inset-0 opacity-10" style={{
-            backgroundImage: "repeating-linear-gradient(45deg, #000 0, #000 10px, #444 10px, #444 20px)"
+            backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,0.1) 20px, rgba(0,0,0,0.1) 40px)"
         }}></div>
 
         <button
