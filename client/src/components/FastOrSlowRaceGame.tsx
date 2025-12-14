@@ -285,11 +285,6 @@ export default function FastOrSlowRaceGame() {
 
   return (
     <div className="min-h-screen bg-green-600 flex flex-col p-4 relative overflow-hidden">
-        {/* Grass texture overlay */}
-        <div className="absolute inset-0 opacity-20" style={{
-            backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
-        }}></div>
-
       <div className="flex-1 flex flex-col z-10 w-full max-w-6xl mx-auto">
         <div className="flex justify-between items-start mb-4">
              <button
@@ -324,22 +319,10 @@ export default function FastOrSlowRaceGame() {
           className="flex-1 relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4 max-w-5xl mx-auto w-full"
           style={{ backgroundImage: 'url(/images/race-track-bg-v2.jpeg)' }}
         >
-            {/* Start Line Graphic */}
-            <div className="absolute left-[20%] top-0 bottom-0 w-4 bg-white/50 z-0"></div>
-            
-            {/* Finish Line Graphic */}
-            <div className="absolute right-[10%] top-0 bottom-0 w-8 flex flex-col z-0">
-                 {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className={`flex-1 ${i % 2 === 0 ? 'bg-white' : 'bg-black'}`}></div>
-                 ))}
-            </div>
-
             {gameState.currentRound && (
                 <>
                 {/* Lane 1 */}
                 <div className="relative h-48 w-full flex items-center">
-                     {/* Lane marking */}
-                     <div className="absolute inset-x-0 h-32 bg-black/20 backdrop-blur-[1px] top-1/2 -translate-y-1/2 border-y border-white/10"></div>
                      
                      {/* Character 1 */}
                      <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
@@ -396,8 +379,6 @@ export default function FastOrSlowRaceGame() {
 
                 {/* Lane 2 */}
                 <div className="relative h-48 w-full flex items-center">
-                     {/* Lane marking */}
-                     <div className="absolute inset-x-0 h-32 bg-black/20 backdrop-blur-[1px] top-1/2 -translate-y-1/2 border-y border-white/10"></div>
 
                      {/* Character 2 */}
                      <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
