@@ -2,12 +2,12 @@ import { memo } from "react";
 import { AnimalCharacter as CharacterType } from "@/lib/schema";
 import { Volume2, Check, X, Sparkles, Music } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { playfulShapes, playfulTypography } from "@/theme/playful";
-import monkeySvg from "@assets/monkey.svg";
-import birdSvg from "@assets/bird.svg";
-import lionSvg from "@assets/lion.svg";
-import elephantSvg from "@assets/elephant.svg";
-import giraffeSvg from "@assets/giraffe.svg";
+import { playfulShapes } from "@/theme/playful";
+import birdPng from "/images/bella-bird.jpeg";
+import elephantPng from "/images/ellie-elephant.jpeg";
+import giraffePng from "/images/gary-giraffe.jpeg";
+import lionPng from "/images/leo-lion.jpeg";
+import monkeyPng from "/images/milo-monkey.jpeg";
 
 interface AnimalCharacterProps {
   character: CharacterType;
@@ -35,25 +35,13 @@ function AnimalCharacter({
   // Get sprite/image based on character ID - use SVGs for all characters
   const getCharacterImage = () => {
     const imageMap: Record<string, string> = {
-      elephant: elephantSvg,
-      giraffe: giraffeSvg,
-      monkey: monkeySvg,
-      bird: birdSvg,
-      lion: lionSvg,
+      elephant: elephantPng,
+      giraffe: giraffePng,
+      monkey: monkeyPng,
+      bird: birdPng,
+      lion: lionPng,
     };
-    return imageMap[character.id] || monkeySvg;
-  };
-
-  // Character emoji for decoration
-  const getCharacterEmoji = () => {
-    const emojiMap: Record<string, string> = {
-      elephant: "🐘",
-      giraffe: "🦒",
-      monkey: "🐵",
-      bird: "🐦",
-      lion: "🦁",
-    };
-    return emojiMap[character.id] || "🎵";
+    return imageMap[character.id] || monkeyPng;
   };
 
   return (
@@ -62,71 +50,61 @@ function AnimalCharacter({
       disabled={disabled}
       aria-label={`${character.name}${isPlaying ? " (playing)" : ""}${isSelected ? " (selected)" : ""}`}
       className={cn(
-        "relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 transform",
-        "min-w-[120px] min-h-[140px] sm:min-w-[140px] sm:min-h-[160px]",
+        "relative overflow-hidden rounded-2xl transition-all duration-300 transform",
+        "w-[140px] h-[140px] sm:w-[160px] sm:h-[160px]",
         playfulShapes.shadows.card,
         // Base state
         !disabled && "hover:scale-105 cursor-pointer",
         disabled && "opacity-50 cursor-not-allowed",
         // Playing state
-        isPlaying && "ring-4 ring-yellow-400 animate-pulse bg-yellow-50 dark:bg-yellow-900/30",
-        // Selected state  
-        isSelected && !isCorrect && isCorrect !== false && "ring-4 ring-blue-400 bg-blue-50 dark:bg-blue-900/30",
+        isPlaying && "ring-4 ring-yellow-400 animate-pulse",
+        // Selected state
+        isSelected && !isCorrect && isCorrect !== false && "ring-4 ring-blue-400",
         // Correct/incorrect feedback
-        isCorrect === true && "ring-4 ring-green-400 bg-green-50 dark:bg-green-900/30",
-        isCorrect === false && "ring-4 ring-red-400 bg-red-50 dark:bg-red-900/30",
+        isCorrect === true && "ring-4 ring-green-400",
+        isCorrect === false && "ring-4 ring-red-400",
         // Default background
-        !isPlaying && !isSelected && isCorrect === null && "bg-white dark:bg-gray-800 border-4 border-purple-300 dark:border-purple-600"
+        !isPlaying && !isSelected && isCorrect === null && "border-4 border-purple-300 dark:border-purple-600"
       )}
     >
       {/* Character image */}
-      <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-2">
+      <div className="relative w-full h-full">
         <img
           src={getCharacterImage()}
           alt={character.name}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
-        {/* Playing indicator */}
-        {isPlaying && (
-          <div className="absolute -top-2 -right-2">
-            <Volume2 className="w-6 h-6 text-yellow-500 animate-bounce" />
-          </div>
-        )}
-        {/* Sparkle decoration when selected */}
-        {isSelected && !isPlaying && (
-          <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-blue-400 animate-spin" style={{ animationDuration: '2s' }} />
-        )}
       </div>
 
-      {/* Character name */}
-      <span className={cn(
-        playfulTypography.body.medium,
-        "font-semibold text-center",
-        isPlaying && "text-yellow-700 dark:text-yellow-300",
-        isSelected && "text-blue-700 dark:text-blue-300",
-        isCorrect === true && "text-green-700 dark:text-green-300",
-        isCorrect === false && "text-red-700 dark:text-red-300",
-        !isPlaying && !isSelected && isCorrect === null && "text-gray-700 dark:text-gray-300"
-      )}>
-        {getCharacterEmoji()} {character.name}
-      </span>
+      {/* Playing indicator */}
+      {isPlaying && (
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <Volume2 className="w-5 h-5 text-yellow-500 animate-bounce" />
+        </div>
+      )}
+      {/* Sparkle decoration when selected */}
+      {isSelected && !isPlaying && (
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <Sparkles className="w-5 h-5 text-blue-400 animate-spin" style={{ animationDuration: '2s' }} />
+        </div>
+      )}
 
       {/* Feedback icons */}
       {isCorrect === true && (
-        <div className="absolute top-2 right-2">
-          <Check className="w-6 h-6 text-green-500" />
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <Check className="w-5 h-5 text-green-500" />
         </div>
       )}
       {isCorrect === false && (
-        <div className="absolute top-2 right-2">
-          <X className="w-6 h-6 text-red-500" />
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <X className="w-5 h-5 text-red-500" />
         </div>
       )}
 
       {/* Music note decoration */}
       <Music className={cn(
-        "absolute bottom-1 left-1 w-4 h-4 opacity-30",
-        isPlaying && "text-yellow-500 opacity-100 animate-bounce"
+        "absolute bottom-2 left-2 w-5 h-5 text-white/60 drop-shadow-md",
+        isPlaying && "text-yellow-300 animate-bounce"
       )} />
     </button>
   );

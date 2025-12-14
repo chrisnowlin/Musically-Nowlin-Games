@@ -370,10 +370,10 @@ export const games: GameConfig[] = [
     ageRange: "6-9 years",
   },
   {
-    id: "staff-wars",
-    title: "Staff Wars",
+    id: "staff-invaders",
+    title: "Staff Invaders",
     description: "Read notes on the staff and tap before they reach the clef!",
-    route: "/games/staff-wars",
+    route: "/games/staff-invaders",
     status: "available",
     icon: Music2,
     color: "bg-indigo-500",

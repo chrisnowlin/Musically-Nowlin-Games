@@ -1,4 +1,4 @@
-import { Clef } from '@/components/StaffWarsGame';
+import { Clef } from '@/components/StaffInvadersGame';
 
 export interface StaffData {
   canvas: HTMLCanvasElement;

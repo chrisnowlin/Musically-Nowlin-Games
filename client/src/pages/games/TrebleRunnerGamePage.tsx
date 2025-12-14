@@ -32,29 +32,29 @@ const LEVELS: Record<number, { name: string; subtitle: string; notes: string[]; 
     name: 'Line Notes',
     subtitle: 'E - G - B - D - F',
     notes: ['E4', 'G4', 'B4', 'D5', 'F5'],
-    speed: 1.44,
-    spawnRate: 2200,
+    speed: 1.2,
+    spawnRate: 2500,
   },
   3: {
     name: 'Mixed Staff',
     subtitle: 'All Notes E - F',
     notes: ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'],
-    speed: 1.6,
-    spawnRate: 2000,
+    speed: 1.2,
+    spawnRate: 2500,
   },
   4: {
     name: 'Ledger Lines Below',
     subtitle: 'Adding Middle C & D',
     notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'],
-    speed: 1.76,
-    spawnRate: 1800,
+    speed: 1.2,
+    spawnRate: 2500,
   },
   5: {
     name: 'Full Range',
     subtitle: 'All Notes with Ledger Lines',
     notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5'],
-    speed: 2.0,
-    spawnRate: 1600,
+    speed: 1.2,
+    spawnRate: 2500,
   },
 };
 
@@ -176,7 +176,7 @@ const Staff = ({ children }: { children: React.ReactNode }) => {
   const linePositions = [-4, -2, 0, 2, 4]; // E, G, B, D, F lines
   
   return (
-    <svg viewBox="0 0 400 120" className="w-full h-32 bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-xl overflow-visible">
+    <svg viewBox="0 0 400 120" className="w-full h-32 bg-gradient-to-b from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200">
       {/* Staff lines */}
       {linePositions.map((pos, idx) => (
         <line
@@ -208,54 +208,30 @@ const Staff = ({ children }: { children: React.ReactNode }) => {
 
 // Runner character
 const Runner = ({ isJumping, isStumbling, frame }: { isJumping: boolean; isStumbling: boolean; frame: number }) => {
-  const baseY = isJumping ? 10 : (isStumbling ? 35 : 25);
-  const rotation = isStumbling ? 15 : 0;
-  const legAngle = Math.sin(frame * 0.3) * 20;
+  // Bobbing motion for running effect
+  const runBob = isStumbling ? 0 : Math.sin(frame * 0.5) * 4;
+  
+  // Position logic: Jump goes up, Stumble drops down/back
+  const baseY = isJumping ? 60 : (isStumbling ? 5 : 25);
+  const rotation = isStumbling ? -20 : (isJumping ? -10 : 0);
   
   return (
     <div 
-      className="absolute transition-all duration-150"
+      className="absolute transition-all duration-150 z-20"
       style={{ 
-        left: '60px', 
-        bottom: `${baseY}px`,
+        left: '20px', 
+        bottom: `${baseY + runBob}px`,
         transform: `rotate(${rotation}deg)`,
       }}
     >
-      <svg width="40" height="50" viewBox="0 0 40 50">
-        {/* Quarter note body */}
-        <ellipse cx="20" cy="35" rx="12" ry="10" fill="#1a1a2e" />
-        {/* Stem */}
-        <line x1="31" y1="35" x2="31" y2="5" stroke="#1a1a2e" strokeWidth="3" />
-        {/* Eyes */}
-        <circle cx="16" cy="33" r="3" fill="white" />
-        <circle cx="24" cy="33" r="3" fill="white" />
-        <circle cx="16" cy="33" r="1.5" fill="#1a1a2e" />
-        <circle cx="24" cy="33" r="1.5" fill="#1a1a2e" />
-        {/* Smile */}
-        {!isStumbling && (
-          <path d="M15,39 Q20,44 25,39" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        )}
-        {isStumbling && (
-          <path d="M15,42 Q20,38 25,42" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" />
-        )}
-        {/* Legs */}
-        <line 
-          x1="14" y1="44" 
-          x2={14 + Math.sin((legAngle) * Math.PI / 180) * 8} 
-          y2="50" 
-          stroke="#1a1a2e" 
-          strokeWidth="3" 
-          strokeLinecap="round"
-        />
-        <line 
-          x1="26" y1="44" 
-          x2={26 + Math.sin((-legAngle) * Math.PI / 180) * 8} 
-          y2="50" 
-          stroke="#1a1a2e" 
-          strokeWidth="3" 
-          strokeLinecap="round"
-        />
-      </svg>
+      <img 
+        src="/images/treble-runner-character.png" 
+        alt="Runner"
+        className="w-40 h-40 object-contain drop-shadow-xl"
+        style={{
+          filter: isStumbling ? 'brightness(0.8) sepia(1) hue-rotate(-50deg)' : 'none'
+        }}
+      />
     </div>
   );
 };
@@ -274,14 +250,35 @@ const NoteButton: React.FC<NoteButtonProps> = ({ note, onPress, disabled, isPres
     disabled={disabled}
     className={`
       w-12 h-16 sm:w-14 sm:h-20 rounded-lg font-bold text-xl sm:text-2xl
-      transition-all duration-75 select-none touch-manipulation
-      ${disabled ? 'bg-gray-300 text-gray-500' : 
-        isPressed ? 'bg-indigo-700 text-white scale-95 shadow-inner' :
-        'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-lg hover:from-indigo-400 hover:to-indigo-500 active:scale-95'}
-      ${['C', 'D', 'E'].includes(note) ? 'rounded-b-xl' : ''}
+      transition-all duration-75 select-none touch-manipulation relative
+      flex items-center justify-center overflow-hidden font-serif
+      ${disabled 
+        ? 'bg-stone-300 text-stone-500 cursor-not-allowed opacity-80' 
+        : isPressed
+          ? 'bg-[#CD853F] text-amber-900 translate-y-1 shadow-[inset_0_3px_6px_rgba(0,0,0,0.5)] border-t-4 border-amber-800'
+          : 'bg-[#D2B48C] text-amber-900 shadow-[0_4px_0_rgb(139,90,43),0_6px_6px_rgba(0,0,0,0.4)] hover:bg-[#DEB887] active:translate-y-1 active:shadow-[inset_0_3px_6px_rgba(0,0,0,0.5)] active:border-t-4 active:border-amber-800'
+      }
     `}
   >
-    {note}
+    {/* Wood texture effect */}
+    {!disabled && (
+      <>
+        <div className="absolute inset-0 opacity-20 pointer-events-none"
+             style={{
+               backgroundImage: `
+                 repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(40,20,0,0.2) 4px, rgba(40,20,0,0.2) 6px),
+                 repeating-radial-gradient(circle at 50% 0%, transparent, transparent 10px, rgba(60,30,0,0.1) 12px)
+               `
+             }}
+        />
+        {/* Inner highlight for 3D effect */}
+        {!isPressed && (
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+        )}
+      </>
+    )}
+
+    <span className="relative z-10 drop-shadow-md transform translate-y-[-2px]">{note}</span>
   </button>
 );
 
@@ -301,17 +298,47 @@ const HealthBar = ({ health, maxHealth }: { health: number; maxHealth: number })
   </div>
 );
 
-// Game Wrapper for 16:9 aspect ratio
-const GameWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
-    <div 
-      className="relative w-full max-w-[177.78vh] aspect-video bg-cover bg-center shadow-2xl overflow-hidden"
-      style={{ backgroundImage: "url('/images/treble-runner-bg.jpeg')" }}
-    >
-      {children}
+// Game Wrapper for 16:9 aspect ratio with Day/Night cycle
+const GameWrapper = ({ children, correctCount = 0 }: { children: React.ReactNode; correctCount?: number }) => {
+  const isNight = Math.floor(correctCount / 30) % 2 === 1;
+
+  return (
+    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+      <div 
+        className="relative w-full aspect-video shadow-2xl overflow-hidden flex flex-col" 
+        style={{ 
+          maxHeight: '100vh',
+          maxWidth: '177.78vh' // 16/9 * 100vh
+        }}
+      >
+        {/* Background Layer - Day */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
+          style={{ 
+            backgroundImage: "url('/images/treble-runner-bg-16x9.png')",
+            opacity: isNight ? 0 : 1,
+            zIndex: 0
+          }}
+        />
+        
+        {/* Background Layer - Night */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
+          style={{ 
+            backgroundImage: "url('/images/treble-runner-bg-night-16x9.png')",
+            opacity: isNight ? 1 : 0,
+            zIndex: 0
+          }}
+        />
+
+        {/* Content Layer */}
+        <div className="relative z-10 w-full h-full flex flex-col">
+          {children}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Main Game Component
 export default function TrebleRunner() {
@@ -338,6 +365,7 @@ export default function TrebleRunner() {
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const noteIdRef = useRef(0);
+  const correctCountRef = useRef(0);
   
   const MAX_HEALTH = 100;
   const DAMAGE = 20;
@@ -385,9 +413,13 @@ export default function TrebleRunner() {
     // Main game loop - move notes
     gameLoopRef.current = setInterval(() => {
       setNotes(prev => {
+        // Speed increases by 2% with each correct answer
+        const speedMultiplier = Math.pow(1.02, correctCountRef.current);
+        const currentSpeed = level.speed * speedMultiplier;
+
         const updated = prev.map(note => ({
           ...note,
-          x: note.x - level.speed,
+          x: note.x - currentSpeed,
         }));
         
         // Check for missed notes (passed the answer zone)
@@ -443,25 +475,26 @@ export default function TrebleRunner() {
   // Handle note button press
   const handleNotePress = useCallback((noteName: string) => {
     if (gameState !== 'playing') return;
-    
+
     setPressedNote(noteName);
     setTimeout(() => setPressedNote(null), 100);
-    
-    // Find the closest unanswered note in the answer zone
-    const answerZone = { min: 60, max: 168 };
-    
+
+    // Find the leftmost (closest) unanswered note that is visible on screen
     setNotes(prev => {
-      const targetNote = prev.find(note => 
-        !note.answered && 
-        note.x >= answerZone.min && 
-        note.x <= answerZone.max
+      const unansweredNotes = prev.filter(note => !note.answered && note.x < 350);
+      if (unansweredNotes.length === 0) return prev;
+
+      // Get the leftmost note (smallest x value)
+      const targetNote = unansweredNotes.reduce((closest, note) =>
+        note.x < closest.x ? note : closest
       );
-      
+
       if (!targetNote) return prev;
       
       const isCorrect = targetNote.name === noteName;
       
       if (isCorrect) {
+        correctCountRef.current += 1;
         const streakBonus = Math.floor(streak / 5) * 10;
         setScore(s => s + 100 + streakBonus);
         setStreak(s => s + 1);
@@ -523,6 +556,7 @@ export default function TrebleRunner() {
     setStats({ correct: 0, wrong: 0, notesPlayed: {} });
     setRunnerState({ isJumping: false, isStumbling: false });
     noteIdRef.current = 0;
+    correctCountRef.current = 0;
     setGameState('playing');
   };
 
@@ -543,72 +577,82 @@ export default function TrebleRunner() {
   // Menu Screen
   if (gameState === 'menu') {
     return (
-      <GameWrapper>
-        <div className="w-full h-full flex flex-col items-center justify-center p-8 relative bg-black/20 backdrop-blur-[2px]">
+      <GameWrapper correctCount={stats.correct}>
+        <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 relative bg-black/40 backdrop-blur-sm overflow-y-auto">
           <button
             onClick={() => setLocation("/games")}
-            className="absolute top-6 left-6 z-50 flex items-center gap-2 text-indigo-900 font-bold bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            className="absolute top-2 left-2 sm:top-4 sm:left-4 z-50 flex items-center gap-1 sm:gap-2 text-white hover:text-indigo-200 font-semibold bg-white/10 backdrop-blur-md px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg hover:shadow-xl transition-all border border-white/20 text-sm sm:text-base"
           >
-            <ChevronLeft size={24} />
-            Back
+            <ChevronLeft size={20} />
+            Main Menu
           </button>
-          
-          <div className="text-center mb-12 animate-in fade-in slide-in-from-top-8 duration-700">
-            <h1 className="text-7xl font-black text-white mb-4 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-tight">
-              Treble Runner
-            </h1>
-            <p className="text-indigo-100 text-2xl font-medium drop-shadow-md bg-black/30 px-6 py-2 rounded-full inline-block backdrop-blur-sm">
-              Master the notes on the staff! 🎼
-            </p>
+          <div className="text-center mb-4 sm:mb-8 mt-10 sm:mt-0">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-1 sm:mb-2 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]">🎵 Treble Runner</h1>
+            <p className="text-indigo-100 text-base sm:text-lg drop-shadow-md">Master the treble clef!</p>
           </div>
-          
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-500">
-            <h2 className="text-2xl font-bold text-indigo-900 mb-6 flex items-center gap-3">
-              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 text-sm">1</span>
-              Select Difficulty Level
-            </h2>
-            
-            <div className="grid gap-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+
+          <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 sm:p-6 w-full max-w-md border border-white/10 shadow-xl my-auto">
+            <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 text-center">Select Level</h2>
+
+            <div className="space-y-2 sm:space-y-3">
               {Object.entries(LEVELS).map(([level, config]) => (
                 <button
                   key={level}
                   onClick={() => startGame(Number(level))}
-                  className="group relative w-full p-4 bg-gradient-to-r from-indigo-50 to-white hover:from-indigo-500 hover:to-purple-600 border-2 border-indigo-100 hover:border-transparent rounded-2xl text-left transition-all hover:shadow-lg hover:-translate-y-0.5"
+                  className="w-full p-3 sm:p-4 bg-[#D2B48C] text-amber-900 rounded-xl text-left transition-all hover:bg-[#DEB887] active:translate-y-1 active:shadow-[inset_0_3px_6px_rgba(0,0,0,0.5)] shadow-[0_4px_0_rgb(139,90,43),0_6px_6px_rgba(0,0,0,0.4)] relative overflow-hidden font-serif"
                 >
-                  <div className="flex justify-between items-center relative z-10">
+                  {/* Wood texture effect */}
+                  <div className="absolute inset-0 opacity-20 pointer-events-none"
+                       style={{
+                         backgroundImage: `
+                           repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(40,20,0,0.2) 4px, rgba(40,20,0,0.2) 6px),
+                           repeating-radial-gradient(circle at 50% 0%, transparent, transparent 10px, rgba(60,30,0,0.1) 12px)
+                         `
+                       }}
+                  />
+                  {/* Inner highlight for 3D effect */}
+                  <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+
+                  <div className="relative z-10 flex justify-between items-center">
                     <div>
-                      <div className="font-bold text-xl text-indigo-900 group-hover:text-white transition-colors">
-                        Level {level}: {config.name}
-                      </div>
-                      <div className="text-indigo-500 group-hover:text-indigo-100 font-medium mt-1 transition-colors">
-                        {config.subtitle}
-                      </div>
+                      <div className="font-bold text-base sm:text-lg">Level {level}: {config.name}</div>
+                      <div className="text-amber-800 text-xs sm:text-sm">{config.subtitle}</div>
                     </div>
                     {highScores[`level${level}`] && (
-                      <div className="text-right bg-white/50 group-hover:bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm transition-colors">
-                        <div className="text-xs text-indigo-600 group-hover:text-indigo-100 uppercase font-bold tracking-wider">Best</div>
-                        <div className="font-bold text-xl text-indigo-900 group-hover:text-white">{highScores[`level${level}`]}</div>
+                      <div className="text-right">
+                        <div className="text-xs text-amber-700">Best</div>
+                        <div className="font-bold text-sm sm:text-base">{highScores[`level${level}`]}</div>
                       </div>
                     )}
                   </div>
                 </button>
               ))}
             </div>
-            
-            <div className="mt-8 flex justify-center border-t border-indigo-100 pt-6">
+
+            <div className="mt-4 sm:mt-6 flex justify-center">
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`
-                  flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all
-                  ${soundEnabled 
-                    ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' 
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}
-                `}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-[#D2B48C] text-amber-900 rounded-lg hover:bg-[#DEB887] active:translate-y-1 active:shadow-[inset_0_3px_6px_rgba(0,0,0,0.5)] shadow-[0_4px_0_rgb(139,90,43),0_6px_6px_rgba(0,0,0,0.4)] transition-all relative overflow-hidden font-serif text-sm sm:text-base"
               >
-                {soundEnabled ? '🔊 Sound Effects On' : '🔇 Sound Effects Off'}
+                {/* Wood texture effect */}
+                <div className="absolute inset-0 opacity-20 pointer-events-none"
+                     style={{
+                       backgroundImage: `
+                         repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(40,20,0,0.2) 4px, rgba(40,20,0,0.2) 6px),
+                         repeating-radial-gradient(circle at 50% 0%, transparent, transparent 10px, rgba(60,30,0,0.1) 12px)
+                       `
+                     }}
+                />
+                {/* Inner highlight for 3D effect */}
+                <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+                <span className="relative z-10">{soundEnabled ? '🔊 Sound On' : '🔇 Sound Off'}</span>
               </button>
             </div>
           </div>
+
+          <p className="text-white/80 text-xs sm:text-sm mt-4 sm:mt-6 text-center max-w-md drop-shadow-md font-medium px-4">
+            Identify the notes before they pass! Tap the correct note name to keep running.
+          </p>
         </div>
       </GameWrapper>
     );
@@ -617,72 +661,68 @@ export default function TrebleRunner() {
   // Game Over Screen
   if (gameState === 'gameOver') {
     const isNewHighScore = score > (highScores[`level${currentLevel}`] || 0);
-    
+
     return (
-      <GameWrapper>
-        <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 w-full max-w-lg text-center shadow-2xl animate-in zoom-in-95 duration-300 border-4 border-white/50">
-            <h2 className="text-4xl font-black text-indigo-900 mb-2 uppercase tracking-wide">Game Over</h2>
-            
+      <GameWrapper correctCount={stats.correct}>
+        <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 relative bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <button
+            onClick={() => setLocation("/games")}
+            className="absolute top-2 left-2 sm:top-4 sm:left-4 z-50 flex items-center gap-1 sm:gap-2 text-white hover:text-indigo-200 font-semibold bg-white/10 backdrop-blur-md px-2 py-1 sm:px-4 sm:py-2 rounded-lg shadow-lg hover:shadow-xl transition-all border border-white/20 text-sm sm:text-base"
+          >
+            <ChevronLeft size={20} />
+            Main Menu
+          </button>
+          <div className="bg-black/60 backdrop-blur-md rounded-2xl p-4 sm:p-6 lg:p-8 w-full max-w-md text-center border border-white/10 shadow-2xl my-auto">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Game Over!</h2>
+
             {isNewHighScore && (
-              <div className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-bold text-lg mb-6 inline-flex items-center gap-2 animate-bounce">
-                🏆 New High Score!
-              </div>
+              <div className="text-yellow-400 text-base sm:text-xl mb-2 sm:mb-4 animate-pulse">🏆 New High Score! 🏆</div>
             )}
-            
-            <div className="bg-indigo-900 text-white rounded-2xl p-6 mb-8 shadow-inner relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-800 to-indigo-950"></div>
-              <div className="relative z-10">
-                <div className="text-indigo-300 text-sm font-bold uppercase tracking-widest mb-1">Final Score</div>
-                <div className="text-7xl font-black tabular-nums tracking-tight group-hover:scale-110 transition-transform duration-300">{score}</div>
+
+            <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-6">{score}</div>
+
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-6 text-white">
+              <div className="bg-white/10 rounded-lg p-2 sm:p-3">
+                <div className="text-xl sm:text-2xl font-bold text-green-400">{stats.correct}</div>
+                <div className="text-xs sm:text-sm text-indigo-200">Correct</div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 sm:p-3">
+                <div className="text-xl sm:text-2xl font-bold text-red-400">{stats.wrong}</div>
+                <div className="text-xs sm:text-sm text-indigo-200">Missed</div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2 sm:p-3 col-span-2">
+                <div className="text-xl sm:text-2xl font-bold">{accuracy}%</div>
+                <div className="text-xs sm:text-sm text-indigo-200">Accuracy</div>
               </div>
             </div>
-            
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                <div className="text-2xl font-bold text-green-600">{stats.correct}</div>
-                <div className="text-xs font-bold text-green-800 uppercase tracking-wide">Correct</div>
-              </div>
-              <div className="bg-red-50 rounded-xl p-3 border border-red-100">
-                <div className="text-2xl font-bold text-red-500">{stats.wrong}</div>
-                <div className="text-xs font-bold text-red-800 uppercase tracking-wide">Missed</div>
-              </div>
-              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                <div className="text-2xl font-bold text-blue-600">{accuracy}%</div>
-                <div className="text-xs font-bold text-blue-800 uppercase tracking-wide">Accuracy</div>
-              </div>
-            </div>
-            
+
             {Object.keys(stats.notesPlayed).length > 0 && (
-              <div className="mb-8 bg-gray-50 rounded-xl p-4 border border-gray-100">
-                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wide mb-3">Performance by Note</h3>
-                <div className="flex flex-wrap justify-center gap-2">
+              <div className="mb-3 sm:mb-6">
+                <h3 className="text-white text-xs sm:text-sm mb-2">Notes Breakdown</h3>
+                <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                   {Object.entries(stats.notesPlayed).map(([note, data]) => (
-                    <div key={note} className="bg-white border border-gray-200 rounded-lg px-3 py-1 text-sm shadow-sm flex items-center gap-2">
-                      <span className="font-bold text-gray-700 w-4">{note}</span>
-                      <div className="flex gap-1 text-xs">
-                        <span className="text-green-600 font-bold">{data.correct || 0}</span>
-                        <span className="text-gray-300">/</span>
-                        <span className="text-red-500 font-bold">{data.wrong || 0}</span>
-                      </div>
+                    <div key={note} className="bg-white/10 rounded px-2 sm:px-3 py-1 text-xs sm:text-sm">
+                      <span className="text-white font-bold">{note}</span>
+                      <span className="text-green-400 ml-1 sm:ml-2">{data.correct || 0}✓</span>
+                      <span className="text-red-400 ml-1">{data.wrong || 0}✗</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="space-y-2 sm:space-y-3">
               <button
                 onClick={() => startGame(currentLevel)}
-                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 rounded-2xl text-white font-bold text-xl transition-all hover:shadow-lg hover:-translate-y-1 active:translate-y-0"
+                className="w-full py-2 sm:py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl text-white font-bold text-base sm:text-lg transition-all shadow-lg"
               >
                 Play Again
               </button>
               <button
                 onClick={endGame}
-                className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-xl transition-all hover:shadow-lg"
+                className="w-full py-2 sm:py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-bold transition-all border border-white/10 text-base sm:text-lg"
               >
-                Menu
+                Level Select
               </button>
             </div>
           </div>
@@ -693,93 +733,118 @@ export default function TrebleRunner() {
 
   // Playing Screen
   return (
-    <GameWrapper>
+    <GameWrapper correctCount={stats.correct}>
       <div className="w-full h-full flex flex-col relative">
-        <button
-          onClick={() => setLocation("/games")}
-          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-indigo-900 font-bold bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all"
-        >
-          <ChevronLeft size={24} />
-          Exit
-        </button>
-        {/* Header */}
-        <div className="bg-white/90 backdrop-blur-md shadow-sm p-4 border-b border-indigo-50 z-20">
-          <div className="flex justify-between items-center max-w-4xl mx-auto w-full">
-            <div className="flex items-center gap-6">
-              <div className="bg-indigo-900 text-white px-4 py-1 rounded-lg font-mono font-bold text-2xl shadow-inner min-w-[100px] text-center">
-                {score}
+      <button
+        onClick={() => setLocation("/games")}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-white hover:text-indigo-200 font-semibold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all border border-white/20"
+      >
+        <ChevronLeft size={24} />
+        Main Menu
+      </button>
+      {/* Header */}
+      <div className="bg-white/60 backdrop-blur-md shadow-md p-3 border-b border-white/20">
+        <div className="flex justify-between items-center max-w-lg mx-auto">
+          <div className="flex items-center gap-4">
+            <div className="text-2xl font-bold text-indigo-900">{score}</div>
+            {streak >= 3 && (
+              <div className="text-orange-500 font-bold animate-pulse">
+                🔥 {streak}
               </div>
-              {streak >= 3 && (
-                <div className="flex items-center gap-1 text-orange-500 font-black animate-pulse bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
-                  <span className="text-xl">🔥</span>
-                  <span>{streak}</span>
-                </div>
-              )}
-            </div>
-            <HealthBar health={health} maxHealth={MAX_HEALTH} />
-            <button
-              onClick={() => setGameState('gameOver')}
-              className="px-4 py-2 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 rounded-lg font-bold transition-colors border border-gray-200 hover:border-red-200"
-            >
-              Quit
-            </button>
+            )}
           </div>
+          <HealthBar health={health} maxHealth={MAX_HEALTH} />
+          <button
+            onClick={() => setGameState('gameOver')}
+            className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition-colors"
+          >
+            Quit
+          </button>
         </div>
-        
-        {/* Level indicator */}
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white px-6 py-1 rounded-full text-sm font-bold shadow-lg border border-white/20 z-10">
-          Level {currentLevel}: {LEVELS[currentLevel].name}
-        </div>
-        
-        {/* Game area */}
-        <div className="flex-1 flex flex-col justify-center px-4 max-w-4xl mx-auto w-full relative z-0">
-          {/* Staff with notes */}
-          <div className="relative mb-0 translate-y-8 z-10">
-            <Staff>
-              {/* Answer zone indicator */}
-              <rect x="60" y="10" width="108" height="100" fill="rgba(59, 130, 246, 0.15)" rx="12" stroke="rgba(59, 130, 246, 0.3)" strokeWidth="2" strokeDasharray="6 4" />
-              
-              {/* Notes */}
-              {notes.map(note => (
+      </div>
+      
+      {/* Level indicator */}
+      <div className="text-center py-2 text-white font-medium drop-shadow">
+        Level {currentLevel}: {LEVELS[currentLevel].name}
+      </div>
+      
+      {/* Game area */}
+      <div className="flex-1 flex flex-col justify-end pb-2 px-4 max-w-lg mx-auto w-full">
+        {/* Staff with notes */}
+        <div className="relative mb-2">
+          <Staff>
+            {/* Notes */}
+            {notes.map((note, index) => {
+              // Find the leftmost unanswered note to mark as active
+              const unansweredNotes = notes.filter(n => !n.answered && n.x < 350);
+              const leftmostNote = unansweredNotes.length > 0
+                ? unansweredNotes.reduce((closest, n) => n.x < closest.x ? n : closest)
+                : null;
+              const isActive = leftmostNote?.id === note.id;
+
+              return (
                 <StaffNote
                   key={note.id}
                   position={note.position}
                   x={note.x}
-                  isActive={note.x >= 60 && note.x <= 168 && !note.answered}
+                  isActive={isActive}
                   feedback={note.feedback}
                 />
-              ))}
-            </Staff>
-          </div>
-          
-          {/* Runner track - Adjusted visual to float */}
-          <div className="relative h-24 mt-[-20px]">
-            {/* Runner */}
-            <Runner 
-              isJumping={runnerState.isJumping} 
-              isStumbling={runnerState.isStumbling}
-              frame={animFrame}
-            />
-          </div>
+              );
+            })}
+          </Staff>
         </div>
         
-        {/* Note buttons */}
-        <div className="bg-white/80 backdrop-blur-xl border-t border-white/50 p-6 pb-8 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] mt-auto z-20">
-          <div className="flex justify-center gap-3 max-w-4xl mx-auto">
-            {NOTE_BUTTONS.map(note => (
-              <NoteButton
-                key={note}
-                note={note}
-                onPress={handleNotePress}
-                disabled={gameState !== 'playing'}
-                isPressed={pressedNote === note}
-              />
-            ))}
+        {/* Runner track */}
+        <div className="relative h-28 rounded-lg">
+          {/* Ground pattern - matching background scenery (inferred) */}
+          <div className="absolute inset-0 overflow-hidden rounded-sm">
+            {/* Simple dirt path or ground line that blends better */}
+            <div className="absolute bottom-4 left-0 right-0 h-4 bg-black/20 blur-sm rounded-full transform scale-x-90" />
+            
+            {/* Animated ground markers for speed reference */}
+             <div className="absolute bottom-0 inset-x-0 h-12 overflow-hidden opacity-40">
+              {[...Array(10)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute bottom-2 w-16 h-2 bg-white/20 rounded-full blur-[1px]"
+                  style={{ 
+                    left: `${i * 15}%`, 
+                    transform: `translateX(${-(animFrame * 8) % 100}%)` 
+                  }}
+                />
+              ))}
+            </div>
           </div>
-          <div className="text-center text-sm font-medium text-indigo-800 mt-4 bg-indigo-50 inline-block mx-auto px-4 py-1 rounded-full">
-            Tap the note name when it enters the blue zone!
-          </div>
+          
+          {/* Runner - can overflow */}
+          <Runner 
+            isJumping={runnerState.isJumping} 
+            isStumbling={runnerState.isStumbling}
+            frame={animFrame}
+          />
         </div>
+      </div>
+      
+      {/* Note buttons */}
+      <div className="p-2 pt-0">
+        <div className="flex justify-center gap-2 max-w-lg mx-auto">
+          {NOTE_BUTTONS.map(note => (
+            <NoteButton
+              key={note}
+              note={note}
+              onPress={handleNotePress}
+              disabled={gameState !== 'playing'}
+              isPressed={pressedNote === note}
+            />
+          ))}
+        </div>
+        <div className="text-center mt-2">
+          <span className="text-xs font-medium text-indigo-900 bg-white/50 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+            Identify the highlighted note before it passes!
+          </span>
+        </div>
+      </div>
       </div>
     </GameWrapper>
   );

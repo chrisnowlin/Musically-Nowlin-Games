@@ -5,17 +5,16 @@ import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import { Play, HelpCircle, Loader2, Star, Sparkles, ChevronLeft } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { LeoLion, MiloMonkey, BellaBird } from "@/components/characters";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 
 const CHARACTERS = [
-  { Component: LeoLion, name: "Leo Lion", id: "leo" },
-  { Component: MiloMonkey, name: "Milo Monkey", id: "milo" },
-  { Component: BellaBird, name: "Bella Bird", id: "bella" },
+  { image: "/images/leo-lion.jpeg", name: "Leo Lion", id: "leo" },
+  { image: "/images/milo-monkey.jpeg", name: "Milo Monkey", id: "milo" },
+  { image: "/images/bella-bird.jpeg", name: "Bella Bird", id: "bella" },
 ];
 
 interface Character {
-  Component: React.ComponentType<any>;
+  image: string;
   name: string;
   id: string;
 }
@@ -302,10 +301,11 @@ export default function FastOrSlowRaceGame() {
                   flex flex-col items-center gap-4 group
                 `}
               >
-                <div className="w-48 h-48 relative">
-                   <gameState.currentRound.character1.Component 
-                     className={`w-full h-full transition-transform duration-300 ${playingCharacter === 1 ? 'scale-110' : ''}`}
-                     isPlaying={playingCharacter === 1}
+                <div className="w-48 h-48 relative overflow-hidden rounded-2xl">
+                   <img
+                     src={gameState.currentRound.character1.image}
+                     alt={gameState.currentRound.character1.name}
+                     className={`w-full h-full object-cover transition-transform duration-300 ${playingCharacter === 1 ? 'scale-110' : ''}`}
                    />
                    {/* Speed indicator when playing */}
                    {playingCharacter === 1 && (
@@ -337,10 +337,11 @@ export default function FastOrSlowRaceGame() {
                   flex flex-col items-center gap-4 group
                 `}
               >
-                <div className="w-48 h-48 relative">
-                   <gameState.currentRound.character2.Component 
-                     className={`w-full h-full transition-transform duration-300 ${playingCharacter === 2 ? 'scale-110' : ''}`}
-                     isPlaying={playingCharacter === 2}
+                <div className="w-48 h-48 relative overflow-hidden rounded-2xl">
+                   <img
+                     src={gameState.currentRound.character2.image}
+                     alt={gameState.currentRound.character2.name}
+                     className={`w-full h-full object-cover transition-transform duration-300 ${playingCharacter === 2 ? 'scale-110' : ''}`}
                    />
                    {/* Speed indicator when playing */}
                    {playingCharacter === 2 && (
