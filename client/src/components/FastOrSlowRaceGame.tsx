@@ -469,12 +469,12 @@ export default function FastOrSlowRaceGame() {
         <AnimatePresence>
             {gameState.feedback?.show && (
               <motion.div 
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-8 rounded-3xl shadow-2xl border-4 ${
-                gameState.feedback.isCorrect ? 'bg-green-500 border-green-300' : 'bg-red-500 border-red-300'
-              } text-white text-center max-w-lg w-full`}
+                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-6 rounded-3xl shadow-2xl border-4 ${
+                gameState.feedback.isCorrect ? 'bg-green-500/95 border-green-300' : 'bg-red-500/95 border-red-300'
+              } text-white text-center max-w-md w-full backdrop-blur-sm`}
               >
                 <h3 className="text-4xl font-black mb-4 uppercase italic">
                   {gameState.feedback.isCorrect ? (
