@@ -245,7 +245,7 @@ export default function FastOrSlowRaceGame() {
               Fast or Slow<br/>Race
             </h1>
             <p className="text-2xl text-gray-300 font-medium">
-              Start your engines! Who will cross the line?
+              On your marks! Who is the fastest?
             </p>
           </motion.div>
 
@@ -257,7 +257,7 @@ export default function FastOrSlowRaceGame() {
             <ul className="text-left space-y-4 text-lg text-gray-200">
               <li className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
                 <span className="text-3xl">👂</span>
-                <span>Listen to the <strong>engine melody</strong> of both racers</span>
+                <span>Listen to the <strong>rhythm</strong> of both runners</span>
               </li>
               <li className="flex items-center gap-4 bg-white/5 p-3 rounded-xl">
                 <span className="text-3xl">🏎️</span>
@@ -350,13 +350,14 @@ export default function FastOrSlowRaceGame() {
                                     alt={gameState.currentRound.character1.name}
                                     className="w-full h-full object-cover"
                                 />
-                                {playingCharacter === 1 && (
-                                    <motion.div 
-                                        className="absolute -left-6 bottom-4 w-10 h-10 bg-white/40 rounded-full blur-lg"
-                                        animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
-                                        transition={{ repeat: Infinity, duration: 0.4 }}
-                                    />
-                                )}
+                             {/* Speed/Dust Effect */}
+                             {playingCharacter === 1 && (
+                                <motion.div 
+                                    className="absolute -left-6 bottom-4 w-10 h-10 bg-white/40 rounded-full blur-lg"
+                                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.5, 2], x: [-10, -30] }}
+                                    transition={{ repeat: Infinity, duration: 0.4 }}
+                                />
+                             )}
                             </div>
                             <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-bold border border-white/20 whitespace-nowrap">
                                 {gameState.currentRound.character1.name}
@@ -406,6 +407,7 @@ export default function FastOrSlowRaceGame() {
                                     alt={gameState.currentRound.character2.name}
                                     className="w-full h-full object-cover"
                                 />
+                                {/* Speed/Dust Effect */}
                                 {playingCharacter === 2 && (
                                     <motion.div 
                                         className="absolute -left-6 bottom-4 w-10 h-10 bg-white/40 rounded-full blur-lg"
@@ -452,12 +454,12 @@ export default function FastOrSlowRaceGame() {
                 {gameState.isPlaying ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                    Racing...
+                    Running...
                   </>
                 ) : (
                   <>
                     <Play className="w-6 h-6 mr-2" />
-                    Replay Engines
+                    Replay Race
                   </>
                 )}
               </Button>
