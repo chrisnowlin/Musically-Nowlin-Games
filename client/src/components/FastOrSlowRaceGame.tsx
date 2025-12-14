@@ -19,11 +19,14 @@ interface Character {
   id: string;
 }
 
+type QuestionType = "faster" | "slower";
+
 interface Round {
   melody: number[];
   tempo1: number; // Duration multiplier (lower = faster)
   tempo2: number;
-  correctAnswer: 1 | 2; // Which one is faster
+  correctAnswer: 1 | 2; // Which one is the correct answer based on questionType
+  questionType: QuestionType;
   character1: Character;
   character2: Character;
 }
@@ -57,9 +60,9 @@ const MELODIES = [
 function generateRound(): Round {
   const melody = MELODIES[Math.floor(Math.random() * MELODIES.length)];
   // Wider tempo range: 0.15s (Very Fast) to 1.0s (Very Slow)
-  const tempo1 = 0.15 + Math.random() * 0.85; 
+  const tempo1 = 0.15 + Math.random() * 0.85;
   const tempo2 = 0.15 + Math.random() * 0.85;
-  
+
   // Ensure tempos are different enough - increased threshold for clarity
   const diff = Math.abs(tempo1 - tempo2);
   if (diff < 0.25) {
@@ -70,12 +73,23 @@ function generateRound(): Round {
   const shuffled = [...CHARACTERS].sort(() => 0.5 - Math.random());
   const character1 = shuffled[0];
   const character2 = shuffled[1];
-  
+
+  // Randomly choose whether to ask about faster or slower
+  const questionType: QuestionType = Math.random() < 0.5 ? "faster" : "slower";
+
+  // Lower tempo value = faster playback
+  // If asking "faster", correct answer is the one with lower tempo
+  // If asking "slower", correct answer is the one with higher tempo
+  const correctAnswer: 1 | 2 = questionType === "faster"
+    ? (tempo1 < tempo2 ? 1 : 2)
+    : (tempo1 > tempo2 ? 1 : 2);
+
   return {
     melody,
     tempo1,
     tempo2,
-    correctAnswer: tempo1 < tempo2 ? 1 : 2, // Lower tempo value = faster
+    correctAnswer,
+    questionType,
     character1,
     character2,
   };
@@ -221,7 +235,7 @@ export default function FastOrSlowRaceGame() {
               Fast or Slow Race
             </h1>
             <p className={`${playfulTypography.body.large} text-gray-700 dark:text-gray-300`}>
-              Which animal played the melody faster?
+              Which animal played the melody faster or slower?
             </p>
           </div>
 
@@ -237,11 +251,11 @@ export default function FastOrSlowRaceGame() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-2xl">⚡</span>
-                <span>Decide which one played faster</span>
+                <span>Decide which one played faster or slower</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-2xl">🏁</span>
-                <span>Tap the faster animal to score!</span>
+                <span>Tap the correct animal to score!</span>
               </li>
             </ul>
           </div>
@@ -276,7 +290,10 @@ export default function FastOrSlowRaceGame() {
 
         <div className="mt-8 mb-8">
           <h2 className={`${playfulTypography.headings.h2} text-center text-gray-800 dark:text-gray-200`}>
-            Which animal played <span className="text-orange-600 font-bold">FASTER</span>?
+            Which animal played{" "}
+            <span className={`font-bold ${gameState.currentRound?.questionType === "faster" ? "text-orange-600" : "text-blue-600"}`}>
+              {gameState.currentRound?.questionType === "faster" ? "FASTER" : "SLOWER"}
+            </span>?
           </h2>
         </div>
 
@@ -386,11 +403,11 @@ export default function FastOrSlowRaceGame() {
                   {gameState.feedback.isCorrect ? (
                     <>
                       <Star className="inline w-8 h-8 mr-2 text-yellow-500 animate-spin-slow" />
-                      Correct! {gameState.currentRound.correctAnswer === 1 ? gameState.currentRound.character1.name : gameState.currentRound.character2.name} was faster!
+                      Correct! {gameState.currentRound.correctAnswer === 1 ? gameState.currentRound.character1.name : gameState.currentRound.character2.name} was {gameState.currentRound.questionType}!
                       <Sparkles className="inline w-8 h-8 ml-2 text-yellow-500 animate-pulse" />
                     </>
                   ) : (
-                    <>Try again! Listen carefully to who finishes first.</>
+                    <>Try again! Listen carefully to the tempo of each melody.</>
                   )}
                 </p>
               </div>
