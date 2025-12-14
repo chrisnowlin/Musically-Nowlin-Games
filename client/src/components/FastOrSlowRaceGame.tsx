@@ -361,8 +361,14 @@ export default function FastOrSlowRaceGame() {
 
         {/* Race Track Area */}
         <div 
-          className="flex-1 relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4 max-w-5xl mx-auto w-full"
-          style={{ backgroundImage: 'url(/images/race-track-bg-v2.jpeg)' }}
+          className="relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-auto"
+          style={{ 
+            backgroundImage: 'url(/images/race-track-bg-v2.jpeg)',
+            width: '100%',
+            maxWidth: '1024px',
+            height: '500px', // Fixed height
+            minHeight: '500px'
+          }}
         >
             {gameState.currentRound && (
                 <>
