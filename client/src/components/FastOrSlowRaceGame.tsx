@@ -322,7 +322,7 @@ export default function FastOrSlowRaceGame() {
               >
                 <h2 className="transform skew-x-12 text-3xl font-black text-white uppercase tracking-wider">
                 Who was{" "}
-                <span className={`text-4xl px-2 ${gameState.currentRound?.questionType === "faster" ? "text-yellow-400 animate-pulse" : "text-blue-400"}`}>
+                <span className={`text-4xl px-2 ${gameState.currentRound?.questionType === "faster" ? "text-yellow-400 animate-pulse" : "text-blue-400 animate-pulse"}`}>
                     {gameState.currentRound?.questionType === "faster" ? "FASTER" : "SLOWER"}
                 </span>?
                 </h2>
