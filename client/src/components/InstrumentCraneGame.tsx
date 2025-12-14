@@ -889,9 +889,11 @@ export default function InstrumentCraneGame() {
                          <div className="absolute top-3 right-4 w-8 h-5 bg-white/50 rounded-full transform rotate-[30deg] blur-[2px]"></div>
                          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-black/20 rounded-b-full"></div>
                          
-                         <div className="drop-shadow-lg relative z-10 group-hover:scale-110 transition-transform">
-                           <target.instrument.Icon className="w-16 h-16 text-white/90" />
-                         </div>
+                        <div className={`drop-shadow-lg relative z-10 group-hover:scale-110 transition-transform ${target.instrument.id === 'double-bass' ? 'w-12 h-12' : 'w-16 h-16'}`}>
+                          <target.instrument.Icon 
+                            className="text-white/90" 
+                          />
+                        </div>
                       </div>
                       <div className="text-center mt-2">
                          <span className="font-black text-xs bg-black/50 text-white px-2 py-1 rounded-full backdrop-blur-md">

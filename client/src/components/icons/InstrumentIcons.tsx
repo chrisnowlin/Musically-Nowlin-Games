@@ -8,10 +8,10 @@ interface InstrumentIconProps {
 
 export const ViolinIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/violin.png`}
       alt="Violin"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', maxWidth: 'none' }}
     />
   </div>
 );
@@ -138,30 +138,30 @@ export const SaxophoneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
 
 export const ViolaIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/viola.png`}
       alt="Viola"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', maxWidth: 'none' }}
     />
   </div>
 );
 
 export const CelloIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/cello.png`}
       alt="Cello"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', maxWidth: 'none' }}
     />
   </div>
 );
 
 export const DoubleBassIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/double-bass.png`}
       alt="Double Bass"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', maxWidth: 'none' }}
     />
   </div>
 );
@@ -198,10 +198,10 @@ export const OboeIcon: React.FC<InstrumentIconProps> = ({ className }) => (
 
 export const TromboneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/trombone.png`}
       alt="Trombone"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '160%', height: '160%', maxWidth: 'none' }}
     />
   </div>
 );
@@ -258,10 +258,10 @@ export const WindChimesIcon: React.FC<InstrumentIconProps> = ({ className }) => 
 
 export const XylophoneIcon: React.FC<InstrumentIconProps> = ({ className }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', overflow: 'hidden' }}>
-    <img 
+    <img
       src={`${import.meta.env.BASE_URL}images/xylophone.png`}
       alt="Xylophone"
-      style={{ objectFit: 'contain', width: '180%', height: '180%', maxWidth: 'none' }}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', maxWidth: 'none' }}
     />
   </div>
 );
