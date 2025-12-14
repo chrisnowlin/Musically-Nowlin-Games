@@ -284,7 +284,12 @@ export default function FastOrSlowRaceGame() {
   }
 
   return (
-    <div className="min-h-screen bg-green-600 flex flex-col p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-green-500 to-green-700 flex flex-col p-4 relative overflow-hidden">
+        {/* Mowed Grass Pattern Overlay */}
+        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
+            backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,0.1) 20px, rgba(0,0,0,0.1) 40px)"
+        }}></div>
+
       <div className="flex-1 flex flex-col z-10 w-full max-w-6xl mx-auto">
         <div className="flex justify-between items-start mb-4">
              <button
