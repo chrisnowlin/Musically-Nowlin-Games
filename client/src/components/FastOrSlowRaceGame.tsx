@@ -309,25 +309,65 @@ export default function FastOrSlowRaceGame() {
             />
         </div>
 
-        {/* Question Header */}
-        <div className="mt-2 mb-8 text-center bg-black/80 backdrop-blur-md rounded-2xl p-6 border-4 border-white shadow-xl mx-auto max-w-2xl transform -skew-x-12">
-            <h2 className="transform skew-x-12 text-3xl font-black text-white uppercase tracking-wider">
-            Who was{" "}
-            <span className={`text-4xl px-2 ${gameState.currentRound?.questionType === "faster" ? "text-yellow-400 animate-pulse" : "text-blue-400"}`}>
-                {gameState.currentRound?.questionType === "faster" ? "FASTER" : "SLOWER"}
-            </span>?
-            </h2>
+        {/* Question Header & Feedback Area */}
+        <div className="mt-2 mb-8 relative z-20 min-h-[140px] flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {!gameState.feedback?.show ? (
+              <motion.div 
+                key="question"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="text-center bg-black/80 backdrop-blur-md rounded-2xl p-6 border-4 border-white shadow-xl mx-auto max-w-2xl transform -skew-x-12"
+              >
+                <h2 className="transform skew-x-12 text-3xl font-black text-white uppercase tracking-wider">
+                Who was{" "}
+                <span className={`text-4xl px-2 ${gameState.currentRound?.questionType === "faster" ? "text-yellow-400 animate-pulse" : "text-blue-400"}`}>
+                    {gameState.currentRound?.questionType === "faster" ? "FASTER" : "SLOWER"}
+                </span>?
+                </h2>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="feedback"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className={`text-center p-6 rounded-2xl border-4 shadow-xl mx-auto max-w-2xl transform -skew-x-12 ${
+                  gameState.feedback.isCorrect ? 'bg-green-600 border-green-300' : 'bg-red-600 border-red-300'
+                }`}
+              >
+                <div className="transform skew-x-12 text-white">
+                  <h3 className="text-3xl font-black mb-2 uppercase italic">
+                    {gameState.feedback.isCorrect ? (
+                      <>
+                        <Trophy className="inline w-10 h-10 mr-2 text-yellow-300 animate-bounce" />
+                        Winner!
+                      </>
+                    ) : (
+                      "False Start!"
+                    )}
+                  </h3>
+                  <p className="text-xl font-bold">
+                    {gameState.feedback.isCorrect 
+                      ? `Great job! That was definitely ${gameState.currentRound?.questionType}!`
+                      : `Oops! That wasn't the ${gameState.currentRound?.questionType} one.`}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Race Track Area */}
         <div 
-          className="flex-1 relative flex flex-col justify-center gap-52 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4 max-w-5xl mx-auto w-full"
+          className="flex-1 relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-4 max-w-5xl mx-auto w-full"
           style={{ backgroundImage: 'url(/images/race-track-bg-v2.jpeg)' }}
         >
             {gameState.currentRound && (
                 <>
                 {/* Lane 1 */}
-                <div className="relative h-40 w-full flex items-center">
+                <div className="relative h-48 w-full flex items-center">
                      
                      {/* Character 1 */}
                      <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
@@ -384,7 +424,7 @@ export default function FastOrSlowRaceGame() {
                 </div>
 
                 {/* Lane 2 */}
-                <div className="relative h-40 w-full flex items-center">
+                <div className="relative h-48 w-full flex items-center">
 
                      {/* Character 2 */}
                      <div className="absolute left-[20%] z-20 -translate-x-1/2 flex flex-col items-center gap-2">
@@ -464,36 +504,6 @@ export default function FastOrSlowRaceGame() {
                 )}
               </Button>
         </div>
-
-        {/* Feedback Overlay */}
-        <AnimatePresence>
-            {gameState.feedback?.show && (
-              <motion.div 
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 p-8 rounded-3xl shadow-2xl border-4 ${
-                gameState.feedback.isCorrect ? 'bg-green-500 border-green-300' : 'bg-red-500 border-red-300'
-              } text-white text-center max-w-lg w-full`}
-              >
-                <h3 className="text-4xl font-black mb-4 uppercase italic">
-                  {gameState.feedback.isCorrect ? (
-                    <>
-                      <Trophy className="inline w-12 h-12 mr-2 text-yellow-300 animate-bounce" />
-                      Winner!
-                    </>
-                  ) : (
-                    "False Start!"
-                  )}
-                </h3>
-                <p className="text-xl font-medium">
-                  {gameState.feedback.isCorrect 
-                    ? `Great job! That was definitely ${gameState.currentRound?.questionType}!`
-                    : `Oops! That wasn't the ${gameState.currentRound?.questionType} one.`}
-                </p>
-              </motion.div>
-            )}
-        </AnimatePresence>
 
       </div>
     </div>
