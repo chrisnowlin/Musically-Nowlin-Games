@@ -273,7 +273,7 @@ export default function FastOrSlowRaceGame() {
           <Button
             onClick={handleStartGame}
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white text-2xl font-bold py-8 px-12 rounded-2xl shadow-lg transform hover:scale-105 transition-all border-b-4 border-green-700 active:border-b-0 active:translate-y-1"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-8 px-12 rounded-2xl shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
           >
             <Play className="w-8 h-8 mr-3 fill-current" />
             START RACE
