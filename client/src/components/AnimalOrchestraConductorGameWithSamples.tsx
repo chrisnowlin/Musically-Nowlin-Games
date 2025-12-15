@@ -6,12 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, HelpCircle, Volume2, VolumeX, Music, Download, ChevronLeft, Gauge, Sparkles, ListMusic, Star, Lightbulb, Shuffle } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { BellaBird, LeoLion, MiloMonkey } from "@/components/characters";
-import chairUrl from "@/assets/aoc/seating/aoc_chair.svg";
-import chairSelectedOverlayUrl from "@/assets/aoc/seating/aoc_chair_selected_overlay.svg";
-import chairPlayingOverlayUrl from "@/assets/aoc/seating/aoc_chair_playing_overlay.svg";
-import musicStandUrl from "@/assets/aoc/seating/aoc_music_stand.svg";
-import musicStandHighlightOverlayUrl from "@/assets/aoc/seating/aoc_music_stand_highlight_overlay.svg";
+import chairUrl from "@/assets/aoc/seating/aoc_chair.png";
+import chairSelectedOverlayUrl from "@/assets/aoc/seating/aoc_chair_selected_overlay.png";
 import podiumBaseUrl from "@/assets/aoc/podium/aoc_podium_base.svg";
 import podiumTrimUrl from "@/assets/aoc/podium/aoc_podium_trim.svg";
 import podiumShadowUrl from "@/assets/aoc/podium/aoc_podium_shadow.svg";
@@ -160,7 +156,26 @@ const PRESET_ARRANGEMENTS: PresetArrangement[] = [
         'color_xylophone',
       ].map((id) => [id, true])
     ) as Record<string, boolean>,
-    parts: {},
+    parts: {
+      strings_violin_1: 'B',
+      strings_violin_2: 'A',
+      strings_viola: 'C',
+      strings_cello: 'B',
+      strings_bass: 'A',
+      winds_flute: 'C',
+      winds_oboe: 'A',
+      winds_clarinet: 'B',
+      winds_bassoon: 'A',
+      brass_trumpet: 'A',
+      brass_horn: 'B',
+      brass_trombone: 'C',
+      brass_tuba: 'A',
+      perc_timpani: 'C',
+      perc_snare: 'B',
+      perc_bass_drum: 'A',
+      color_glockenspiel: 'B',
+      color_xylophone: 'C',
+    },
     tempo: 115,
   },
 ];
@@ -1273,7 +1288,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: 'bird',
     description: 'Bright soaring strings!',
     defaultVolume: 70,
-    seat: { row: 1, xPct: 30, yPct: 78, scale: 1.05, zIndex: 40 },
+    seat: { row: 1, xPct: 25, yPct: 82, scale: 0.85, zIndex: 40 },
   },
   {
     id: 'strings_violin_2',
@@ -1287,7 +1302,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Second violin support!',
     defaultVolume: 65,
-    seat: { row: 1, xPct: 44, yPct: 78, scale: 1.05, zIndex: 40 },
+    seat: { row: 1, xPct: 41, yPct: 82, scale: 0.85, zIndex: 40 },
   },
   {
     id: 'strings_viola',
@@ -1301,7 +1316,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Warm middle strings!',
     defaultVolume: 62,
-    seat: { row: 1, xPct: 58, yPct: 78, scale: 1.05, zIndex: 40 },
+    seat: { row: 1, xPct: 59, yPct: 82, scale: 0.85, zIndex: 40 },
   },
   {
     id: 'strings_cello',
@@ -1315,7 +1330,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: 'lion',
     description: 'Rich warm support!',
     defaultVolume: 60,
-    seat: { row: 1, xPct: 72, yPct: 78, scale: 1.05, zIndex: 40 },
+    seat: { row: 1, xPct: 75, yPct: 82, scale: 0.85, zIndex: 40 },
   },
 
   // Row 2 (winds + bass)
@@ -1331,7 +1346,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Deep foundation!',
     defaultVolume: 65,
-    seat: { row: 2, xPct: 18, yPct: 66, scale: 1.0, zIndex: 30 },
+    seat: { row: 2, xPct: 18, yPct: 74, scale: 0.75, zIndex: 30 },
   },
   {
     id: 'winds_flute',
@@ -1345,7 +1360,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Sparkly melodies!',
     defaultVolume: 68,
-    seat: { row: 2, xPct: 32, yPct: 66, scale: 1.0, zIndex: 30 },
+    seat: { row: 2, xPct: 32, yPct: 74, scale: 0.75, zIndex: 30 },
   },
   {
     id: 'winds_oboe',
@@ -1359,7 +1374,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Reed song!',
     defaultVolume: 60,
-    seat: { row: 2, xPct: 46, yPct: 66, scale: 1.0, zIndex: 30 },
+    seat: { row: 2, xPct: 46, yPct: 74, scale: 0.75, zIndex: 30 },
   },
   {
     id: 'winds_clarinet',
@@ -1373,7 +1388,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Smooth woodwind tone!',
     defaultVolume: 60,
-    seat: { row: 2, xPct: 60, yPct: 66, scale: 1.0, zIndex: 30 },
+    seat: { row: 2, xPct: 60, yPct: 74, scale: 0.75, zIndex: 30 },
   },
   {
     id: 'winds_bassoon',
@@ -1387,7 +1402,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Deep woodwind voice!',
     defaultVolume: 58,
-    seat: { row: 2, xPct: 74, yPct: 66, scale: 1.0, zIndex: 30 },
+    seat: { row: 2, xPct: 74, yPct: 74, scale: 0.75, zIndex: 30 },
   },
 
   // Row 3 (brass)
@@ -1403,7 +1418,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Bright fanfares!',
     defaultVolume: 62,
-    seat: { row: 3, xPct: 26, yPct: 54, scale: 0.92, zIndex: 20 },
+    seat: { row: 3, xPct: 26, yPct: 65, scale: 0.65, zIndex: 20 },
   },
   {
     id: 'brass_horn',
@@ -1417,7 +1432,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Warm noble brass!',
     defaultVolume: 58,
-    seat: { row: 3, xPct: 40, yPct: 54, scale: 0.92, zIndex: 20 },
+    seat: { row: 3, xPct: 40, yPct: 65, scale: 0.65, zIndex: 20 },
   },
   {
     id: 'brass_trombone',
@@ -1431,7 +1446,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Powerful low brass!',
     defaultVolume: 58,
-    seat: { row: 3, xPct: 54, yPct: 54, scale: 0.92, zIndex: 20 },
+    seat: { row: 3, xPct: 54, yPct: 65, scale: 0.65, zIndex: 20 },
   },
   {
     id: 'brass_tuba',
@@ -1445,7 +1460,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Deep brass foundation!',
     defaultVolume: 60,
-    seat: { row: 3, xPct: 68, yPct: 54, scale: 0.92, zIndex: 20 },
+    seat: { row: 3, xPct: 68, yPct: 65, scale: 0.65, zIndex: 20 },
   },
 
   // Row 4 (percussion + color)
@@ -1461,7 +1476,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: 'monkey',
     description: 'Dramatic tuned drums!',
     defaultVolume: 78,
-    seat: { row: 4, xPct: 18, yPct: 42, scale: 0.85, zIndex: 10 },
+    seat: { row: 4, xPct: 18, yPct: 56, scale: 0.55, zIndex: 10 },
   },
   {
     id: 'perc_snare',
@@ -1475,7 +1490,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Crisp marching hits!',
     defaultVolume: 55,
-    seat: { row: 4, xPct: 34, yPct: 42, scale: 0.85, zIndex: 10 },
+    seat: { row: 4, xPct: 34, yPct: 56, scale: 0.55, zIndex: 10 },
   },
   {
     id: 'perc_bass_drum',
@@ -1489,7 +1504,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Big booming accents!',
     defaultVolume: 55,
-    seat: { row: 4, xPct: 50, yPct: 42, scale: 0.85, zIndex: 10 },
+    seat: { row: 4, xPct: 50, yPct: 56, scale: 0.55, zIndex: 10 },
   },
   {
     id: 'color_glockenspiel',
@@ -1503,7 +1518,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Magical bell sparkle!',
     defaultVolume: 50,
-    seat: { row: 4, xPct: 66, yPct: 42, scale: 0.85, zIndex: 10 },
+    seat: { row: 4, xPct: 66, yPct: 56, scale: 0.55, zIndex: 10 },
   },
   {
     id: 'color_xylophone',
@@ -1517,7 +1532,7 @@ const ORCHESTRA_SEATS: OrchestraSeatConfig[] = [
     character: null,
     description: 'Bright wooden clicks!',
     defaultVolume: 55,
-    seat: { row: 4, xPct: 82, yPct: 42, scale: 0.85, zIndex: 10 },
+    seat: { row: 4, xPct: 82, yPct: 56, scale: 0.55, zIndex: 10 },
   },
 ];
 
@@ -1994,25 +2009,31 @@ export default function AnimalOrchestraConductorGameWithSamples() {
 
   // Render animal character
   const renderCharacter = (layer: OrchestraLayer, size: string = "w-20 h-20") => {
-    const commonProps = {
-      className: size,
-      isPlaying: layer.isPlaying,
-    };
-
-    switch (layer.character) {
-      case 'bird':
-        return <BellaBird {...commonProps} />;
-      case 'lion':
-        return <LeoLion {...commonProps} />;
-      case 'monkey':
-        return <MiloMonkey {...commonProps} />;
-      default:
-        return (
-          <span className={`${size.includes('20') ? 'text-6xl' : 'text-4xl'} ${layer.isPlaying ? 'animate-bounce' : ''}`}>
-            {layer.emoji}
-          </span>
-        );
+    // Determine character image based on instrument
+    let characterImage = layer.instrumentName.replace(/-/g, '_');
+    
+    // Special case for Violin II (different character)
+    if (layer.id === 'strings_violin_2') {
+      characterImage = 'violin_alt';
     }
+
+    // Special case: Increase size for Violin I, II, Viola & Cello (custom assets are larger/different scale)
+    let finalSize = size;
+    if (layer.id === 'strings_violin_1' || layer.id === 'strings_violin_2' || layer.id === 'strings_viola' || layer.id === 'strings_cello') {
+      finalSize = "w-32 h-32";
+    }
+
+    const imageUrl = `/aoc/characters/aoc_character_${characterImage}.png`;
+
+    return (
+      <div className={`${finalSize} relative flex items-center justify-center`}>
+        <img
+          src={imageUrl}
+          alt={`${layer.animal} playing ${layer.instrumentName}`}
+          className={`block w-full h-full object-contain ${layer.isPlaying ? 'animate-tilt-subtle' : ''}`}
+        />
+      </div>
+    );
   };
 
   if (!gameStarted) {
@@ -2218,14 +2239,34 @@ export default function AnimalOrchestraConductorGameWithSamples() {
         >
           {/* Back wall */}
           <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/aoc/stage/aoc_stage_backwall_1920x1080.webp')" }}
+            className="absolute left-0 right-0 top-0 h-1/2 bg-cover bg-center"
+            // Prefer a custom backwall image if present; fall back to the default.
+            // If the first URL 404s, the second background layer will still render.
+            style={{
+              backgroundImage:
+                "url('/aoc/stage/aoc_stage_backwall_custom.png'), url('/aoc/stage/aoc_stage_backwall.png')",
+              // Show the *bottom half* of the back wall image in the top half of the stage.
+              // Custom image scaled to 102.5% to align curtains with the floor image.
+              // Fallback image remains at 100%.
+              backgroundSize: "102.5% 205%, 100% 200%",
+              backgroundPosition: "center bottom, center bottom",
+              backgroundRepeat: "no-repeat, no-repeat",
+            }}
           />
 
           {/* Floor */}
           <div
-            className="absolute inset-0 bg-cover bg-bottom opacity-90"
-            style={{ backgroundImage: "url('/aoc/stage/aoc_stage_floor_1920x1080.webp')" }}
+            className="absolute left-0 right-0 bottom-0 h-1/2 bg-cover bg-bottom"
+            // Prefer a custom floor image if present; fall back to the default.
+            // If the first URL 404s, the second background layer will still render.
+            style={{
+              backgroundImage:
+                "url('/aoc/stage/aoc_stage_floor_custom.png'), url('/aoc/stage/aoc_stage_floor.png')",
+              // Show the *top half* of the floor image in the bottom half of the stage.
+              backgroundSize: "100% 200%, 100% 200%",
+              backgroundPosition: "center top, center top",
+              backgroundRepeat: "no-repeat, no-repeat",
+            }}
           />
 
           {/* Atmospheric overlays */}
@@ -2246,7 +2287,7 @@ export default function AnimalOrchestraConductorGameWithSamples() {
                     setSelectedSeatId(layer.id);
                   }
                 }}
-                className={`absolute touch-target select-none outline-none disabled:opacity-60 focus-visible:ring-4 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/30 ${
+                className={`absolute touch-target select-none outline-none rounded-2xl disabled:opacity-60 focus-visible:ring-4 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/30 ${
                   isSelected ? "ring-4 ring-blue-300/80" : ""
                 }`}
                 style={{
@@ -2258,53 +2299,42 @@ export default function AnimalOrchestraConductorGameWithSamples() {
                 aria-label={`${layer.name} seat`}
               >
                 <div className="relative flex flex-col items-center">
-                  {/* Playing glow */}
-                  {layer.isPlaying && (
-                    <img
-                      src="/aoc/overlays/aoc_glow_ring_sm.png"
-                      alt=""
-                      className="absolute -top-8 -left-8 w-36 h-36 opacity-80 pointer-events-none"
-                    />
-                  )}
-
-                  {/* Chair overlays */}
-                  <div className="relative w-24 h-24">
-                    {layer.isPlaying && (
+                  {/* Seat Visuals Container - Wider to fit effects without shrinking chair */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-48 pointer-events-none flex items-end justify-center">
+                    
+                    {/* Chair */}
+                    {layer.isPlaying ? (
                       <img
-                        src={chairPlayingOverlayUrl}
+                        // Use the same ring-chair asset as the selected state to keep sizing consistent.
+                        src={chairSelectedOverlayUrl}
                         alt=""
-                        className="absolute inset-0 w-full h-full pointer-events-none"
+                        className="w-full h-full object-contain object-bottom"
                       />
-                    )}
-                    {isSelected && (
+                    ) : isSelected ? (
                       <img
                         src={chairSelectedOverlayUrl}
                         alt=""
-                        className="absolute inset-0 w-full h-full pointer-events-none"
+                        className="w-full h-full object-contain object-bottom"
                       />
-                    )}
-                    <img src={chairUrl} alt="" className="absolute inset-0 w-full h-full opacity-95 pointer-events-none" />
-
-                    {/* Character + stand */}
-                    <div className="absolute inset-0 flex items-center justify-center -translate-y-2 pointer-events-none">
-                      {renderCharacter(layer, "w-14 h-14")}
-                    </div>
-                    <img
-                      src={musicStandUrl}
-                      alt=""
-                      className="absolute inset-0 w-full h-full opacity-90 pointer-events-none"
-                    />
-                    {isSelected && (
+                    ) : (
                       <img
-                        src={musicStandHighlightOverlayUrl}
+                        src={chairUrl}
                         alt=""
-                        className="absolute inset-0 w-full h-full pointer-events-none"
+                        className="w-full h-full object-contain object-bottom opacity-95"
                       />
                     )}
+
+                    {/* Character */}
+                    <div className="absolute inset-x-0 bottom-16 flex justify-center">
+                      {renderCharacter(layer, "w-20 h-20")}
+                    </div>
                   </div>
 
+                  {/* Spacer to maintain button size flow if needed, or just rely on w-32 h-44 of button */}
+                  <div className="w-32 h-44" /> 
+
                   {/* Seat label */}
-                  <div className="mt-1 px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-semibold tracking-wide">
+                  <div className="mt-1 px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-semibold tracking-wide z-50">
                     {layer.name} · {layer.selectedPart}
                   </div>
                 </div>
@@ -2317,7 +2347,7 @@ export default function AnimalOrchestraConductorGameWithSamples() {
       </div>
 
       {/* Conductor Podium (always visible) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4">
+      <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 origin-bottom transform scale-90 sm:scale-100">
         <div className="max-w-6xl mx-auto">
           <div className={`relative overflow-hidden ${playfulShapes.rounded.container} ${playfulShapes.shadows.card}`}>
             <img src={podiumShadowUrl} alt="" className="absolute inset-0 w-full h-full opacity-70 pointer-events-none" />
