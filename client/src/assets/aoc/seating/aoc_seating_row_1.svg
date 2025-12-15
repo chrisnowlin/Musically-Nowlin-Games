@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200">
+  
+  <rect x="2" y="2" width="596" height="196" rx="12" fill="none" stroke="#0b1220" stroke-width="2" />
+  
+  <!-- Subtle inner border for depth -->
+  <rect x="8" y="8" width="584" height="184" rx="8" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+  
+  
+  <!-- Center label with shadow -->
+  <text x="301" y="101" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="16" fill="rgba(0,0,0,0.3)">Row 1</text>
+  <text x="300" y="100" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="16" fill="rgba(255,255,255,0.95)">Row 1</text>
+  
+  
+  
+</svg>

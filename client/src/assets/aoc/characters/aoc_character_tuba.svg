@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+  
+    <defs>
+      <linearGradient id="grad_7xoe0k3m4" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#1e3a8a" stop-opacity="0.8" />
+        <stop offset="100%" stop-color="#1e3a8a" stop-opacity="1" />
+      </linearGradient>
+    </defs>
+  <rect x="2" y="2" width="296" height="396" rx="12" fill="url(#grad_7xoe0k3m4)" stroke="#0b1220" stroke-width="2" />
+  
+  <!-- Subtle inner border for depth -->
+  <rect x="8" y="8" width="284" height="384" rx="8" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+  
+  
+  <!-- Center label with shadow -->
+  <text x="151" y="201" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="24" fill="rgba(0,0,0,0.3)">tuba</text>
+  <text x="150" y="200" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="24" fill="rgba(255,255,255,0.95)">tuba</text>
+  
+  
+  
+</svg>

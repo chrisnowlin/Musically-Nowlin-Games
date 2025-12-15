@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600">
+  
+  <rect x="2" y="2" width="996" height="596" rx="12" fill="url(#grad_vignette)" stroke="#0b1220" stroke-width="2" />
+  
+  <!-- Subtle inner border for depth -->
+  <rect x="8" y="8" width="984" height="584" rx="8" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+  
+  
+  <!-- Center label with shadow -->
+  <text x="501" y="301" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="48" fill="rgba(0,0,0,0.3)">Vignette</text>
+  <text x="500" y="300" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif" font-weight="600" font-size="48" fill="rgba(255,255,255,0.95)">Vignette</text>
+  
+  
+  
+</svg>
