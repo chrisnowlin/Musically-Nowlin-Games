@@ -2,6 +2,8 @@
 
 This document is the **designer handoff spec** for the Animal Orchestra Conductor redesign. It defines **every UI piece** we need, plus the **technical requirements** for deliverables so engineering can integrate assets cleanly.
 
+**NOTE:** Final deliverables must be **PNG** or **JPEG** format. Vector (SVG) sources should be kept for future edits, but the runtime assets will be raster images.
+
 ---
 
 ### Goals (what the UI must achieve)
@@ -77,20 +79,21 @@ This document is the **designer handoff spec** for the Animal Orchestra Conducto
   - `aoc_<category>_<name>[_<variant>][_WxH].<ext>`
 
 Examples
-- `aoc_stage_backwall_1920x1080.webp`
-- `aoc_music_stand.svg`
-- `aoc_character_bassoon.svg`
+- `aoc_stage_backwall_1920x1080.jpg`
+- `aoc_music_stand.png`
+- `aoc_character_bassoon.png`
 
-### 2.2 Preferred formats
-- **SVG**: UI chrome, seats, characters, icons, minimap
-- **PNG/WebP**: painterly backgrounds, soft glows, textures
+### 2.2 Required formats
+- **PNG (24-bit or 32-bit)**: REQUIRED for all UI elements, characters, icons, and overlays that need **transparency**.
+- **JPEG**: Acceptable ONLY for fully opaque, rectangular background images (e.g., stage back wall) to save file size.
 
-### 2.3 SVG export rules (important)
-- Must include a **`viewBox`**.
-- Transparent background.
-- No external font dependencies (do not rely on text glyphs). If you must include “note” shapes, draw them as vector shapes.
-- Avoid excessive filter usage; prefer simple shapes.
-- Keep path counts reasonably optimized.
+### 2.3 Image export rules (important)
+- **Resolution**: All assets must be exported at high resolution (Retina-ready).
+  - **Standard**: Export at **2x** or **3x** the logical CSS pixel size.
+  - Example: If a button is 44x44px in CSS, the PNG should be at least **88x88px** (2x) or **132x132px** (3x).
+- **Transparency**: PNGs must have a clean transparent background (alpha channel). No white/black mattes.
+- **Trimming**: Trim transparent whitespace tightly around the visual content, unless a specific padding is required for alignment (e.g., keeping a glow effect centered).
+- **Compression**: Optimize all PNG/JPEG files (e.g., using TinyPNG or ImageOptim) to reduce file size without visible quality loss.
 
 ### 2.4 Interaction/touch requirements
 - Any clickable target must be usable at **44×44 CSS px** minimum.
@@ -103,14 +106,14 @@ Examples
 ### 3.1 Stage background (layered)
 | Asset ID | File(s) | Type | Required sizes | Notes |
 |---|---|---|---|---|
-| Back wall + curtains | `aoc_stage_backwall_1920x1080.webp` (+ `2560x1440`, `1366x1024`, `1170x2532`) | Raster | 16:9 + tablet + mobile | No UI text baked in. Keep key detail out of outer 5% margins. |
-| Stage floor | `aoc_stage_floor_1920x1080.webp` (+ same sizes) | Raster | same | Subtle perspective lines are encouraged. |
-| Vignette overlay | `aoc_stage_vignette_overlay.svg` (or `.png`) | Overlay | scalable | Transparent edges; subtle. |
-| Global spotlight overlay (optional) | `aoc_stage_spotlight_overlay.svg` | Overlay | scalable | Engineering can toggle as needed. |
+| Back wall + curtains | `aoc_stage_backwall_1920x1080.jpg` (+ `2560x1440`, `1366x1024`, `1170x2532`) | JPEG/PNG | 16:9 + tablet + mobile | No UI text baked in. Keep key detail out of outer 5% margins. |
+| Stage floor | `aoc_stage_floor_1920x1080.jpg` (+ same sizes) | JPEG/PNG | same | Subtle perspective lines are encouraged. |
+| Vignette overlay | `aoc_stage_vignette_overlay.png` | PNG | scalable | Transparent edges; subtle gradient. |
+| Global spotlight overlay (optional) | `aoc_stage_spotlight_overlay.png` | PNG | scalable | Engineering can toggle as needed. |
 
 **Technical requirements**
-- If raster, export as **WebP** preferred; PNG acceptable.
 - If using multiple layers, ensure they align perfectly at each size.
+- Backgrounds can be JPEG if opaque, otherwise PNG.
 
 ---
 
@@ -119,19 +122,20 @@ Examples
 ### 4.1 Seating rows (optional guides)
 | Asset ID | File(s) | Type | Notes |
 |---|---|---|---|
-| Row guides | `aoc_seating_row_1.svg` … `aoc_seating_row_4.svg` | SVG | Subtle semi-circular guides; decorative. |
+| Row guides | `aoc_seating_row_1.png` … `aoc_seating_row_4.png` | PNG | Subtle semi-circular guides; decorative. |
 
 ### 4.2 Chair + stand components
 | Asset ID | File(s) | Type | Variants/states | Technical requirements |
 |---|---|---|---|---|
-| Chair | `aoc_chair.svg` | SVG | idle | Provide clear visual **bottom-center anchor**. |
-| Chair selected overlay | `aoc_chair_selected_overlay.svg` | SVG overlay | selected | Transparent overlay, stackable over chair. |
-| Chair playing overlay | `aoc_chair_playing_overlay.svg` | SVG/PNG overlay | playing | Separate glow/pulse overlay. |
-| Music stand | `aoc_music_stand.svg` | SVG | idle | Must be legible at small sizes. |
-| Stand highlight overlay | `aoc_music_stand_highlight_overlay.svg` | SVG overlay | hover/selected | Stackable overlay. |
+| Chair | `aoc_chair.png` | PNG | idle | Provide clear visual **bottom-center anchor**. |
+| Chair selected overlay | `aoc_chair_selected_overlay.png` | PNG overlay | selected | Transparent overlay, stackable over chair. |
+| Chair playing overlay | `aoc_chair_playing_overlay.png` | PNG overlay | playing | Separate glow/pulse overlay. |
+| Music stand | `aoc_music_stand.png` | PNG | idle | Must be legible at small sizes. |
+| Stand highlight overlay | `aoc_music_stand_highlight_overlay.png` | PNG overlay | hover/selected | Stackable overlay. |
 
 **Sizing system**
-- Provide a canonical SVG `viewBox` for seats/stands. Recommendation: chair+stand fits comfortably in a **300×300** viewBox.
+- Target logical size: Chair+stand fits in **300×300 CSS px**.
+- **Export size**: **900×900px** (3x) recommended for crisp edges on high-DPI displays.
 
 ---
 
@@ -139,10 +143,10 @@ Examples
 
 | Asset ID | File(s) | Type | Sizes | Notes |
 |---|---|---|---|---|
-| Glow rings | `aoc_glow_ring_sm.png`, `aoc_glow_ring_md.png`, `aoc_glow_ring_lg.png` | PNG | 256² / 512² / 1024² | Transparent background. |
-| Seat spotlight pool | `aoc_spotlight_pool.svg` (or `.png`) | Overlay | scalable | Placed on floor under seat. |
-| Note particles | `aoc_particle_note_1.svg` … `aoc_particle_note_8.svg` | SVG | scalable | Simple vector note sprites. |
-| Disabled haze overlay | `aoc_disabled_haze_overlay.svg` | SVG overlay | scalable | Used when seats are disabled/unavailable. |
+| Glow rings | `aoc_glow_ring_sm.png`, `aoc_glow_ring_md.png`, `aoc_glow_ring_lg.png` | PNG | 256² / 512² / 1024² | Transparent background. Soft edges. |
+| Seat spotlight pool | `aoc_spotlight_pool.png` | PNG | scalable | Placed on floor under seat. |
+| Note particles | `aoc_particle_note_1.png` … `aoc_particle_note_8.png` | PNG | scalable | Simple note sprites. |
+| Disabled haze overlay | `aoc_disabled_haze_overlay.png` | PNG | scalable | Used when seats are disabled/unavailable. |
 
 ---
 
@@ -153,34 +157,32 @@ The podium is the fixed control surface at the bottom of the screen. It should r
 ### 6.1 Podium shell
 | Asset ID | File(s) | Type | Notes |
 |---|---|---|---|
-| Podium base | `aoc_podium_base.svg` | SVG | Stretch-friendly (see 9-slice guidance below). |
-| Podium trim | `aoc_podium_trim.svg` | SVG | Optional overlay; tintable for light/dark. |
-| Podium shadow | `aoc_podium_shadow.svg` | SVG | Optional overlay gradient. |
+| Podium base | `aoc_podium_base.png` | PNG | Stretch-friendly (see 9-slice guidance below). |
+| Podium trim | `aoc_podium_trim.png` | PNG | Optional overlay; tintable for light/dark. |
+| Podium shadow | `aoc_podium_shadow.png` | PNG | Optional overlay gradient. |
 
 ### 6.2 Button + slider skins (optional)
 If provided, engineering can skin existing button/slider components.
 
 | Asset ID | File(s) | Type | States |
 |---|---|---|---|
-| Primary button | `aoc_btn_primary_idle.svg`, `hover`, `pressed`, `disabled` | SVG | 4 |
-| Secondary button | `aoc_btn_secondary_idle.svg`, `hover`, `pressed`, `disabled` | SVG | 4 |
-| Slider track | `aoc_slider_track.svg` | SVG | idle |
-| Slider fill | `aoc_slider_fill.svg` | SVG | idle |
-| Slider thumb | `aoc_slider_thumb_idle.svg`, `hover`, `active` | SVG | 3 |
+| Primary button | `aoc_btn_primary_idle.png`, `hover`, `pressed`, `disabled` | PNG | 4 |
+| Secondary button | `aoc_btn_secondary_idle.png`, `hover`, `pressed`, `disabled` | PNG | 4 |
+| Slider track | `aoc_slider_track.png` | PNG | idle |
+| Slider fill | `aoc_slider_fill.png` | PNG | idle |
+| Slider thumb | `aoc_slider_thumb_idle.png`, `hover`, `active` | PNG | 3 |
 
 ### 6.3 Selected-seat “score” inspector
 | Asset ID | File(s) | Type | States/variants | Notes |
 |---|---|---|---|---|
-| Score panel background | `aoc_score_panel_bg.svg` | SVG | idle | No baked labels. |
-| Part selector staff background | `aoc_part_selector_staff.svg` | SVG | idle | Staff lines/measures background. |
-| Part chips | `aoc_part_chip_idle.svg`, `hover`, `selected`, `disabled` | SVG | 4 | Used for parts A–F. |
+| Score panel background | `aoc_score_panel_bg.png` | PNG | idle | No baked labels. |
+| Part selector staff background | `aoc_part_selector_staff.png` | PNG | idle | Staff lines/measures background. |
+| Part chips | `aoc_part_chip_idle.png`, `hover`, `selected`, `disabled` | PNG | 4 | Used for parts A–F. |
 
 ### 6.4 9-slice / stretch guidance (required)
-- If a panel must stretch, either:
-  - Deliver **simple SVG** that scales cleanly, OR
-  - Deliver **caps + center tile** pieces:
-    - `*_cap_left.svg`, `*_cap_right.svg`, `*_center_tile.svg`
-- Avoid complex textures that look distorted under stretch.
+- If a panel must stretch, deliver **caps + center tile** pieces to avoid distortion:
+  - `*_cap_left.png`, `*_cap_right.png`, `*_center_tile.png`
+- OR provide a very high-resolution PNG if stretching isn't extreme.
 
 ---
 
@@ -188,9 +190,9 @@ If provided, engineering can skin existing button/slider components.
 
 | Asset ID | File(s) | Type | Notes |
 |---|---|---|---|
-| Modal frame | `aoc_modal_frame.svg` | SVG | Themed frame container only. |
-| Preset card bg | `aoc_preset_card_bg.svg` | SVG | Optional; no text baked in. |
-| Tip frame | `aoc_tip_frame.svg` | SVG | Optional decorative frame. |
+| Modal frame | `aoc_modal_frame.png` | PNG | Themed frame container only. |
+| Preset card bg | `aoc_preset_card_bg.png` | PNG | Optional; no text baked in. |
+| Tip frame | `aoc_tip_frame.png` | PNG | Optional decorative frame. |
 
 ---
 
@@ -198,8 +200,8 @@ If provided, engineering can skin existing button/slider components.
 
 | Asset ID | File(s) | Type | States |
 |---|---|---|---|
-| Stage outline | `aoc_minimap_stage_outline.svg` | SVG | idle |
-| Seat dot | `aoc_minimap_seat_dot_idle.svg`, `playing`, `selected` | SVG | 3 |
+| Stage outline | `aoc_minimap_stage_outline.png` | PNG | idle |
+| Seat dot | `aoc_minimap_seat_dot_idle.png`, `playing`, `selected` | PNG | 3 |
 
 ---
 
@@ -210,34 +212,32 @@ Engineering will implement each seat as a playable “layer”. The `instrumentN
 ### 9.1 Seat roster table
 | Seat ID | Family | instrumentName (code) | Character asset | Notes |
 |---|---|---|---|---|
-| `strings_violin_1` | strings | `violin` | `aoc_character_violin.svg` | If we want visual variety, also export `aoc_character_violin_alt.svg`. |
-| `strings_violin_2` | strings | `violin` | `aoc_character_violin.svg` | May reuse same SVG; engineering can add subtle badge/tint. |
-| `strings_viola` | strings | `viola` | `aoc_character_viola.svg` | |
-| `strings_cello` | strings | `cello` | `aoc_character_cello.svg` | |
-| `strings_bass` | strings | `double-bass` | `aoc_character_double_bass.svg` | |
-| `winds_flute` | woodwinds | `flute` | `aoc_character_flute.svg` | |
-| `winds_oboe` | woodwinds | `oboe` | `aoc_character_oboe.svg` | |
-| `winds_clarinet` | woodwinds | `clarinet` | `aoc_character_clarinet.svg` | |
-| `winds_bassoon` | woodwinds | `bassoon` | `aoc_character_bassoon.svg` | |
-| `brass_trumpet` | brass | `trumpet` | `aoc_character_trumpet.svg` | |
-| `brass_horn` | brass | `french-horn` | `aoc_character_french_horn.svg` | |
-| `brass_trombone` | brass | `trombone` | `aoc_character_trombone.svg` | |
-| `brass_tuba` | brass | `tuba` | `aoc_character_tuba.svg` | |
-| `perc_timpani` | percussion | `timpani` | `aoc_character_timpani.svg` | |
-| `perc_snare` | percussion | `snare-drum` | `aoc_character_snare.svg` | |
-| `perc_bass_drum` | percussion | `bass-drum` | `aoc_character_bass_drum.svg` | |
-| `color_glockenspiel` | percussion | `glockenspiel` | `aoc_character_glockenspiel.svg` | |
-| `color_xylophone` | percussion | `xylophone` | `aoc_character_xylophone.svg` | |
+| `strings_violin_1` | strings | `violin` | `aoc_character_violin.png` | If we want visual variety, also export `_alt.png`. |
+| `strings_violin_2` | strings | `violin` | `aoc_character_violin.png` | May reuse same PNG; engineering can add subtle badge/tint. |
+| `strings_viola` | strings | `viola` | `aoc_character_viola.png` | |
+| `strings_cello` | strings | `cello` | `aoc_character_cello.png` | |
+| `strings_bass` | strings | `double-bass` | `aoc_character_double_bass.png` | |
+| `winds_flute` | woodwinds | `flute` | `aoc_character_flute.png` | |
+| `winds_oboe` | woodwinds | `oboe` | `aoc_character_oboe.png` | |
+| `winds_clarinet` | woodwinds | `clarinet` | `aoc_character_clarinet.png` | |
+| `winds_bassoon` | woodwinds | `bassoon` | `aoc_character_bassoon.png` | |
+| `brass_trumpet` | brass | `trumpet` | `aoc_character_trumpet.png` | |
+| `brass_horn` | brass | `french-horn` | `aoc_character_french_horn.png` | |
+| `brass_trombone` | brass | `trombone` | `aoc_character_trombone.png` | |
+| `brass_tuba` | brass | `tuba` | `aoc_character_tuba.png` | |
+| `perc_timpani` | percussion | `timpani` | `aoc_character_timpani.png` | |
+| `perc_snare` | percussion | `snare-drum` | `aoc_character_snare.png` | |
+| `perc_bass_drum` | percussion | `bass-drum` | `aoc_character_bass_drum.png` | |
+| `color_glockenspiel` | percussion | `glockenspiel` | `aoc_character_glockenspiel.png` | |
+| `color_xylophone` | percussion | `xylophone` | `aoc_character_xylophone.png` | |
 
-### 9.2 Character SVG technical requirements (apply to all)
-- **Format**: SVG, transparent background
-- **Consistent `viewBox`**: recommend `viewBox="0 0 300 400"`
+### 9.2 Character Image technical requirements (apply to all)
+- **Format**: PNG, transparent background (alpha channel preserved).
+- **Resolution**: Export at **3x** logical size (e.g., if character is displayed at 150x200px, export at **450x600px**).
 - **Seated look**: characters must read as seated in an orchestra; either:
-  - seated pose inside the character SVG, or
-  - designed to sit behind `aoc_music_stand.svg` cleanly.
-- **Animation-friendly layering** (strongly preferred): group IDs for
-  - `head`, `arms`, `instrument`, `notes`
-- **No font-based music note glyphs**; if notes are included, draw them as vector shapes.
+  - seated pose inside the character image, or
+  - designed to sit behind `aoc_music_stand.png` cleanly.
+- **No font-based music note glyphs**; notes should be drawn shapes if included.
 
 ---
 
@@ -260,8 +260,9 @@ aoc_ui_exports/
 ---
 
 ## 11) Acceptance checklist (handoff-ready)
-- [ ] All SVGs have a `viewBox` and no external font dependencies
-- [ ] All overlays have correct transparency and layer cleanly
+- [ ] All assets are **PNG** or **JPEG** (no SVGs).
+- [ ] PNGs have correct **transparency** and no white/black halos.
+- [ ] Assets are exported at **high resolution** (2x/3x) for crispness on all devices.
 - [ ] Interactive elements have visuals for: idle/hover/selected/playing/disabled
 - [ ] Podium panels are stretch-safe (or have caps/center tile exports)
 - [ ] Character art reads clearly at mobile scale
