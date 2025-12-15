@@ -20,19 +20,14 @@ This document is the **designer handoff spec** for the Animal Orchestra Conducto
 
 ## 1) Global deliverables (non-image)
 
-### 1.1 Figma source
-- **Filename**: `aoc_ui_redesign.fig`
-- **Pages**:
-  - `Stage_Layout` (desktop/tablet/mobile frames)
+### 1.1 Source Files (Vector)
+- **Format**: Any vector source format (e.g., `.ai`, `.sketch`, `.afdesign`, or raw `.svg` files).
+- **Purpose**: We need the **source of truth** files to allow future edits, even if we are not using Figma.
+- **Organization**: Please organize layers clearly:
+  - `Stage_Layout`
   - `Components` (chairs/stands/podium/buttons/parts/overlays)
-  - `Characters` (one component per musician)
-  - `Tokens` (colors/type/spacing)
-  - `SeatLayout` (seat coordinates table)
-
-**Figma requirements**
-- Use **components + variants** for interactive states: `idle`, `hover`, `pressed`, `selected`, `playing`, `disabled`.
-- Podium panel must be **auto-layout + constraints** so it scales across widths.
-- Provide both **light and dark** styling (either variants or token-driven).
+  - `Characters`
+  - `Tokens`
 
 ### 1.2 Seat layout export (engineering placement)
 - **Filename**: `aoc_seat_layout.json`
