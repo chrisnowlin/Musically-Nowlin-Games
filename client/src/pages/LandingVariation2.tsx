@@ -103,7 +103,7 @@ export default function LandingVariation2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {games
-              .filter(game => game.id === "staff-invaders" || game.id === "pitch-match" || game.id === "fast-or-slow-race" || game.id === "dynamics-001" || game.id === "finish-the-tune" || game.id === "instrument-crane" || game.id === "instrument-detective" || game.id === "animal-orchestra-conductor" || game.id === "treble-runner")
+              .filter(game => game.id === "staff-invaders" || game.id === "pitch-match" || game.id === "fast-or-slow-race" || game.id === "dynamics-001" || game.id === "finish-the-tune" || game.id === "instrument-crane" || game.id === "instrument-detective" || game.id === "treble-runner")
               .sort((a, b) => a.title.localeCompare(b.title))
               .map((game, index) => {
             const Icon = game.icon;
@@ -208,7 +208,7 @@ export default function LandingVariation2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {games
-              .filter(game => game.id !== "staff-invaders" && game.id !== "pitch-match" && game.id !== "fast-or-slow-race" && game.id !== "dynamics-001" && game.id !== "finish-the-tune" && game.id !== "instrument-crane" && game.id !== "instrument-detective" && game.id !== "animal-orchestra-conductor" && game.id !== "treble-runner")
+              .filter(game => game.id !== "staff-invaders" && game.id !== "pitch-match" && game.id !== "fast-or-slow-race" && game.id !== "dynamics-001" && game.id !== "finish-the-tune" && game.id !== "instrument-crane" && game.id !== "instrument-detective" && game.id !== "treble-runner")
               .sort((a, b) => a.title.localeCompare(b.title))
               .map((game, index) => {
             const Icon = game.icon;
