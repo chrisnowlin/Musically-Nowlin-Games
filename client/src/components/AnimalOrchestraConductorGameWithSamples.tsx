@@ -8,9 +8,8 @@ import { Play, HelpCircle, Volume2, VolumeX, Music, Download, ChevronLeft, Gauge
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import chairUrl from "@/assets/aoc/seating/aoc_chair.png";
 import chairSelectedOverlayUrl from "@/assets/aoc/seating/aoc_chair_selected_overlay.png";
-import podiumBaseUrl from "@/assets/aoc/podium/aoc_podium_base.svg";
-import podiumTrimUrl from "@/assets/aoc/podium/aoc_podium_trim.svg";
-import podiumShadowUrl from "@/assets/aoc/podium/aoc_podium_shadow.svg";
+import podiumPanelUrl from "@/assets/aoc/podium/aoc_podium_panel.png";
+import scorePanelUrl from "@/assets/aoc/podium/aoc_score_panel.png";
 
 // Part variation interface
 type PartId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
@@ -2019,8 +2018,10 @@ export default function AnimalOrchestraConductorGameWithSamples() {
 
     // Special case: Increase size for Violin I, II, Viola & Cello (custom assets are larger/different scale)
     let finalSize = size;
-    if (layer.id === 'strings_violin_1' || layer.id === 'strings_violin_2' || layer.id === 'strings_viola' || layer.id === 'strings_cello') {
+    if (layer.id === 'strings_violin_1' || layer.id === 'strings_violin_2' || layer.id === 'strings_viola') {
       finalSize = "w-32 h-32";
+    } else if (layer.id === 'strings_cello' || layer.id === 'strings_bass') {
+      finalSize = "w-48 h-48";
     }
 
     const imageUrl = `/aoc/characters/aoc_character_${characterImage}.png`;
@@ -2325,7 +2326,7 @@ export default function AnimalOrchestraConductorGameWithSamples() {
                     )}
 
                     {/* Character */}
-                    <div className="absolute inset-x-0 bottom-16 flex justify-center">
+                    <div className={`absolute inset-x-0 flex justify-center ${layer.id === 'strings_cello' || layer.id === 'strings_bass' ? 'bottom-4' : 'bottom-16'}`}>
                       {renderCharacter(layer, "w-20 h-20")}
                     </div>
                   </div>
@@ -2347,17 +2348,20 @@ export default function AnimalOrchestraConductorGameWithSamples() {
       </div>
 
       {/* Conductor Podium (always visible) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 origin-bottom transform scale-90 sm:scale-100">
+      <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 origin-bottom transform scale-75 sm:scale-90">
         <div className="max-w-6xl mx-auto">
           <div className={`relative overflow-hidden ${playfulShapes.rounded.container} ${playfulShapes.shadows.card}`}>
-            <img src={podiumShadowUrl} alt="" className="absolute inset-0 w-full h-full opacity-70 pointer-events-none" />
-            <img src={podiumBaseUrl} alt="" className="absolute inset-0 w-full h-full opacity-90 pointer-events-none" />
-            <img src={podiumTrimUrl} alt="" className="absolute inset-0 w-full h-full opacity-70 pointer-events-none" />
+            {/* Podium artwork (extracted) */}
+            <img
+              src={podiumPanelUrl}
+              alt=""
+              className="absolute inset-x-0 bottom-0 h-44 w-full object-contain object-bottom pointer-events-none opacity-95"
+            />
 
-            <div className="relative p-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <div className="relative p-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 {/* Global controls */}
-                <div className="bg-black/35 rounded-2xl p-4 text-white">
+                <div className="bg-black/35 rounded-2xl p-3 text-white">
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-bold tracking-wide">Conductor Podium</div>
                     {samplesLoaded && usingSamples && (
@@ -2470,84 +2474,92 @@ export default function AnimalOrchestraConductorGameWithSamples() {
                 </div>
 
                 {/* Selected seat inspector */}
-                <div className="bg-black/35 rounded-2xl p-4 text-white">
-                  <div className="font-bold tracking-wide">Score / Selected Seat</div>
+                <div className="relative overflow-hidden bg-black/35 rounded-2xl p-3 text-white">
+                  {/* Score artwork (extracted) */}
+                  <img
+                    src={scorePanelUrl}
+                    alt=""
+                    className="absolute inset-x-0 top-0 h-24 w-full object-contain object-top pointer-events-none opacity-95"
+                  />
+                  <div className="relative z-10">
+                    <div className="font-bold tracking-wide">Score / Selected Seat</div>
 
-                  {!selectedSeat ? (
-                    <div className="mt-3 text-sm opacity-80">Select a musician on the stage to conduct their part.</div>
-                  ) : (
-                    <>
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div>
-                          <div className="font-semibold">{selectedSeat.name}</div>
-                          <div className="text-xs opacity-80">{selectedSeat.description}</div>
+                    {!selectedSeat ? (
+                      <div className="mt-3 text-sm opacity-80">Select a musician on the stage to conduct their part.</div>
+                    ) : (
+                      <>
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <div>
+                            <div className="font-semibold">{selectedSeat.name}</div>
+                            <div className="text-xs opacity-80">{selectedSeat.description}</div>
+                          </div>
+                          <Button
+                            onClick={() => toggleLayer(selectedSeat.id)}
+                            disabled={!samplesLoaded}
+                            size="sm"
+                            className={`${playfulComponents.button.primary}`}
+                          >
+                            {selectedSeat.isPlaying ? "Stop" : "Cue"}
+                          </Button>
                         </div>
-                        <Button
-                          onClick={() => toggleLayer(selectedSeat.id)}
-                          disabled={!samplesLoaded}
-                          size="sm"
-                          className={`${playfulComponents.button.primary}`}
-                        >
-                          {selectedSeat.isPlaying ? "Stop" : "Cue"}
-                        </Button>
-                      </div>
 
-                      <div className="mt-3">
-                        <div className="text-xs opacity-80 mb-2">Part (A–F)</div>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedSeat.variations.map((variation) => (
-                            <button
-                              key={variation.id}
-                              type="button"
-                              onClick={() => updateLayerPart(selectedSeat.id, variation.id)}
-                              className={`touch-target px-3 py-2 rounded-xl text-sm font-bold border transition-colors outline-none focus-visible:ring-4 focus-visible:ring-white/40 ${
-                                selectedSeat.selectedPart === variation.id
-                                  ? "bg-white text-gray-900 border-white"
-                                  : "bg-white/10 border-white/20 hover:bg-white/15"
-                              }`}
-                              title={`${variation.name}: ${variation.description}`}
-                            >
-                              {variation.id}
-                            </button>
-                          ))}
+                        <div className="mt-3">
+                          <div className="text-xs opacity-80 mb-2">Part (A–F)</div>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedSeat.variations.map((variation) => (
+                              <button
+                                key={variation.id}
+                                type="button"
+                                onClick={() => updateLayerPart(selectedSeat.id, variation.id)}
+                                className={`touch-target px-3 py-2 rounded-xl text-sm font-bold border transition-colors outline-none focus-visible:ring-4 focus-visible:ring-white/40 ${
+                                  selectedSeat.selectedPart === variation.id
+                                    ? "bg-white text-gray-900 border-white"
+                                    : "bg-white/10 border-white/20 hover:bg-white/15"
+                                }`}
+                                title={`${variation.name}: ${variation.description}`}
+                              >
+                                {variation.id}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="mt-3 grid gap-2">
-                        <div className="text-xs opacity-80">
-                          {selectedSeat.variations.find(v => v.id === selectedSeat.selectedPart)?.name}
+                        <div className="mt-3 grid gap-2">
+                          <div className="text-xs opacity-80">
+                            {selectedSeat.variations.find(v => v.id === selectedSeat.selectedPart)?.name}
+                          </div>
+                          <div className="text-xs opacity-70">
+                            {selectedSeat.variations.find(v => v.id === selectedSeat.selectedPart)?.description}
+                          </div>
                         </div>
-                        <div className="text-xs opacity-70">
-                          {selectedSeat.variations.find(v => v.id === selectedSeat.selectedPart)?.description}
-                        </div>
-                      </div>
 
-                      <div className="mt-4 flex items-center gap-3">
-                        <Volume2 className="w-4 h-4 opacity-80" />
-                        <div className="flex-1">
-                          <div className="text-xs opacity-80 mb-1">Seat volume</div>
-                          <Slider
-                            value={[selectedSeat.volume]}
-                            onValueChange={(values) => updateLayerVolume(selectedSeat.id, values[0])}
-                            min={0}
-                            max={100}
-                            step={1}
-                            className="w-full"
-                            aria-label={`${selectedSeat.name} volume`}
-                          />
+                        <div className="mt-4 flex items-center gap-3">
+                          <Volume2 className="w-4 h-4 opacity-80" />
+                          <div className="flex-1">
+                            <div className="text-xs opacity-80 mb-1">Seat volume</div>
+                            <Slider
+                              value={[selectedSeat.volume]}
+                              onValueChange={(values) => updateLayerVolume(selectedSeat.id, values[0])}
+                              min={0}
+                              max={100}
+                              step={1}
+                              className="w-full"
+                              aria-label={`${selectedSeat.name} volume`}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowTip(selectedSeat.instrumentName)}
+                            className="touch-target p-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+                            title="Learn about this instrument"
+                            aria-label="Learn about this instrument"
+                          >
+                            <Lightbulb className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowTip(selectedSeat.instrumentName)}
-                          className="touch-target p-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 outline-none focus-visible:ring-4 focus-visible:ring-white/40"
-                          title="Learn about this instrument"
-                          aria-label="Learn about this instrument"
-                        >
-                          <Lightbulb className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
