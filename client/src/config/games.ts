@@ -330,7 +330,7 @@ export const games: GameConfig[] = [
     title: "Animal Orchestra Conductor",
     description: "Start/stop parts to layer percussion, melody, and harmony.",
     route: "/games/animal-orchestra-conductor",
-    status: "coming-soon",
+    status: "available",
     icon: Gamepad2,
     color: "bg-orange-500",
     difficulty: "medium",
