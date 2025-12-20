@@ -16,22 +16,38 @@ import {
   type Pattern,
 } from '@/lib/aoc-v2/InstrumentPatterns';
 
-// Stage rows for depth effect (back to front)
-// Back row: smaller, higher on stage
-// Front row: larger, lower on stage
-const INSTRUMENTS = [
-  // Back row - percussion & brass (smaller)
-  { id: 'bass-drum', image: '/images/bass-drum.png', alt: 'Bear drummer', patterns: BASS_DRUM_PATTERNS, instrument: 'bass-drum' as InstrumentType, row: 'back' },
-  { id: 'tuba', image: '/images/tuba.png', alt: 'Elephant tubist', patterns: TUBA_PATTERNS, instrument: 'tuba' as InstrumentType, row: 'back' },
-  { id: 'trumpet', image: '/images/trumpet.png', alt: 'Lion trumpeter', patterns: TRUMPET_PATTERNS, instrument: 'trumpet' as InstrumentType, row: 'back' },
+// Instrument positioning: xPct/yPct are percentage positions on the stage (0-100)
+// scale controls size, zIndex controls layering (higher = in front)
+interface InstrumentPosition {
+  xPct: number;    // horizontal position (0 = left, 100 = right)
+  yPct: number;    // vertical position (0 = top, 100 = bottom)
+  scale: number;   // size multiplier (0.5 = half, 1 = normal, 1.5 = 150%)
+  zIndex: number;  // layering order (higher = in front)
+}
 
-  // Middle row - woodwinds (medium)
-  { id: 'clarinet', image: '/images/clarinet.png', alt: 'Raccoon clarinetist', patterns: CLARINET_PATTERNS, instrument: 'clarinet' as InstrumentType, row: 'middle' },
-  { id: 'flute', image: '/images/flute.png', alt: 'Bird flutist', patterns: FLUTE_PATTERNS, instrument: 'flute' as InstrumentType, row: 'middle' },
+interface InstrumentConfig {
+  id: string;
+  image: string;
+  alt: string;
+  patterns: Pattern[];
+  instrument: InstrumentType;
+  position: InstrumentPosition;
+}
 
-  // Front row - strings (larger)
-  { id: 'violin1', image: '/images/violinist-fox.png', alt: 'Fox violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin' as InstrumentType, row: 'front' },
-  { id: 'violin2', image: '/images/violinist-2.png', alt: 'Second violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin' as InstrumentType, row: 'front' },
+const INSTRUMENTS: InstrumentConfig[] = [
+  // Back row - percussion, brass & woodwinds (smaller, higher on stage)
+  { id: 'bass-drum', image: '/aoc/characters/aoc_character_bass_drum.png', alt: 'Gorilla drummer', patterns: BASS_DRUM_PATTERNS, instrument: 'bass-drum', position: { xPct: 35, yPct: 50, scale: 0.8, zIndex: 10 } },
+  { id: 'trumpet', image: '/aoc/characters/aoc_character_trumpet.png', alt: 'Badger trumpeter', patterns: TRUMPET_PATTERNS, instrument: 'trumpet', position: { xPct: 64, yPct: 53, scale: 0.8, zIndex: 10 } },
+  { id: 'tuba', image: '/aoc/characters/aoc_character_tuba.png', alt: 'Hippo tubist', patterns: TUBA_PATTERNS, instrument: 'tuba', position: { xPct: 80, yPct: 53, scale: 0.8, zIndex: 10 } },
+
+
+  // Middle row - woodwinds (smaller, middle on stage)
+  { id: 'clarinet', image: '/aoc/characters/aoc_character_clarinet.png', alt: 'Squirrel clarinetist', patterns: CLARINET_PATTERNS, instrument: 'clarinet', position: { xPct: 50, yPct: 65, scale: 0.9, zIndex: 10 } },
+  { id: 'flute', image: '/aoc/characters/aoc_character_flute.png', alt: 'Bird flutist', patterns: FLUTE_PATTERNS, instrument: 'flute', position: { xPct: 20, yPct: 65, scale: 0.9, zIndex: 10 } },
+
+  // Front row - strings (larger, lower on stage)
+  { id: 'violin1', image: '/images/violinist-fox.png', alt: 'Fox violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin', position: { xPct: 35, yPct: 79, scale: 1.0, zIndex: 20 } },
+  { id: 'violin2', image: '/images/violinist-2.png', alt: 'Cat violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin', position: { xPct: 65, yPct: 78, scale: 0.9, zIndex: 20 } },
 ];
 
 interface InstrumentState {
@@ -72,7 +88,7 @@ export function AnimalOrchestraConductorV2() {
     preloadSamples();
   }, []);
 
-  const handleSelectPattern = (instrumentId: string, pattern: Pattern) => {
+  const handleSelectPattern = (instrumentId: string, pattern: Pattern | null) => {
     setInstrumentStates(prev => ({
       ...prev,
       [instrumentId]: { ...prev[instrumentId], pattern },
@@ -199,66 +215,42 @@ export function AnimalOrchestraConductorV2() {
           </div>
         )}
 
-        {/* Main content - Stage with depth rows */}
+        {/* Main content - Stage with fixed aspect ratio */}
         {!isLoading && (
           <>
-            <div className="flex-1 flex flex-col justify-end pb-4 relative">
-              {/* Back row - percussion & brass (smaller, further back on stage) */}
-              <div className="flex justify-center gap-4 -mb-32 relative z-10">
-                {INSTRUMENTS.filter(i => i.row === 'back').map(instrument => (
-                  <InstrumentStation
-                    key={instrument.id}
-                    patterns={instrument.patterns}
-                    image={instrument.image}
-                    alt={instrument.alt}
-                    selectedPattern={instrumentStates[instrument.id].pattern}
-                    enabled={instrumentStates[instrument.id].enabled}
-                    isPlaying={isPlaying}
-                    onSelectPattern={(pattern) => handleSelectPattern(instrument.id, pattern)}
-                    onToggleEnabled={() => handleToggleEnabled(instrument.id)}
-                    size="small"
-                  />
-                ))}
-              </div>
-
-              {/* Middle row - woodwinds (medium) */}
-              <div className="flex justify-center gap-6 -mb-28 relative z-20">
-                {INSTRUMENTS.filter(i => i.row === 'middle').map(instrument => (
-                  <InstrumentStation
-                    key={instrument.id}
-                    patterns={instrument.patterns}
-                    image={instrument.image}
-                    alt={instrument.alt}
-                    selectedPattern={instrumentStates[instrument.id].pattern}
-                    enabled={instrumentStates[instrument.id].enabled}
-                    isPlaying={isPlaying}
-                    onSelectPattern={(pattern) => handleSelectPattern(instrument.id, pattern)}
-                    onToggleEnabled={() => handleToggleEnabled(instrument.id)}
-                    size="medium"
-                  />
-                ))}
-              </div>
-
-              {/* Front row - strings (larger) */}
-              <div className="flex justify-center gap-8 relative z-30 mb-16">
-                {INSTRUMENTS.filter(i => i.row === 'front').map(instrument => (
-                  <InstrumentStation
-                    key={instrument.id}
-                    patterns={instrument.patterns}
-                    image={instrument.image}
-                    alt={instrument.alt}
-                    selectedPattern={instrumentStates[instrument.id].pattern}
-                    enabled={instrumentStates[instrument.id].enabled}
-                    isPlaying={isPlaying}
-                    onSelectPattern={(pattern) => handleSelectPattern(instrument.id, pattern)}
-                    onToggleEnabled={() => handleToggleEnabled(instrument.id)}
-                    size="large"
-                  />
-                ))}
+            {/* Stage area - flex-1 pushes conductor panel to bottom */}
+            <div className="flex-1 flex items-center justify-center">
+              {/* Fixed 16:9 aspect ratio stage container */}
+              <div className="w-full max-w-5xl mx-auto" style={{ aspectRatio: '16 / 9' }}>
+                <div className="relative w-full h-full">
+                  {INSTRUMENTS.map(instrument => (
+                    <div
+                      key={instrument.id}
+                      className="absolute"
+                      style={{
+                        left: `${instrument.position.xPct}%`,
+                        top: `${instrument.position.yPct}%`,
+                        transform: `translate(-50%, -50%) scale(${instrument.position.scale})`,
+                        zIndex: instrument.position.zIndex,
+                      }}
+                    >
+                      <InstrumentStation
+                        patterns={instrument.patterns}
+                        image={instrument.image}
+                        alt={instrument.alt}
+                        selectedPattern={instrumentStates[instrument.id].pattern}
+                        enabled={instrumentStates[instrument.id].enabled}
+                        isPlaying={isPlaying}
+                        onSelectPattern={(pattern) => handleSelectPattern(instrument.id, pattern)}
+                        onToggleEnabled={() => handleToggleEnabled(instrument.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Conductor Panel */}
+            {/* Conductor Panel - stays at bottom */}
             <ConductorPanel
               isPlaying={isPlaying}
               isLooping={isLooping}

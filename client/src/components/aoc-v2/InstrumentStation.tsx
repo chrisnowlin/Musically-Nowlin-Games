@@ -2,18 +2,11 @@
  * InstrumentStation - Container for an animal musician and their pattern selector
  *
  * State is lifted to parent - this component just displays and handles interactions
+ * Positioning/scaling is handled by parent via CSS transform
  */
 
 import { PatternSelector } from './PatternSelector';
 import type { Pattern } from '@/lib/aoc-v2/InstrumentPatterns';
-
-type StationSize = 'small' | 'medium' | 'large';
-
-const SIZE_CLASSES: Record<StationSize, string> = {
-  small: 'h-32 md:h-40',   // Back row - smaller for depth
-  medium: 'h-44 md:h-56',  // Middle row
-  large: 'h-56 md:h-72',   // Front row - larger for depth
-};
 
 interface InstrumentStationProps {
   patterns: Pattern[];
@@ -22,9 +15,8 @@ interface InstrumentStationProps {
   selectedPattern: Pattern | null;
   enabled: boolean;
   isPlaying: boolean;
-  onSelectPattern: (pattern: Pattern) => void;
+  onSelectPattern: (pattern: Pattern | null) => void;
   onToggleEnabled: () => void;
-  size?: StationSize;
 }
 
 export function InstrumentStation({
@@ -36,16 +28,14 @@ export function InstrumentStation({
   isPlaying,
   onSelectPattern,
   onToggleEnabled,
-  size = 'large',
 }: InstrumentStationProps) {
-  const sizeClass = SIZE_CLASSES[size];
-
   return (
     <div className={`relative transition-opacity duration-200 ${enabled ? 'opacity-100' : 'opacity-40'}`}>
       {/* Animal musician - click to toggle enabled (works while playing!) */}
       <button
         onClick={onToggleEnabled}
         className={`
+          relative
           transition-all duration-200 ease-in-out
           focus:outline-none focus:ring-4 focus:ring-amber-400 focus:ring-offset-2
           ${isPlaying && enabled ? 'scale-105' : 'hover:scale-105'}
@@ -57,7 +47,7 @@ export function InstrumentStation({
         <img
           src={image}
           alt={alt}
-          className={`w-auto ${sizeClass}`}
+          className="w-auto h-44"
         />
 
         {/* Playing indicator */}
@@ -76,7 +66,8 @@ export function InstrumentStation({
       </button>
 
       {/* Pattern dots - layered on top of image (can change while playing!) */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+      {/* z-40 is above all images (z-10/20/30) so buttons are always clickable */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center z-40">
         <PatternSelector
           patterns={patterns}
           selectedPattern={selectedPattern}

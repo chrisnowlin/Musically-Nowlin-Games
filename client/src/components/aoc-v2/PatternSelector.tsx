@@ -7,7 +7,7 @@ import type { Pattern } from '@/lib/aoc-v2/InstrumentPatterns';
 interface PatternSelectorProps {
   patterns: Pattern[];
   selectedPattern: Pattern | null;
-  onSelectPattern: (pattern: Pattern) => void;
+  onSelectPattern: (pattern: Pattern | null) => void;
   disabled?: boolean;
 }
 
@@ -17,12 +17,21 @@ export function PatternSelector({
   onSelectPattern,
   disabled = false,
 }: PatternSelectorProps) {
+  const handleClick = (pattern: Pattern) => {
+    // Toggle: if already selected, deselect (null), otherwise select
+    if (selectedPattern?.id === pattern.id) {
+      onSelectPattern(null);
+    } else {
+      onSelectPattern(pattern);
+    }
+  };
+
   return (
     <div className="flex gap-2">
       {patterns.map((pattern) => (
         <button
           key={pattern.id}
-          onClick={() => onSelectPattern(pattern)}
+          onClick={() => handleClick(pattern)}
           disabled={disabled}
           aria-label={pattern.name}
           className={`

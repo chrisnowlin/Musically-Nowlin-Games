@@ -25,7 +25,17 @@ export interface DrumHit {
   technique?: 'bass-drum-mallet' | 'struck-singly';
 }
 
-export type SoundEvent = Note | DrumHit;
+export interface Rest {
+  type: 'rest';
+  duration: Duration;
+}
+
+export type SoundEvent = Note | DrumHit | Rest;
+
+// Type guard for rest
+export function isRest(event: SoundEvent): event is Rest {
+  return 'type' in event && event.type === 'rest';
+}
 
 const INSTRUMENT_PATHS: Record<InstrumentType, string> = {
   'violin': '/audio/philharmonia/strings/violin',
@@ -142,14 +152,18 @@ class OrchestraAudioService {
     signal?: AbortSignal
   ): Promise<void> {
     if (!this.audioContext) await this.initialize();
-    
-    // Preload all samples
-    await Promise.all(events.map(e => this.loadSample(instrument, e)));
+
+    // Preload all non-rest samples
+    const soundEvents = events.filter(e => !isRest(e));
+    await Promise.all(soundEvents.map(e => this.loadSample(instrument, e)));
 
     for (const event of events) {
       if (signal?.aborted) return;
-      
-      await this.playSound(instrument, event);
+
+      // For rests, just wait without playing
+      if (!isRest(event)) {
+        await this.playSound(instrument, event);
+      }
       const durationMultiplier = event.duration === '025' ? 0.5 : event.duration === '05' ? 1 : 2;
       await this.delay(tempoMs * durationMultiplier, signal);
     }
@@ -164,7 +178,9 @@ class OrchestraAudioService {
 
   async preloadInstrument(instrument: InstrumentType, events: SoundEvent[]): Promise<void> {
     if (!this.audioContext) await this.initialize();
-    await Promise.all(events.map(e => this.loadSample(instrument, e)));
+    // Skip rests when preloading
+    const soundEvents = events.filter(e => !isRest(e));
+    await Promise.all(soundEvents.map(e => this.loadSample(instrument, e)));
   }
 
   private delay(ms: number, signal?: AbortSignal): Promise<void> {
