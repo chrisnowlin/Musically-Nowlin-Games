@@ -148,7 +148,6 @@ function Router() {
       <Route path="/games/musical-math" component={MusicalMathGamePage} />
       <Route path="/games/rest-finder" component={RestFinderGamePage} />
       <Route path="/games/animal-orchestra-conductor" component={AnimalOrchestraConductorGamePage} />
-      <Route path="/games/aoc-v2" component={lazy(() => import("@/pages/games/AnimalOrchestraConductorV2Page"))} />
       <Route path="/games/pitch-perfect-path" component={PitchPerfectPathGamePage} />
       <Route path="/games/beat-and-pulse-trainer" component={Rhythm006Page} />
       <Route path="/games/tempo-conducting-studio" component={Rhythm007Page} />

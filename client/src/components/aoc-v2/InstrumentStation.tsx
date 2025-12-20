@@ -38,7 +38,7 @@ export function InstrumentStation({
           relative
           transition-all duration-200 ease-in-out
           focus:outline-none focus:ring-4 focus:ring-amber-400 focus:ring-offset-2
-          ${isPlaying && enabled ? 'scale-105' : 'hover:scale-105'}
+          ${isPlaying && enabled && selectedPattern ? 'scale-105' : 'hover:scale-105'}
           cursor-pointer
         `}
         aria-label={enabled ? `Disable ${alt}` : `Enable ${alt}`}
@@ -50,8 +50,8 @@ export function InstrumentStation({
           className="w-auto h-44"
         />
 
-        {/* Playing indicator */}
-        {isPlaying && enabled && (
+        {/* Playing indicator - only show when pattern is selected */}
+        {isPlaying && enabled && selectedPattern && (
           <div className="absolute -top-4 left-0 right-0 flex justify-center">
             <span className="text-3xl animate-bounce">🎵</span>
           </div>

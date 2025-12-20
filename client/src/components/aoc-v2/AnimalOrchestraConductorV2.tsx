@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { InstrumentStation } from './InstrumentStation';
 import { ConductorPanel } from './ConductorPanel';
 import { orchestraAudioService, type InstrumentType } from '@/lib/aoc-v2/OrchestraAudioService';
@@ -15,6 +16,9 @@ import {
   BASS_DRUM_PATTERNS,
   type Pattern,
 } from '@/lib/aoc-v2/InstrumentPatterns';
+import { Button } from '@/components/ui/button';
+import { Play, HelpCircle, Music2, ChevronLeft, Sparkles, Headphones } from 'lucide-react';
+import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
 
 // Instrument positioning: xPct/yPct are percentage positions on the stage (0-100)
 // scale controls size, zIndex controls layering (higher = in front)
@@ -56,6 +60,8 @@ interface InstrumentState {
 }
 
 export function AnimalOrchestraConductorV2() {
+  const [, setLocation] = useLocation();
+  const [gameStarted, setGameStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
@@ -184,6 +190,94 @@ export function AnimalOrchestraConductorV2() {
     setIsPlaying(false);
   };
 
+  const handleStartGame = () => {
+    setGameStarted(true);
+  };
+
+  const decorativeOrbs = generateDecorativeOrbs();
+
+  // Landing screen
+  if (!gameStarted) {
+    return (
+      <div className="h-screen relative overflow-hidden">
+        {/* Stage background */}
+        <img
+          src="/images/aoc-stage-background.jpeg"
+          alt="Theater stage with curtains"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Content overlay */}
+        <div className="relative z-10 h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+          <button
+            onClick={() => setLocation("/games")}
+            className="absolute top-4 left-4 z-50 flex items-center gap-2 text-amber-100 hover:text-amber-50 font-semibold bg-black/40 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all hover:bg-black/60"
+          >
+            <ChevronLeft size={24} />
+            Main Menu
+          </button>
+
+          <div className="text-center space-y-4 z-10 max-w-4xl w-full px-4 overflow-y-auto max-h-full py-8">
+            <div className="space-y-2 animate-fade-in-down">
+              <div className="relative inline-block mb-2">
+                <div className="absolute inset-0 bg-amber-200/30 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                <Music2 className="w-16 h-16 md:w-20 md:h-20 mx-auto text-amber-100 relative z-10 drop-shadow-lg" />
+                <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-yellow-300 absolute -top-1 -right-1 animate-spin z-20 drop-shadow-lg" />
+                <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-amber-200 absolute -bottom-1 -left-1 animate-pulse z-20 delay-300 drop-shadow-lg" />
+              </div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-amber-100 mb-1 drop-shadow-lg">
+                🎻 Animal Orchestra Conductor
+              </h1>
+              <p className="text-base md:text-lg lg:text-xl text-amber-200/90 max-w-2xl mx-auto drop-shadow-md">
+                Conduct your own animal orchestra! Select musical patterns for each musician and create beautiful harmonies.
+              </p>
+              <div className="flex items-center justify-center gap-2 mt-3 bg-amber-900/40 backdrop-blur-sm px-4 py-2 rounded-lg border border-amber-500/30 inline-flex">
+                <Headphones className="w-4 h-4 md:w-5 md:h-5 text-amber-200" />
+                <span className="text-sm md:text-base text-amber-100 font-medium">Best played with headphones</span>
+              </div>
+            </div>
+
+            <div className="bg-black/60 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-2xl space-y-3 border border-amber-500/20">
+              <div className="flex items-center justify-center gap-2 text-base md:text-lg mb-2">
+                <HelpCircle className="w-5 h-5 md:w-6 md:h-6 text-amber-200" />
+                <span className="text-amber-100 font-bold text-lg md:text-xl">How to Play</span>
+              </div>
+              <ul className="text-left space-y-2 text-sm md:text-base">
+                <li className="flex items-start gap-2 bg-amber-900/30 p-2 md:p-3 rounded-lg border border-amber-500/20">
+                  <div className="bg-amber-800/50 p-1.5 md:p-2 rounded-full flex-shrink-0"><Music2 className="w-4 h-4 md:w-5 md:h-5 text-amber-200" /></div>
+                  <span className="text-amber-100">Select a musical pattern for each animal musician using the pattern selector</span>
+                </li>
+                <li className="flex items-start gap-2 bg-amber-900/30 p-2 md:p-3 rounded-lg border border-amber-500/20">
+                  <div className="bg-amber-800/50 p-1.5 md:p-2 rounded-full flex-shrink-0"><Play className="w-4 h-4 md:w-5 md:h-5 text-amber-200" /></div>
+                  <span className="text-amber-100">Click on animals to enable or disable them - only enabled musicians will play</span>
+                </li>
+                <li className="flex items-start gap-2 bg-amber-900/30 p-2 md:p-3 rounded-lg border border-amber-500/20">
+                  <div className="bg-amber-800/50 p-1.5 md:p-2 rounded-full flex-shrink-0"><Sparkles className="w-4 h-4 md:w-5 md:h-5 text-amber-200" /></div>
+                  <span className="text-amber-100">Use the conductor panel to adjust tempo, dynamics, and control playback</span>
+                </li>
+                <li className="flex items-start gap-2 bg-amber-900/30 p-2 md:p-3 rounded-lg border border-amber-500/20">
+                  <div className="bg-amber-800/50 p-1.5 md:p-2 rounded-full flex-shrink-0"><Music2 className="w-4 h-4 md:w-5 md:h-5 text-amber-200" /></div>
+                  <span className="text-amber-100">Experiment with different combinations to create your own musical masterpiece!</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                onClick={handleStartGame}
+                size="lg"
+                className="bg-amber-600 hover:bg-amber-500 text-white font-bold px-8 md:px-12 py-4 md:py-6 text-lg md:text-xl lg:text-2xl shadow-xl transform hover:scale-105 transition-all border-2 border-amber-400"
+              >
+                <Play className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 mr-2 md:mr-3 fill-current" />
+                Start Conducting!
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Stage background */}
@@ -195,6 +289,15 @@ export function AnimalOrchestraConductorV2() {
 
       {/* Content overlay */}
       <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Main Menu Button */}
+        <button
+          onClick={() => setLocation("/games")}
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 text-amber-100 hover:text-amber-50 font-semibold bg-black/40 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all hover:bg-black/60"
+        >
+          <ChevronLeft size={24} />
+          Main Menu
+        </button>
+
         {/* Header */}
         <header className="text-center py-6">
           <h1 className="text-4xl font-bold text-amber-100 mb-2 drop-shadow-lg">
