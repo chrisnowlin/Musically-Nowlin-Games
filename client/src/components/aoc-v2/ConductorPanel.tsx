@@ -56,7 +56,6 @@ export function ConductorPanel({
             max={180}
             value={tempo}
             onChange={(e) => onTempoChange(Number(e.target.value))}
-            disabled={isPlaying}
             className="w-full accent-amber-400"
           />
         </div>
