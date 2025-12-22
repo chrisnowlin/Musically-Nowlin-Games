@@ -29,6 +29,7 @@ import { NotationToggle } from './Display/NotationToggle';
 import { SyllableSelector } from './Display/SyllableSelector';
 import { EnsembleDisplay } from './Display/EnsembleDisplay';
 import { EnsembleModeSelector } from './ControlPanel/EnsembleModeSelector';
+import { WorksheetBuilder } from './Worksheet/WorksheetBuilder';
 
 export function RhythmRandomizerTool() {
   const {
@@ -242,12 +243,18 @@ export function RhythmRandomizerTool() {
               </CardContent>
             </Card>
 
-            {/* Coming Soon - Worksheet Export */}
-            <Card className="bg-gray-50/50">
-              <CardContent className="py-6 text-center">
-                <div className="text-2xl mb-2">📄</div>
-                <div className="text-sm font-medium text-gray-600">Worksheet Export</div>
-                <div className="text-xs text-gray-400 mt-1">Coming Soon - Export printable PDFs with exercises and answer keys</div>
+            {/* Worksheet Export */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Worksheet Export</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Generate printable PDFs with exercises and answer keys
+                  </div>
+                  <WorksheetBuilder rhythmSettings={settings} />
+                </div>
               </CardContent>
             </Card>
           </div>
