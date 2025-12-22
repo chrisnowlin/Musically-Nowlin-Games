@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bravura music font (SMuFL) - for scoring applications */
+@font-face {
+  font-family: 'Bravura';
+  src: url('/fonts/Bravura.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Bravura Text music font (SMuFL) - for text-based applications with proper kerning */
+@font-face {
+  font-family: 'Bravura Text';
+  src: url('/fonts/BravuraText.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Screen reader only content */
 .sr-only {
   position: absolute;

@@ -17,7 +17,11 @@ export type NoteValue =
   | 'dottedQuarter'
   | 'dottedEighth'
   | 'tripletQuarter'
-  | 'tripletEighth';
+  | 'tripletEighth'
+  // Beamed note groups
+  | 'twoEighths'      // Two beamed eighth notes (1 beat total)
+  | 'fourSixteenths'  // Four beamed sixteenth notes (1 beat total)
+  | 'twoSixteenths';  // Two beamed sixteenth notes (0.5 beats total)
 
 export type RestValue =
   | 'wholeRest'
@@ -256,6 +260,10 @@ export const NOTE_DURATIONS: Record<NoteValue, number> = {
   dottedEighth: 0.75,
   tripletQuarter: 2 / 3,
   tripletEighth: 1 / 3,
+  // Beamed note groups
+  twoEighths: 1,       // Two eighth notes = 1 beat
+  fourSixteenths: 1,   // Four sixteenth notes = 1 beat
+  twoSixteenths: 0.5,  // Two sixteenth notes = 0.5 beats
 };
 
 export const REST_DURATIONS: Record<RestValue, number> = {

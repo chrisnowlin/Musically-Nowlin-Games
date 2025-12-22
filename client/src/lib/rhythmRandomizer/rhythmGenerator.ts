@@ -30,6 +30,10 @@ const NOTE_TO_REST_MAP: Partial<Record<NoteValue, RestValue>> = {
   dottedEighth: 'eighthRest',
   tripletQuarter: 'quarterRest',
   tripletEighth: 'eighthRest',
+  // Beamed note groups map to equivalent rest values
+  twoEighths: 'quarterRest',      // 1 beat = quarter rest
+  fourSixteenths: 'quarterRest',  // 1 beat = quarter rest
+  twoSixteenths: 'eighthRest',    // 0.5 beat = eighth rest
 };
 
 /**
@@ -189,13 +193,13 @@ function generateEvent(
   currentBeat: number,
   settings: RhythmSettings,
   timeSignature: TimeSignature,
-  derivedRestValues: RestValue[]
+  allowedRestValues: RestValue[]
 ): RhythmEvent {
   const shouldRest = Math.random() * 100 < settings.restProbability;
 
   if (shouldRest) {
-    // Use derived rest values (matching note values) instead of settings.allowedRestValues
-    const availableRests = getAvailableRestValues(remainingBeats, derivedRestValues);
+    // Use user-selected rest values from settings
+    const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
     if (availableRests.length > 0) {
       // Select rest based on density (sparse = longer rests, dense = shorter rests)
       const restValue = selectRestValueByDensity(availableRests, settings.noteDensity);
@@ -210,8 +214,8 @@ function generateEvent(
   const availableNotes = getAvailableNoteValues(remainingBeats, settings.allowedNoteValues, settings);
 
   if (availableNotes.length === 0) {
-    // Fallback: use smallest available rest that fits
-    const availableRests = getAvailableRestValues(remainingBeats, derivedRestValues);
+    // Fallback: use smallest available rest that fits from user-selected rest values
+    const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
     if (availableRests.length > 0) {
       // Sort by duration and pick smallest that fits
       const sortedRests = availableRests.sort((a, b) => REST_DURATIONS[a] - REST_DURATIONS[b]);
@@ -221,7 +225,15 @@ function generateEvent(
         duration: REST_DURATIONS[sortedRests[0]],
       };
     }
-    // Ultimate fallback - create a rest that fits exactly
+    // Ultimate fallback - use quarter rest if available, otherwise create a rest that fits exactly
+    if (allowedRestValues.includes('quarterRest')) {
+      return {
+        type: 'rest',
+        value: 'quarterRest',
+        duration: Math.min(1, remainingBeats),
+      };
+    }
+    // If no rest values are selected, create a rest that fits exactly
     return {
       type: 'rest',
       value: 'quarterRest',
@@ -260,22 +272,66 @@ function generateEvent(
 
 /**
  * Generate a single measure of rhythm
+ * Allows slight variations in measure length (±1 beat) to improve readability
+ * when measures are densely packed. Dense measures can end slightly early,
+ * sparse measures can extend slightly to fill space better.
  */
 function generateMeasure(
   measureNumber: number,
   settings: RhythmSettings,
   timeSignature: TimeSignature,
-  derivedRestValues: RestValue[]
+  allowedRestValues: RestValue[]
 ): Measure {
-  const totalBeats = getMeasureBeats(timeSignature);
+  const targetBeats = getMeasureBeats(timeSignature);
   const events: RhythmEvent[] = [];
   let currentBeat = 0;
+  
+  // Allow measures to vary by up to 1 beat for readability
+  const minBeats = Math.max(0.5, targetBeats - 1);
+  const maxBeats = targetBeats + 1;
+  
+  // Track measure density (events per beat) to detect when a measure is getting too dense
+  let eventCount = 0;
+  const denseThreshold = 2.5; // More than 2.5 events per beat is considered dense
 
-  while (currentBeat < totalBeats) {
-    const remainingBeats = totalBeats - currentBeat;
-    const event = generateEvent(remainingBeats, currentBeat, settings, timeSignature, derivedRestValues);
+  while (currentBeat < maxBeats) {
+    const remainingBeats = maxBeats - currentBeat;
+    
+    // Calculate current density
+    const currentDensity = eventCount / Math.max(0.1, currentBeat);
+    
+    // If we're past minimum beats, check if we should end early for readability
+    if (currentBeat >= minBeats) {
+      // If measure is dense and we're close to target, end early to improve readability
+      if (currentDensity > denseThreshold && currentBeat >= targetBeats - 0.5) {
+        // End if we're within 0.25 beats of target (close enough)
+        if (Math.abs(currentBeat - targetBeats) <= 0.25) {
+          break;
+        }
+      }
+      
+      // If we've reached target beats, end the measure (allow slight overflow up to 0.5 beats)
+      if (currentBeat >= targetBeats) {
+        // End if we're within 0.5 beats of target (acceptable variation)
+        if (currentBeat <= targetBeats + 0.5) {
+          break;
+        }
+        // If we're over by more than 0.5 beats, only continue if there's significant space left
+        if (remainingBeats < 0.5) {
+          break;
+        }
+      }
+    }
+    
+    const event = generateEvent(remainingBeats, currentBeat, settings, timeSignature, allowedRestValues);
     events.push(event);
     currentBeat += event.duration;
+    eventCount++;
+    
+    // Safety check: prevent infinite loops
+    if (events.length > 50) {
+      break;
+    }
   }
 
   return {
@@ -294,20 +350,29 @@ export function generateRhythmPattern(settings: RhythmSettings): RhythmPattern {
     throw new Error(`Unknown time signature: ${settings.timeSignature}`);
   }
 
-  // Derive rest values from allowed note values so rests match the note durations
-  const derivedRestValues = deriveRestValuesFromNotes(settings.allowedNoteValues);
+  // Use user-selected rest values, but ensure at least one rest is available
+  // If no rest values are selected, derive them from note values as a fallback
+  let allowedRestValues = settings.allowedRestValues;
+  if (allowedRestValues.length === 0) {
+    // Fallback: derive rest values from allowed note values
+    allowedRestValues = deriveRestValuesFromNotes(settings.allowedNoteValues);
+  }
 
   const measures: Measure[] = [];
-  const beatsPerMeasure = getMeasureBeats(timeSignature);
 
   for (let i = 0; i < settings.measureCount; i++) {
-    measures.push(generateMeasure(i + 1, settings, timeSignature, derivedRestValues));
+    measures.push(generateMeasure(i + 1, settings, timeSignature, allowedRestValues));
   }
+
+  // Calculate total duration from actual measure lengths (allowing for variation)
+  const totalDurationBeats = measures.reduce((sum, measure) => {
+    return sum + measure.events.reduce((measureSum, event) => measureSum + event.duration, 0);
+  }, 0);
 
   return {
     id: generateId(),
     measures,
-    totalDurationBeats: beatsPerMeasure * settings.measureCount,
+    totalDurationBeats,
     settings,
     createdAt: Date.now(),
   };
@@ -331,15 +396,21 @@ export function getFlattenedEvents(pattern: RhythmPattern): RhythmEvent[] {
 
 /**
  * Validate that a pattern correctly fills all measures
+ * Allows for slight variations (±1 beat) for readability
  */
 export function validatePattern(pattern: RhythmPattern): boolean {
   const timeSignature = TIME_SIGNATURES[pattern.settings.timeSignature];
   const expectedBeats = getMeasureBeats(timeSignature);
+  const tolerance = 1.0; // Allow ±1 beat variation
 
   for (const measure of pattern.measures) {
     const totalBeats = measure.events.reduce((sum, e) => sum + e.duration, 0);
-    if (Math.abs(totalBeats - expectedBeats) > 0.001) {
-      console.warn(`Measure ${measure.measureNumber} has ${totalBeats} beats, expected ${expectedBeats}`);
+    const difference = Math.abs(totalBeats - expectedBeats);
+    
+    if (difference > tolerance) {
+      console.warn(
+        `Measure ${measure.measureNumber} has ${totalBeats} beats, expected ${expectedBeats} (±${tolerance})`
+      );
       return false;
     }
   }

@@ -41,7 +41,52 @@ const NOTE_VALUE_TO_VEXFLOW: Record<NoteValue, string> = {
   dottedEighth: '8d',
   tripletQuarter: 'q',
   tripletEighth: '8',
+  // Beamed groups use individual note durations (expanded before rendering)
+  twoEighths: '8',
+  fourSixteenths: '16',
+  twoSixteenths: '16',
 };
+
+// Beamed group definitions: how many notes and what type
+const BEAMED_GROUP_INFO: Partial<Record<NoteValue, { count: number; noteType: NoteValue; duration: number }>> = {
+  twoEighths: { count: 2, noteType: 'eighth', duration: 0.5 },
+  fourSixteenths: { count: 4, noteType: 'sixteenth', duration: 0.25 },
+  twoSixteenths: { count: 2, noteType: 'sixteenth', duration: 0.25 },
+};
+
+/**
+ * Check if a note value is a beamed group
+ */
+function isBeamedGroup(noteValue: NoteValue): boolean {
+  return noteValue in BEAMED_GROUP_INFO;
+}
+
+/**
+ * Expand beamed group events into individual note events
+ */
+function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
+  const expanded: RhythmEvent[] = [];
+
+  for (const event of events) {
+    if (event.type === 'note' && isBeamedGroup(event.value as NoteValue)) {
+      const groupInfo = BEAMED_GROUP_INFO[event.value as NoteValue]!;
+      // Create individual notes for the beamed group
+      for (let i = 0; i < groupInfo.count; i++) {
+        expanded.push({
+          type: 'note',
+          value: groupInfo.noteType,
+          duration: groupInfo.duration,
+          isAccented: i === 0 ? event.isAccented : false, // Only first note gets accent
+          isTriplet: false,
+        });
+      }
+    } else {
+      expanded.push(event);
+    }
+  }
+
+  return expanded;
+}
 
 // Map rest values to VexFlow duration strings
 const REST_VALUE_TO_VEXFLOW: Record<RestValue, string> = {
@@ -67,15 +112,16 @@ export interface RenderOptions {
   startX: number;
   startY: number;
   highlightEventIndex?: number;
+  containerWidth?: number; // If provided, staveWidth will be calculated to fit
 }
 
 const DEFAULT_RENDER_OPTIONS: RenderOptions = {
   width: 800,
-  height: 150,
+  height: 120,
   staveWidth: 180,
-  measureSpacing: 20,
+  measureSpacing: 15,
   startX: 10,
-  startY: 20,
+  startY: 10,
 };
 
 /**
@@ -217,25 +263,45 @@ function renderMeasure(
   const noteEndX = stave.getNoteEndX();
   const availableWidth = noteEndX - noteStartX;
 
+  // Expand beamed groups into individual notes for rendering
+  const expandedEvents = expandBeamedGroups(measure.events);
+
   // Create notes
   const staveNotes: StaveNote[] = [];
 
-  measure.events.forEach((event, eventIndex) => {
-    const globalIndex = globalEventOffset + eventIndex;
+  // Track original event index for highlighting
+  let originalEventIndex = 0;
+  let expandedEventIndex = 0;
+
+  for (const event of measure.events) {
+    const globalIndex = globalEventOffset + originalEventIndex;
     const isHighlighted = globalIndex === highlightEventIndex;
-    const staveNote = createStaveNote(event, isHighlighted);
-    staveNotes.push(staveNote);
-  });
+
+    if (event.type === 'note' && isBeamedGroup(event.value as NoteValue)) {
+      const groupInfo = BEAMED_GROUP_INFO[event.value as NoteValue]!;
+      // Create notes for the beamed group
+      for (let i = 0; i < groupInfo.count; i++) {
+        const staveNote = createStaveNote(expandedEvents[expandedEventIndex], isHighlighted);
+        staveNotes.push(staveNote);
+        expandedEventIndex++;
+      }
+    } else {
+      const staveNote = createStaveNote(event, isHighlighted);
+      staveNotes.push(staveNote);
+      expandedEventIndex++;
+    }
+    originalEventIndex++;
+  }
 
   if (staveNotes.length === 0) return globalEventOffset;
 
-  // Calculate total beats for voice
-  const totalBeats = timeSig.beatsPerMeasure;
+  // Calculate actual beats in this measure (allowing for variable measure lengths)
+  const actualBeats = measure.events.reduce((sum, event) => sum + event.duration, 0);
   const beatValue = 4 / timeSig.denominator; // Convert to quarter note beats
 
-  // Create voice
+  // Create voice with actual measure duration (not fixed)
   const voice = new Voice({
-    num_beats: totalBeats * beatValue,
+    num_beats: actualBeats * beatValue,
     beat_value: 4,
   });
   voice.setStrict(false); // Allow slight timing variations
@@ -251,7 +317,8 @@ function renderMeasure(
     });
   } catch {
     // Fallback to manual beaming if generateBeams fails
-    const beamGroups = getBeamGroups(staveNotes, measure.events);
+    // Use expanded events for beaming since staveNotes corresponds to expanded events
+    const beamGroups = getBeamGroups(staveNotes, expandedEvents);
     beamGroups.forEach((group) => {
       try {
         beams.push(new Beam(group));
@@ -275,8 +342,8 @@ function renderMeasure(
     beam.setContext(context).draw();
   });
 
-  // Draw triplet brackets
-  const tripletGroups = getTripletGroups(staveNotes, measure.events);
+  // Draw triplet brackets (use expanded events since staveNotes corresponds to expanded events)
+  const tripletGroups = getTripletGroups(staveNotes, expandedEvents);
   tripletGroups.forEach((group) => {
     try {
       const tuplet = new Tuplet(group, { num_notes: 3, notes_occupied: 2 });
@@ -306,15 +373,98 @@ export function renderPatternToDiv(
   // Clear existing content
   containerDiv.innerHTML = '';
 
-  // Calculate total width needed
+  // Calculate measures per line and stave width based on container width
   const measuresPerLine = Math.min(pattern.measures.length, 4);
-  const totalWidth = opts.startX + (opts.staveWidth + opts.measureSpacing) * measuresPerLine + 50;
   const lines = Math.ceil(pattern.measures.length / measuresPerLine);
-  const totalHeight = lines * (opts.height + 20);
+
+  // Get expected beats per measure from time signature
+  const timeSig = TIME_SIGNATURES[pattern.settings.timeSignature];
+  const expectedBeatsPerMeasure = timeSig.beatsPerMeasure;
+
+  // Calculate actual durations for each measure
+  const measureDurations = pattern.measures.map(measure => 
+    measure.events.reduce((sum, event) => sum + event.duration, 0)
+  );
+
+  // Calculate base stave width to fit within container
+  // First measure needs extra 60px for clef and time signature
+  const firstMeasureExtra = 60;
+  const availableWidth = opts.containerWidth || opts.width;
+  const totalSpacing = opts.measureSpacing * (measuresPerLine - 1);
+  const availableForStaves = availableWidth - opts.startX - totalSpacing - firstMeasureExtra - 20; // 20px padding
+  const baseStaveWidth = opts.containerWidth 
+    ? Math.max(120, Math.floor(availableForStaves / measuresPerLine))
+    : opts.staveWidth;
+
+  // Calculate desired widths for each measure based on actual duration
+  // Scale width proportionally to actual beats vs expected beats
+  const desiredWidths = measureDurations.map((actualBeats, index) => {
+    const isFirstInLine = index % measuresPerLine === 0;
+    const baseWidth = isFirstInLine ? baseStaveWidth + firstMeasureExtra : baseStaveWidth;
+    // Scale width based on actual duration (with minimum width constraint)
+    const durationRatio = actualBeats / expectedBeatsPerMeasure;
+    const scaledWidth = baseWidth * durationRatio;
+    // Ensure minimum width for readability
+    return Math.max(isFirstInLine ? baseStaveWidth * 0.7 + firstMeasureExtra : baseStaveWidth * 0.7, scaledWidth);
+  });
+
+  // Calculate total width needed for each line and find the maximum
+  const lineWidths: number[] = [];
+  let currentLineWidth = 0;
+  
+  desiredWidths.forEach((width, index) => {
+    const isFirstInLine = index % measuresPerLine === 0;
+    
+    if (isFirstInLine) {
+      // New line - save previous line width and start new line
+      if (index > 0) {
+        lineWidths.push(currentLineWidth);
+      }
+      currentLineWidth = opts.startX;
+    } else {
+      currentLineWidth += opts.measureSpacing;
+    }
+    currentLineWidth += width;
+  });
+  
+  // Don't forget the last line
+  lineWidths.push(currentLineWidth);
+  const maxLineWidth = Math.max(...lineWidths);
+  
+  // Scale down all widths proportionally if they exceed container width
+  const maxAllowedWidth = availableWidth - 20; // 20px padding
+  let measureWidths = desiredWidths;
+  
+  if (maxLineWidth > maxAllowedWidth && maxAllowedWidth > 0) {
+    const scaleFactor = maxAllowedWidth / maxLineWidth;
+    measureWidths = desiredWidths.map(width => width * scaleFactor);
+  }
+
+  // Calculate final total width (find the widest line after scaling)
+  let finalMaxLineWidth = 0;
+  let finalCurrentLineWidth = opts.startX;
+  
+  measureWidths.forEach((width, index) => {
+    const isFirstInLine = index % measuresPerLine === 0;
+    
+    if (isFirstInLine && index > 0) {
+      finalMaxLineWidth = Math.max(finalMaxLineWidth, finalCurrentLineWidth);
+      finalCurrentLineWidth = opts.startX;
+    }
+    
+    if (!isFirstInLine) {
+      finalCurrentLineWidth += opts.measureSpacing;
+    }
+    finalCurrentLineWidth += width;
+  });
+  
+  finalMaxLineWidth = Math.max(finalMaxLineWidth, finalCurrentLineWidth);
+  const totalWidth = Math.min(finalMaxLineWidth + 10, availableWidth); // Ensure it doesn't exceed container
+  const totalHeight = lines * (opts.height + 15) + 10;
 
   // Create renderer
   const renderer = new Renderer(containerDiv, Renderer.Backends.SVG);
-  renderer.resize(Math.max(totalWidth, opts.width), totalHeight);
+  renderer.resize(Math.min(Math.max(totalWidth, availableWidth), availableWidth), totalHeight);
 
   const context = renderer.getContext();
   context.setFont('Arial', 10);
@@ -327,12 +477,13 @@ export function renderPatternToDiv(
 
   pattern.measures.forEach((measure, measureIndex) => {
     const isFirstMeasure = measureIndex === 0;
-    const measureWidth = isFirstMeasure ? opts.staveWidth + 60 : opts.staveWidth;
+    const isFirstInLine = measuresInCurrentLine === 0;
+    const measureWidth = measureWidths[measureIndex];
 
     // Check if we need to wrap to next line
     if (measuresInCurrentLine >= measuresPerLine) {
       currentX = opts.startX;
-      currentY += opts.height + 20;
+      currentY += opts.height + 15;
       measuresInCurrentLine = 0;
     }
 
@@ -363,9 +514,52 @@ export function renderPatternToCanvas(
 ): void {
   const opts = { ...DEFAULT_RENDER_OPTIONS, ...options };
 
+  // Get expected beats per measure from time signature
+  const timeSig = TIME_SIGNATURES[pattern.settings.timeSignature];
+  const expectedBeatsPerMeasure = timeSig.beatsPerMeasure;
+
+  // Calculate actual durations for each measure
+  const measureDurations = pattern.measures.map(measure => 
+    measure.events.reduce((sum, event) => sum + event.duration, 0)
+  );
+
+  // Calculate desired widths for each measure based on actual duration
+  const firstMeasureExtra = 60;
+  const desiredWidths = measureDurations.map((actualBeats, index) => {
+    const isFirstMeasure = index === 0;
+    const baseWidth = isFirstMeasure ? opts.staveWidth + firstMeasureExtra : opts.staveWidth;
+    // Scale width based on actual duration (with minimum width constraint)
+    const durationRatio = actualBeats / expectedBeatsPerMeasure;
+    const scaledWidth = baseWidth * durationRatio;
+    // Ensure minimum width for readability
+    return Math.max(isFirstMeasure ? opts.staveWidth * 0.7 + firstMeasureExtra : opts.staveWidth * 0.7, scaledWidth);
+  });
+
+  // Calculate total width needed
+  let totalDesiredWidth = opts.startX;
+  desiredWidths.forEach((width, index) => {
+    if (index > 0) {
+      totalDesiredWidth += opts.measureSpacing;
+    }
+    totalDesiredWidth += width;
+  });
+  totalDesiredWidth += 10; // Padding
+
+  // Scale down all widths proportionally if they exceed canvas width
+  const maxAllowedWidth = opts.width - 20; // 20px padding
+  let measureWidths = desiredWidths;
+  
+  if (totalDesiredWidth > maxAllowedWidth && maxAllowedWidth > 0) {
+    const scaleFactor = maxAllowedWidth / totalDesiredWidth;
+    measureWidths = desiredWidths.map(width => width * scaleFactor);
+    totalDesiredWidth = maxAllowedWidth;
+  }
+
+  const totalWidth = Math.min(totalDesiredWidth, opts.width);
+
   // Create renderer using canvas backend
   const renderer = new Renderer(canvas, Renderer.Backends.CANVAS);
-  renderer.resize(opts.width, opts.height);
+  renderer.resize(Math.max(totalWidth, opts.width), opts.height);
 
   const context = renderer.getContext();
   context.setFont('Arial', 10);
@@ -376,7 +570,7 @@ export function renderPatternToCanvas(
 
   pattern.measures.forEach((measure, measureIndex) => {
     const isFirstMeasure = measureIndex === 0;
-    const measureWidth = isFirstMeasure ? opts.staveWidth + 60 : opts.staveWidth;
+    const measureWidth = measureWidths[measureIndex];
 
     globalEventIndex = renderMeasure(
       context,
@@ -407,7 +601,7 @@ export function calculatePatternDimensions(
   const lines = Math.ceil(pattern.measures.length / measuresPerLine);
 
   const width = opts.startX + (opts.staveWidth + opts.measureSpacing) * measuresPerLine + 100;
-  const height = lines * (opts.height + 20) + 40;
+  const height = lines * (opts.height + 15) + 20;
 
   return { width, height };
 }
