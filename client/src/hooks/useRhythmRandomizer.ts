@@ -24,6 +24,7 @@ interface UseRhythmRandomizerReturn {
   ensemblePattern: EnsemblePattern | null;
   playbackState: PlaybackState;
   isReady: boolean;
+  volume: number;
 
   // Actions
   generate: () => void;
@@ -31,6 +32,7 @@ interface UseRhythmRandomizerReturn {
   stop: () => void;
   pause: () => void;
   resume: () => void;
+  setVolume: (volume: number) => void;
 
   // Settings
   updateSetting: <K extends keyof RhythmSettings>(key: K, value: RhythmSettings[K]) => void;
@@ -45,6 +47,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const [pattern, setPattern] = useState<RhythmPattern | null>(null);
   const [ensemblePattern, setEnsemblePattern] = useState<EnsemblePattern | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState>(INITIAL_PLAYBACK_STATE);
+  const [volume, setVolumeState] = useState<number>(0.7);
 
   // Refs for playback timing
   const playbackTimeoutRef = useRef<number | null>(null);
@@ -216,6 +219,14 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     setSettings(DEFAULT_SETTINGS);
   }, []);
 
+  // Set volume
+  const setVolume = useCallback((newVolume: number) => {
+    setVolumeState(Math.max(0, Math.min(1, newVolume)));
+    if (audio) {
+      audio.setVolume(newVolume);
+    }
+  }, [audio]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -229,11 +240,13 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     ensemblePattern,
     playbackState,
     isReady,
+    volume,
     generate,
     play,
     stop,
     pause,
     resume,
+    setVolume,
     updateSetting,
     updateSettings,
     applyPreset,

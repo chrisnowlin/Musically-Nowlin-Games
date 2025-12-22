@@ -5,14 +5,23 @@
 
 import { useEffect } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, RefreshCw, Play, Square, Pause } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRhythmRandomizer } from '@/hooks/useRhythmRandomizer';
+
+// Control Panel Components
 import { TimeSignatureSelector } from './ControlPanel/TimeSignatureSelector';
 import { TempoControl } from './ControlPanel/TempoControl';
 import { NoteValueSelector } from './ControlPanel/NoteValueSelector';
 import { PresetSelector } from './ControlPanel/PresetSelector';
+import { PlaybackControls } from './ControlPanel/PlaybackControls';
+import { SoundSelector } from './ControlPanel/SoundSelector';
+import { DensityControls } from './ControlPanel/DensityControls';
+import { MeasureCountSelector } from './ControlPanel/MeasureCountSelector';
+
+// Display Components
 import { GridNotation } from './Display/GridNotation';
 
 export function RhythmRandomizerTool() {
@@ -21,9 +30,13 @@ export function RhythmRandomizerTool() {
     pattern,
     playbackState,
     isReady,
+    volume,
     generate,
     play,
     stop,
+    pause,
+    resume,
+    setVolume,
     updateSetting,
     applyPreset,
   } = useRhythmRandomizer();
@@ -46,6 +59,9 @@ export function RhythmRandomizerTool() {
               </Button>
             </Link>
             <h1 className="text-xl font-bold text-purple-800">Rhythm Randomizer</h1>
+            <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">
+              For Educators
+            </span>
           </div>
           <Button onClick={generate} className="gap-2">
             <RefreshCw className="w-4 h-4" />
@@ -57,55 +73,76 @@ export function RhythmRandomizerTool() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Control Panel */}
+          {/* Control Panel - Left Column */}
           <div className="lg:col-span-1 space-y-4">
             {/* Presets */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Difficulty</CardTitle>
+                <CardTitle className="text-sm font-medium">Quick Presets</CardTitle>
               </CardHeader>
               <CardContent>
                 <PresetSelector onSelectPreset={applyPreset} />
               </CardContent>
             </Card>
 
-            {/* Time & Tempo */}
+            {/* Settings Tabs */}
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Time & Tempo</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <TimeSignatureSelector
-                  value={settings.timeSignature}
-                  onChange={(value) => updateSetting('timeSignature', value)}
-                />
-                <TempoControl
-                  value={settings.tempo}
-                  onChange={(value) => updateSetting('tempo', value)}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Note Values */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Note Values</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <NoteValueSelector
-                  selectedValues={settings.allowedNoteValues}
-                  onChange={(values) => updateSetting('allowedNoteValues', values)}
-                />
-              </CardContent>
+              <Tabs defaultValue="basic" className="w-full">
+                <CardHeader className="pb-0">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="basic">Basic</TabsTrigger>
+                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                  </TabsList>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <TabsContent value="basic" className="space-y-4 mt-0">
+                    <TimeSignatureSelector
+                      value={settings.timeSignature}
+                      onChange={(value) => updateSetting('timeSignature', value)}
+                    />
+                    <TempoControl
+                      value={settings.tempo}
+                      onChange={(value) => updateSetting('tempo', value)}
+                    />
+                    <MeasureCountSelector
+                      value={settings.measureCount}
+                      onChange={(value) => updateSetting('measureCount', value)}
+                    />
+                    <SoundSelector
+                      value={settings.sound}
+                      onChange={(value) => updateSetting('sound', value)}
+                    />
+                  </TabsContent>
+                  <TabsContent value="advanced" className="space-y-4 mt-0">
+                    <NoteValueSelector
+                      selectedValues={settings.allowedNoteValues}
+                      onChange={(values) => updateSetting('allowedNoteValues', values)}
+                    />
+                    <DensityControls
+                      syncopation={settings.syncopationProbability}
+                      density={settings.noteDensity}
+                      restProbability={settings.restProbability}
+                      onSyncopationChange={(value) => updateSetting('syncopationProbability', value)}
+                      onDensityChange={(value) => updateSetting('noteDensity', value)}
+                      onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
+                    />
+                  </TabsContent>
+                </CardContent>
+              </Tabs>
             </Card>
           </div>
 
-          {/* Display & Playback */}
+          {/* Display & Playback - Right Column */}
           <div className="lg:col-span-2 space-y-4">
             {/* Notation Display */}
-            <Card className="min-h-[300px]">
+            <Card className="min-h-[350px]">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Pattern</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium">Pattern</CardTitle>
+                  <div className="text-xs text-gray-500">
+                    {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {pattern ? (
@@ -124,35 +161,47 @@ export function RhythmRandomizerTool() {
 
             {/* Playback Controls */}
             <Card>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-center gap-4">
-                  {!playbackState.isPlaying ? (
-                    <Button
-                      onClick={play}
-                      disabled={!pattern || !isReady}
-                      size="lg"
-                      className="gap-2"
-                    >
-                      <Play className="w-5 h-5" />
-                      Play
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={stop}
-                      size="lg"
-                      variant="destructive"
-                      className="gap-2"
-                    >
-                      <Square className="w-5 h-5" />
-                      Stop
-                    </Button>
-                  )}
-                </div>
-                <div className="text-center mt-2 text-sm text-gray-500">
-                  {settings.tempo} BPM | {settings.timeSignature} | {settings.measureCount} measures
-                </div>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Playback</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PlaybackControls
+                  playbackState={playbackState}
+                  isReady={isReady}
+                  hasPattern={!!pattern}
+                  loopEnabled={settings.loopEnabled}
+                  countInMeasures={settings.countInMeasures}
+                  metronomeEnabled={settings.metronomeEnabled}
+                  volume={volume}
+                  onPlay={play}
+                  onStop={stop}
+                  onPause={pause}
+                  onResume={resume}
+                  onLoopChange={(enabled) => updateSetting('loopEnabled', enabled)}
+                  onCountInChange={(measures) => updateSetting('countInMeasures', measures)}
+                  onMetronomeChange={(enabled) => updateSetting('metronomeEnabled', enabled)}
+                  onVolumeChange={setVolume}
+                />
               </CardContent>
             </Card>
+
+            {/* Coming Soon - Worksheet & Ensemble */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-gray-50/50">
+                <CardContent className="py-6 text-center">
+                  <div className="text-2xl mb-2">📄</div>
+                  <div className="text-sm font-medium text-gray-600">Worksheet Export</div>
+                  <div className="text-xs text-gray-400 mt-1">Coming Soon</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gray-50/50">
+                <CardContent className="py-6 text-center">
+                  <div className="text-2xl mb-2">🎭</div>
+                  <div className="text-sm font-medium text-gray-600">Ensemble Mode</div>
+                  <div className="text-xs text-gray-400 mt-1">Coming Soon</div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </main>
