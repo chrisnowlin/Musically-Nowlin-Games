@@ -210,6 +210,13 @@ function renderMeasure(
 
   stave.setContext(context).draw();
 
+  // Calculate the actual space available for notes
+  // getNoteStartX() returns where notes should start (after clef/time sig)
+  // getNoteEndX() returns where notes should end (before barline)
+  const noteStartX = stave.getNoteStartX();
+  const noteEndX = stave.getNoteEndX();
+  const availableWidth = noteEndX - noteStartX;
+
   // Create notes
   const staveNotes: StaveNote[] = [];
 
@@ -254,9 +261,13 @@ function renderMeasure(
     });
   }
 
-  // Format and draw voice
+  // Format and draw voice - use the actual available width for proper distribution
   const formatter = new Formatter();
-  formatter.joinVoices([voice]).format([voice], width - 50);
+  formatter.joinVoices([voice]).format([voice], availableWidth - 10, {
+    align_rests: true,
+  });
+
+  // Set the starting X position for the voice to align with stave
   voice.draw(context, stave);
 
   // Draw beams after notes
