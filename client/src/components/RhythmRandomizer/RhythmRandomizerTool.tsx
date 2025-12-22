@@ -3,13 +3,14 @@
  * Main container component for the rhythm generation tool
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRhythmRandomizer } from '@/hooks/useRhythmRandomizer';
+import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
 
 // Control Panel Components
 import { TimeSignatureSelector } from './ControlPanel/TimeSignatureSelector';
@@ -23,6 +24,9 @@ import { MeasureCountSelector } from './ControlPanel/MeasureCountSelector';
 
 // Display Components
 import { GridNotation } from './Display/GridNotation';
+import { StaffNotation } from './Display/StaffNotation';
+import { NotationToggle } from './Display/NotationToggle';
+import { SyllableSelector } from './Display/SyllableSelector';
 
 export function RhythmRandomizerTool() {
   const {
@@ -45,6 +49,12 @@ export function RhythmRandomizerTool() {
   useEffect(() => {
     generate();
   }, []);
+
+  // Add syllables to pattern based on current counting system
+  const patternWithSyllables = useMemo(() => {
+    if (!pattern) return null;
+    return addSyllablesToPattern(pattern, settings.countingSystem);
+  }, [pattern, settings.countingSystem]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -137,20 +147,41 @@ export function RhythmRandomizerTool() {
             {/* Notation Display */}
             <Card className="min-h-[350px]">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <CardTitle className="text-sm font-medium">Pattern</CardTitle>
-                  <div className="text-xs text-gray-500">
-                    {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
+                  <div className="flex items-center gap-3">
+                    <NotationToggle
+                      value={settings.notationMode}
+                      onChange={(mode) => updateSetting('notationMode', mode)}
+                    />
+                    <SyllableSelector
+                      value={settings.countingSystem}
+                      onChange={(system) => updateSetting('countingSystem', system)}
+                      showLabel={false}
+                      compact
+                    />
                   </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
                 </div>
               </CardHeader>
               <CardContent>
-                {pattern ? (
-                  <GridNotation
-                    pattern={pattern}
-                    currentEventIndex={playbackState.currentEventIndex}
-                    isPlaying={playbackState.isPlaying}
-                  />
+                {patternWithSyllables ? (
+                  settings.notationMode === 'staff' ? (
+                    <StaffNotation
+                      pattern={patternWithSyllables}
+                      currentEventIndex={playbackState.currentEventIndex}
+                      isPlaying={playbackState.isPlaying}
+                      showSyllables={settings.countingSystem !== 'none'}
+                    />
+                  ) : (
+                    <GridNotation
+                      pattern={patternWithSyllables}
+                      currentEventIndex={playbackState.currentEventIndex}
+                      isPlaying={playbackState.isPlaying}
+                    />
+                  )
                 ) : (
                   <div className="flex items-center justify-center h-48 text-gray-400">
                     Click "Regenerate" to create a pattern
