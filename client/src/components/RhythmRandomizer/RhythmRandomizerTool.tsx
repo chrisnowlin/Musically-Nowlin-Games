@@ -30,6 +30,9 @@ import { SyllableSelector } from './Display/SyllableSelector';
 import { EnsembleDisplay } from './Display/EnsembleDisplay';
 import { EnsembleModeSelector } from './ControlPanel/EnsembleModeSelector';
 import { WorksheetBuilder } from './Worksheet/WorksheetBuilder';
+import { ShareButton } from './Actions/ShareButton';
+import { PrintButton } from './Actions/PrintButton';
+import { loadSettingsFromUrl, updateUrlWithSettings } from '@/lib/rhythmRandomizer/shareUtils';
 
 export function RhythmRandomizerTool() {
   const {
@@ -49,13 +52,26 @@ export function RhythmRandomizerTool() {
     toggleEnsemblePartMute,
     toggleEnsemblePartSolo,
     updateSetting,
+    updateSettings,
     applyPreset,
   } = useRhythmRandomizer();
 
-  // Generate initial pattern on mount
+  // Load settings from URL on mount and generate initial pattern
   useEffect(() => {
+    const urlSettings = loadSettingsFromUrl();
+    if (Object.keys(urlSettings).length > 0) {
+      updateSettings(urlSettings);
+    }
     generate();
   }, []);
+
+  // Update URL when settings change (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      updateUrlWithSettings(settings);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [settings]);
 
   // Add syllables to pattern based on current counting system
   const patternWithSyllables = useMemo(() => {
@@ -80,10 +96,14 @@ export function RhythmRandomizerTool() {
               For Educators
             </span>
           </div>
-          <Button onClick={generate} className="gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Regenerate
-          </Button>
+          <div className="flex items-center gap-2">
+            <ShareButton settings={settings} />
+            <PrintButton />
+            <Button onClick={generate} className="gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Regenerate
+            </Button>
+          </div>
         </div>
       </header>
 

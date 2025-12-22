@@ -501,3 +501,71 @@
     animation-delay: 0.5s;
   }
 }
+
+/* ============================================
+   PRINT STYLES - Rhythm Randomizer
+   ============================================ */
+@media print {
+  /* Hide non-essential elements */
+  header,
+  .print\\:hidden,
+  button:not(.print\\:visible),
+  [data-radix-popper-content-wrapper],
+  .sticky {
+    display: none !important;
+  }
+
+  /* Reset page background */
+  body,
+  .min-h-screen {
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  /* Expand content width */
+  main {
+    max-width: 100% !important;
+    padding: 1rem !important;
+  }
+
+  /* Card styles for print */
+  .card,
+  [class*="Card"] {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Notation display */
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Grid notation print styles */
+  .rounded-lg {
+    border-radius: 0 !important;
+  }
+
+  /* Ensure text is black */
+  * {
+    color: black !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* Hide control panels */
+  .lg\\:col-span-1 {
+    display: none !important;
+  }
+
+  /* Full width for notation */
+  .lg\\:col-span-2 {
+    grid-column: span 3 !important;
+  }
+}
