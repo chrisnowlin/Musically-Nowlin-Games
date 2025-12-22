@@ -13,6 +13,7 @@ import {
   Tuplet,
   Dot,
   Articulation,
+  Fraction,
   type RenderContext,
 } from 'vexflow';
 import {
@@ -233,21 +234,34 @@ function renderMeasure(
   voice.setStrict(false); // Allow slight timing variations
   voice.addTickables(staveNotes);
 
-  // Format and draw
+  // Generate beams BEFORE drawing - this modifies notes to hide flags
+  let beams: Beam[] = [];
+  try {
+    // Use Beam.generateBeams() for automatic beaming with proper flag handling
+    beams = Beam.generateBeams(staveNotes, {
+      groups: [new Fraction(2, 8)], // Group by beat (2 eighths per beat)
+      stem_direction: 1,
+    });
+  } catch {
+    // Fallback to manual beaming if generateBeams fails
+    const beamGroups = getBeamGroups(staveNotes, measure.events);
+    beamGroups.forEach((group) => {
+      try {
+        beams.push(new Beam(group));
+      } catch {
+        // Beam creation can fail for certain note combinations
+      }
+    });
+  }
+
+  // Format and draw voice
   const formatter = new Formatter();
   formatter.joinVoices([voice]).format([voice], width - 50);
-
   voice.draw(context, stave);
 
-  // Draw beams
-  const beamGroups = getBeamGroups(staveNotes, measure.events);
-  beamGroups.forEach((group) => {
-    try {
-      const beam = new Beam(group);
-      beam.setContext(context).draw();
-    } catch {
-      // Beam creation can fail for certain note combinations
-    }
+  // Draw beams after notes
+  beams.forEach((beam) => {
+    beam.setContext(context).draw();
   });
 
   // Draw triplet brackets

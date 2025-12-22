@@ -17,20 +17,31 @@ import {
 } from '@/lib/rhythmRandomizer/types';
 
 // Sound parameters for different instrument options
-// Using short durations for percussion-like sounds
-const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; duration: number }> = {
-  woodblock: { note: 800, accent: 1000, duration: 0.08 },
-  drums: { note: 150, accent: 200, duration: 0.15 },
-  claps: { note: 1200, accent: 1500, duration: 0.05 },
-  piano: { note: 440, accent: 523, duration: 0.25 },
-  metronome: { note: 1000, accent: 1200, duration: 0.05 },
+// isTonal: if true, sound duration matches note length; if false, uses short percussion hit
+const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; minDuration: number; isTonal: boolean }> = {
+  woodblock: { note: 800, accent: 1000, minDuration: 0.08, isTonal: false },
+  drums: { note: 150, accent: 200, minDuration: 0.15, isTonal: false },
+  claps: { note: 1200, accent: 1500, minDuration: 0.05, isTonal: false },
+  piano: { note: 440, accent: 523, minDuration: 0.1, isTonal: true },
+  metronome: { note: 1000, accent: 1200, minDuration: 0.05, isTonal: false },
 };
 
-function getSoundParams(sound: SoundOption, isAccented?: boolean): { frequency: number; duration: number } {
+function getSoundParams(
+  sound: SoundOption,
+  noteDurationSeconds: number,
+  isAccented?: boolean
+): { frequency: number; duration: number } {
   const params = SOUND_PARAMS[sound] || SOUND_PARAMS.woodblock;
+
+  // For tonal sounds (piano), use the full note duration
+  // For percussion sounds, use the minimum duration (short hit)
+  const duration = params.isTonal
+    ? Math.max(params.minDuration, noteDurationSeconds * 0.9) // 90% of note length to avoid overlap
+    : params.minDuration;
+
   return {
     frequency: isAccented ? params.accent : params.note,
-    duration: params.duration,
+    duration,
   };
 }
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
@@ -158,13 +169,14 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       // Count-in
       if (settings.countInMeasures > 0) {
         const countInBeats = settings.countInMeasures * 4; // Assuming 4/4 for simplicity
+        const countInBeatDurationSeconds = msPerBeat / 1000;
         for (let i = 0; i < countInBeats; i++) {
           const beatTime = currentTime;
           const isFirstBeat = i % 4 === 0; // Accent first beat of measure
           scheduleTimeout(() => {
             if (audio) {
-              // Use metronome sound for count-in
-              const clickParams = getSoundParams('metronome', isFirstBeat);
+              // Use metronome sound for count-in (short click, not tonal)
+              const clickParams = getSoundParams('metronome', countInBeatDurationSeconds, isFirstBeat);
               audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.6);
             }
           }, beatTime);
@@ -187,6 +199,8 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           // Copy values to avoid closure issues
           const eventCopy = { ...event };
           const soundToUse = settings.sound;
+          // Calculate note duration in seconds for sound generation
+          const noteDurationSeconds = (event.duration * msPerBeat) / 1000;
 
           scheduleTimeout(() => {
             // Update playback state
@@ -200,7 +214,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
             // Play sound for notes
             if (eventCopy.type === 'note' && audio) {
               const vol = eventCopy.isAccented ? 0.9 : 0.7;
-              const soundParams = getSoundParams(soundToUse, eventCopy.isAccented);
+              const soundParams = getSoundParams(soundToUse, noteDurationSeconds, eventCopy.isAccented);
               audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
             }
           }, eventTime);

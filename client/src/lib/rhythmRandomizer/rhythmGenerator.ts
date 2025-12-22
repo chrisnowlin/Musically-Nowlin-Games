@@ -17,6 +17,44 @@ import {
 } from './types';
 
 /**
+ * Mapping from note values to their corresponding rest values
+ */
+const NOTE_TO_REST_MAP: Partial<Record<NoteValue, RestValue>> = {
+  whole: 'wholeRest',
+  half: 'halfRest',
+  quarter: 'quarterRest',
+  eighth: 'eighthRest',
+  sixteenth: 'sixteenthRest',
+  dottedHalf: 'halfRest', // Dotted notes map to base rest value
+  dottedQuarter: 'quarterRest',
+  dottedEighth: 'eighthRest',
+  tripletQuarter: 'quarterRest',
+  tripletEighth: 'eighthRest',
+};
+
+/**
+ * Derive rest values from allowed note values
+ * This ensures rests match the note durations available
+ */
+function deriveRestValuesFromNotes(allowedNoteValues: NoteValue[]): RestValue[] {
+  const restSet = new Set<RestValue>();
+
+  for (const noteValue of allowedNoteValues) {
+    const restValue = NOTE_TO_REST_MAP[noteValue];
+    if (restValue) {
+      restSet.add(restValue);
+    }
+  }
+
+  // Always include at least quarter rest as fallback
+  if (restSet.size === 0) {
+    restSet.add('quarterRest');
+  }
+
+  return Array.from(restSet);
+}
+
+/**
  * Generate a unique ID for patterns
  */
 function generateId(): string {
@@ -112,20 +150,55 @@ function selectNoteValueByDensity(
 }
 
 /**
+ * Select a rest value based on density preference
+ * (mirrors note selection: sparse = longer rests, dense = shorter rests)
+ */
+function selectRestValueByDensity(
+  availableRests: RestValue[],
+  density: 'sparse' | 'medium' | 'dense'
+): RestValue {
+  // Sort by duration (longest first for sparse, shortest first for dense)
+  const sorted = [...availableRests].sort((a, b) => {
+    const diff = REST_DURATIONS[a] - REST_DURATIONS[b];
+    return density === 'sparse' ? -diff : diff;
+  });
+
+  // Weight selection based on density
+  const weights = density === 'medium'
+    ? sorted.map(() => 1) // Equal weights for medium
+    : sorted.map((_, i) => sorted.length - i); // Prefer first items
+
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  let random = Math.random() * totalWeight;
+
+  for (let i = 0; i < sorted.length; i++) {
+    random -= weights[i];
+    if (random <= 0) {
+      return sorted[i];
+    }
+  }
+
+  return sorted[0];
+}
+
+/**
  * Generate a single rhythm event
  */
 function generateEvent(
   remainingBeats: number,
   currentBeat: number,
   settings: RhythmSettings,
-  timeSignature: TimeSignature
+  timeSignature: TimeSignature,
+  derivedRestValues: RestValue[]
 ): RhythmEvent {
   const shouldRest = Math.random() * 100 < settings.restProbability;
 
   if (shouldRest) {
-    const availableRests = getAvailableRestValues(remainingBeats, settings.allowedRestValues);
+    // Use derived rest values (matching note values) instead of settings.allowedRestValues
+    const availableRests = getAvailableRestValues(remainingBeats, derivedRestValues);
     if (availableRests.length > 0) {
-      const restValue = availableRests[Math.floor(Math.random() * availableRests.length)];
+      // Select rest based on density (sparse = longer rests, dense = shorter rests)
+      const restValue = selectRestValueByDensity(availableRests, settings.noteDensity);
       return {
         type: 'rest',
         value: restValue,
@@ -137,16 +210,18 @@ function generateEvent(
   const availableNotes = getAvailableNoteValues(remainingBeats, settings.allowedNoteValues, settings);
 
   if (availableNotes.length === 0) {
-    // Fallback: use quarter rest if nothing else fits
-    const smallestRest = settings.allowedRestValues.find(r => REST_DURATIONS[r] <= remainingBeats);
-    if (smallestRest) {
+    // Fallback: use smallest available rest that fits
+    const availableRests = getAvailableRestValues(remainingBeats, derivedRestValues);
+    if (availableRests.length > 0) {
+      // Sort by duration and pick smallest that fits
+      const sortedRests = availableRests.sort((a, b) => REST_DURATIONS[a] - REST_DURATIONS[b]);
       return {
         type: 'rest',
-        value: smallestRest,
-        duration: REST_DURATIONS[smallestRest],
+        value: sortedRests[0],
+        duration: REST_DURATIONS[sortedRests[0]],
       };
     }
-    // Ultimate fallback
+    // Ultimate fallback - create a rest that fits exactly
     return {
       type: 'rest',
       value: 'quarterRest',
@@ -189,7 +264,8 @@ function generateEvent(
 function generateMeasure(
   measureNumber: number,
   settings: RhythmSettings,
-  timeSignature: TimeSignature
+  timeSignature: TimeSignature,
+  derivedRestValues: RestValue[]
 ): Measure {
   const totalBeats = getMeasureBeats(timeSignature);
   const events: RhythmEvent[] = [];
@@ -197,7 +273,7 @@ function generateMeasure(
 
   while (currentBeat < totalBeats) {
     const remainingBeats = totalBeats - currentBeat;
-    const event = generateEvent(remainingBeats, currentBeat, settings, timeSignature);
+    const event = generateEvent(remainingBeats, currentBeat, settings, timeSignature, derivedRestValues);
     events.push(event);
     currentBeat += event.duration;
   }
@@ -218,11 +294,14 @@ export function generateRhythmPattern(settings: RhythmSettings): RhythmPattern {
     throw new Error(`Unknown time signature: ${settings.timeSignature}`);
   }
 
+  // Derive rest values from allowed note values so rests match the note durations
+  const derivedRestValues = deriveRestValuesFromNotes(settings.allowedNoteValues);
+
   const measures: Measure[] = [];
   const beatsPerMeasure = getMeasureBeats(timeSignature);
 
   for (let i = 0; i < settings.measureCount; i++) {
-    measures.push(generateMeasure(i + 1, settings, timeSignature));
+    measures.push(generateMeasure(i + 1, settings, timeSignature, derivedRestValues));
   }
 
   return {
