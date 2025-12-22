@@ -4,17 +4,35 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAudioService } from './useAudioService';
-import { useGameCleanup } from './useGameCleanup';
 import {
   RhythmSettings,
   RhythmPattern,
   PlaybackState,
   EnsemblePattern,
   DifficultyPreset,
+  SoundOption,
   DEFAULT_SETTINGS,
   DIFFICULTY_PRESETS,
   INITIAL_PLAYBACK_STATE,
 } from '@/lib/rhythmRandomizer/types';
+
+// Sound parameters for different instrument options
+// Using short durations for percussion-like sounds
+const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; duration: number }> = {
+  woodblock: { note: 800, accent: 1000, duration: 0.08 },
+  drums: { note: 150, accent: 200, duration: 0.15 },
+  claps: { note: 1200, accent: 1500, duration: 0.05 },
+  piano: { note: 440, accent: 523, duration: 0.25 },
+  metronome: { note: 1000, accent: 1200, duration: 0.05 },
+};
+
+function getSoundParams(sound: SoundOption, isAccented?: boolean): { frequency: number; duration: number } {
+  const params = SOUND_PARAMS[sound] || SOUND_PARAMS.woodblock;
+  return {
+    frequency: isAccented ? params.accent : params.note,
+    duration: params.duration,
+  };
+}
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
 import {
   generateEnsemblePattern,
@@ -61,12 +79,27 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const [volume, setVolumeState] = useState<number>(0.7);
 
   // Refs for playback timing
-  const playbackTimeoutRef = useRef<number | null>(null);
+  const playbackTimeoutsRef = useRef<Set<number>>(new Set());
   const playbackStartTimeRef = useRef<number>(0);
 
-  // Audio and cleanup hooks
+  // Audio hook
   const { audio, isReady, initialize } = useAudioService();
-  const { setTimeout: safeSetTimeout, clearAll } = useGameCleanup();
+
+  // Helper to schedule a timeout and track it for cleanup
+  const scheduleTimeout = useCallback((callback: () => void, delay: number): number => {
+    const id = window.setTimeout(() => {
+      playbackTimeoutsRef.current.delete(id);
+      callback();
+    }, delay);
+    playbackTimeoutsRef.current.add(id);
+    return id;
+  }, []);
+
+  // Clear all playback timeouts
+  const clearPlaybackTimeouts = useCallback(() => {
+    playbackTimeoutsRef.current.forEach(id => window.clearTimeout(id));
+    playbackTimeoutsRef.current.clear();
+  }, []);
 
   // Generate new pattern (single or ensemble)
   const generate = useCallback(() => {
@@ -99,9 +132,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
 
   // Play the pattern
   const play = useCallback(async () => {
-    if (!pattern || !isReady) return;
+    if (!pattern) return;
 
     try {
+      // Clear any existing timeouts
+      clearPlaybackTimeouts();
+
       await initialize();
 
       setPlaybackState(prev => ({
@@ -124,9 +160,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
         const countInBeats = settings.countInMeasures * 4; // Assuming 4/4 for simplicity
         for (let i = 0; i < countInBeats; i++) {
           const beatTime = currentTime;
-          safeSetTimeout(() => {
+          const isFirstBeat = i % 4 === 0; // Accent first beat of measure
+          scheduleTimeout(() => {
             if (audio) {
-              audio.playNote(800, 0.1); // Click sound
+              // Use metronome sound for count-in
+              const clickParams = getSoundParams('metronome', isFirstBeat);
+              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.6);
             }
           }, beatTime);
           currentTime += msPerBeat;
@@ -145,7 +184,11 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           const currentMeasureIdx = m;
           const currentBeatVal = beatInMeasure;
 
-          safeSetTimeout(() => {
+          // Copy values to avoid closure issues
+          const eventCopy = { ...event };
+          const soundToUse = settings.sound;
+
+          scheduleTimeout(() => {
             // Update playback state
             setPlaybackState(prev => ({
               ...prev,
@@ -155,10 +198,10 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
             }));
 
             // Play sound for notes
-            if (event.type === 'note' && audio) {
-              const volume = event.isAccented ? 0.9 : 0.7;
-              // Use a drum-like frequency
-              audio.playNoteWithDynamics(200, event.duration * msPerBeat / 1000, volume);
+            if (eventCopy.type === 'note' && audio) {
+              const vol = eventCopy.isAccented ? 0.9 : 0.7;
+              const soundParams = getSoundParams(soundToUse, eventCopy.isAccented);
+              audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
             }
           }, eventTime);
 
@@ -168,12 +211,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
         }
       }
 
-      // Schedule end of playback
-      const totalDuration = getPatternDurationMs(pattern) +
-        (settings.countInMeasures * 4 * msPerBeat);
+      // Schedule end of playback - use currentTime which already includes count-in and pattern
+      const totalDuration = currentTime;
+      const shouldLoop = settings.loopEnabled;
 
-      safeSetTimeout(() => {
-        if (settings.loopEnabled) {
+      scheduleTimeout(() => {
+        if (shouldLoop) {
           // Restart playback
           play();
         } else {
@@ -191,20 +234,20 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       console.error('Playback error:', error);
       setPlaybackState(INITIAL_PLAYBACK_STATE);
     }
-  }, [pattern, isReady, settings, audio, initialize, safeSetTimeout]);
+  }, [pattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts]);
 
   // Stop playback
   const stop = useCallback(() => {
-    clearAll();
+    clearPlaybackTimeouts();
     if (audio) {
       audio.stopAll();
     }
     setPlaybackState(INITIAL_PLAYBACK_STATE);
-  }, [audio, clearAll]);
+  }, [audio, clearPlaybackTimeouts]);
 
   // Pause playback
   const pause = useCallback(() => {
-    clearAll();
+    clearPlaybackTimeouts();
     if (audio) {
       audio.stopAll();
     }
@@ -214,7 +257,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       isPaused: true,
       elapsedTime: Date.now() - playbackStartTimeRef.current,
     }));
-  }, [audio, clearAll]);
+  }, [audio, clearPlaybackTimeouts]);
 
   // Resume playback (simplified - just restarts for now)
   const resume = useCallback(() => {
@@ -279,9 +322,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      clearAll();
+      clearPlaybackTimeouts();
+      if (audio) {
+        audio.stopAll();
+      }
     };
-  }, [clearAll]);
+  }, [clearPlaybackTimeouts, audio]);
 
   return {
     settings,

@@ -779,12 +779,21 @@ export class AudioService {
       lowShelf.gain.value = this.getLowBoostDb(validFreq);
 
       // ADSR envelope with volume scaling
+      // Adjust envelope times for short durations
       const now = this.audioContext!.currentTime;
-      const sustainVolume = 0.2 * validVolume;
+      const peakVolume = 0.3 * validVolume;
+      const sustainVolume = Math.max(0.01, 0.2 * validVolume);
+
+      // Scale envelope phases based on duration
+      const attackTime = Math.min(0.02, validDuration * 0.15);
+      const decayTime = Math.min(0.05, validDuration * 0.2);
+      const releaseTime = Math.min(0.1, validDuration * 0.3);
+      const sustainEnd = Math.max(attackTime + decayTime + 0.001, validDuration - releaseTime);
+
       gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.3 * validVolume, now + 0.05); // Attack
-      gainNode.gain.exponentialRampToValueAtTime(sustainVolume, now + 0.1); // Decay
-      gainNode.gain.setValueAtTime(sustainVolume, now + validDuration - 0.2); // Sustain
+      gainNode.gain.linearRampToValueAtTime(peakVolume, now + attackTime); // Attack
+      gainNode.gain.exponentialRampToValueAtTime(sustainVolume, now + attackTime + decayTime); // Decay
+      gainNode.gain.setValueAtTime(sustainVolume, now + sustainEnd); // Sustain
       gainNode.gain.exponentialRampToValueAtTime(0.01, now + validDuration); // Release
 
       // Connect nodes
