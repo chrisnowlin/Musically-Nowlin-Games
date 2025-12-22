@@ -16,6 +16,12 @@ import {
   INITIAL_PLAYBACK_STATE,
 } from '@/lib/rhythmRandomizer/types';
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
+import {
+  generateEnsemblePattern,
+  regeneratePart,
+  togglePartMute,
+  togglePartSolo,
+} from '@/lib/rhythmRandomizer/ensembleGenerator';
 
 interface UseRhythmRandomizerReturn {
   // State
@@ -33,6 +39,11 @@ interface UseRhythmRandomizerReturn {
   pause: () => void;
   resume: () => void;
   setVolume: (volume: number) => void;
+
+  // Ensemble Actions
+  regenerateEnsemblePart: (partIndex: number) => void;
+  toggleEnsemblePartMute: (partIndex: number) => void;
+  toggleEnsemblePartSolo: (partIndex: number) => void;
 
   // Settings
   updateSetting: <K extends keyof RhythmSettings>(key: K, value: RhythmSettings[K]) => void;
@@ -57,13 +68,30 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const { audio, isReady, initialize } = useAudioService();
   const { setTimeout: safeSetTimeout, clearAll } = useGameCleanup();
 
-  // Generate new pattern
+  // Generate new pattern (single or ensemble)
   const generate = useCallback(() => {
     try {
-      const newPattern = generateRhythmPattern(settings);
-      setPattern(newPattern);
       // Reset playback state when generating new pattern
       setPlaybackState(INITIAL_PLAYBACK_STATE);
+
+      if (settings.ensembleMode === 'single') {
+        // Generate single pattern
+        const newPattern = generateRhythmPattern(settings);
+        setPattern(newPattern);
+        setEnsemblePattern(null);
+      } else {
+        // Generate ensemble pattern
+        const newEnsemble = generateEnsemblePattern(
+          settings,
+          settings.ensembleMode,
+          settings.partCount
+        );
+        setEnsemblePattern(newEnsemble);
+        // Also set the first part as the main pattern for fallback
+        if (newEnsemble && newEnsemble.parts.length > 0) {
+          setPattern(newEnsemble.parts[0].pattern);
+        }
+      }
     } catch (error) {
       console.error('Failed to generate rhythm pattern:', error);
     }
@@ -227,6 +255,27 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     }
   }, [audio]);
 
+  // Ensemble: Regenerate a single part
+  const regenerateEnsemblePart = useCallback((partIndex: number) => {
+    if (!ensemblePattern) return;
+    const updated = regeneratePart(ensemblePattern, partIndex);
+    setEnsemblePattern(updated);
+  }, [ensemblePattern]);
+
+  // Ensemble: Toggle mute on a part
+  const toggleEnsemblePartMute = useCallback((partIndex: number) => {
+    if (!ensemblePattern) return;
+    const updated = togglePartMute(ensemblePattern, partIndex);
+    setEnsemblePattern(updated);
+  }, [ensemblePattern]);
+
+  // Ensemble: Toggle solo on a part
+  const toggleEnsemblePartSolo = useCallback((partIndex: number) => {
+    if (!ensemblePattern) return;
+    const updated = togglePartSolo(ensemblePattern, partIndex);
+    setEnsemblePattern(updated);
+  }, [ensemblePattern]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -247,6 +296,9 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     pause,
     resume,
     setVolume,
+    regenerateEnsemblePart,
+    toggleEnsemblePartMute,
+    toggleEnsemblePartSolo,
     updateSetting,
     updateSettings,
     applyPreset,

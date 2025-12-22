@@ -27,11 +27,14 @@ import { GridNotation } from './Display/GridNotation';
 import { StaffNotation } from './Display/StaffNotation';
 import { NotationToggle } from './Display/NotationToggle';
 import { SyllableSelector } from './Display/SyllableSelector';
+import { EnsembleDisplay } from './Display/EnsembleDisplay';
+import { EnsembleModeSelector } from './ControlPanel/EnsembleModeSelector';
 
 export function RhythmRandomizerTool() {
   const {
     settings,
     pattern,
+    ensemblePattern,
     playbackState,
     isReady,
     volume,
@@ -41,6 +44,9 @@ export function RhythmRandomizerTool() {
     pause,
     resume,
     setVolume,
+    regenerateEnsemblePart,
+    toggleEnsemblePartMute,
+    toggleEnsemblePartSolo,
     updateSetting,
     applyPreset,
   } = useRhythmRandomizer();
@@ -136,6 +142,12 @@ export function RhythmRandomizerTool() {
                       onDensityChange={(value) => updateSetting('noteDensity', value)}
                       onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
                     />
+                    <EnsembleModeSelector
+                      mode={settings.ensembleMode}
+                      partCount={settings.partCount}
+                      onModeChange={(mode) => updateSetting('ensembleMode', mode)}
+                      onPartCountChange={(count) => updateSetting('partCount', count)}
+                    />
                   </TabsContent>
                 </CardContent>
               </Tabs>
@@ -148,7 +160,9 @@ export function RhythmRandomizerTool() {
             <Card className="min-h-[350px]">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <CardTitle className="text-sm font-medium">Pattern</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    {settings.ensembleMode === 'single' ? 'Pattern' : 'Ensemble'}
+                  </CardTitle>
                   <div className="flex items-center gap-3">
                     <NotationToggle
                       value={settings.notationMode}
@@ -164,10 +178,22 @@ export function RhythmRandomizerTool() {
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                   {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
+                  {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
                 </div>
               </CardHeader>
               <CardContent>
-                {patternWithSyllables ? (
+                {settings.ensembleMode !== 'single' && ensemblePattern ? (
+                  <EnsembleDisplay
+                    ensemble={ensemblePattern}
+                    notationMode={settings.notationMode}
+                    countingSystem={settings.countingSystem}
+                    currentEventIndex={playbackState.currentEventIndex}
+                    isPlaying={playbackState.isPlaying}
+                    onToggleMute={toggleEnsemblePartMute}
+                    onToggleSolo={toggleEnsemblePartSolo}
+                    onRegeneratePart={regenerateEnsemblePart}
+                  />
+                ) : patternWithSyllables ? (
                   settings.notationMode === 'staff' ? (
                     <StaffNotation
                       pattern={patternWithSyllables}
@@ -216,23 +242,14 @@ export function RhythmRandomizerTool() {
               </CardContent>
             </Card>
 
-            {/* Coming Soon - Worksheet & Ensemble */}
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-gray-50/50">
-                <CardContent className="py-6 text-center">
-                  <div className="text-2xl mb-2">📄</div>
-                  <div className="text-sm font-medium text-gray-600">Worksheet Export</div>
-                  <div className="text-xs text-gray-400 mt-1">Coming Soon</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-gray-50/50">
-                <CardContent className="py-6 text-center">
-                  <div className="text-2xl mb-2">🎭</div>
-                  <div className="text-sm font-medium text-gray-600">Ensemble Mode</div>
-                  <div className="text-xs text-gray-400 mt-1">Coming Soon</div>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Coming Soon - Worksheet Export */}
+            <Card className="bg-gray-50/50">
+              <CardContent className="py-6 text-center">
+                <div className="text-2xl mb-2">📄</div>
+                <div className="text-sm font-medium text-gray-600">Worksheet Export</div>
+                <div className="text-xs text-gray-400 mt-1">Coming Soon - Export printable PDFs with exercises and answer keys</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
