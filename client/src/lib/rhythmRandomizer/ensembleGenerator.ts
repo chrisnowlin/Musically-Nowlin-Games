@@ -44,7 +44,7 @@ const BODY_PERCUSSION_CONFIGS: Record<BodyPercussionPart, PartConfig> = {
     densityMultiplier: 1.0,
     syncopationMultiplier: 0.8,
     restMultiplier: 1.0,
-    preferredNotes: ['quarter', 'eighth'],
+    preferredNotes: ['quarter', 'eighth', 'twoEighths'],
   },
   snap: {
     label: 'Snap (Fingers)',
@@ -52,7 +52,7 @@ const BODY_PERCUSSION_CONFIGS: Record<BodyPercussionPart, PartConfig> = {
     densityMultiplier: 1.2,
     syncopationMultiplier: 1.2,
     restMultiplier: 0.8,
-    preferredNotes: ['eighth', 'sixteenth', 'quarter'],
+    preferredNotes: ['eighth', 'sixteenth', 'quarter', 'twoEighths', 'twoSixteenths', 'fourSixteenths', 'eighthTwoSixteenths', 'twoSixteenthsEighth', 'sixteenthEighthSixteenth'],
   },
   pat: {
     label: 'Pat (Thighs)',
@@ -60,7 +60,7 @@ const BODY_PERCUSSION_CONFIGS: Record<BodyPercussionPart, PartConfig> = {
     densityMultiplier: 0.8,
     syncopationMultiplier: 0.6,
     restMultiplier: 1.2,
-    preferredNotes: ['quarter', 'eighth', 'half'],
+    preferredNotes: ['quarter', 'eighth', 'half', 'twoEighths'],
   },
 };
 
@@ -77,21 +77,21 @@ const LAYERED_PART_CONFIGS: PartConfig[] = [
     densityMultiplier: 0.8,
     syncopationMultiplier: 0.6,
     restMultiplier: 1.0,
-    preferredNotes: ['quarter', 'eighth'],
+    preferredNotes: ['quarter', 'eighth', 'twoEighths'],
   },
   {
     label: 'Part 3 (Active)',
     densityMultiplier: 1.2,
     syncopationMultiplier: 1.0,
     restMultiplier: 0.7,
-    preferredNotes: ['eighth', 'sixteenth', 'quarter'],
+    preferredNotes: ['eighth', 'sixteenth', 'quarter', 'twoEighths', 'twoSixteenths', 'fourSixteenths', 'eighthTwoSixteenths', 'twoSixteenthsEighth', 'sixteenthEighthSixteenth'],
   },
   {
     label: 'Part 4 (Complex)',
     densityMultiplier: 1.5,
     syncopationMultiplier: 1.3,
     restMultiplier: 0.5,
-    preferredNotes: ['sixteenth', 'eighth', 'twoSixteenths'],
+    preferredNotes: ['sixteenth', 'eighth', 'twoSixteenths', 'fourSixteenths', 'eighthTwoSixteenths', 'twoSixteenthsEighth', 'sixteenthEighthSixteenth'],
   },
 ];
 
@@ -105,13 +105,23 @@ function generateUniqueId(): string {
 
 /**
  * Filter allowed notes based on part configuration
+ * Always respects user's selections - only filters if there's overlap with preferred notes
+ * If user has only selected notes that don't match preferences, use all user selections
  */
 function filterNotesForPart(
   allowedNotes: NoteValue[],
   preferredNotes: NoteValue[]
 ): NoteValue[] {
+  // If user hasn't selected any notes, return preferences as fallback
+  if (allowedNotes.length === 0) {
+    return preferredNotes;
+  }
+
+  // Try to find overlap between user selections and part preferences
   const filtered = allowedNotes.filter((note) => preferredNotes.includes(note));
-  // If nothing matches, use the original list
+
+  // If there's overlap, use filtered notes; otherwise use ALL of user's selections
+  // This ensures user's selections are always respected
   return filtered.length > 0 ? filtered : allowedNotes;
 }
 

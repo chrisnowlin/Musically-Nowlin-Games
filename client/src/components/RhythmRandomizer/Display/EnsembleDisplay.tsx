@@ -3,16 +3,14 @@
  * Displays multiple rhythm parts for ensemble mode
  */
 
-import { EnsemblePattern, NotationMode, CountingSystem } from '@/lib/rhythmRandomizer/types';
+import { EnsemblePattern, CountingSystem } from '@/lib/rhythmRandomizer/types';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
-import { GridNotation } from './GridNotation';
 import { StaffNotation } from './StaffNotation';
 import { Button } from '@/components/ui/button';
 import { Volume2, VolumeX, Star, RefreshCw } from 'lucide-react';
 
 interface EnsembleDisplayProps {
   ensemble: EnsemblePattern;
-  notationMode: NotationMode;
   countingSystem: CountingSystem;
   currentPartIndex?: number;
   currentEventIndex?: number;
@@ -40,7 +38,6 @@ const BODY_PERCUSSION_ICONS: Record<string, string> = {
 
 export function EnsembleDisplay({
   ensemble,
-  notationMode,
   countingSystem,
   currentPartIndex = -1,
   currentEventIndex = -1,
@@ -51,6 +48,9 @@ export function EnsembleDisplay({
 }: EnsembleDisplayProps) {
   // Check if any part is soloed
   const hasSoloedPart = ensemble.parts.some((p) => p.isSoloed);
+
+  // For layered/body percussion modes, all unmuted parts play simultaneously
+  const isSimultaneousMode = ensemble.mode === 'layered' || ensemble.mode === 'bodyPercussion';
 
   return (
     <div className="space-y-4">
@@ -70,9 +70,19 @@ export function EnsembleDisplay({
       <div className="space-y-3">
         {ensemble.parts.map((part, index) => {
           const colors = PART_COLORS[index % PART_COLORS.length];
-          const isCurrentPart = currentPartIndex === index;
+
+          // Check if this part is effectively muted (muted directly or not soloed when others are)
+          const isEffectivelyMuted = part.isMuted || (hasSoloedPart && !part.isSoloed);
+
+          // Determine if this part is currently playing
+          // For simultaneous modes: all unmuted parts are active when isPlaying
+          // For call & response: only the current part index is active
+          const isCurrentPart = isSimultaneousMode
+            ? !isEffectivelyMuted && currentPartIndex >= 0  // All unmuted parts active when playing
+            : currentPartIndex === index;  // Only current part active for sequential
+
           const isActive = isPlaying && isCurrentPart;
-          const isMuted = part.isMuted || (hasSoloedPart && !part.isSoloed);
+          const isMuted = isEffectivelyMuted;
 
           // Add syllables to pattern
           const patternWithSyllables = addSyllablesToPattern(
@@ -159,20 +169,13 @@ export function EnsembleDisplay({
 
               {/* Part notation */}
               <div className="p-3">
-                {notationMode === 'staff' ? (
-                  <StaffNotation
-                    pattern={patternWithSyllables}
-                    currentEventIndex={isCurrentPart ? currentEventIndex : -1}
-                    isPlaying={isActive}
-                    showSyllables={countingSystem !== 'none'}
-                  />
-                ) : (
-                  <GridNotation
-                    pattern={patternWithSyllables}
-                    currentEventIndex={isCurrentPart ? currentEventIndex : -1}
-                    isPlaying={isActive}
-                  />
-                )}
+                <StaffNotation
+                  pattern={patternWithSyllables}
+                  currentEventIndex={isCurrentPart ? currentEventIndex : -1}
+                  isPlaying={isActive}
+                  showSyllables={countingSystem !== 'none'}
+                  countingSystem={countingSystem}
+                />
               </div>
             </div>
           );

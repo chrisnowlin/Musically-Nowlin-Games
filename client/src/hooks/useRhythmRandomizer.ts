@@ -9,8 +9,10 @@ import {
   RhythmPattern,
   PlaybackState,
   EnsemblePattern,
+  EnsemblePart,
   DifficultyPreset,
   SoundOption,
+  BodyPercussionPart,
   DEFAULT_SETTINGS,
   DIFFICULTY_PRESETS,
   INITIAL_PLAYBACK_STATE,
@@ -24,6 +26,14 @@ const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; minDurat
   claps: { note: 1200, accent: 1500, minDuration: 0.05, isTonal: false },
   piano: { note: 440, accent: 523, minDuration: 0.1, isTonal: true },
   metronome: { note: 1000, accent: 1200, minDuration: 0.05, isTonal: false },
+};
+
+// Body percussion sound parameters - distinct frequencies for each body part
+const BODY_PERCUSSION_SOUNDS: Record<BodyPercussionPart, { note: number; accent: number; minDuration: number }> = {
+  stomp: { note: 80, accent: 100, minDuration: 0.2 },    // Low bass thump
+  pat: { note: 200, accent: 250, minDuration: 0.12 },     // Low-mid thigh pat
+  clap: { note: 1000, accent: 1200, minDuration: 0.08 },  // High sharp clap
+  snap: { note: 2000, accent: 2400, minDuration: 0.05 },  // Very high crisp snap
 };
 
 function getSoundParams(
@@ -42,6 +52,17 @@ function getSoundParams(
   return {
     frequency: isAccented ? params.accent : params.note,
     duration,
+  };
+}
+
+function getBodyPercussionSoundParams(
+  bodyPart: BodyPercussionPart,
+  isAccented?: boolean
+): { frequency: number; duration: number } {
+  const params = BODY_PERCUSSION_SOUNDS[bodyPart];
+  return {
+    frequency: isAccented ? params.accent : params.note,
+    duration: params.minDuration,
   };
 }
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
@@ -142,9 +163,98 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     }
   }, [settings]);
 
-  // Play the pattern
+  /**
+   * Schedule playback for a single pattern
+   * Returns the end time in ms
+   */
+  const schedulePatternPlayback = useCallback((
+    patternToPlay: RhythmPattern,
+    startTimeMs: number,
+    msPerBeat: number,
+    soundToUse: SoundOption,
+    partIndex: number = -1,
+    bodyPart?: BodyPercussionPart
+  ): number => {
+    let currentTime = startTimeMs;
+    let eventIndex = 0;
+
+    for (let m = 0; m < patternToPlay.measures.length; m++) {
+      const measure = patternToPlay.measures[m];
+      let beatInMeasure = 0;
+
+      // Expand beamed groups into individual notes for playback
+      const expandedEvents = expandBeamedGroups(measure.events);
+
+      for (const event of expandedEvents) {
+        const eventTime = currentTime;
+        const currentEventIdx = eventIndex;
+        const currentMeasureIdx = m;
+        const currentBeatVal = beatInMeasure;
+        const partIdx = partIndex;
+
+        // Copy values to avoid closure issues
+        const eventCopy = { ...event };
+        const bodyPartCopy = bodyPart;
+        const sound = soundToUse;
+        // Calculate note duration in seconds for sound generation
+        const noteDurationSeconds = (event.duration * msPerBeat) / 1000;
+
+        scheduleTimeout(() => {
+          // Update playback state
+          setPlaybackState(prev => ({
+            ...prev,
+            currentMeasure: currentMeasureIdx,
+            currentBeat: currentBeatVal,
+            currentEventIndex: currentEventIdx,
+            currentPartIndex: partIdx,
+          }));
+
+          // Play sound for notes
+          if (eventCopy.type === 'note' && audio) {
+            const vol = eventCopy.isAccented ? 0.9 : 0.7;
+
+            // Use body percussion sound if specified, otherwise use selected sound
+            const soundParams = bodyPartCopy
+              ? getBodyPercussionSoundParams(bodyPartCopy, eventCopy.isAccented)
+              : getSoundParams(sound, noteDurationSeconds, eventCopy.isAccented);
+
+            audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
+          }
+        }, eventTime);
+
+        currentTime += event.duration * msPerBeat;
+        beatInMeasure += event.duration;
+        eventIndex++;
+      }
+    }
+
+    return currentTime;
+  }, [audio, scheduleTimeout]);
+
+  /**
+   * Check if a part should be audible based on mute/solo states
+   */
+  const isPartAudible = useCallback((part: EnsemblePart, allParts: EnsemblePart[]): boolean => {
+    // If part is muted, it's not audible
+    if (part.isMuted) return false;
+
+    // If any part is soloed, only soloed parts are audible
+    const hasSoloedPart = allParts.some(p => p.isSoloed);
+    if (hasSoloedPart) {
+      return part.isSoloed;
+    }
+
+    // Otherwise, part is audible
+    return true;
+  }, []);
+
+  // Play the pattern (single or ensemble)
   const play = useCallback(async () => {
-    if (!pattern) return;
+    // For ensemble mode, we need ensemblePattern; for single mode, we need pattern
+    const isEnsembleMode = settings.ensembleMode !== 'single' && ensemblePattern;
+
+    if (!isEnsembleMode && !pattern) return;
+    if (isEnsembleMode && (!ensemblePattern || ensemblePattern.parts.length === 0)) return;
 
     try {
       // Clear any existing timeouts
@@ -159,11 +269,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
         currentMeasure: 0,
         currentBeat: 0,
         currentEventIndex: 0,
+        currentPartIndex: -1,
       }));
 
       playbackStartTimeRef.current = Date.now();
 
-      // Calculate timing for each event
+      // Calculate timing
       const msPerBeat = 60000 / settings.tempo;
       let currentTime = 0;
 
@@ -176,7 +287,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           const isFirstBeat = i % 4 === 0; // Accent first beat of measure
           scheduleTimeout(() => {
             if (audio) {
-              // Use metronome sound for count-in (short click, not tonal)
+              // Use metronome sound for count-in
               const clickParams = getSoundParams('metronome', countInBeatDurationSeconds, isFirstBeat);
               audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.6);
             }
@@ -185,53 +296,85 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
         }
       }
 
-      // Schedule pattern events
-      let eventIndex = 0;
-      for (let m = 0; m < pattern.measures.length; m++) {
-        const measure = pattern.measures[m];
-        let beatInMeasure = 0;
+      let totalDuration = currentTime;
 
-        // Expand beamed groups into individual notes for playback
-        // e.g., fourSixteenths becomes 4 individual sixteenth notes
-        const expandedEvents = expandBeamedGroups(measure.events);
+      if (isEnsembleMode && ensemblePattern) {
+        // ENSEMBLE PLAYBACK
+        const mode = ensemblePattern.mode;
+        const parts = ensemblePattern.parts;
 
-        for (const event of expandedEvents) {
-          const eventTime = currentTime;
-          const currentEventIdx = eventIndex;
-          const currentMeasureIdx = m;
-          const currentBeatVal = beatInMeasure;
+        if (mode === 'callResponse') {
+          // CALL & RESPONSE: Parts play sequentially
+          for (let partIndex = 0; partIndex < parts.length; partIndex++) {
+            const part = parts[partIndex];
 
-          // Copy values to avoid closure issues
-          const eventCopy = { ...event };
-          const soundToUse = settings.sound;
-          // Calculate note duration in seconds for sound generation
-          const noteDurationSeconds = (event.duration * msPerBeat) / 1000;
+            if (isPartAudible(part, parts)) {
+              totalDuration = schedulePatternPlayback(
+                part.pattern,
+                totalDuration,
+                msPerBeat,
+                settings.sound,
+                partIndex,
+                part.bodyPart
+              );
+            } else {
+              // Even if muted, advance time for the part duration
+              totalDuration += part.pattern.totalDurationBeats * msPerBeat;
+            }
 
+            // For call & response, update part index at start of each part
+            const startTime = partIndex === 0 ? currentTime : totalDuration - (part.pattern.totalDurationBeats * msPerBeat);
+            const pIdx = partIndex;
+            scheduleTimeout(() => {
+              setPlaybackState(prev => ({
+                ...prev,
+                currentPartIndex: pIdx,
+              }));
+            }, startTime);
+          }
+        } else {
+          // LAYERED / BODY PERCUSSION: All parts play simultaneously
+          let maxEndTime = currentTime;
+
+          for (let partIndex = 0; partIndex < parts.length; partIndex++) {
+            const part = parts[partIndex];
+
+            if (isPartAudible(part, parts)) {
+              const endTime = schedulePatternPlayback(
+                part.pattern,
+                currentTime,
+                msPerBeat,
+                settings.sound,
+                partIndex,
+                part.bodyPart
+              );
+              maxEndTime = Math.max(maxEndTime, endTime);
+            }
+          }
+
+          // For simultaneous playback, show all parts as active (-1 means "all")
+          // We'll set currentPartIndex to 0 but the UI should show all parts as playing
           scheduleTimeout(() => {
-            // Update playback state
             setPlaybackState(prev => ({
               ...prev,
-              currentMeasure: currentMeasureIdx,
-              currentBeat: currentBeatVal,
-              currentEventIndex: currentEventIdx,
+              currentPartIndex: 0,
             }));
+          }, currentTime);
 
-            // Play sound for notes
-            if (eventCopy.type === 'note' && audio) {
-              const vol = eventCopy.isAccented ? 0.9 : 0.7;
-              const soundParams = getSoundParams(soundToUse, noteDurationSeconds, eventCopy.isAccented);
-              audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
-            }
-          }, eventTime);
-
-          currentTime += event.duration * msPerBeat;
-          beatInMeasure += event.duration;
-          eventIndex++;
+          totalDuration = maxEndTime;
         }
+      } else if (pattern) {
+        // SINGLE PATTERN PLAYBACK
+        totalDuration = schedulePatternPlayback(
+          pattern,
+          currentTime,
+          msPerBeat,
+          settings.sound,
+          -1
+        );
       }
 
-      // Schedule end of playback - use currentTime which already includes count-in and pattern
-      const totalDuration = currentTime;
+      // Schedule end of playback
       const shouldLoop = settings.loopEnabled;
 
       scheduleTimeout(() => {
@@ -239,13 +382,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           // Restart playback
           play();
         } else {
-          setPlaybackState(prev => ({
-            ...prev,
-            isPlaying: false,
-            currentMeasure: 0,
-            currentBeat: 0,
-            currentEventIndex: 0,
-          }));
+          setPlaybackState(INITIAL_PLAYBACK_STATE);
         }
       }, totalDuration);
 
@@ -253,7 +390,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       console.error('Playback error:', error);
       setPlaybackState(INITIAL_PLAYBACK_STATE);
     }
-  }, [pattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts]);
+  }, [pattern, ensemblePattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts, schedulePatternPlayback, isPartAudible]);
 
   // Stop playback
   const stop = useCallback(() => {

@@ -16,16 +16,12 @@ import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables'
 import { TimeSignatureSelector } from './ControlPanel/TimeSignatureSelector';
 import { TempoControl } from './ControlPanel/TempoControl';
 import { NoteValueSelector } from './ControlPanel/NoteValueSelector';
-import { PresetSelector } from './ControlPanel/PresetSelector';
 import { PlaybackControls } from './ControlPanel/PlaybackControls';
 import { SoundSelector } from './ControlPanel/SoundSelector';
-import { DensityControls } from './ControlPanel/DensityControls';
 import { MeasureCountSelector } from './ControlPanel/MeasureCountSelector';
 
 // Display Components
-import { GridNotation } from './Display/GridNotation';
 import { StaffNotation } from './Display/StaffNotation';
-import { NotationToggle } from './Display/NotationToggle';
 import { SyllableSelector } from './Display/SyllableSelector';
 import { EnsembleDisplay } from './Display/EnsembleDisplay';
 import { EnsembleModeSelector } from './ControlPanel/EnsembleModeSelector';
@@ -108,31 +104,25 @@ export function RhythmRandomizerTool() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="max-w-7xl mx-auto px-4 py-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Control Panel - Left Column */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* Presets */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Quick Presets</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PresetSelector onSelectPreset={applyPreset} />
-              </CardContent>
-            </Card>
-
+          <div className="lg:col-span-1 space-y-2">
             {/* Settings Tabs */}
             <Card>
-              <Tabs defaultValue="basic" className="w-full">
-                <CardHeader className="pb-0">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="basic">Basic</TabsTrigger>
-                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
+              <Tabs defaultValue="time-tempo" className="w-full">
+                <CardHeader className="py-2 px-4 pb-0">
+                  <TabsList className="grid w-full grid-cols-2 h-auto">
+                    <TabsTrigger value="time-tempo" className="text-xs py-1.5">Time & Tempo</TabsTrigger>
+                    <TabsTrigger value="note-values" className="text-xs py-1.5">Note Values</TabsTrigger>
+                  </TabsList>
+                  <TabsList className="grid w-full grid-cols-2 h-auto mt-1">
+                    <TabsTrigger value="ensemble" className="text-xs py-1.5">Ensemble</TabsTrigger>
+                    <TabsTrigger value="sound" className="text-xs py-1.5">Sound</TabsTrigger>
                   </TabsList>
                 </CardHeader>
-                <CardContent className="pt-4">
-                  <TabsContent value="basic" className="space-y-4 mt-0">
+                <CardContent className="px-4 pb-3 pt-2">
+                  <TabsContent value="time-tempo" className="space-y-3 mt-0">
                     <TimeSignatureSelector
                       value={settings.timeSignature}
                       onChange={(value) => updateSetting('timeSignature', value)}
@@ -145,29 +135,29 @@ export function RhythmRandomizerTool() {
                       value={settings.measureCount}
                       onChange={(value) => updateSetting('measureCount', value)}
                     />
-                    <SoundSelector
-                      value={settings.sound}
-                      onChange={(value) => updateSetting('sound', value)}
-                    />
                   </TabsContent>
-                  <TabsContent value="advanced" className="space-y-4 mt-0">
+                  <TabsContent value="note-values" className="space-y-3 mt-0">
                     <NoteValueSelector
                       selectedValues={settings.allowedNoteValues}
-                      onChange={(values) => updateSetting('allowedNoteValues', values)}
-                    />
-                    <DensityControls
-                      syncopation={settings.syncopationProbability}
-                      density={settings.noteDensity}
+                      selectedRestValues={settings.allowedRestValues}
                       restProbability={settings.restProbability}
-                      onSyncopationChange={(value) => updateSetting('syncopationProbability', value)}
-                      onDensityChange={(value) => updateSetting('noteDensity', value)}
+                      onNoteValuesChange={(values) => updateSetting('allowedNoteValues', values)}
+                      onRestValuesChange={(values) => updateSetting('allowedRestValues', values)}
                       onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
                     />
+                  </TabsContent>
+                  <TabsContent value="ensemble" className="space-y-3 mt-0">
                     <EnsembleModeSelector
                       mode={settings.ensembleMode}
                       partCount={settings.partCount}
                       onModeChange={(mode) => updateSetting('ensembleMode', mode)}
                       onPartCountChange={(count) => updateSetting('partCount', count)}
+                    />
+                  </TabsContent>
+                  <TabsContent value="sound" className="space-y-3 mt-0">
+                    <SoundSelector
+                      value={settings.sound}
+                      onChange={(value) => updateSetting('sound', value)}
                     />
                   </TabsContent>
                 </CardContent>
@@ -176,19 +166,21 @@ export function RhythmRandomizerTool() {
           </div>
 
           {/* Display & Playback - Right Column */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-2">
             {/* Notation Display */}
-            <Card className="min-h-[350px]">
-              <CardHeader className="pb-3">
+            <Card>
+              <CardHeader className="py-2 px-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <CardTitle className="text-sm font-medium">
-                    {settings.ensembleMode === 'single' ? 'Pattern' : 'Ensemble'}
-                  </CardTitle>
+                  <div>
+                    <CardTitle className="text-sm font-medium inline-block mr-3">
+                      {settings.ensembleMode === 'single' ? 'Pattern' : 'Ensemble'}
+                    </CardTitle>
+                    <span className="text-xs text-gray-500">
+                      {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
+                      {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3">
-                    <NotationToggle
-                      value={settings.notationMode}
-                      onChange={(mode) => updateSetting('notationMode', mode)}
-                    />
                     <SyllableSelector
                       value={settings.countingSystem}
                       onChange={(system) => updateSetting('countingSystem', system)}
@@ -197,17 +189,13 @@ export function RhythmRandomizerTool() {
                     />
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
-                  {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
-                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-3 pt-0">
                 {settings.ensembleMode !== 'single' && ensemblePattern ? (
                   <EnsembleDisplay
                     ensemble={ensemblePattern}
-                    notationMode={settings.notationMode}
                     countingSystem={settings.countingSystem}
+                    currentPartIndex={playbackState.currentPartIndex}
                     currentEventIndex={playbackState.currentEventIndex}
                     isPlaying={playbackState.isPlaying}
                     onToggleMute={toggleEnsemblePartMute}
@@ -215,22 +203,15 @@ export function RhythmRandomizerTool() {
                     onRegeneratePart={regenerateEnsemblePart}
                   />
                 ) : patternWithSyllables ? (
-                  settings.notationMode === 'staff' ? (
-                    <StaffNotation
-                      pattern={patternWithSyllables}
-                      currentEventIndex={playbackState.currentEventIndex}
-                      isPlaying={playbackState.isPlaying}
-                      showSyllables={settings.countingSystem !== 'none'}
-                    />
-                  ) : (
-                    <GridNotation
-                      pattern={patternWithSyllables}
-                      currentEventIndex={playbackState.currentEventIndex}
-                      isPlaying={playbackState.isPlaying}
-                    />
-                  )
+                  <StaffNotation
+                    pattern={patternWithSyllables}
+                    currentEventIndex={playbackState.currentEventIndex}
+                    isPlaying={playbackState.isPlaying}
+                    showSyllables={settings.countingSystem !== 'none'}
+                    countingSystem={settings.countingSystem}
+                  />
                 ) : (
-                  <div className="flex items-center justify-center h-48 text-gray-400">
+                  <div className="flex items-center justify-center h-32 text-gray-400">
                     Click "Regenerate" to create a pattern
                   </div>
                 )}
@@ -239,10 +220,10 @@ export function RhythmRandomizerTool() {
 
             {/* Playback Controls */}
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="py-2 px-4">
                 <CardTitle className="text-sm font-medium">Playback</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-3 pt-0">
                 <PlaybackControls
                   playbackState={playbackState}
                   isReady={isReady}
@@ -265,10 +246,10 @@ export function RhythmRandomizerTool() {
 
             {/* Worksheet Export */}
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="py-2 px-4">
                 <CardTitle className="text-sm font-medium">Worksheet Export</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-3 pt-0">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
                     Generate printable PDFs with exercises and answer keys
