@@ -196,49 +196,47 @@ function generateEvent(
   timeSignature: TimeSignature,
   allowedRestValues: RestValue[]
 ): RhythmEvent {
-  const shouldRest = Math.random() * 100 < settings.restProbability;
+  // Only consider rests if user has selected rest values
+  if (allowedRestValues.length > 0) {
+    const shouldRest = Math.random() * 100 < settings.restProbability;
 
-  if (shouldRest) {
-    // Use user-selected rest values from settings
-    const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
-    if (availableRests.length > 0) {
-      // Select rest based on density (sparse = longer rests, dense = shorter rests)
-      const restValue = selectRestValueByDensity(availableRests, settings.noteDensity);
-      return {
-        type: 'rest',
-        value: restValue,
-        duration: REST_DURATIONS[restValue],
-      };
+    if (shouldRest) {
+      // Use user-selected rest values from settings
+      const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
+      if (availableRests.length > 0) {
+        // Select rest based on density (sparse = longer rests, dense = shorter rests)
+        const restValue = selectRestValueByDensity(availableRests, settings.noteDensity);
+        return {
+          type: 'rest',
+          value: restValue,
+          duration: REST_DURATIONS[restValue],
+        };
+      }
     }
   }
 
   const availableNotes = getAvailableNoteValues(remainingBeats, settings.allowedNoteValues, settings);
 
   if (availableNotes.length === 0) {
-    // Fallback: use smallest available rest that fits from user-selected rest values
-    const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
-    if (availableRests.length > 0) {
-      // Sort by duration and pick smallest that fits
-      const sortedRests = availableRests.sort((a, b) => REST_DURATIONS[a] - REST_DURATIONS[b]);
-      return {
-        type: 'rest',
-        value: sortedRests[0],
-        duration: REST_DURATIONS[sortedRests[0]],
-      };
+    // Only use rests as fallback if user has selected rest values
+    if (allowedRestValues.length > 0) {
+      const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
+      if (availableRests.length > 0) {
+        // Sort by duration and pick smallest that fits
+        const sortedRests = availableRests.sort((a, b) => REST_DURATIONS[a] - REST_DURATIONS[b]);
+        return {
+          type: 'rest',
+          value: sortedRests[0],
+          duration: REST_DURATIONS[sortedRests[0]],
+        };
+      }
     }
-    // Ultimate fallback - use quarter rest if available, otherwise create a rest that fits exactly
-    if (allowedRestValues.includes('quarterRest')) {
-      return {
-        type: 'rest',
-        value: 'quarterRest',
-        duration: Math.min(1, remainingBeats),
-      };
-    }
-    // If no rest values are selected, create a rest that fits exactly
+    // No notes or rests fit - return null to signal we need different handling
+    // This will be caught by generateMeasure
     return {
-      type: 'rest',
-      value: 'quarterRest',
-      duration: Math.min(1, remainingBeats),
+      type: 'note',
+      value: 'sixteenth',
+      duration: Math.min(NOTE_DURATIONS['sixteenth'], remainingBeats),
     };
   }
 
@@ -341,18 +339,25 @@ function generateMeasure(
 
 /**
  * Find the smallest note or rest value that can fill the remaining beats
+ * Only uses user-selected note and rest values
  */
 function findSmallestFiller(
   remainingBeats: number,
   settings: RhythmSettings,
   allowedRestValues: RestValue[]
 ): RhythmEvent | null {
-  // Check all possible note values, sorted by duration (smallest first)
-  const allNotes: NoteValue[] = ['sixteenth', 'eighth', 'quarter', 'half', 'whole'];
-  const allRests: RestValue[] = ['sixteenthRest', 'eighthRest', 'quarterRest', 'halfRest', 'wholeRest'];
+  // Get available note values sorted by duration (smallest first)
+  const sortedNotes = [...settings.allowedNoteValues].sort(
+    (a, b) => NOTE_DURATIONS[a] - NOTE_DURATIONS[b]
+  );
 
-  // Try to find a note that fits exactly
-  for (const note of allNotes) {
+  // Get available rest values sorted by duration (smallest first)
+  const sortedRests = [...allowedRestValues].sort(
+    (a, b) => REST_DURATIONS[a] - REST_DURATIONS[b]
+  );
+
+  // Try to find a note from user-selected values that fits exactly
+  for (const note of sortedNotes) {
     const duration = NOTE_DURATIONS[note];
     if (Math.abs(duration - remainingBeats) < 0.001) {
       return {
@@ -363,8 +368,8 @@ function findSmallestFiller(
     }
   }
 
-  // Try to find a rest that fits exactly
-  for (const rest of allRests) {
+  // Try to find a rest from user-selected values that fits exactly
+  for (const rest of sortedRests) {
     const duration = REST_DURATIONS[rest];
     if (Math.abs(duration - remainingBeats) < 0.001) {
       return {
@@ -375,13 +380,25 @@ function findSmallestFiller(
     }
   }
 
-  // Try to find the smallest note that fits within remaining beats
-  for (const note of allNotes) {
+  // Try to find the smallest user-selected note that fits within remaining beats
+  for (const note of sortedNotes) {
     const duration = NOTE_DURATIONS[note];
     if (duration <= remainingBeats + 0.001) {
       return {
         type: 'note',
         value: note,
+        duration: duration,
+      };
+    }
+  }
+
+  // Try to find the smallest user-selected rest that fits within remaining beats
+  for (const rest of sortedRests) {
+    const duration = REST_DURATIONS[rest];
+    if (duration <= remainingBeats + 0.001) {
+      return {
+        type: 'rest',
+        value: rest,
         duration: duration,
       };
     }
@@ -400,13 +417,9 @@ export function generateRhythmPattern(settings: RhythmSettings): RhythmPattern {
     throw new Error(`Unknown time signature: ${settings.timeSignature}`);
   }
 
-  // Use user-selected rest values, but ensure at least one rest is available
-  // If no rest values are selected, derive them from note values as a fallback
-  let allowedRestValues = settings.allowedRestValues;
-  if (allowedRestValues.length === 0) {
-    // Fallback: derive rest values from allowed note values
-    allowedRestValues = deriveRestValuesFromNotes(settings.allowedNoteValues);
-  }
+  // Use user-selected rest values directly
+  // If no rest values are selected, that means user doesn't want rests
+  const allowedRestValues = settings.allowedRestValues;
 
   const measures: Measure[] = [];
 

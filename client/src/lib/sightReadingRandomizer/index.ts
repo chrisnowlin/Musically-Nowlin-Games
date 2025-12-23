@@ -34,6 +34,8 @@ export {
   getScaleNotes,
   getDiatonicPitchesInRange,
   getVexFlowKeySignature,
+  getAccidentalCount,
+  getAccidentalCountFromVexFlow,
   isNoteInKey,
   getTonicNote,
   isTonicPitch,

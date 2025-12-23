@@ -27,6 +27,7 @@ import {
   ClefType,
   TIME_SIGNATURES,
 } from './types';
+import { getAccidentalCountFromVexFlow } from '../sightReadingRandomizer/keySignatureUtils';
 
 // ============================================
 // VEXFLOW NOTE VALUE MAPPINGS
@@ -595,50 +596,94 @@ export function renderPatternToDiv(
   // Find the maximum note count to determine measures per line
   const maxNoteCount = Math.max(...measureNoteCounts);
 
+  // Calculate key signature width
+  const accidentalCount = opts.keySignature
+    ? getAccidentalCountFromVexFlow(opts.keySignature)
+    : 0;
+  const keySignatureWidth = accidentalCount * 18; // ~18px per accidental
+
   // Adjust measures per line based on density - fewer measures per line for dense patterns
   // Standard: 4 measures per line for simple patterns (4-6 notes per measure)
   // Reduce to 2 measures per line for dense patterns (10+ notes per measure)
   // Reduce to 1 measure per line for very dense patterns (16+ notes per measure)
   const densityFactor = maxNoteCount >= 16 ? 1 : maxNoteCount > 10 ? 2 : maxNoteCount > 6 ? 3 : 4;
   const measuresPerLine = Math.min(pattern.measures.length, densityFactor);
-  const lines = Math.ceil(pattern.measures.length / measuresPerLine);
 
   // Calculate base stave width to fit within container
-  // First measure needs extra 60px for clef and time signature
-  const firstMeasureExtra = 60;
+  // First measure needs extra space for clef, key signature, and time signature
+  const firstMeasureExtra = 100 + keySignatureWidth; // clef + time sig + key sig
   const availableWidth = opts.containerWidth || opts.width;
+
+  // Minimum pixels per note to ensure readability
+  const minPixelsPerNote = 32;
+
+  // Calculate minimum width needed for each measure
+  const measureMinWidths = measureNoteCounts.map((noteCount, index) => {
+    const notesWidth = noteCount * minPixelsPerNote;
+    if (index === 0) {
+      return notesWidth + firstMeasureExtra;
+    }
+    return notesWidth + 20; // Small padding for non-first measures
+  });
+
+  // Determine if first measure needs its own line by checking if it can fit with at least one other measure
+  let firstMeasureNeedsFullLine = false;
+  if (pattern.measures.length > 1) {
+    const firstMeasureWidth = measureMinWidths[0];
+    const secondMeasureWidth = measureMinWidths[1];
+    const combinedWidth = firstMeasureWidth + secondMeasureWidth + opts.measureSpacing + opts.startX + 30;
+    // Only give first measure its own line if two measures genuinely can't fit
+    firstMeasureNeedsFullLine = combinedWidth > availableWidth;
+  }
+
+  // Recalculate base stave width now that we know the layout
   const totalSpacing = opts.measureSpacing * (measuresPerLine - 1);
-  const availableForStaves = availableWidth - opts.startX - totalSpacing - firstMeasureExtra - 20; // 20px padding
+  const availableForStaves = availableWidth - opts.startX - totalSpacing - firstMeasureExtra - 20;
   const baseStaveWidth = opts.containerWidth
     ? Math.max(120, Math.floor(availableForStaves / measuresPerLine))
     : opts.staveWidth;
 
-  // Minimum pixels per note to ensure readability of syllables
-  const minPixelsPerNote = 32;
+  // Helper to determine if a measure is first in its line
+  const isFirstInLine = (index: number): boolean => {
+    if (index === 0) return true;
+    if (firstMeasureNeedsFullLine) {
+      // After measure 0 gets its own line, remaining measures start fresh
+      return (index - 1) % measuresPerLine === 0;
+    }
+    return index % measuresPerLine === 0;
+  };
 
-  // Calculate desired widths for each measure based on note count (not just duration)
-  // This ensures measures with many notes get more space
+  // Calculate desired widths for each measure based on note count
   const desiredWidths = measureNoteCounts.map((noteCount, index) => {
-    const isFirstInLine = index % measuresPerLine === 0;
-    const baseWidth = isFirstInLine ? baseStaveWidth + firstMeasureExtra : baseStaveWidth;
+    const isFirst = isFirstInLine(index);
 
-    // Calculate minimum width needed based on note count
+    // First measure with full line gets all available width
+    if (index === 0 && firstMeasureNeedsFullLine) {
+      const fullLineWidth = availableWidth - opts.startX - 30;
+      const minWidthForNotes = noteCount * minPixelsPerNote + firstMeasureExtra;
+      return Math.max(fullLineWidth, minWidthForNotes);
+    }
+
+    const baseWidth = isFirst && index === 0 ? baseStaveWidth + firstMeasureExtra : baseStaveWidth;
     const minWidthForNotes = noteCount * minPixelsPerNote;
-
-    // Use the larger of: base width or minimum for note count
-    const desiredWidth = Math.max(baseWidth, minWidthForNotes);
-
-    return desiredWidth;
+    return Math.max(baseWidth, minWidthForNotes);
   });
+
+  // Calculate lines accounting for first measure potentially being alone
+  const effectiveMeasuresAfterFirst = firstMeasureNeedsFullLine ? pattern.measures.length - 1 : pattern.measures.length;
+  const linesAfterFirst = firstMeasureNeedsFullLine
+    ? Math.ceil(effectiveMeasuresAfterFirst / measuresPerLine)
+    : Math.ceil(pattern.measures.length / measuresPerLine);
+  const lines = firstMeasureNeedsFullLine ? 1 + linesAfterFirst : linesAfterFirst;
 
   // Calculate total width needed for each line and find the maximum
   const lineWidths: number[] = [];
   let currentLineWidth = 0;
-  
+
   desiredWidths.forEach((width, index) => {
-    const isFirstInLine = index % measuresPerLine === 0;
-    
-    if (isFirstInLine) {
+    const isFirst = isFirstInLine(index);
+
+    if (isFirst) {
       // New line - save previous line width and start new line
       if (index > 0) {
         lineWidths.push(currentLineWidth);
@@ -649,15 +694,15 @@ export function renderPatternToDiv(
     }
     currentLineWidth += width;
   });
-  
+
   // Don't forget the last line
   lineWidths.push(currentLineWidth);
   const maxLineWidth = Math.max(...lineWidths);
-  
+
   // Scale down all widths proportionally if they exceed container width
   const maxAllowedWidth = availableWidth - 20; // 20px padding
   let measureWidths = desiredWidths;
-  
+
   if (maxLineWidth > maxAllowedWidth && maxAllowedWidth > 0) {
     const scaleFactor = maxAllowedWidth / maxLineWidth;
     measureWidths = desiredWidths.map(width => width * scaleFactor);
@@ -666,21 +711,21 @@ export function renderPatternToDiv(
   // Calculate final total width (find the widest line after scaling)
   let finalMaxLineWidth = 0;
   let finalCurrentLineWidth = opts.startX;
-  
+
   measureWidths.forEach((width, index) => {
-    const isFirstInLine = index % measuresPerLine === 0;
-    
-    if (isFirstInLine && index > 0) {
+    const isFirst = isFirstInLine(index);
+
+    if (isFirst && index > 0) {
       finalMaxLineWidth = Math.max(finalMaxLineWidth, finalCurrentLineWidth);
       finalCurrentLineWidth = opts.startX;
     }
-    
-    if (!isFirstInLine) {
+
+    if (!isFirst) {
       finalCurrentLineWidth += opts.measureSpacing;
     }
     finalCurrentLineWidth += width;
   });
-  
+
   finalMaxLineWidth = Math.max(finalMaxLineWidth, finalCurrentLineWidth);
   const totalWidth = Math.min(finalMaxLineWidth + 10, availableWidth); // Ensure it doesn't exceed container
   const totalHeight = lines * (opts.height + 15) + 10;
@@ -706,11 +751,12 @@ export function renderPatternToDiv(
 
   pattern.measures.forEach((measure, measureIndex) => {
     const isFirstMeasure = measureIndex === 0;
-    const isFirstInLine = measuresInCurrentLine === 0;
+    const isFirst = isFirstInLine(measureIndex);
     const measureWidth = measureWidths[measureIndex];
 
     // Check if we need to wrap to next line
-    if (measuresInCurrentLine >= measuresPerLine) {
+    // Use isFirstInLine to properly handle when first measure takes full line
+    if (isFirst && measureIndex > 0) {
       currentX = opts.startX;
       currentY += opts.height + 15;
       measuresInCurrentLine = 0;
@@ -764,7 +810,13 @@ export function renderPatternToCanvas(
   );
 
   // Calculate desired widths for each measure based on actual duration
-  const firstMeasureExtra = 60;
+  // First measure needs extra space for clef, key signature, and time signature
+  // Base: 120px for clef + time signature (enough room for dense 16th note patterns)
+  // Key signature: ~30px per accidental
+  const keySignatureWidth = opts.keySignature
+    ? getAccidentalCountFromVexFlow(opts.keySignature) * 30
+    : 0;
+  const firstMeasureExtra = 120 + keySignatureWidth;
   const desiredWidths = measureDurations.map((actualBeats, index) => {
     const isFirstMeasure = index === 0;
     const baseWidth = isFirstMeasure ? opts.staveWidth + firstMeasureExtra : opts.staveWidth;

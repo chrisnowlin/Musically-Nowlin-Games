@@ -326,6 +326,30 @@ export function getVexFlowKeySignature(key: KeySignature): string {
 }
 
 /**
+ * Get the number of accidentals for a key signature
+ * @param key - Key signature
+ * @returns Absolute number of accidentals (0-7)
+ */
+export function getAccidentalCount(key: KeySignature): number {
+  return Math.abs(KEY_SIGNATURES[key].accidentalCount);
+}
+
+/**
+ * Get the accidental count from a VexFlow key signature string
+ * @param vexflowKey - VexFlow key signature string (e.g., 'G', 'Bb', 'Am')
+ * @returns Absolute number of accidentals (0-7), or 0 if not found
+ */
+export function getAccidentalCountFromVexFlow(vexflowKey: string): number {
+  // Find the key signature that matches this VexFlow key
+  for (const key of Object.keys(KEY_SIGNATURES) as KeySignature[]) {
+    if (KEY_SIGNATURES[key].vexflowKey === vexflowKey) {
+      return Math.abs(KEY_SIGNATURES[key].accidentalCount);
+    }
+  }
+  return 0; // Default to 0 if not found
+}
+
+/**
  * Check if a note is in the key signature
  * @param note - Note name (without octave)
  * @param key - Key signature
