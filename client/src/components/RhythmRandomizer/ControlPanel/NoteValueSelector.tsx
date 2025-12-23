@@ -46,9 +46,10 @@ const NOTE_OPTIONS: NoteOption[] = [
   { value: 'twoSixteenths', label: '2 Sixteenths', symbol: '\uE1F0\uE1F7\uE1F9\uE1F4', beats: '½ beat' },
   // Four 16ths: single beamed group with short stems
   { value: 'fourSixteenths', label: '4 Sixteenths', symbol: '\uE1F0\uE1F7\uE1F9\uE1F0\uE1F7\uE1F9\uE1F0\uE1F7\uE1F9\uE1F4', beats: '1 beat' },
-  { value: 'dottedHalf', label: 'Dotted Half', symbol: '\uE1D3\uE1E7', beats: '3 beats' },     // noteHalfUp + augmentationDot
-  { value: 'dottedQuarter', label: 'Dotted Quarter', symbol: '\uE1D5\uE1E7', beats: '1½ beats' },
-  { value: 'dottedEighth', label: 'Dotted Eighth', symbol: '\uE1D7\uE1E7', beats: '¾ beat' },
+  // Mixed eighth + sixteenth beamed groups
+  { value: 'eighthTwoSixteenths', label: '8th+2 16ths', symbol: '\uE1F1\uE1F8\uE1FA\uE1F5', beats: '1 beat' },
+  { value: 'twoSixteenthsEighth', label: '2 16ths+8th', symbol: '\uE1F1\uE1FA\uE1F5\uE1F3', beats: '1 beat' },
+  { value: 'sixteenthEighthSixteenth', label: '16th+8th+16th', symbol: '\uE1F1\uE1FA\uE1F8\uE1F5', beats: '1 beat' },
 ];
 
 const REST_OPTIONS: RestOption[] = [
@@ -70,7 +71,7 @@ const REST_OPTIONS: RestOption[] = [
 // Beamed group configurations using SMuFL text-combining glyphs (long stem versions)
 // These render as a single text string with letter-spacing to control overlap
 const BEAMED_GROUP_CONFIG: Record<
-  'twoEighths' | 'twoSixteenths' | 'fourSixteenths',
+  'twoEighths' | 'twoSixteenths' | 'fourSixteenths' | 'eighthTwoSixteenths' | 'twoSixteenthsEighth' | 'sixteenthEighthSixteenth',
   { symbol: string; letterSpacing: string }
 > = {
   twoEighths: {
@@ -87,6 +88,21 @@ const BEAMED_GROUP_CONFIG: Record<
     // Four 16ths with long stems: (note + beams) x3 + final note with frac beam
     symbol: '\uE1F1\uE1FA\uE1F5\uE1FA\uE1F5\uE1FA\uE1F5',
     letterSpacing: '-0.02em',
+  },
+  eighthTwoSixteenths: {
+    // Eighth + two sixteenths: note + 8thBeam + two 16ths with partial beam
+    symbol: '\uE1F1\uE1F8\uE1F3\uE1FA\uE1F5',
+    letterSpacing: '-0.01em',
+  },
+  twoSixteenthsEighth: {
+    // Two sixteenths + eighth: 16th + 16th partial beam + 8th final
+    symbol: '\uE1F1\uE1FA\uE1F5\uE1F3',
+    letterSpacing: '-0.01em',
+  },
+  sixteenthEighthSixteenth: {
+    // Sixteenth + eighth + sixteenth: syncopated pattern
+    symbol: '\uE1F1\uE1FA\uE1F3\uE1F8\uE1F5',
+    letterSpacing: '-0.01em',
   },
 };
 

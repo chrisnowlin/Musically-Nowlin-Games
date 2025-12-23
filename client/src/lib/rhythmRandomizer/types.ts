@@ -13,15 +13,16 @@ export type NoteValue =
   | 'quarter'
   | 'eighth'
   | 'sixteenth'
-  | 'dottedHalf'
-  | 'dottedQuarter'
-  | 'dottedEighth'
   | 'tripletQuarter'
   | 'tripletEighth'
   // Beamed note groups
-  | 'twoEighths'      // Two beamed eighth notes (1 beat total)
-  | 'fourSixteenths'  // Four beamed sixteenth notes (1 beat total)
-  | 'twoSixteenths';  // Two beamed sixteenth notes (0.5 beats total)
+  | 'twoEighths'              // Two beamed eighth notes (1 beat total)
+  | 'fourSixteenths'          // Four beamed sixteenth notes (1 beat total)
+  | 'twoSixteenths'           // Two beamed sixteenth notes (0.5 beats total)
+  // Mixed eighth + sixteenth beamed groups (1 beat total each)
+  | 'eighthTwoSixteenths'     // Eighth + two sixteenths (1 beat)
+  | 'twoSixteenthsEighth'     // Two sixteenths + eighth (1 beat)
+  | 'sixteenthEighthSixteenth'; // Sixteenth + eighth + sixteenth (1 beat)
 
 export type RestValue =
   | 'wholeRest'
@@ -199,7 +200,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, Partial<RhythmSettings
   intermediate: {
     timeSignature: '4/4',
     measureCount: 4,
-    allowedNoteValues: ['quarter', 'half', 'eighth', 'dottedQuarter'],
+    allowedNoteValues: ['quarter', 'half', 'eighth', 'twoEighths'],
     allowedRestValues: ['quarterRest', 'eighthRest'],
     includeTriplets: false,
     syncopationProbability: 25,
@@ -210,7 +211,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, Partial<RhythmSettings
   advanced: {
     timeSignature: '4/4',
     measureCount: 4,
-    allowedNoteValues: ['quarter', 'half', 'eighth', 'sixteenth', 'dottedQuarter', 'dottedEighth'],
+    allowedNoteValues: ['quarter', 'half', 'eighth', 'sixteenth', 'twoEighths', 'fourSixteenths'],
     allowedRestValues: ['quarterRest', 'eighthRest', 'sixteenthRest'],
     includeTriplets: true,
     syncopationProbability: 40,
@@ -255,15 +256,16 @@ export const NOTE_DURATIONS: Record<NoteValue, number> = {
   quarter: 1,
   eighth: 0.5,
   sixteenth: 0.25,
-  dottedHalf: 3,
-  dottedQuarter: 1.5,
-  dottedEighth: 0.75,
   tripletQuarter: 2 / 3,
   tripletEighth: 1 / 3,
   // Beamed note groups
   twoEighths: 1,       // Two eighth notes = 1 beat
   fourSixteenths: 1,   // Four sixteenth notes = 1 beat
   twoSixteenths: 0.5,  // Two sixteenth notes = 0.5 beats
+  // Mixed eighth + sixteenth beamed groups
+  eighthTwoSixteenths: 1,       // Eighth + two sixteenths = 1 beat
+  twoSixteenthsEighth: 1,       // Two sixteenths + eighth = 1 beat
+  sixteenthEighthSixteenth: 1,  // Sixteenth + eighth + sixteenth = 1 beat
 };
 
 export const REST_DURATIONS: Record<RestValue, number> = {

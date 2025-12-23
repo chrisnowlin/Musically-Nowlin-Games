@@ -17,15 +17,12 @@ import {
 // KODALY SYLLABLES
 // ============================================
 
-const KODALY_NOTE_SYLLABLES: Record<NoteValue, string> = {
+const KODALY_NOTE_SYLLABLES: Partial<Record<NoteValue, string>> = {
   whole: 'ta-a-a-a',
   half: 'ta-a',
   quarter: 'ta',
   eighth: 'ti',
   sixteenth: 'ti-ka',
-  dottedHalf: 'ta-a-a',
-  dottedQuarter: 'tam',
-  dottedEighth: 'tim',
   tripletQuarter: 'tri-o-la',
   tripletEighth: 'tri',
 };

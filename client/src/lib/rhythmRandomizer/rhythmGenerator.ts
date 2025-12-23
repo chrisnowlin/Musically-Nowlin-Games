@@ -25,15 +25,16 @@ const NOTE_TO_REST_MAP: Partial<Record<NoteValue, RestValue>> = {
   quarter: 'quarterRest',
   eighth: 'eighthRest',
   sixteenth: 'sixteenthRest',
-  dottedHalf: 'halfRest', // Dotted notes map to base rest value
-  dottedQuarter: 'quarterRest',
-  dottedEighth: 'eighthRest',
   tripletQuarter: 'quarterRest',
   tripletEighth: 'eighthRest',
   // Beamed note groups map to equivalent rest values
   twoEighths: 'quarterRest',      // 1 beat = quarter rest
   fourSixteenths: 'quarterRest',  // 1 beat = quarter rest
   twoSixteenths: 'eighthRest',    // 0.5 beat = eighth rest
+  // Mixed eighth + sixteenth beamed groups
+  eighthTwoSixteenths: 'quarterRest',       // 1 beat = quarter rest
+  twoSixteenthsEighth: 'quarterRest',       // 1 beat = quarter rest
+  sixteenthEighthSixteenth: 'quarterRest',  // 1 beat = quarter rest
 };
 
 /**

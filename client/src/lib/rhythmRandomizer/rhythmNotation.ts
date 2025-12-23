@@ -36,49 +36,94 @@ const NOTE_VALUE_TO_VEXFLOW: Record<NoteValue, string> = {
   quarter: 'q',
   eighth: '8',
   sixteenth: '16',
-  dottedHalf: 'hd',
-  dottedQuarter: 'qd',
-  dottedEighth: '8d',
   tripletQuarter: 'q',
   tripletEighth: '8',
   // Beamed groups use individual note durations (expanded before rendering)
   twoEighths: '8',
   fourSixteenths: '16',
   twoSixteenths: '16',
+  // Mixed beamed groups (expanded before rendering)
+  eighthTwoSixteenths: '8',         // First note type (eighth)
+  twoSixteenthsEighth: '16',        // First note type (sixteenth)
+  sixteenthEighthSixteenth: '16',   // First note type (sixteenth)
 };
 
-// Beamed group definitions: how many notes and what type
-const BEAMED_GROUP_INFO: Partial<Record<NoteValue, { count: number; noteType: NoteValue; duration: number }>> = {
+// Beamed group definitions
+// For uniform groups: count + noteType + duration
+// For mixed groups: notes array with individual note specifications
+type BeamedGroupDef =
+  | { count: number; noteType: NoteValue; duration: number }
+  | { notes: Array<{ noteType: NoteValue; duration: number }> };
+
+export const BEAMED_GROUP_INFO: Partial<Record<NoteValue, BeamedGroupDef>> = {
+  // Uniform groups
   twoEighths: { count: 2, noteType: 'eighth', duration: 0.5 },
   fourSixteenths: { count: 4, noteType: 'sixteenth', duration: 0.25 },
   twoSixteenths: { count: 2, noteType: 'sixteenth', duration: 0.25 },
+  // Mixed eighth + sixteenth groups
+  eighthTwoSixteenths: {
+    notes: [
+      { noteType: 'eighth', duration: 0.5 },
+      { noteType: 'sixteenth', duration: 0.25 },
+      { noteType: 'sixteenth', duration: 0.25 },
+    ]
+  },
+  twoSixteenthsEighth: {
+    notes: [
+      { noteType: 'sixteenth', duration: 0.25 },
+      { noteType: 'sixteenth', duration: 0.25 },
+      { noteType: 'eighth', duration: 0.5 },
+    ]
+  },
+  sixteenthEighthSixteenth: {
+    notes: [
+      { noteType: 'sixteenth', duration: 0.25 },
+      { noteType: 'eighth', duration: 0.5 },
+      { noteType: 'sixteenth', duration: 0.25 },
+    ]
+  },
 };
 
 /**
  * Check if a note value is a beamed group
  */
-function isBeamedGroup(noteValue: NoteValue): boolean {
+export function isBeamedGroup(noteValue: NoteValue): boolean {
   return noteValue in BEAMED_GROUP_INFO;
 }
 
 /**
  * Expand beamed group events into individual note events
  */
-function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
+export function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
   const expanded: RhythmEvent[] = [];
 
   for (const event of events) {
     if (event.type === 'note' && isBeamedGroup(event.value as NoteValue)) {
       const groupInfo = BEAMED_GROUP_INFO[event.value as NoteValue]!;
-      // Create individual notes for the beamed group
-      for (let i = 0; i < groupInfo.count; i++) {
-        expanded.push({
-          type: 'note',
-          value: groupInfo.noteType,
-          duration: groupInfo.duration,
-          isAccented: i === 0 ? event.isAccented : false, // Only first note gets accent
-          isTriplet: false,
+
+      // Check if it's a mixed group (has 'notes' array) or uniform group (has 'count')
+      if ('notes' in groupInfo) {
+        // Mixed group - expand each note in the sequence
+        groupInfo.notes.forEach((note, i) => {
+          expanded.push({
+            type: 'note',
+            value: note.noteType,
+            duration: note.duration,
+            isAccented: i === 0 ? event.isAccented : false,
+            isTriplet: false,
+          });
         });
+      } else {
+        // Uniform group - create identical notes
+        for (let i = 0; i < groupInfo.count; i++) {
+          expanded.push({
+            type: 'note',
+            value: groupInfo.noteType,
+            duration: groupInfo.duration,
+            isAccented: i === 0 ? event.isAccented : false,
+            isTriplet: false,
+          });
+        }
       }
     } else {
       expanded.push(event);
@@ -183,7 +228,7 @@ function getBeamGroups(notes: StaveNote[], events: RhythmEvent[]): StaveNote[][]
 
     const isBeamable =
       event.type === 'note' &&
-      ['eighth', 'sixteenth', 'dottedEighth', 'tripletEighth'].includes(event.value as string);
+      ['eighth', 'sixteenth', 'tripletEighth'].includes(event.value as string);
 
     if (isBeamable) {
       currentGroup.push(note);
@@ -266,31 +311,15 @@ function renderMeasure(
   // Expand beamed groups into individual notes for rendering
   const expandedEvents = expandBeamedGroups(measure.events);
 
-  // Create notes
+  // Create notes from expanded events
+  // Use expanded event indices for highlighting to match playback
   const staveNotes: StaveNote[] = [];
 
-  // Track original event index for highlighting
-  let originalEventIndex = 0;
-  let expandedEventIndex = 0;
-
-  for (const event of measure.events) {
-    const globalIndex = globalEventOffset + originalEventIndex;
+  for (let i = 0; i < expandedEvents.length; i++) {
+    const globalIndex = globalEventOffset + i;
     const isHighlighted = globalIndex === highlightEventIndex;
-
-    if (event.type === 'note' && isBeamedGroup(event.value as NoteValue)) {
-      const groupInfo = BEAMED_GROUP_INFO[event.value as NoteValue]!;
-      // Create notes for the beamed group
-      for (let i = 0; i < groupInfo.count; i++) {
-        const staveNote = createStaveNote(expandedEvents[expandedEventIndex], isHighlighted);
-        staveNotes.push(staveNote);
-        expandedEventIndex++;
-      }
-    } else {
-      const staveNote = createStaveNote(event, isHighlighted);
-      staveNotes.push(staveNote);
-      expandedEventIndex++;
-    }
-    originalEventIndex++;
+    const staveNote = createStaveNote(expandedEvents[i], isHighlighted);
+    staveNotes.push(staveNote);
   }
 
   if (staveNotes.length === 0) return globalEventOffset;
@@ -353,7 +382,8 @@ function renderMeasure(
     }
   });
 
-  return globalEventOffset + measure.events.length;
+  // Return offset using expanded event count to match playback indices
+  return globalEventOffset + expandedEvents.length;
 }
 
 // ============================================

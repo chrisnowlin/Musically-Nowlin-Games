@@ -91,7 +91,7 @@ const LAYERED_PART_CONFIGS: PartConfig[] = [
     densityMultiplier: 1.5,
     syncopationMultiplier: 1.3,
     restMultiplier: 0.5,
-    preferredNotes: ['sixteenth', 'eighth', 'dottedEighth'],
+    preferredNotes: ['sixteenth', 'eighth', 'twoSixteenths'],
   },
 ];
 

@@ -41,11 +41,15 @@ function encodeNoteValues(values: string[]): string {
     quarter: 'q',
     eighth: 'e',
     sixteenth: 's',
-    dottedHalf: 'dh',
-    dottedQuarter: 'dq',
-    dottedEighth: 'de',
     tripletQuarter: 'tq',
     tripletEighth: 'te',
+    // Beamed groups
+    twoEighths: '2e',
+    fourSixteenths: '4s',
+    twoSixteenths: '2s',
+    eighthTwoSixteenths: 'e2s',
+    twoSixteenthsEighth: '2se',
+    sixteenthEighthSixteenth: 'ses',
   };
   return values.map((v) => shortCodes[v] || v).join(',');
 }
@@ -60,11 +64,15 @@ function decodeNoteValues(encoded: string): string[] {
     q: 'quarter',
     e: 'eighth',
     s: 'sixteenth',
-    dh: 'dottedHalf',
-    dq: 'dottedQuarter',
-    de: 'dottedEighth',
     tq: 'tripletQuarter',
     te: 'tripletEighth',
+    // Beamed groups
+    '2e': 'twoEighths',
+    '4s': 'fourSixteenths',
+    '2s': 'twoSixteenths',
+    'e2s': 'eighthTwoSixteenths',
+    '2se': 'twoSixteenthsEighth',
+    'ses': 'sixteenthEighthSixteenth',
   };
   return encoded.split(',').map((code) => longCodes[code] || code);
 }

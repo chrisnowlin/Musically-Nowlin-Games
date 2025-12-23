@@ -45,6 +45,7 @@ function getSoundParams(
   };
 }
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
+import { expandBeamedGroups } from '@/lib/rhythmRandomizer/rhythmNotation';
 import {
   generateEnsemblePattern,
   regeneratePart,
@@ -190,7 +191,11 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
         const measure = pattern.measures[m];
         let beatInMeasure = 0;
 
-        for (const event of measure.events) {
+        // Expand beamed groups into individual notes for playback
+        // e.g., fourSixteenths becomes 4 individual sixteenth notes
+        const expandedEvents = expandBeamedGroups(measure.events);
+
+        for (const event of expandedEvents) {
           const eventTime = currentTime;
           const currentEventIdx = eventIndex;
           const currentMeasureIdx = m;

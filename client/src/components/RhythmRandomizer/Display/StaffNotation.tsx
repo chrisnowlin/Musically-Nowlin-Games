@@ -3,9 +3,10 @@
  * Renders rhythm patterns using VexFlow staff notation
  */
 
-import { useRef, useEffect, useCallback } from 'react';
-import { RhythmPattern } from '@/lib/rhythmRandomizer/types';
-import { renderPatternToDiv, calculatePatternDimensions } from '@/lib/rhythmRandomizer/rhythmNotation';
+import { useRef, useEffect, useCallback, useState } from 'react';
+import { RhythmPattern, CountingSystem } from '@/lib/rhythmRandomizer/types';
+import { renderPatternToDiv, expandBeamedGroups } from '@/lib/rhythmRandomizer/rhythmNotation';
+import { getSyllableForEvent } from '@/lib/rhythmRandomizer/countingSyllables';
 
 interface StaffNotationProps {
   pattern: RhythmPattern;
@@ -21,20 +22,32 @@ export function StaffNotation({
   showSyllables = true,
 }: StaffNotationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const syllablesRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  // Render the notation whenever pattern or highlight changes
+  // Measure container width on mount and resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (wrapperRef.current) {
+        setContainerWidth(wrapperRef.current.clientWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  // Render the notation whenever pattern, highlight, or container width changes
   const renderNotation = useCallback(() => {
-    if (!containerRef.current) return;
-
-    const dimensions = calculatePatternDimensions(pattern);
+    if (!containerRef.current || containerWidth === 0) return;
 
     renderPatternToDiv(containerRef.current, pattern, {
-      width: dimensions.width,
-      height: dimensions.height,
+      containerWidth: containerWidth,
       highlightEventIndex: isPlaying ? currentEventIndex : undefined,
     });
-  }, [pattern, currentEventIndex, isPlaying]);
+  }, [pattern, currentEventIndex, isPlaying, containerWidth]);
 
   // Initial render and re-render on changes
   useEffect(() => {
@@ -45,12 +58,12 @@ export function StaffNotation({
   const syllables = showSyllables ? getSyllablesWithPositions(pattern) : [];
 
   return (
-    <div className="relative w-full overflow-x-auto">
+    <div ref={wrapperRef} className="relative w-full">
       {/* VexFlow notation container */}
       <div
         ref={containerRef}
-        className="min-w-full"
-        style={{ minHeight: '150px' }}
+        className="w-full"
+        style={{ minHeight: '120px' }}
       />
 
       {/* Syllables overlay */}
@@ -87,20 +100,33 @@ interface SyllablePosition {
 
 /**
  * Extract syllables from pattern with their global indices
+ * Uses expanded events to match playback indices (beamed groups are expanded)
+ * Regenerates syllables for expanded events using the pattern's counting system
  */
 function getSyllablesWithPositions(pattern: RhythmPattern): SyllablePosition[] {
   const positions: SyllablePosition[] = [];
   let globalIndex = 0;
+  const countingSystem: CountingSystem = pattern.settings?.countingSystem || 'none';
 
   pattern.measures.forEach((measure, measureIndex) => {
-    measure.events.forEach((event) => {
-      if (event.syllable) {
+    // Expand beamed groups to match playback indices
+    const expandedEvents = expandBeamedGroups(measure.events);
+    let beatPosition = 0;
+
+    expandedEvents.forEach((event) => {
+      // Generate syllable for the expanded event based on its beat position
+      const syllable = getSyllableForEvent(event, beatPosition, beatPosition, countingSystem);
+
+      if (syllable && countingSystem !== 'none') {
         positions.push({
-          syllable: event.syllable,
+          syllable,
           globalIndex,
           measureIndex,
         });
       }
+
+      // Advance beat position by the event's duration
+      beatPosition += event.duration;
       globalIndex++;
     });
 
