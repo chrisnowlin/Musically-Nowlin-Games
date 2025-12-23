@@ -127,7 +127,7 @@ export interface RhythmSettings {
   // Core Parameters
   timeSignature: string;
   tempo: number; // 40-208 BPM
-  measureCount: 1 | 2 | 4 | 8;
+  measureCount: 1 | 2 | 4 | 8 | 12 | 16 | 24;
 
   // Note Value Selection
   allowedNoteValues: NoteValue[];
@@ -302,7 +302,7 @@ export interface WorksheetSettings {
   title: string;
   includeNameField: boolean;
   includeDateField: boolean;
-  difficultyVariants: number; // 1-4
+  difficultyVariants: 1 | 2 | 3 | 4 | 6 | 8; // Number of exercises
 }
 
 export const DEFAULT_WORKSHEET_SETTINGS: WorksheetSettings = {

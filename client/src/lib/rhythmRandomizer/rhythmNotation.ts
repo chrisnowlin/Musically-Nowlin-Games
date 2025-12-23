@@ -162,6 +162,8 @@ export interface RenderOptions {
   containerWidth?: number; // If provided, staveWidth will be calculated to fit
   staffLineMode?: StaffLineMode; // 'single' for single-line percussion, 'full' for 5-line staff
   stemDirection?: StemDirection; // 'up' or 'down' for note stems
+  showMeasureNumbers?: boolean; // Show measure numbers above each measure
+  totalMeasures?: number; // Total number of measures (used to auto-enable measure numbers)
 }
 
 export interface NotePosition {
@@ -338,7 +340,8 @@ function renderMeasure(
   highlightEventIndex: number,
   globalEventOffset: number,
   staffLineMode: StaffLineMode = 'single',
-  stemDirection: StemDirection = 'up'
+  stemDirection: StemDirection = 'up',
+  showMeasureNumbers: boolean = false
 ): { nextGlobalIndex: number; notePositions: NotePosition[] } {
   // Convert stem direction to VexFlow format using Stem constants
   const stemDir = stemDirection === 'up' ? Stem.UP : Stem.DOWN;
@@ -366,6 +369,36 @@ function renderMeasure(
   }
 
   stave.setContext(context).draw();
+
+  // Draw measure number above the stave if enabled
+  if (showMeasureNumbers) {
+    const measureNumber = measureIndex + 1; // 1-based measure numbers
+
+    // Try SVG context first (for renderPatternToDiv)
+    const svgContext = context as unknown as { svg: SVGElement };
+    if (svgContext.svg) {
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', String(x + 5));
+      text.setAttribute('y', String(y + 18)); // Position just above top staff line
+      text.setAttribute('font-family', 'Arial, sans-serif');
+      text.setAttribute('font-size', '10');
+      text.setAttribute('font-weight', 'normal');
+      text.setAttribute('fill', '#666666');
+      text.textContent = String(measureNumber);
+      svgContext.svg.appendChild(text);
+    } else {
+      // Canvas context (for renderPatternToCanvas)
+      const canvasContext = context as unknown as { context2D: CanvasRenderingContext2D };
+      if (canvasContext.context2D) {
+        const ctx2d = canvasContext.context2D;
+        ctx2d.save();
+        ctx2d.font = '10px Arial, sans-serif';
+        ctx2d.fillStyle = '#666666';
+        ctx2d.fillText(String(measureNumber), x + 5, y + 18);
+        ctx2d.restore();
+      }
+    }
+  }
 
   // Calculate the actual space available for notes
   // getNoteStartX() returns where notes should start (after clef/time sig)
@@ -592,6 +625,11 @@ export function renderPatternToDiv(
   const context = renderer.getContext();
   context.setFont('Arial', 10);
 
+  // Determine if measure numbers should be shown
+  // Auto-enable when total measures > 4, or use explicit option
+  const totalMeasures = opts.totalMeasures ?? pattern.measures.length;
+  const showMeasureNumbers = opts.showMeasureNumbers ?? totalMeasures > 4;
+
   // Render each measure
   let currentX = opts.startX;
   let currentY = opts.startY;
@@ -623,7 +661,8 @@ export function renderPatternToDiv(
       opts.highlightEventIndex ?? -1,
       globalEventIndex,
       opts.staffLineMode ?? 'single',
-      opts.stemDirection ?? 'up'
+      opts.stemDirection ?? 'up',
+      showMeasureNumbers
     );
 
     globalEventIndex = result.nextGlobalIndex;
@@ -696,6 +735,10 @@ export function renderPatternToCanvas(
   const context = renderer.getContext();
   context.setFont('Arial', 10);
 
+  // Determine if measure numbers should be shown
+  const totalMeasures = opts.totalMeasures ?? pattern.measures.length;
+  const showMeasureNumbers = opts.showMeasureNumbers ?? totalMeasures > 4;
+
   // Render measures
   let currentX = opts.startX;
   let globalEventIndex = 0;
@@ -716,7 +759,8 @@ export function renderPatternToCanvas(
       opts.highlightEventIndex ?? -1,
       globalEventIndex,
       opts.staffLineMode ?? 'single',
-      opts.stemDirection ?? 'up'
+      opts.stemDirection ?? 'up',
+      showMeasureNumbers
     );
 
     globalEventIndex = result.nextGlobalIndex;

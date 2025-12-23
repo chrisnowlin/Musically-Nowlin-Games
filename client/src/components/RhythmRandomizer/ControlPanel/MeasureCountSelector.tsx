@@ -6,16 +6,21 @@
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
+type MeasureCount = 1 | 2 | 4 | 8 | 12 | 16 | 24;
+
 interface MeasureCountSelectorProps {
-  value: 1 | 2 | 4 | 8;
-  onChange: (value: 1 | 2 | 4 | 8) => void;
+  value: MeasureCount;
+  onChange: (value: MeasureCount) => void;
 }
 
-const MEASURE_OPTIONS: { value: 1 | 2 | 4 | 8; label: string }[] = [
+const MEASURE_OPTIONS: { value: MeasureCount; label: string }[] = [
   { value: 1, label: '1' },
   { value: 2, label: '2' },
   { value: 4, label: '4' },
   { value: 8, label: '8' },
+  { value: 12, label: '12' },
+  { value: 16, label: '16' },
+  { value: 24, label: '24' },
 ];
 
 export function MeasureCountSelector({ value, onChange }: MeasureCountSelectorProps) {
@@ -24,7 +29,7 @@ export function MeasureCountSelector({ value, onChange }: MeasureCountSelectorPr
       <Label>Measures</Label>
       <RadioGroup
         value={String(value)}
-        onValueChange={(v) => onChange(Number(v) as 1 | 2 | 4 | 8)}
+        onValueChange={(v) => onChange(Number(v) as MeasureCount)}
         className="flex gap-2"
       >
         {MEASURE_OPTIONS.map((option) => (
