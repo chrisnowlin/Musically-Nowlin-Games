@@ -266,6 +266,126 @@ export default function LandingVariation2() {
                 </div>
               </div>
             </div>
+
+            {/* Solfege Randomizer Tool Card */}
+            <div
+              className="relative"
+              onMouseEnter={() => setHoveredGame("solfege-randomizer")}
+              onMouseLeave={() => setHoveredGame(null)}
+            >
+              <div
+                className={`
+                  bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl
+                  transition-all duration-300 overflow-hidden border-4
+                  border-green-400 hover:border-green-500
+                  ${hoveredGame === "solfege-randomizer" ? "scale-105 -rotate-1" : ""}
+                `}
+              >
+                {/* Sparkle Effect */}
+                {hoveredGame === "solfege-randomizer" && (
+                  <div className="absolute top-2 right-2 z-20">
+                    <Sparkles className="w-8 h-8 text-yellow-400 animate-spin" />
+                  </div>
+                )}
+
+                {/* Icon Circle */}
+                <div className="relative pt-8 pb-4">
+                  <div
+                    className={`
+                      w-24 h-24 mx-auto rounded-full flex items-center justify-center
+                      bg-gradient-to-br from-green-500 to-teal-600 shadow-lg
+                      ${hoveredGame === "solfege-randomizer" ? "animate-bounce" : ""}
+                    `}
+                  >
+                    <Shuffle className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="px-6 pb-6 text-center">
+                  {/* Title */}
+                  <h2 className="font-fredoka font-bold text-2xl md:text-3xl text-foreground mb-2">
+                    Solfege Randomizer
+                  </h2>
+
+                  {/* Description */}
+                  <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">
+                    Generate random solfege patterns for ear training, sight-singing, and melodic dictation exercises.
+                  </p>
+
+                  {/* Button */}
+                  <Link href="/tools/solfege-randomizer">
+                    <Button
+                      className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 shadow-lg"
+                      size="lg"
+                    >
+                      <Play className="w-6 h-6 mr-2" />
+                      Open Tool
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Sight Reading Randomizer Tool Card */}
+            <div
+              className="relative"
+              onMouseEnter={() => setHoveredGame("sight-reading-randomizer")}
+              onMouseLeave={() => setHoveredGame(null)}
+            >
+              <div
+                className={`
+                  bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl
+                  transition-all duration-300 overflow-hidden border-4
+                  border-red-400 hover:border-red-500
+                  ${hoveredGame === "sight-reading-randomizer" ? "scale-105 -rotate-1" : ""}
+                `}
+              >
+                {/* Sparkle Effect */}
+                {hoveredGame === "sight-reading-randomizer" && (
+                  <div className="absolute top-2 right-2 z-20">
+                    <Sparkles className="w-8 h-8 text-yellow-400 animate-spin" />
+                  </div>
+                )}
+
+                {/* Icon Circle */}
+                <div className="relative pt-8 pb-4">
+                  <div
+                    className={`
+                      w-24 h-24 mx-auto rounded-full flex items-center justify-center
+                      bg-gradient-to-br from-red-500 to-rose-600 shadow-lg
+                      ${hoveredGame === "sight-reading-randomizer" ? "animate-bounce" : ""}
+                    `}
+                  >
+                    <Shuffle className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="px-6 pb-6 text-center">
+                  {/* Title */}
+                  <h2 className="font-fredoka font-bold text-2xl md:text-3xl text-foreground mb-2">
+                    Sight Reading Randomizer
+                  </h2>
+
+                  {/* Description */}
+                  <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">
+                    Generate random sight reading exercises for instrumental and vocal practice sessions.
+                  </p>
+
+                  {/* Button */}
+                  <Link href="/tools/sight-reading-randomizer">
+                    <Button
+                      className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg"
+                      size="lg"
+                    >
+                      <Play className="w-6 h-6 mr-2" />
+                      Open Tool
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
