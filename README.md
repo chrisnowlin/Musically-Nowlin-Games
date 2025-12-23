@@ -4,7 +4,7 @@ Educational music learning platform with 60+ interactive games covering pitch, r
 
 ## Live Demo
 
-🎵 **[Play Now](https://chrisnowlin.github.io/Musically-Nowlin-Games/)** 🎵
+🎵 **[Play Now](https://musically-nowlin-games.vercel.app/)** 🎵
 
 ## Features
 

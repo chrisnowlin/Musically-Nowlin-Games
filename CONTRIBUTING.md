@@ -27,7 +27,7 @@ bun run check
 We use a modified Git Flow strategy to keep production deployments stable while allowing rapid feature development.
 
 ```
-main (protected)     → Production (deploy on tags only)
+main (protected)     → Production (auto-deploy via Vercel)
 ├── develop          → Integration & staging
 ├── feature/*        → New features
 ├── fix/*            → Bug fixes
@@ -134,9 +134,8 @@ git push origin develop
    ```
 
 4. **Automatic deployment**
-   - GitHub Actions detects the new tag
-   - Runs tests and builds the application
-   - Deploys to GitHub Pages
+   - Vercel automatically deploys when main is updated
+   - Preview deployments are created for pull requests
 
 ### Semantic Versioning
 

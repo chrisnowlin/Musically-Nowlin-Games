@@ -7,7 +7,7 @@ This application is a static single-page application (SPA) that can be deployed 
 We use a robust branching strategy to keep production stable:
 
 ```
-main (protected)     → Production (deploy on tags only)
+main (protected)     → Production (auto-deploy via Vercel)
 ├── develop          → Integration & staging
 ├── feature/*        → New features
 ├── fix/*            → Bug fixes
@@ -19,7 +19,7 @@ main (protected)     → Production (deploy on tags only)
 - **Production (`main`)** is always stable and deployable
 - **Develop** is for integration testing before release
 - **Feature branches** isolate work in progress
-- **Tagged releases** trigger production deployments
+- **Merges to main** trigger production deployments via Vercel
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete workflow.
 
@@ -39,20 +39,9 @@ Pushes to `develop` trigger staging builds (`.github/workflows/deploy-staging.ym
 - Creates build artifacts for review
 - (Optional) Deploy to preview environment
 
-### Production Deployments (Tagged Releases)
+### Production Deployments (Vercel)
 
-Production deployments are triggered **only by version tags** (`.github/workflows/deploy.yml`):
-
-```bash
-# Create and push a release tag
-git tag -a v1.2.3 -m "Release v1.2.3"
-git push origin v1.2.3
-```
-
-This ensures:
-- Production is never accidentally updated
-- Every release is intentional and versioned
-- Easy rollback by deploying a previous tag
+Production deployments are handled automatically by Vercel when changes are merged to `main`.
 
 ## Release Process
 
@@ -73,17 +62,10 @@ This ensures:
    git push origin main
    ```
 
-3. **Create release tag**
-   ```bash
-   # Use semantic versioning: MAJOR.MINOR.PATCH
-   git tag -a v1.2.3 -m "Release v1.2.3: Description of changes"
-   git push origin v1.2.3
-   ```
-
-4. **Verify deployment**
-   - Check GitHub Actions for deployment status
-   - Visit https://chrisnowlin.github.io/Musically-Nowlin-Games/
-   - Test critical functionality
+3. **Verify deployment**
+   - Vercel automatically deploys on push to main
+   - Check Vercel dashboard for deployment status
+   - Test critical functionality on production
 
 ### Hotfix Release
 
@@ -108,32 +90,11 @@ For critical production bugs:
    git checkout main
    git merge hotfix/critical-bug
    git push origin main
-   
+
    git checkout develop
    git merge hotfix/critical-bug
    git push origin develop
    ```
-
-4. **Create patch release**
-   ```bash
-   git checkout main
-   git tag -a v1.2.4 -m "Hotfix v1.2.4: Fix critical bug"
-   git push origin v1.2.4
-   ```
-
-### Rollback
-
-To rollback to a previous version:
-
-```bash
-# Option 1: Redeploy previous tag (via GitHub Actions)
-# Go to Actions → Deploy to GitHub Pages → Run workflow
-# Select the tag to deploy
-
-# Option 2: Create a new tag pointing to old commit
-git tag -a v1.2.5 v1.2.2 -m "Rollback to v1.2.2"
-git push origin v1.2.5
-```
 
 ## Local Development and Testing
 
@@ -142,7 +103,7 @@ Start the development server with hot module replacement:
 ```bash
 bun dev
 ```
-The app will be available at `http://localhost:5173`
+The app will be available at `http://localhost:5174`
 
 ### Production Build
 Build the application for production:
@@ -156,25 +117,20 @@ Test the production build locally:
 ```bash
 bun run preview
 ```
-The app will be available at `http://localhost:4173`
 
 ## Deployment Platforms
 
-### GitHub Pages (Primary)
+### Vercel (Primary)
 
-Our primary deployment uses GitHub Pages with automated deployments via GitHub Actions.
+Our primary deployment uses Vercel with automatic deployments on push to main.
 
 **How it works:**
-1. Push a version tag (e.g., `v1.2.3`)
-2. GitHub Actions runs tests and builds
-3. Automatically deploys to GitHub Pages
-4. Live at: https://chrisnowlin.github.io/Musically-Nowlin-Games/
+1. Push to `main` branch
+2. Vercel automatically builds and deploys
+3. Preview deployments are created for pull requests
 
-**Manual deployment (emergency only):**
-```bash
-bun run build
-# Manually upload dist/ contents to gh-pages branch
-```
+**Configuration:**
+The `vercel.json` file handles SPA routing and caching.
 
 ### Netlify
 
@@ -192,23 +148,6 @@ bun run build
 5. Deploy!
 
 The `public/_redirects` file is automatically used by Netlify to handle SPA routing.
-
-### Vercel
-
-#### Option 1: Git Integration (Recommended)
-1. Push your repository to GitHub
-2. Go to [Vercel](https://vercel.com)
-3. Click "New Project" and import your repository
-4. Vercel auto-detects the build settings
-5. Deploy!
-
-#### Option 2: Using Vercel CLI
-```bash
-npm install -g vercel
-vercel
-```
-
-The `vercel.json` file is automatically used to handle SPA routing.
 
 ### Other Static Hosts
 
@@ -240,21 +179,9 @@ Ensure the `dist/` folder is deployed, not just individual files.
 ### Web Audio API not working
 Some hosting platforms may have CORS restrictions. The application uses only client-side Web Audio API, so this should work on all platforms.
 
-### Deployment not triggering
-- Ensure you pushed a tag, not just a commit: `git push origin v1.2.3`
-- Check that the tag follows the `v*` pattern
-- View GitHub Actions logs for errors
-
-### Need to deploy without a tag
-Use the "Run workflow" button in GitHub Actions:
-1. Go to Actions → Deploy to GitHub Pages
-2. Click "Run workflow"
-3. Select the branch/tag to deploy
-
 ## Support
 
 For issues with deployment, check:
 1. That `bun run build` completes without errors
 2. That `bun run preview` works locally
 3. That your hosting platform is configured for SPA routing
-4. GitHub Actions logs for CI/CD issues

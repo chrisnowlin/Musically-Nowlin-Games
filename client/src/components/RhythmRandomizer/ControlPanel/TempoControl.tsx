@@ -82,6 +82,16 @@ export function TempoControl({
     }
   };
 
+  // Calculate position percentage for a given BPM
+  const getPositionPercent = (bpm: number): number => {
+    return ((bpm - min) / (max - min)) * 100;
+  };
+
+  // Filter tempo markings to those within the slider range
+  const visibleMarkings = TEMPO_MARKINGS.filter(
+    (marking) => marking.bpm >= min && marking.bpm <= max
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -90,15 +100,44 @@ export function TempoControl({
       </div>
 
       <div className="flex items-center gap-3">
-        <Slider
-          id="tempo"
-          value={[value]}
-          onValueChange={handleSliderChange}
-          min={min}
-          max={max}
-          step={1}
-          className="flex-1"
-        />
+        <div className="flex-1 relative">
+          <Slider
+            id="tempo"
+            value={[value]}
+            onValueChange={handleSliderChange}
+            min={min}
+            max={max}
+            step={1}
+            className="relative z-10"
+          />
+          {/* Tempo marking notches */}
+          <div className="relative h-8 mt-1">
+            {visibleMarkings.map((marking) => {
+              const percent = getPositionPercent(marking.bpm);
+              return (
+                <div
+                  key={marking.bpm}
+                  className="absolute flex flex-col items-center"
+                  style={{
+                    left: `${percent}%`,
+                    transform: 'translateX(-50%)',
+                  }}
+                >
+                  <div className="w-px h-2 bg-gray-400" />
+                  <span
+                    className="text-[9px] text-gray-500 whitespace-nowrap origin-top-left"
+                    style={{
+                      transform: 'rotate(-45deg) translateX(-2px)',
+                      marginTop: ['Largo', 'Vivace', 'Presto'].includes(marking.label) ? '8px' : '16px',
+                    }}
+                  >
+                    {marking.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <Input
           type="number"
           value={value}

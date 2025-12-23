@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Vite configuration optimized for Bun 1.3
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  // Use VITE_BASE_PATH env var for flexibility (defaults to "/" for Vercel)
+  // Base path for deployment (defaults to "/" for Vercel)
   base: process.env.VITE_BASE_PATH || "/",
   resolve: {
     alias: {

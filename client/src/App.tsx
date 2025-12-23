@@ -8,7 +8,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
-// Get base path from Vite config for GitHub Pages
+// Get base path from Vite config for deployment flexibility
 const base = import.meta.env.BASE_URL;
 
 // Redirect component for wouter

@@ -24,7 +24,7 @@ interface Instrument {
   color: string;
 }
 
-// Use import.meta.env.BASE_URL to get the correct base path for production (GitHub Pages)
+// Use import.meta.env.BASE_URL to get the correct base path for production
 // This ensures audio files are loaded from the correct URL in all environments
 const BASE_URL = import.meta.env.BASE_URL || '/';
 

@@ -1082,7 +1082,7 @@ export class InstrumentLibrary {
   }
 
   /**
-   * Get sample path for loading (uses BASE_URL for GitHub Pages compatibility)
+   * Get sample path for loading (uses BASE_URL for deployment compatibility)
    */
   getSamplePath(instrumentName: string, note: string): string | undefined {
     const sample = this.getSample(instrumentName, note);

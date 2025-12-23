@@ -93,7 +93,7 @@ export function usePhilharmoniaInstruments(
         }
 
         for (const sample of samples) {
-          // Use import.meta.env.BASE_URL for correct path resolution on GitHub Pages
+          // Use import.meta.env.BASE_URL for correct path resolution in production
           const basePath = import.meta.env.BASE_URL || '/';
           const path = `${basePath}audio/${sample.path}`;
           const sampleName = instrumentLibrary.getSampleName(sample.instrument, sample.note);
