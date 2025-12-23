@@ -116,6 +116,10 @@ export type DifficultyPreset = 'beginner' | 'intermediate' | 'advanced' | 'custo
 
 export type NotationMode = 'staff' | 'grid';
 
+export type StaffLineMode = 'single' | 'full';
+
+export type StemDirection = 'up' | 'down';
+
 export type NoteDensity = 'sparse' | 'medium' | 'dense';
 
 export interface RhythmSettings {
@@ -145,6 +149,8 @@ export interface RhythmSettings {
 
   // Display Options
   notationMode: NotationMode;
+  staffLineMode: StaffLineMode;
+  stemDirection: StemDirection;
   countingSystem: CountingSystem;
   showSyllables: boolean;
 
@@ -174,6 +180,8 @@ export const DEFAULT_SETTINGS: RhythmSettings = {
   swingAmount: 0,
   sound: 'piano',
   notationMode: 'staff',
+  staffLineMode: 'single',
+  stemDirection: 'up',
   countingSystem: 'takadimi',
   showSyllables: true,
   ensembleMode: 'single',

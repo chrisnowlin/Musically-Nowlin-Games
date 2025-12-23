@@ -13,7 +13,7 @@ import {
   Tuplet,
   Dot,
   Articulation,
-  Fraction,
+  Stem,
   type RenderContext,
 } from 'vexflow';
 import {
@@ -22,6 +22,8 @@ import {
   Measure,
   NoteValue,
   RestValue,
+  StaffLineMode,
+  StemDirection,
   TIME_SIGNATURES,
 } from './types';
 
@@ -158,6 +160,8 @@ export interface RenderOptions {
   startY: number;
   highlightEventIndex?: number;
   containerWidth?: number; // If provided, staveWidth will be calculated to fit
+  staffLineMode?: StaffLineMode; // 'single' for single-line percussion, 'full' for 5-line staff
+  stemDirection?: StemDirection; // 'up' or 'down' for note stems
 }
 
 export interface NotePosition {
@@ -178,12 +182,15 @@ const DEFAULT_RENDER_OPTIONS: RenderOptions = {
   measureSpacing: 15,
   startX: 10,
   startY: 10,
+  staffLineMode: 'single',
+  stemDirection: 'up',
 };
 
 /**
  * Create a VexFlow StaveNote from a RhythmEvent
+ * Note: stem direction is set later, not in constructor, to work properly with beams
  */
-function createStaveNote(event: RhythmEvent, isHighlighted: boolean): StaveNote {
+function createStaveNote(event: RhythmEvent, isHighlighted: boolean, stemDir: number = Stem.UP): StaveNote {
   const isRest = event.type === 'rest';
 
   let durationStr: string;
@@ -199,12 +206,12 @@ function createStaveNote(event: RhythmEvent, isHighlighted: boolean): StaveNote 
   // Remove the 'd' suffix if present - we'll add dot separately
   const baseDuration = isDotted ? durationStr.replace('d', '') : durationStr;
 
-  // Create the note - use different rendering for rests
-  const noteConfig = isRest
-    ? { keys: [RHYTHM_NOTE_KEY], duration: baseDuration }
-    : { keys: [RHYTHM_NOTE_KEY], duration: baseDuration, stem_direction: 1 };
-
-  const staveNote = new StaveNote(noteConfig);
+  // Create the note - DON'T set stem_direction here, it will be set later
+  // Setting it in constructor can interfere with beam flag hiding
+  const staveNote = new StaveNote({
+    keys: [RHYTHM_NOTE_KEY],
+    duration: baseDuration,
+  });
 
   // Add dot for dotted notes
   if (isDotted && !isRest) {
@@ -214,7 +221,7 @@ function createStaveNote(event: RhythmEvent, isHighlighted: boolean): StaveNote 
   // Add accent articulation
   if (event.isAccented && !isRest) {
     const articulation = new Articulation('a>');
-    articulation.setPosition(3); // Above the note
+    articulation.setPosition(stemDir === Stem.UP ? 3 : 4); // Above note if stems up, below if stems down
     staveNote.addModifier(articulation);
   }
 
@@ -227,11 +234,15 @@ function createStaveNote(event: RhythmEvent, isHighlighted: boolean): StaveNote 
 }
 
 /**
- * Group eighth/sixteenth notes for beaming
+ * Group eighth/sixteenth notes for beaming by beat position
+ * Groups notes that fall within the same beat (e.g., 2 eighths = 1 beat)
  */
-function getBeamGroups(notes: StaveNote[], events: RhythmEvent[]): StaveNote[][] {
+function getBeamGroupsByBeat(notes: StaveNote[], events: RhythmEvent[]): StaveNote[][] {
   const groups: StaveNote[][] = [];
   let currentGroup: StaveNote[] = [];
+  let currentBeatStart = 0;
+  let beatPosition = 0;
+  const beatDuration = 1; // Each beat is 1 quarter note worth (1.0)
 
   events.forEach((event, index) => {
     const note = notes[index];
@@ -241,14 +252,39 @@ function getBeamGroups(notes: StaveNote[], events: RhythmEvent[]): StaveNote[][]
       event.type === 'note' &&
       ['eighth', 'sixteenth', 'tripletEighth'].includes(event.value as string);
 
+    // Check if we've crossed into a new beat
+    const currentBeat = Math.floor(beatPosition / beatDuration);
+    const groupBeat = Math.floor(currentBeatStart / beatDuration);
+    const crossedBeat = currentBeat !== groupBeat;
+
     if (isBeamable) {
+      // If we crossed a beat boundary, finalize the current group
+      if (crossedBeat && currentGroup.length >= 2) {
+        groups.push([...currentGroup]);
+        currentGroup = [];
+        currentBeatStart = beatPosition;
+      } else if (crossedBeat) {
+        // Started new beat but didn't have enough for a group
+        currentGroup = [];
+        currentBeatStart = beatPosition;
+      }
+
+      // Start a new group if empty
+      if (currentGroup.length === 0) {
+        currentBeatStart = beatPosition;
+      }
+
       currentGroup.push(note);
     } else {
+      // Non-beamable note - finalize any existing group
       if (currentGroup.length >= 2) {
         groups.push([...currentGroup]);
       }
       currentGroup = [];
+      currentBeatStart = beatPosition + event.duration;
     }
+
+    beatPosition += event.duration;
   });
 
   // Don't forget the last group
@@ -300,12 +336,29 @@ function renderMeasure(
   timeSignature: string,
   isFirstMeasure: boolean,
   highlightEventIndex: number,
-  globalEventOffset: number
+  globalEventOffset: number,
+  staffLineMode: StaffLineMode = 'single',
+  stemDirection: StemDirection = 'up'
 ): { nextGlobalIndex: number; notePositions: NotePosition[] } {
+  // Convert stem direction to VexFlow format using Stem constants
+  const stemDir = stemDirection === 'up' ? Stem.UP : Stem.DOWN;
   const timeSig = TIME_SIGNATURES[timeSignature];
 
   // Create stave
   const stave = new Stave(x, y, width);
+
+  // Configure staff lines based on mode
+  if (staffLineMode === 'single') {
+    // Show only the middle line for single-line percussion notation
+    // Use setConfigForLines() to properly configure line visibility
+    stave.setConfigForLines([
+      { visible: false },
+      { visible: false },
+      { visible: true },  // Middle line only (where b/4 notes are placed)
+      { visible: false },
+      { visible: false },
+    ]);
+  }
 
   if (isFirstMeasure) {
     stave.addClef('percussion');
@@ -331,7 +384,7 @@ function renderMeasure(
   for (let i = 0; i < expandedEvents.length; i++) {
     const globalIndex = globalEventOffset + i;
     const isHighlighted = globalIndex === highlightEventIndex;
-    const staveNote = createStaveNote(expandedEvents[i], isHighlighted);
+    const staveNote = createStaveNote(expandedEvents[i], isHighlighted, stemDir);
     staveNotes.push(staveNote);
   }
 
@@ -351,26 +404,26 @@ function renderMeasure(
   voice.setStrict(false); // Allow slight timing variations
   voice.addTickables(staveNotes);
 
-  // Generate beams BEFORE drawing - this modifies notes to hide flags
-  let beams: Beam[] = [];
-  try {
-    // Use Beam.generateBeams() for automatic beaming with proper flag handling
-    beams = Beam.generateBeams(staveNotes, {
-      groups: [new Fraction(2, 8)], // Group by beat (2 eighths per beat)
-      stem_direction: 1,
-    });
-  } catch {
-    // Fallback to manual beaming if generateBeams fails
-    // Use expanded events for beaming since staveNotes corresponds to expanded events
-    const beamGroups = getBeamGroups(staveNotes, expandedEvents);
-    beamGroups.forEach((group) => {
-      try {
-        beams.push(new Beam(group));
-      } catch {
-        // Beam creation can fail for certain note combinations
-      }
-    });
-  }
+  // Set stem direction on ALL notes BEFORE beam creation
+  staveNotes.forEach((note) => {
+    if (!note.isRest()) {
+      note.setStemDirection(stemDir);
+    }
+  });
+
+  // Group notes for beaming by beat position and create beams with auto_stem=false
+  const beams: Beam[] = [];
+  const beamGroups = getBeamGroupsByBeat(staveNotes, expandedEvents);
+  beamGroups.forEach((group) => {
+    try {
+      // Ensure stem direction is set on all notes in the group
+      group.forEach((note) => note.setStemDirection(stemDir));
+      // Create beam with auto_stem=false to respect our stem directions
+      beams.push(new Beam(group, false));
+    } catch {
+      // Beam creation can fail for certain note combinations
+    }
+  });
 
   // Format and draw voice - use the actual available width for proper distribution
   const formatter = new Formatter();
@@ -568,7 +621,9 @@ export function renderPatternToDiv(
       pattern.settings.timeSignature,
       isFirstMeasure,
       opts.highlightEventIndex ?? -1,
-      globalEventIndex
+      globalEventIndex,
+      opts.staffLineMode ?? 'single',
+      opts.stemDirection ?? 'up'
     );
 
     globalEventIndex = result.nextGlobalIndex;
@@ -649,18 +704,22 @@ export function renderPatternToCanvas(
     const isFirstMeasure = measureIndex === 0;
     const measureWidth = measureWidths[measureIndex];
 
-    globalEventIndex = renderMeasure(
+    const result = renderMeasure(
       context,
       measure,
+      measureIndex,
       currentX,
       opts.startY,
       measureWidth,
       pattern.settings.timeSignature,
       isFirstMeasure,
       opts.highlightEventIndex ?? -1,
-      globalEventIndex
+      globalEventIndex,
+      opts.staffLineMode ?? 'single',
+      opts.stemDirection ?? 'up'
     );
 
+    globalEventIndex = result.nextGlobalIndex;
     currentX += measureWidth + opts.measureSpacing;
   });
 }

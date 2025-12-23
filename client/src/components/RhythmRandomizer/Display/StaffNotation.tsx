@@ -4,7 +4,7 @@
  */
 
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { RhythmPattern, CountingSystem } from '@/lib/rhythmRandomizer/types';
+import { RhythmPattern, CountingSystem, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizer/types';
 import { renderPatternToDiv, expandBeamedGroups, NotePosition } from '@/lib/rhythmRandomizer/rhythmNotation';
 import { getSyllableForEvent } from '@/lib/rhythmRandomizer/countingSyllables';
 
@@ -14,6 +14,8 @@ interface StaffNotationProps {
   isPlaying?: boolean;
   showSyllables?: boolean;
   countingSystem?: CountingSystem;
+  staffLineMode?: StaffLineMode;
+  stemDirection?: StemDirection;
 }
 
 export function StaffNotation({
@@ -22,6 +24,8 @@ export function StaffNotation({
   isPlaying = false,
   showSyllables = true,
   countingSystem: countingSystemProp,
+  staffLineMode = 'single',
+  stemDirection = 'up',
 }: StaffNotationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -48,10 +52,12 @@ export function StaffNotation({
     const result = renderPatternToDiv(containerRef.current, pattern, {
       containerWidth: containerWidth,
       highlightEventIndex: isPlaying ? currentEventIndex : undefined,
+      staffLineMode: staffLineMode,
+      stemDirection: stemDirection,
     });
 
     setNotePositions(result.notePositions);
-  }, [pattern, currentEventIndex, isPlaying, containerWidth]);
+  }, [pattern, currentEventIndex, isPlaying, containerWidth, staffLineMode, stemDirection]);
 
   // Initial render and re-render on changes
   useEffect(() => {

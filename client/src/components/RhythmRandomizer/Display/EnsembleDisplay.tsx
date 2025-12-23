@@ -3,7 +3,7 @@
  * Displays multiple rhythm parts for ensemble mode
  */
 
-import { EnsemblePattern, CountingSystem } from '@/lib/rhythmRandomizer/types';
+import { EnsemblePattern, CountingSystem, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizer/types';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
 import { StaffNotation } from './StaffNotation';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { Volume2, VolumeX, Star, RefreshCw } from 'lucide-react';
 interface EnsembleDisplayProps {
   ensemble: EnsemblePattern;
   countingSystem: CountingSystem;
+  staffLineMode?: StaffLineMode;
+  stemDirection?: StemDirection;
   currentPartIndex?: number;
   currentEventIndex?: number;
   isPlaying?: boolean;
@@ -39,6 +41,8 @@ const BODY_PERCUSSION_ICONS: Record<string, string> = {
 export function EnsembleDisplay({
   ensemble,
   countingSystem,
+  staffLineMode = 'single',
+  stemDirection = 'up',
   currentPartIndex = -1,
   currentEventIndex = -1,
   isPlaying = false,
@@ -175,6 +179,8 @@ export function EnsembleDisplay({
                   isPlaying={isActive}
                   showSyllables={countingSystem !== 'none'}
                   countingSystem={countingSystem}
+                  staffLineMode={staffLineMode}
+                  stemDirection={stemDirection}
                 />
               </div>
             </div>

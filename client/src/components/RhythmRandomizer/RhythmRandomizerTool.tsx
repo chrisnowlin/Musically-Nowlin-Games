@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Music, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -180,7 +180,33 @@ export function RhythmRandomizerTool() {
                       {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {/* Staff line mode toggle */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateSetting('staffLineMode', settings.staffLineMode === 'single' ? 'full' : 'single')}
+                      className="h-7 text-xs gap-1.5"
+                      title={settings.staffLineMode === 'single' ? 'Single-line staff' : 'Full 5-line staff'}
+                    >
+                      <Music className="w-3.5 h-3.5" />
+                      {settings.staffLineMode === 'single' ? '1 Line' : '5 Lines'}
+                    </Button>
+                    {/* Stem direction toggle */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateSetting('stemDirection', settings.stemDirection === 'up' ? 'down' : 'up')}
+                      className="h-7 text-xs gap-1.5"
+                      title={settings.stemDirection === 'up' ? 'Stems up' : 'Stems down'}
+                    >
+                      {settings.stemDirection === 'up' ? (
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      )}
+                      Stems {settings.stemDirection === 'up' ? 'Up' : 'Down'}
+                    </Button>
                     <SyllableSelector
                       value={settings.countingSystem}
                       onChange={(system) => updateSetting('countingSystem', system)}
@@ -195,6 +221,8 @@ export function RhythmRandomizerTool() {
                   <EnsembleDisplay
                     ensemble={ensemblePattern}
                     countingSystem={settings.countingSystem}
+                    staffLineMode={settings.staffLineMode}
+                    stemDirection={settings.stemDirection}
                     currentPartIndex={playbackState.currentPartIndex}
                     currentEventIndex={playbackState.currentEventIndex}
                     isPlaying={playbackState.isPlaying}
@@ -209,6 +237,8 @@ export function RhythmRandomizerTool() {
                     isPlaying={playbackState.isPlaying}
                     showSyllables={settings.countingSystem !== 'none'}
                     countingSystem={settings.countingSystem}
+                    staffLineMode={settings.staffLineMode}
+                    stemDirection={settings.stemDirection}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-32 text-gray-400">
