@@ -45,6 +45,7 @@ export interface RhythmEvent {
   syllable?: string; // Counting syllable (e.g., "ta", "ti-ti")
   pitch?: string; // e.g., 'C4', 'D#4', 'Eb5'
   vexflowKey?: string; // e.g., 'c/4', 'd#/4', 'eb/5'
+  pitchSyllable?: string; // Pitch syllable (e.g., "Do", "Re", "1", "C")
 }
 
 export interface Measure {
@@ -113,7 +114,8 @@ export const TIME_SIGNATURES: Record<string, TimeSignature> = {
 
 export type CountingSystem = 'kodaly' | 'takadimi' | 'gordon' | 'numbers' | 'none';
 
-export type SoundOption = 'drums' | 'woodblock' | 'claps' | 'piano' | 'metronome' | 'snare';
+export type SoundOption = 'drums' | 'woodblock' | 'claps' | 'piano' | 'metronome' | 'snare'
+  | 'clarinet';
 
 export type DifficultyPreset = 'beginner' | 'intermediate' | 'advanced' | 'custom';
 

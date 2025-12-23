@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, RefreshCw, Music, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +27,7 @@ import { TonicGravitySlider } from './ControlPanel/TonicGravitySlider';
 
 // Display Components
 import { StaffNotation } from './Display/StaffNotation';
-import { SyllableSelector } from './Display/SyllableSelector';
+import { PitchSyllableSelector } from './Display/PitchSyllableSelector';
 import { EnsembleDisplay } from './Display/EnsembleDisplay';
 import { EnsembleModeSelector } from './ControlPanel/EnsembleModeSelector';
 import { WorksheetBuilder } from './Worksheet/WorksheetBuilder';
@@ -233,24 +233,10 @@ export function SightReadingRandomizerTool() {
                       <Music className="w-3.5 h-3.5" />
                       {settings.staffLineMode === 'single' ? '1 Line' : '5 Lines'}
                     </Button>
-                    {/* Stem direction toggle */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateSetting('stemDirection', settings.stemDirection === 'up' ? 'down' : 'up')}
-                      className="h-7 text-xs gap-1.5"
-                      title={settings.stemDirection === 'up' ? 'Stems up' : 'Stems down'}
-                    >
-                      {settings.stemDirection === 'up' ? (
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      )}
-                      Stems {settings.stemDirection === 'up' ? 'Up' : 'Down'}
-                    </Button>
-                    <SyllableSelector
-                      value={settings.countingSystem}
-                      onChange={(system) => updateSetting('countingSystem', system)}
+                    {/* Combined syllable selector for both pitch and rhythm syllables */}
+                    <PitchSyllableSelector
+                      value={sightReadingSettings.pitchSyllableSystem}
+                      onChange={(system) => updateSightReadingSetting('pitchSyllableSystem', system)}
                       showLabel={false}
                       compact
                     />
@@ -263,7 +249,6 @@ export function SightReadingRandomizerTool() {
                     ensemble={ensemblePattern}
                     countingSystem={settings.countingSystem}
                     staffLineMode={settings.staffLineMode}
-                    stemDirection={settings.stemDirection}
                     clef={settings.clef}
                     currentPartIndex={playbackState.currentPartIndex}
                     currentEventIndex={playbackState.currentEventIndex}
@@ -278,12 +263,13 @@ export function SightReadingRandomizerTool() {
                     pattern={patternWithSyllables}
                     currentEventIndex={playbackState.currentEventIndex}
                     isPlaying={playbackState.isPlaying}
-                    showSyllables={settings.countingSystem !== 'none'}
+                    showSyllables={sightReadingSettings.pitchSyllableSystem !== 'none'}
                     countingSystem={settings.countingSystem}
                     staffLineMode={settings.staffLineMode}
-                    stemDirection={settings.stemDirection}
                     clef={settings.clef}
                     keySignature={settings.staffLineMode === 'full' ? vexflowKeySignature : undefined}
+                    pitchSyllableSystem={sightReadingSettings.pitchSyllableSystem}
+                    keySignatureForSolfege={sightReadingSettings.keySignature}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-32 text-gray-400">

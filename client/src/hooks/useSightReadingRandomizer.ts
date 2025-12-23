@@ -5,7 +5,8 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useRhythmRandomizer } from './useRhythmRandomizer';
-import { RhythmSettings, RhythmPattern } from '@/lib/rhythmRandomizer/types';
+import { useAudioService } from './useAudioService';
+import { RhythmSettings, RhythmPattern, SoundOption } from '@/lib/rhythmRandomizer/types';
 import { generateRhythmPattern } from '@/lib/rhythmRandomizer/rhythmGenerator';
 import {
   SightReadingSettings,
@@ -23,6 +24,61 @@ const SIGHT_READING_RHYTHM_DEFAULTS: Partial<RhythmSettings> = {
   clef: 'treble',
   sound: 'piano',
 };
+
+// Pitched instruments that use Philharmonia samples
+const PITCHED_INSTRUMENTS: SoundOption[] = ['clarinet'];
+
+// Sample paths for pitched instruments
+const INSTRUMENT_SAMPLE_PATHS: Record<string, string> = {
+  clarinet: '/audio/philharmonia/woodwinds/clarinet',
+};
+
+/**
+ * Convert pitch to Philharmonia note format
+ */
+function pitchToPhilharmoniaNote(pitch: string): string {
+  const match = pitch.match(/^([A-G])([#b]?)(\d)$/);
+  if (!match) return 'C4';
+  const [, note, accidental, octave] = match;
+  if (accidental === '#') return `${note}s${octave}`;
+  if (accidental === 'b') {
+    const flatToSharp: Record<string, string> = {
+      'Db': 'Cs', 'Eb': 'Ds', 'Gb': 'Fs', 'Ab': 'Gs', 'Bb': 'As',
+      'Fb': 'E', 'Cb': 'B'
+    };
+    const converted = flatToSharp[`${note}b`];
+    return converted ? `${converted}${octave}` : `${note}${octave}`;
+  }
+  return `${note}${octave}`;
+}
+
+/**
+ * Get instrument dynamic based on instrument type
+ */
+function getInstrumentDynamic(instrument: SoundOption): string {
+  if (instrument === 'clarinet') return 'forte';
+  return 'mezzo-forte';
+}
+
+/**
+ * Build sample URLs for preloading
+ */
+function buildSampleUrlsForPreload(instrument: SoundOption, pitches: string[]): string[] {
+  const basePath = INSTRUMENT_SAMPLE_PATHS[instrument];
+  if (!basePath) return [];
+
+  const dynamic = getInstrumentDynamic(instrument);
+  const durations = ['025', '05', '1'];
+
+  const urls: string[] = [];
+  for (const pitch of pitches) {
+    const philNote = pitchToPhilharmoniaNote(pitch);
+    for (const duration of durations) {
+      urls.push(`${basePath}/${instrument}_${philNote}_${duration}_${dynamic}_normal.mp3`);
+    }
+  }
+  return urls;
+}
 
 export interface UseSightReadingRandomizerReturn {
   settings: RhythmSettings;
@@ -59,6 +115,7 @@ export interface UseSightReadingRandomizerReturn {
 
 export function useSightReadingRandomizer(): UseSightReadingRandomizerReturn {
   const rhythmRandomizer = useRhythmRandomizer();
+  const { audio } = useAudioService();
   const hasInitialized = useRef(false);
 
   // Sight reading specific settings
@@ -89,6 +146,25 @@ export function useSightReadingRandomizer(): UseSightReadingRandomizerReturn {
       allowedPitches: getDiatonicPitchesInRange(prev.keySignature, newRange),
     }));
   }, [rhythmRandomizer.settings.clef]);
+
+  // Preload samples when a pitched instrument is selected
+  useEffect(() => {
+    const sound = rhythmRandomizer.settings.sound;
+    if (!audio || !PITCHED_INSTRUMENTS.includes(sound)) return;
+
+    // Get pitches to preload - use allowed pitches or diatonic pitches in range
+    const pitchesToPreload = sightReadingSettings.allowedPitches.length > 0
+      ? sightReadingSettings.allowedPitches
+      : getDiatonicPitchesInRange(sightReadingSettings.keySignature, sightReadingSettings.pitchRange);
+
+    if (pitchesToPreload.length === 0) return;
+
+    // Build sample URLs and preload them
+    const sampleUrls = buildSampleUrlsForPreload(sound, pitchesToPreload);
+    audio.preloadSamples(sampleUrls).catch(() => {
+      // Preloading may fail before user gesture - that's okay
+    });
+  }, [rhythmRandomizer.settings.sound, sightReadingSettings.allowedPitches, sightReadingSettings.keySignature, audio]);
 
   // Get VexFlow-formatted key signature
   const vexflowKeySignature = useMemo(() => {

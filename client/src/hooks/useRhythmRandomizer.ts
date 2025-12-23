@@ -28,6 +28,7 @@ const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; minDurat
   piano: { note: 440, accent: 523, minDuration: 0.1, isTonal: true },
   metronome: { note: 2800, accent: 3200, minDuration: 0.02, isTonal: false }, // High metallic click
   snare: { note: 0, accent: 0, minDuration: 0.1, isTonal: false, isSample: true }, // Real snare drum samples
+  clarinet: { note: 0, accent: 0, minDuration: 0.1, isTonal: true, isSample: true }, // Philharmonia clarinet samples
 };
 
 // Audio sample URLs for sample-based sounds
@@ -38,6 +39,11 @@ const SNARE_SAMPLES = {
   // Rolls for half notes and longer
   rollNormal: '/audio/philharmonia/percussion/snare drum/snare-drum__long_mezzo-forte_roll.mp3',
   rollAccent: '/audio/philharmonia/percussion/snare drum/snare-drum__long_forte_roll.mp3',
+};
+
+// Philharmonia instrument sample base paths
+const INSTRUMENT_SAMPLE_PATHS: Record<string, string> = {
+  clarinet: '/audio/philharmonia/woodwinds/clarinet',
 };
 
 // Body percussion sound parameters - distinct frequencies for each body part
@@ -117,6 +123,83 @@ function pitchToFrequency(pitch: string): number {
 
   return NOTE_FREQUENCIES[pitch] || 440; // Default to A4 if pitch not found
 }
+
+/**
+ * Convert pitch notation (e.g., 'C4', 'D#4') to Philharmonia sample filename format
+ * @param pitch - Pitch string like 'C4', 'C#4', 'Db4'
+ * @returns Note in format like 'C4', 'Cs4' for sharps (Philharmonia uses 's' suffix for sharps)
+ */
+function pitchToPhilharmoniaNote(pitch: string): string {
+  const match = pitch.match(/^([A-G])([#b]?)(\d)$/);
+  if (!match) return 'C4'; // fallback
+
+  const [, note, accidental, octave] = match;
+
+  // Philharmonia uses 's' for sharps, flats need enharmonic conversion
+  if (accidental === '#') {
+    return `${note}s${octave}`;
+  }
+  if (accidental === 'b') {
+    // Convert flat to enharmonic sharp
+    const flatToSharp: Record<string, string> = {
+      'Db': 'Cs', 'Eb': 'Ds', 'Gb': 'Fs', 'Ab': 'Gs', 'Bb': 'As',
+      'Fb': 'E', 'Cb': 'B'  // Edge cases
+    };
+    const converted = flatToSharp[`${note}b`];
+    return converted ? `${converted}${octave}` : `${note}${octave}`;
+  }
+
+  return `${note}${octave}`;
+}
+
+/**
+ * Get Philharmonia sample duration code based on note duration in beats
+ * @param durationBeats - Duration in beats (quarter = 1, half = 2, whole = 4)
+ * @returns Duration code: '025' (quarter/shorter), '05' (half), '1' (whole/longer)
+ */
+function getPhilharmoniaDuration(durationBeats: number): string {
+  if (durationBeats >= 4) return '1';      // whole note or longer
+  if (durationBeats >= 2) return '05';     // half note
+  return '025';                             // quarter note or shorter
+}
+
+/**
+ * Get the appropriate dynamic for an instrument
+ * Different instruments have different available dynamics in Philharmonia samples
+ */
+function getInstrumentDynamic(instrument: SoundOption, isAccented?: boolean): string {
+  // Trumpet and clarinet don't have mezzo-forte, use forte/fortissimo
+  // Trombone and tuba have mezzo-forte available
+  if (instrument === 'trumpet' || instrument === 'clarinet') {
+    return isAccented ? 'fortissimo' : 'forte';
+  }
+  // Trombone and tuba have mezzo-forte
+  return isAccented ? 'forte' : 'mezzo-forte';
+}
+
+/**
+ * Build sample URL for a pitched instrument
+ * @param instrument - The instrument type
+ * @param pitch - Pitch string like 'C4', 'D#4'
+ * @param durationBeats - Duration in beats for sample duration selection
+ * @param isAccented - Whether to use louder dynamic
+ */
+function buildInstrumentSampleUrl(
+  instrument: SoundOption,
+  pitch: string,
+  durationBeats: number,
+  isAccented?: boolean
+): string {
+  const basePath = INSTRUMENT_SAMPLE_PATHS[instrument];
+  if (!basePath) return '';
+
+  const philNote = pitchToPhilharmoniaNote(pitch);
+  const duration = getPhilharmoniaDuration(durationBeats);
+  const dynamic = getInstrumentDynamic(instrument, isAccented);
+
+  return `${basePath}/${instrument}_${philNote}_${duration}_${dynamic}_normal.mp3`;
+}
+
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
 import { expandBeamedGroups } from '@/lib/rhythmRandomizer/rhythmNotation';
 import {
@@ -309,7 +392,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           if (eventCopy.type === 'note' && audio) {
             const vol = eventCopy.isAccented ? 0.9 : 0.7;
 
-            // Check if this is a sample-based sound (like snare)
+            // Check if this is a sample-based sound (like snare or pitched instruments)
             const soundConfig = SOUND_PARAMS[sound];
             if (soundConfig?.isSample && sound === 'snare') {
               // Use real audio samples for snare
@@ -326,6 +409,16 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
                 sampleUrl = eventCopy.isAccented ? SNARE_SAMPLES.accent : SNARE_SAMPLES.normal;
                 audio.playSample(sampleUrl);
               }
+            } else if (soundConfig?.isSample && eventCopy.pitch && ['trumpet', 'clarinet', 'trombone', 'tuba'].includes(sound)) {
+              // Pitched instrument samples with duration-aware sample selection
+              const sampleUrl = buildInstrumentSampleUrl(
+                sound,
+                eventCopy.pitch,
+                eventCopy.duration,
+                eventCopy.isAccented
+              );
+              // Play sample from the beginning (no offset)
+              audio.playSampleWithOffset(sampleUrl, 0.00);
             } else if (sound === 'piano' && eventCopy.pitch) {
               // Piano with pitched notes - calculate frequency from pitch
               const frequency = pitchToFrequency(eventCopy.pitch);

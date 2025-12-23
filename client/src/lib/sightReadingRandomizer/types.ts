@@ -61,6 +61,36 @@ export interface SightReadingSettings {
   stepwiseBias: number; // 0-100, higher = more stepwise motion
   contourVariety: number; // 0-100, higher = more varied contour
   tonicGravity: number; // 0-100, higher = stronger tendency to return to tonic
+
+  // Pitch syllable display
+  pitchSyllableSystem: PitchSyllableSystem;
+}
+
+// ============================================
+// SYLLABLE SYSTEM TYPES
+// ============================================
+
+export type PitchSyllableSystem =
+  // Pitch-based syllables
+  | 'moveableDo'      // Do Re Mi Fa Sol La Ti (Do = tonic)
+  | 'fixedDo'         // Do Re Mi Fa Sol La Ti (C = Do always)
+  | 'scaleDegrees'    // 1 2 3 4 5 6 7
+  | 'noteNames'       // C D E F G A B (actual note names)
+  // Rhythm-based syllables
+  | 'kodaly'          // ta, ti-ti, ta-a (Kodály method)
+  | 'takadimi'        // ta, di, ka, mi (beat-function based)
+  | 'gordon'          // du, de, ta (Gordon method)
+  | 'numbers'         // 1, e, &, a (traditional counting)
+  | 'none';           // No syllables
+
+// Helper to check if a syllable system is pitch-based
+export function isPitchSyllableSystem(system: PitchSyllableSystem): boolean {
+  return system === 'moveableDo' || system === 'fixedDo' || system === 'scaleDegrees' || system === 'noteNames';
+}
+
+// Helper to check if a syllable system is rhythm-based
+export function isRhythmSyllableSystem(system: PitchSyllableSystem): boolean {
+  return system === 'kodaly' || system === 'takadimi' || system === 'gordon' || system === 'numbers';
 }
 
 export const DEFAULT_SIGHT_READING_SETTINGS: SightReadingSettings = {
@@ -74,4 +104,5 @@ export const DEFAULT_SIGHT_READING_SETTINGS: SightReadingSettings = {
   stepwiseBias: 80,
   contourVariety: 50,
   tonicGravity: 50, // Moderate tendency toward tonic
+  pitchSyllableSystem: 'moveableDo', // Default to moveable Do solfege
 };

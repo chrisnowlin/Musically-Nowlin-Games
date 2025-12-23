@@ -7,6 +7,9 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { RhythmPattern, CountingSystem, StaffLineMode, StemDirection, ClefType } from '@/lib/rhythmRandomizer/types';
 import { renderPatternToDiv, expandBeamedGroups, NotePosition } from '@/lib/rhythmRandomizer/rhythmNotation';
 import { getSyllableForEvent } from '@/lib/rhythmRandomizer/countingSyllables';
+import type { KeySignature, PitchSyllableSystem } from '@/lib/sightReadingRandomizer/types';
+import { isPitchSyllableSystem, isRhythmSyllableSystem } from '@/lib/sightReadingRandomizer/types';
+import { getPitchSyllable } from '@/lib/sightReadingRandomizer/solfegeSyllables';
 
 interface StaffNotationProps {
   pattern: RhythmPattern;
@@ -18,6 +21,9 @@ interface StaffNotationProps {
   stemDirection?: StemDirection;
   clef?: ClefType;
   keySignature?: string; // VexFlow key signature string (e.g., 'G', 'Bb')
+  // Pitch syllable settings
+  pitchSyllableSystem?: PitchSyllableSystem;
+  keySignatureForSolfege?: KeySignature; // Key signature for solfege calculation
 }
 
 export function StaffNotation({
@@ -30,6 +36,8 @@ export function StaffNotation({
   stemDirection = 'up',
   clef = 'treble',
   keySignature,
+  pitchSyllableSystem = 'none',
+  keySignatureForSolfege,
 }: StaffNotationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -73,9 +81,18 @@ export function StaffNotation({
   // Use prop if provided, otherwise fall back to pattern.settings
   const countingSystem: CountingSystem = countingSystemProp ?? pattern.settings?.countingSystem ?? 'none';
 
+  // Determine which syllable mode to use
+  const shouldShowPitchSyllables = pitchSyllableSystem && isPitchSyllableSystem(pitchSyllableSystem) && keySignatureForSolfege;
+  const shouldShowRhythmSyllables = pitchSyllableSystem && isRhythmSyllableSystem(pitchSyllableSystem);
+
   // Calculate syllables with their positions from note X coordinates
+  // Priority: pitchSyllableSystem setting takes precedence
   const syllablesWithPositions = showSyllables
-    ? getSyllablesWithNotePositions(pattern, notePositions, countingSystem)
+    ? shouldShowPitchSyllables
+      ? getPitchSyllablesWithNotePositions(pattern, notePositions, pitchSyllableSystem!, keySignatureForSolfege!)
+      : shouldShowRhythmSyllables
+        ? getSyllablesWithNotePositions(pattern, notePositions, pitchSyllableSystem as CountingSystem)
+        : getSyllablesWithNotePositions(pattern, notePositions, countingSystem)
     : [];
 
   // Group syllables by line (Y position)
@@ -260,6 +277,54 @@ function getSyllablesWithNotePositions(
 
       // Advance beat position by the event's duration
       beatPosition += event.duration;
+      globalIndex++;
+    });
+  });
+
+  return positions;
+}
+
+/**
+ * Extract pitch syllables from pattern with their X positions from VexFlow
+ * Uses expanded events to match playback indices (beamed groups are expanded)
+ */
+function getPitchSyllablesWithNotePositions(
+  pattern: RhythmPattern,
+  notePositions: NotePosition[],
+  pitchSyllableSystem: PitchSyllableSystem,
+  keySignature: KeySignature
+): SyllableWithPosition[] {
+  const positions: SyllableWithPosition[] = [];
+  let globalIndex = 0;
+
+  if (pitchSyllableSystem === 'none') {
+    return [];
+  }
+
+  pattern.measures.forEach((measure, measureIndex) => {
+    // Expand beamed groups to match playback indices
+    const expandedEvents = expandBeamedGroups(measure.events);
+
+    expandedEvents.forEach((event) => {
+      // Find the note position for this global index
+      const notePos = notePositions.find((p) => p.globalIndex === globalIndex);
+
+      // Only show syllables for notes (not rests)
+      if (event.type === 'note' && notePos) {
+        // Generate pitch syllable from the event's pitch
+        const syllable = getPitchSyllable(event.pitch, keySignature, pitchSyllableSystem);
+
+        if (syllable) {
+          positions.push({
+            syllable,
+            globalIndex,
+            measureIndex,
+            x: notePos.x,
+            y: notePos.y,
+          });
+        }
+      }
+
       globalIndex++;
     });
   });

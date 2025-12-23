@@ -672,6 +672,52 @@ export class AudioService {
   }
 
   /**
+   * Play an audio sample with a start offset (skips leading silence/attack)
+   * Useful for samples with slow attack that need to sound more immediate
+   * @param url - URL path to the audio file
+   * @param offset - Time in seconds to skip from the start of the sample
+   * @returns Promise that resolves when playback completes
+   */
+  async playSampleWithOffset(url: string, offset: number = 0): Promise<void> {
+    await this.ensureAudioContext();
+    this.ensureAudioAvailable();
+
+    // Check cache first
+    let audioBuffer = this.audioBufferCache.get(url);
+
+    if (!audioBuffer) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new AudioError(`Failed to fetch audio file: ${url}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      audioBuffer = await this.decodeAudioData(arrayBuffer);
+      this.audioBufferCache.set(url, audioBuffer);
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const source = this.audioContext!.createBufferSource();
+        source.buffer = audioBuffer!;
+        source.connect(this.masterGain!);
+
+        this.currentSampleSource = source;
+
+        source.onended = () => {
+          this.currentSampleSource = null;
+          resolve();
+        };
+
+        // Start with offset to skip leading silence
+        source.start(0, offset);
+      } catch (e) {
+        console.warn('Failed to play sample with offset:', e);
+        resolve();
+      }
+    });
+  }
+
+  /**
    * Stop any currently playing sample
    */
   stopSample(): void {

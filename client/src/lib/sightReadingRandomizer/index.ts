@@ -8,13 +8,16 @@ export type {
   KeySignature,
   MelodicDifficulty,
   PitchRange,
+  PitchSyllableSystem,
   SightReadingSettings
 } from './types';
 
 export {
   TREBLE_CLEF_RANGE,
   BASS_CLEF_RANGE,
-  DEFAULT_SIGHT_READING_SETTINGS
+  DEFAULT_SIGHT_READING_SETTINGS,
+  isPitchSyllableSystem,
+  isRhythmSyllableSystem
 } from './types';
 
 // Export pitch utilities
@@ -48,3 +51,13 @@ export {
   assignPitchesToPattern,
   analyzeContour
 } from './pitchGenerator';
+
+// Export solfege syllables
+export {
+  getPitchSyllable,
+  getMoveableDoSyllable,
+  getFixedDoSyllable,
+  getScaleDegreeSyllable,
+  getPitchSyllableSystemName,
+  getPitchSyllableSystemDescription
+} from './solfegeSyllables';

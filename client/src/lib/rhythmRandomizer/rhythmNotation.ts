@@ -192,6 +192,55 @@ function getNoteKeyForEvent(
   return NOTE_KEYS[clef];
 }
 
+/**
+ * Convert a VexFlow key (e.g., 'c/4', 'b/4', 'f#/5') to a numeric pitch value
+ * for comparison. Returns a value where higher = higher pitch.
+ */
+function vexflowKeyToPitchValue(vexflowKey: string): number {
+  const match = vexflowKey.match(/^([a-g])([#b]?)\/(\d+)$/i);
+  if (!match) return 0;
+
+  const noteName = match[1].toLowerCase();
+  const accidental = match[2];
+  const octave = parseInt(match[3], 10);
+
+  // Base semitone values for each note (C = 0)
+  const noteValues: Record<string, number> = {
+    'c': 0, 'd': 2, 'e': 4, 'f': 5, 'g': 7, 'a': 9, 'b': 11
+  };
+
+  let semitone = noteValues[noteName] || 0;
+  if (accidental === '#') semitone += 1;
+  if (accidental === 'b') semitone -= 1;
+
+  return octave * 12 + semitone;
+}
+
+/**
+ * Determine stem direction based on pitch position relative to middle line
+ * Traditional rules:
+ * - Notes on or above middle line: stems down
+ * - Notes below middle line: stems up
+ *
+ * Middle lines:
+ * - Treble clef: B4
+ * - Bass clef: D3
+ */
+function getStemDirectionForPitch(vexflowKey: string, clef: ClefType): number {
+  const pitchValue = vexflowKeyToPitchValue(vexflowKey);
+
+  // Middle line pitch values
+  const middleLineValues: Record<ClefType, number> = {
+    'treble': vexflowKeyToPitchValue('b/4'), // B4 = 59
+    'bass': vexflowKeyToPitchValue('d/3'),   // D3 = 38
+  };
+
+  const middleLine = middleLineValues[clef];
+
+  // On or above middle line = stems down, below = stems up
+  return pitchValue >= middleLine ? Stem.DOWN : Stem.UP;
+}
+
 // ============================================
 // STAVE RENDERING
 // ============================================
@@ -400,8 +449,10 @@ function renderMeasure(
   showMeasureNumbers: boolean = false,
   keySignature?: string
 ): { nextGlobalIndex: number; notePositions: NotePosition[] } {
-  // Convert stem direction to VexFlow format using Stem constants
-  const stemDir = stemDirection === 'up' ? Stem.UP : Stem.DOWN;
+  // Fallback stem direction for rhythm-only mode (single line staff)
+  const fallbackStemDir = stemDirection === 'up' ? Stem.UP : Stem.DOWN;
+  // Use auto stem direction when in full staff mode (pitched notes)
+  const useAutoStem = staffLineMode === 'full';
   const timeSig = TIME_SIGNATURES[timeSignature];
 
   // Create stave
@@ -479,13 +530,23 @@ function renderMeasure(
   // Create notes from expanded events
   // Use expanded event indices for highlighting to match playback
   const staveNotes: StaveNote[] = [];
+  // Track stem directions for each note (for auto-stem calculation)
+  const noteStemDirs: number[] = [];
 
   for (let i = 0; i < expandedEvents.length; i++) {
     const globalIndex = globalEventOffset + i;
     const isHighlighted = globalIndex === highlightEventIndex;
     // Get note key from event if present, otherwise use clef default
     const eventNoteKey = expandedEvents[i].vexflowKey || noteKey;
-    const staveNote = createStaveNote(expandedEvents[i], isHighlighted, stemDir, eventNoteKey);
+
+    // Determine stem direction for this note
+    let noteStemDir = fallbackStemDir;
+    if (useAutoStem && expandedEvents[i].vexflowKey) {
+      noteStemDir = getStemDirectionForPitch(expandedEvents[i].vexflowKey, clef);
+    }
+    noteStemDirs.push(noteStemDir);
+
+    const staveNote = createStaveNote(expandedEvents[i], isHighlighted, noteStemDir, eventNoteKey);
     staveNotes.push(staveNote);
   }
 
@@ -506,19 +567,41 @@ function renderMeasure(
   voice.addTickables(staveNotes);
 
   // Set stem direction on ALL notes BEFORE beam creation
-  staveNotes.forEach((note) => {
+  staveNotes.forEach((note, idx) => {
     if (!note.isRest()) {
-      note.setStemDirection(stemDir);
+      note.setStemDirection(noteStemDirs[idx]);
     }
   });
 
-  // Group notes for beaming by beat position and create beams with auto_stem=false
+  // Group notes for beaming by beat position and create beams
   const beams: Beam[] = [];
   const beamGroups = getBeamGroupsByBeat(staveNotes, expandedEvents);
   beamGroups.forEach((group) => {
     try {
-      // Ensure stem direction is set on all notes in the group
-      group.forEach((note) => note.setStemDirection(stemDir));
+      // For beamed notes, use a single stem direction based on average pitch
+      // Find the indices of notes in this group to get their calculated stem directions
+      const groupIndices = group.map((note) => staveNotes.indexOf(note));
+
+      // Calculate beam stem direction based on average pitch position
+      let beamStemDir = fallbackStemDir;
+      if (useAutoStem) {
+        // Get the pitches of all notes in the beam
+        const pitchValues = groupIndices
+          .map((idx) => expandedEvents[idx]?.vexflowKey)
+          .filter((key): key is string => !!key)
+          .map((key) => vexflowKeyToPitchValue(key));
+
+        if (pitchValues.length > 0) {
+          // Calculate average pitch
+          const avgPitch = pitchValues.reduce((a, b) => a + b, 0) / pitchValues.length;
+          // Get middle line pitch for comparison
+          const middleLine = vexflowKeyToPitchValue(clef === 'treble' ? 'b/4' : 'd/3');
+          beamStemDir = avgPitch >= middleLine ? Stem.DOWN : Stem.UP;
+        }
+      }
+
+      // Set uniform stem direction on all notes in the beam
+      group.forEach((note) => note.setStemDirection(beamStemDir));
       // Create beam with auto_stem=false to respect our stem directions
       beams.push(new Beam(group, false));
     } catch {

@@ -33,6 +33,18 @@ const SOUND_OPTIONS: SoundOptionConfig[] = [
     description: 'Real Philharmonia snare',
   },
   {
+    value: 'clarinet',
+    label: 'Clarinet',
+    icon: '🎵',
+    description: 'Philharmonia woodwind',
+  },
+  {
+    value: 'piano',
+    label: 'Piano',
+    icon: '🎹',
+    description: 'Synthesized piano',
+  },
+  {
     value: 'woodblock',
     label: 'Woodblock',
     icon: '🪵',
@@ -49,12 +61,6 @@ const SOUND_OPTIONS: SoundOptionConfig[] = [
     label: 'Claps',
     icon: '👏',
     description: 'Hand clap sound',
-  },
-  {
-    value: 'piano',
-    label: 'Piano',
-    icon: '🎹',
-    description: 'Single piano note',
   },
   {
     value: 'metronome',
