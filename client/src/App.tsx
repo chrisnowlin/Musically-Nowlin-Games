@@ -108,6 +108,9 @@ const Challenge001Page = lazy(() => import("@/pages/games/Challenge001Page"));
 const TrebleRunnerGamePage = lazy(() => import("@/pages/games/TrebleRunnerGamePage"));
 const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
 
+// Tools
+const RhythmRandomizerPage = lazy(() => import("@/pages/tools/RhythmRandomizerPage"));
+
 function Router() {
   return (
     <Suspense fallback={<GameLoadingFallback />}>
@@ -193,6 +196,8 @@ function Router() {
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-invaders" component={StaffInvadersGamePage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
+      {/* Tools */}
+      <Route path="/tools/rhythm-randomizer" component={RhythmRandomizerPage} />
       <Route component={NotFound} />
       </Switch>
     </Suspense>

@@ -612,6 +612,66 @@ export class AudioService {
   }
 
   /**
+   * Play an audio sample with a maximum duration (clips the sample if longer)
+   * Useful for drum rolls that need to match note duration
+   * @param url - URL path to the audio file
+   * @param maxDuration - Maximum duration in seconds
+   * @returns Promise that resolves when playback completes
+   */
+  async playSampleWithDuration(url: string, maxDuration: number): Promise<void> {
+    await this.ensureAudioContext();
+    this.ensureAudioAvailable();
+
+    // Check cache first
+    let audioBuffer = this.audioBufferCache.get(url);
+
+    if (!audioBuffer) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new AudioError(`Failed to fetch audio file: ${url}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      audioBuffer = await this.decodeAudioData(arrayBuffer);
+      this.audioBufferCache.set(url, audioBuffer);
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const source = this.audioContext!.createBufferSource();
+        const gainNode = this.audioContext!.createGain();
+
+        source.buffer = audioBuffer!;
+
+        // Add fade out at the end to avoid clicks
+        const now = this.audioContext!.currentTime;
+        const fadeOutStart = Math.max(0, maxDuration - 0.05);
+        gainNode.gain.setValueAtTime(1, now);
+        gainNode.gain.setValueAtTime(1, now + fadeOutStart);
+        gainNode.gain.linearRampToValueAtTime(0, now + maxDuration);
+
+        source.connect(gainNode);
+        gainNode.connect(this.masterGain!);
+
+        source.onended = () => {
+          try {
+            source.disconnect();
+            gainNode.disconnect();
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+          resolve();
+        };
+
+        // Play with duration limit - third parameter limits playback length
+        source.start(0, 0, maxDuration);
+      } catch (e) {
+        console.warn('Failed to play sample with duration:', e);
+        resolve();
+      }
+    });
+  }
+
+  /**
    * Stop any currently playing sample
    */
   stopSample(): void {
@@ -779,12 +839,21 @@ export class AudioService {
       lowShelf.gain.value = this.getLowBoostDb(validFreq);
 
       // ADSR envelope with volume scaling
+      // Adjust envelope times for short durations
       const now = this.audioContext!.currentTime;
-      const sustainVolume = 0.2 * validVolume;
+      const peakVolume = 0.3 * validVolume;
+      const sustainVolume = Math.max(0.01, 0.2 * validVolume);
+
+      // Scale envelope phases based on duration
+      const attackTime = Math.min(0.02, validDuration * 0.15);
+      const decayTime = Math.min(0.05, validDuration * 0.2);
+      const releaseTime = Math.min(0.1, validDuration * 0.3);
+      const sustainEnd = Math.max(attackTime + decayTime + 0.001, validDuration - releaseTime);
+
       gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.3 * validVolume, now + 0.05); // Attack
-      gainNode.gain.exponentialRampToValueAtTime(sustainVolume, now + 0.1); // Decay
-      gainNode.gain.setValueAtTime(sustainVolume, now + validDuration - 0.2); // Sustain
+      gainNode.gain.linearRampToValueAtTime(peakVolume, now + attackTime); // Attack
+      gainNode.gain.exponentialRampToValueAtTime(sustainVolume, now + attackTime + decayTime); // Decay
+      gainNode.gain.setValueAtTime(sustainVolume, now + sustainEnd); // Sustain
       gainNode.gain.exponentialRampToValueAtTime(0.01, now + validDuration); // Release
 
       // Connect nodes

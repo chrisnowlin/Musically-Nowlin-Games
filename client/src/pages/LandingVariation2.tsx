@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { games, GameConfig } from "@/config/games";
 import { Button } from "@/components/ui/button";
-import { Music, Star, Sparkles, Lock, Play, KeyRound } from "lucide-react";
+import { Music, Star, Sparkles, Lock, Play, KeyRound, Shuffle } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -194,6 +194,79 @@ export default function LandingVariation2() {
             );
           })}
         </div>
+        </section>
+
+        {/* Tools Section */}
+        <section className="mb-16">
+          <div className="text-center mb-8">
+            <h2 className="font-fredoka font-bold text-4xl md:text-5xl text-blue-800 dark:text-blue-200 mb-2">
+              Tools for Educators
+            </h2>
+            <p className="font-nunito text-lg text-gray-700 dark:text-gray-300">
+              🎼 Helpful resources for teaching! 🎼
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Rhythm Randomizer Tool Card */}
+            <div
+              className="relative"
+              onMouseEnter={() => setHoveredGame("rhythm-randomizer")}
+              onMouseLeave={() => setHoveredGame(null)}
+            >
+              <div
+                className={`
+                  bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl 
+                  transition-all duration-300 overflow-hidden border-4
+                  border-blue-400 hover:border-blue-500
+                  ${hoveredGame === "rhythm-randomizer" ? "scale-105 -rotate-1" : ""}
+                `}
+              >
+                {/* Sparkle Effect */}
+                {hoveredGame === "rhythm-randomizer" && (
+                  <div className="absolute top-2 right-2 z-20">
+                    <Sparkles className="w-8 h-8 text-yellow-400 animate-spin" />
+                  </div>
+                )}
+
+                {/* Icon Circle */}
+                <div className="relative pt-8 pb-4">
+                  <div
+                    className={`
+                      w-24 h-24 mx-auto rounded-full flex items-center justify-center
+                      bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg
+                      ${hoveredGame === "rhythm-randomizer" ? "animate-bounce" : ""}
+                    `}
+                  >
+                    <Shuffle className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="px-6 pb-6 text-center">
+                  {/* Title */}
+                  <h2 className="font-fredoka font-bold text-2xl md:text-3xl text-foreground mb-2">
+                    Rhythm Randomizer
+                  </h2>
+
+                  {/* Description */}
+                  <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">
+                    Generate random rhythm patterns for classroom exercises, worksheets, and ensemble activities.
+                  </p>
+
+                  {/* Button */}
+                  <Link href="/tools/rhythm-randomizer">
+                    <Button
+                      className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg"
+                      size="lg"
+                    >
+                      <Play className="w-6 h-6 mr-2" />
+                      Open Tool
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Under Development Section */}
