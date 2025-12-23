@@ -110,7 +110,7 @@ export const TIME_SIGNATURES: Record<string, TimeSignature> = {
 
 export type CountingSystem = 'kodaly' | 'takadimi' | 'gordon' | 'numbers' | 'none';
 
-export type SoundOption = 'drums' | 'woodblock' | 'claps' | 'piano' | 'metronome';
+export type SoundOption = 'drums' | 'woodblock' | 'claps' | 'piano' | 'metronome' | 'snare';
 
 export type DifficultyPreset = 'beginner' | 'intermediate' | 'advanced' | 'custom';
 
@@ -164,9 +164,9 @@ export interface RhythmSettings {
 
 export const DEFAULT_SETTINGS: RhythmSettings = {
   timeSignature: '4/4',
-  tempo: 100,
+  tempo: 80,
   measureCount: 4,
-  allowedNoteValues: ['quarter', 'eighth'],
+  allowedNoteValues: ['quarter', 'twoEighths'],
   allowedRestValues: ['quarterRest'],
   includeTriplets: false,
   syncopationProbability: 20,
@@ -178,7 +178,7 @@ export const DEFAULT_SETTINGS: RhythmSettings = {
   loopEnabled: false,
   metronomeEnabled: true,
   swingAmount: 0,
-  sound: 'piano',
+  sound: 'snare',
   notationMode: 'staff',
   staffLineMode: 'single',
   stemDirection: 'up',
@@ -239,6 +239,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, Partial<RhythmSettings
 export interface PlaybackState {
   isPlaying: boolean;
   isPaused: boolean;
+  isMetronomePlaying: boolean; // Standalone metronome (separate from pattern playback)
   currentMeasure: number;
   currentBeat: number;
   currentEventIndex: number;
@@ -249,6 +250,7 @@ export interface PlaybackState {
 export const INITIAL_PLAYBACK_STATE: PlaybackState = {
   isPlaying: false,
   isPaused: false,
+  isMetronomePlaying: false,
   currentMeasure: 0,
   currentBeat: 0,
   currentEventIndex: 0,

@@ -20,12 +20,24 @@ import {
 
 // Sound parameters for different instrument options
 // isTonal: if true, sound duration matches note length; if false, uses short percussion hit
-const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; minDuration: number; isTonal: boolean }> = {
+// isSample: if true, uses audio samples instead of synthesized tones
+const SOUND_PARAMS: Record<SoundOption, { note: number; accent: number; minDuration: number; isTonal: boolean; isSample?: boolean }> = {
   woodblock: { note: 800, accent: 1000, minDuration: 0.08, isTonal: false },
   drums: { note: 150, accent: 200, minDuration: 0.15, isTonal: false },
   claps: { note: 1200, accent: 1500, minDuration: 0.05, isTonal: false },
   piano: { note: 440, accent: 523, minDuration: 0.1, isTonal: true },
-  metronome: { note: 1000, accent: 1200, minDuration: 0.05, isTonal: false },
+  metronome: { note: 2800, accent: 3200, minDuration: 0.02, isTonal: false }, // High metallic click
+  snare: { note: 0, accent: 0, minDuration: 0.1, isTonal: false, isSample: true }, // Real snare drum samples
+};
+
+// Audio sample URLs for sample-based sounds
+const SNARE_SAMPLES = {
+  // Short hits for quarter notes and shorter
+  normal: '/audio/philharmonia/percussion/snare drum/snare-drum__025_mezzo-forte_with-snares.mp3',
+  accent: '/audio/philharmonia/percussion/snare drum/snare-drum__025_fortissimo_with-snares.mp3',
+  // Rolls for half notes and longer
+  rollNormal: '/audio/philharmonia/percussion/snare drum/snare-drum__long_mezzo-forte_roll.mp3',
+  rollAccent: '/audio/philharmonia/percussion/snare drum/snare-drum__long_forte_roll.mp3',
 };
 
 // Body percussion sound parameters - distinct frequencies for each body part
@@ -91,6 +103,10 @@ interface UseRhythmRandomizerReturn {
   resume: () => void;
   setVolume: (volume: number) => void;
 
+  // Metronome Actions
+  playMetronome: () => Promise<void>;
+  stopMetronome: () => void;
+
   // Ensemble Actions
   regenerateEnsemblePart: (partIndex: number) => void;
   toggleEnsemblePartMute: (partIndex: number) => void;
@@ -115,6 +131,10 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const playbackTimeoutsRef = useRef<Set<number>>(new Set());
   const playbackStartTimeRef = useRef<number>(0);
 
+  // Refs for standalone metronome
+  const metronomeTimeoutsRef = useRef<Set<number>>(new Set());
+  const metronomeLoopRef = useRef<boolean>(false);
+
   // Audio hook
   const { audio, isReady, initialize } = useAudioService();
 
@@ -132,6 +152,23 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const clearPlaybackTimeouts = useCallback(() => {
     playbackTimeoutsRef.current.forEach(id => window.clearTimeout(id));
     playbackTimeoutsRef.current.clear();
+  }, []);
+
+  // Helper to schedule a metronome timeout and track it for cleanup
+  const scheduleMetronomeTimeout = useCallback((callback: () => void, delay: number): number => {
+    const id = window.setTimeout(() => {
+      metronomeTimeoutsRef.current.delete(id);
+      callback();
+    }, delay);
+    metronomeTimeoutsRef.current.add(id);
+    return id;
+  }, []);
+
+  // Clear all metronome timeouts
+  const clearMetronomeTimeouts = useCallback(() => {
+    metronomeTimeoutsRef.current.forEach(id => window.clearTimeout(id));
+    metronomeTimeoutsRef.current.clear();
+    metronomeLoopRef.current = false;
   }, []);
 
   // Generate new pattern (single or ensemble)
@@ -213,12 +250,31 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           if (eventCopy.type === 'note' && audio) {
             const vol = eventCopy.isAccented ? 0.9 : 0.7;
 
-            // Use body percussion sound if specified, otherwise use selected sound
-            const soundParams = bodyPartCopy
-              ? getBodyPercussionSoundParams(bodyPartCopy, eventCopy.isAccented)
-              : getSoundParams(sound, noteDurationSeconds, eventCopy.isAccented);
+            // Check if this is a sample-based sound (like snare)
+            const soundConfig = SOUND_PARAMS[sound];
+            if (soundConfig?.isSample && sound === 'snare') {
+              // Use real audio samples for snare
+              // Use rolls for half notes (2 beats) and longer, single hits for shorter
+              const useRoll = eventCopy.duration >= 2;
+              let sampleUrl: string;
+              if (useRoll) {
+                sampleUrl = eventCopy.isAccented ? SNARE_SAMPLES.rollAccent : SNARE_SAMPLES.rollNormal;
+                // Play roll with duration limit to prevent overlap with next note
+                // Subtract a small amount for clean cutoff
+                const rollDuration = Math.max(0.2, noteDurationSeconds - 0.05);
+                audio.playSampleWithDuration(sampleUrl, rollDuration);
+              } else {
+                sampleUrl = eventCopy.isAccented ? SNARE_SAMPLES.accent : SNARE_SAMPLES.normal;
+                audio.playSample(sampleUrl);
+              }
+            } else {
+              // Use body percussion sound if specified, otherwise use selected sound
+              const soundParams = bodyPartCopy
+                ? getBodyPercussionSoundParams(bodyPartCopy, eventCopy.isAccented)
+                : getSoundParams(sound, noteDurationSeconds, eventCopy.isAccented);
 
-            audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
+              audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
+            }
           }
         }, eventTime);
 
@@ -260,12 +316,16 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       // Clear any existing timeouts
       clearPlaybackTimeouts();
 
+      // Stop standalone metronome (pattern takes over)
+      clearMetronomeTimeouts();
+
       await initialize();
 
       setPlaybackState(prev => ({
         ...prev,
         isPlaying: true,
         isPaused: false,
+        isMetronomePlaying: false, // Pattern takes over from standalone metronome
         currentMeasure: 0,
         currentBeat: 0,
         currentEventIndex: 0,
@@ -278,18 +338,22 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       const msPerBeat = 60000 / settings.tempo;
       let currentTime = 0;
 
+      // Get beats per measure from time signature
+      const timeSigMatch = settings.timeSignature.match(/^(\d+)\/\d+$/);
+      const beatsPerMeasure = timeSigMatch ? parseInt(timeSigMatch[1], 10) : 4;
+
       // Count-in
       if (settings.countInMeasures > 0) {
-        const countInBeats = settings.countInMeasures * 4; // Assuming 4/4 for simplicity
+        const countInBeats = settings.countInMeasures * beatsPerMeasure;
         const countInBeatDurationSeconds = msPerBeat / 1000;
         for (let i = 0; i < countInBeats; i++) {
           const beatTime = currentTime;
-          const isFirstBeat = i % 4 === 0; // Accent first beat of measure
+          const isFirstBeat = i % beatsPerMeasure === 0; // Accent first beat of measure
           scheduleTimeout(() => {
             if (audio) {
               // Use metronome sound for count-in
               const clickParams = getSoundParams('metronome', countInBeatDurationSeconds, isFirstBeat);
-              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.6);
+              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.85);
             }
           }, beatTime);
           currentTime += msPerBeat;
@@ -297,6 +361,39 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       }
 
       let totalDuration = currentTime;
+
+      // Calculate pattern duration for metronome click scheduling
+      let patternDurationBeats = 0;
+      if (isEnsembleMode && ensemblePattern) {
+        if (ensemblePattern.mode === 'callResponse') {
+          // Sequential: sum of all parts
+          patternDurationBeats = ensemblePattern.parts.reduce((sum, p) => sum + p.pattern.totalDurationBeats, 0);
+        } else {
+          // Simultaneous: max duration
+          patternDurationBeats = Math.max(...ensemblePattern.parts.map(p => p.pattern.totalDurationBeats));
+        }
+      } else if (pattern) {
+        patternDurationBeats = pattern.totalDurationBeats;
+      }
+
+      // Schedule metronome clicks during playback (if enabled)
+      if (settings.metronomeEnabled && patternDurationBeats > 0) {
+        const totalClicks = Math.ceil(patternDurationBeats);
+        const beatDurationSeconds = msPerBeat / 1000;
+
+        for (let beat = 0; beat < totalClicks; beat++) {
+          const beatTime = currentTime + beat * msPerBeat;
+          const isFirstBeatOfMeasure = beat % beatsPerMeasure === 0;
+
+          scheduleTimeout(() => {
+            if (audio) {
+              const clickParams = getSoundParams('metronome', beatDurationSeconds, isFirstBeatOfMeasure);
+              // Lower volume so it doesn't overpower the pattern
+              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.7);
+            }
+          }, beatTime);
+        }
+      }
 
       if (isEnsembleMode && ensemblePattern) {
         // ENSEMBLE PLAYBACK
@@ -390,7 +487,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       console.error('Playback error:', error);
       setPlaybackState(INITIAL_PLAYBACK_STATE);
     }
-  }, [pattern, ensemblePattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts, schedulePatternPlayback, isPartAudible]);
+  }, [pattern, ensemblePattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts, clearMetronomeTimeouts, schedulePatternPlayback, isPartAudible]);
 
   // Stop playback
   const stop = useCallback(() => {
@@ -421,6 +518,68 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       play();
     }
   }, [playbackState.isPaused, play]);
+
+  // Stop standalone metronome
+  const stopMetronome = useCallback(() => {
+    clearMetronomeTimeouts();
+    setPlaybackState(prev => ({
+      ...prev,
+      isMetronomePlaying: false,
+    }));
+  }, [clearMetronomeTimeouts]);
+
+  // Play standalone metronome (loops until stopped)
+  const playMetronome = useCallback(async () => {
+    try {
+      await initialize();
+
+      // Mark metronome as playing
+      setPlaybackState(prev => ({
+        ...prev,
+        isMetronomePlaying: true,
+      }));
+
+      metronomeLoopRef.current = true;
+      const msPerBeat = 60000 / settings.tempo;
+
+      // Get beats per measure from time signature
+      const timeSigMatch = settings.timeSignature.match(/^(\d+)\/\d+$/);
+      const beatsPerMeasure = timeSigMatch ? parseInt(timeSigMatch[1], 10) : 4;
+
+      // Schedule one measure of clicks, then schedule next measure
+      const scheduleMeasure = (startTime: number) => {
+        if (!metronomeLoopRef.current) return;
+
+        for (let beat = 0; beat < beatsPerMeasure; beat++) {
+          const beatTime = startTime + beat * msPerBeat;
+          const isFirstBeat = beat === 0;
+
+          scheduleMetronomeTimeout(() => {
+            if (!metronomeLoopRef.current) return;
+            if (audio) {
+              const clickParams = getSoundParams('metronome', msPerBeat / 1000, isFirstBeat);
+              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.85);
+            }
+          }, beatTime);
+        }
+
+        // Schedule next measure
+        const nextMeasureTime = startTime + beatsPerMeasure * msPerBeat;
+        scheduleMetronomeTimeout(() => {
+          if (metronomeLoopRef.current) {
+            scheduleMeasure(0); // Start from 0 since this is a new timeout chain
+          }
+        }, nextMeasureTime);
+      };
+
+      // Start the first measure
+      scheduleMeasure(0);
+
+    } catch (error) {
+      console.error('Metronome error:', error);
+      stopMetronome();
+    }
+  }, [settings.tempo, settings.timeSignature, audio, initialize, scheduleMetronomeTimeout, stopMetronome]);
 
   // Update single setting
   const updateSetting = useCallback(<K extends keyof RhythmSettings>(
@@ -479,11 +638,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   useEffect(() => {
     return () => {
       clearPlaybackTimeouts();
+      clearMetronomeTimeouts();
       if (audio) {
         audio.stopAll();
       }
     };
-  }, [clearPlaybackTimeouts, audio]);
+  }, [clearPlaybackTimeouts, clearMetronomeTimeouts, audio]);
 
   return {
     settings,
@@ -498,6 +658,8 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     pause,
     resume,
     setVolume,
+    playMetronome,
+    stopMetronome,
     regenerateEnsemblePart,
     toggleEnsemblePartMute,
     toggleEnsemblePartSolo,

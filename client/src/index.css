@@ -524,46 +524,72 @@
    PRINT STYLES - Rhythm Randomizer
    ============================================ */
 @media print {
-  /* Hide non-essential elements */
-  header,
-  .print\\:hidden,
-  button:not(.print\\:visible),
-  [data-radix-popper-content-wrapper],
+  /* Hide header */
+  header {
+    display: none !important;
+  }
+
+  /* Hide buttons */
+  button {
+    display: none !important;
+  }
+
+  /* Hide control panel */
+  .lg\:col-span-1 {
+    display: none !important;
+  }
+
+  /* Hide sticky elements */
   .sticky {
     display: none !important;
   }
 
+  /* Hide radix popovers */
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
   /* Reset page background */
-  body,
+  body {
+    background: white !important;
+  }
+
   .min-h-screen {
     background: white !important;
     min-height: auto !important;
   }
 
-  /* Expand content width */
+  /* Remove padding and margins */
   main {
     max-width: 100% !important;
-    padding: 1rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
-  /* Card styles for print */
-  .card,
-  [class*="Card"] {
-    border: 1px solid #ddd !important;
+  .grid {
+    display: block !important;
+  }
+
+  /* Pattern card - only show the notation content */
+  .print-pattern {
+    border: none !important;
     box-shadow: none !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-pattern > div:first-child {
+    display: none !important;
+  }
+
+  .print-pattern > div:last-child {
+    padding: 0 !important;
   }
 
   /* Notation display */
   svg {
     max-width: 100% !important;
     height: auto !important;
-  }
-
-  /* Grid notation print styles */
-  .rounded-lg {
-    border-radius: 0 !important;
   }
 
   /* Ensure text is black */
@@ -573,17 +599,17 @@
 
   /* Page margins */
   @page {
-    margin: 1.5cm;
+    margin: 1cm;
     size: A4;
   }
 
-  /* Hide control panels */
-  .lg\\:col-span-1 {
-    display: none !important;
+  /* Full width for notation */
+  .lg\:col-span-2 {
+    grid-column: span 3 !important;
   }
 
-  /* Full width for notation */
-  .lg\\:col-span-2 {
-    grid-column: span 3 !important;
+  /* Hide non-pattern cards */
+  .space-y-2 > *:not(.print-pattern) {
+    display: none !important;
   }
 }

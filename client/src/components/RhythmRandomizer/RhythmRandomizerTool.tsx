@@ -44,6 +44,8 @@ export function RhythmRandomizerTool() {
     pause,
     resume,
     setVolume,
+    playMetronome,
+    stopMetronome,
     regenerateEnsemblePart,
     toggleEnsemblePartMute,
     toggleEnsemblePartSolo,
@@ -78,7 +80,7 @@ export function RhythmRandomizerTool() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10 print:hidden">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/games">
@@ -107,7 +109,7 @@ export function RhythmRandomizerTool() {
       <main className="max-w-7xl mx-auto px-4 py-3">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Control Panel - Left Column */}
-          <div className="lg:col-span-1 space-y-2">
+          <div className="lg:col-span-1 space-y-2 print:hidden">
             {/* Settings Tabs */}
             <Card>
               <Tabs defaultValue="time-tempo" className="w-full">
@@ -166,10 +168,10 @@ export function RhythmRandomizerTool() {
           </div>
 
           {/* Display & Playback - Right Column */}
-          <div className="lg:col-span-2 space-y-2">
+          <div className="lg:col-span-2 space-y-2 print:col-span-3">
             {/* Notation Display */}
-            <Card>
-              <CardHeader className="py-2 px-4">
+            <Card className="print-pattern print:border-0 print:shadow-none">
+              <CardHeader className="py-2 px-4 print:hidden">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <CardTitle className="text-sm font-medium inline-block mr-3">
@@ -249,7 +251,7 @@ export function RhythmRandomizerTool() {
             </Card>
 
             {/* Playback Controls */}
-            <Card>
+            <Card className="print:hidden">
               <CardHeader className="py-2 px-4">
                 <CardTitle className="text-sm font-medium">Playback</CardTitle>
               </CardHeader>
@@ -262,6 +264,7 @@ export function RhythmRandomizerTool() {
                   countInMeasures={settings.countInMeasures}
                   metronomeEnabled={settings.metronomeEnabled}
                   volume={volume}
+                  tempo={settings.tempo}
                   onPlay={play}
                   onStop={stop}
                   onPause={pause}
@@ -270,12 +273,14 @@ export function RhythmRandomizerTool() {
                   onCountInChange={(measures) => updateSetting('countInMeasures', measures)}
                   onMetronomeChange={(enabled) => updateSetting('metronomeEnabled', enabled)}
                   onVolumeChange={setVolume}
+                  onPlayMetronome={playMetronome}
+                  onStopMetronome={stopMetronome}
                 />
               </CardContent>
             </Card>
 
             {/* Worksheet Export */}
-            <Card>
+            <Card className="print:hidden">
               <CardHeader className="py-2 px-4">
                 <CardTitle className="text-sm font-medium">Worksheet Export</CardTitle>
               </CardHeader>

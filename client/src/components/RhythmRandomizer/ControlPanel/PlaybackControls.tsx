@@ -3,7 +3,7 @@
  * Play/Stop/Pause, Loop, Count-in, Metronome, Volume controls
  */
 
-import { Play, Square, Pause, Repeat, Volume2, VolumeX } from 'lucide-react';
+import { Play, Square, Pause, Repeat, Volume2, VolumeX, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -25,6 +25,7 @@ interface PlaybackControlsProps {
   countInMeasures: 0 | 1 | 2;
   metronomeEnabled: boolean;
   volume: number;
+  tempo: number;
   onPlay: () => void;
   onStop: () => void;
   onPause: () => void;
@@ -33,6 +34,8 @@ interface PlaybackControlsProps {
   onCountInChange: (measures: 0 | 1 | 2) => void;
   onMetronomeChange: (enabled: boolean) => void;
   onVolumeChange: (volume: number) => void;
+  onPlayMetronome: () => void;
+  onStopMetronome: () => void;
 }
 
 export function PlaybackControls({
@@ -43,6 +46,7 @@ export function PlaybackControls({
   countInMeasures,
   metronomeEnabled,
   volume,
+  tempo,
   onPlay,
   onStop,
   onPause,
@@ -51,8 +55,10 @@ export function PlaybackControls({
   onCountInChange,
   onMetronomeChange,
   onVolumeChange,
+  onPlayMetronome,
+  onStopMetronome,
 }: PlaybackControlsProps) {
-  const { isPlaying, isPaused } = playbackState;
+  const { isPlaying, isPaused, isMetronomePlaying } = playbackState;
   const canPlay = hasPattern && isReady;
 
   return (
@@ -119,6 +125,19 @@ export function PlaybackControls({
 
       {/* Secondary Controls - Inline */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Standalone Metronome Button */}
+        <Button
+          onClick={isMetronomePlaying ? onStopMetronome : onPlayMetronome}
+          variant={isMetronomePlaying ? 'destructive' : 'outline'}
+          size="sm"
+          disabled={!isReady}
+          className="gap-1.5"
+          title={isMetronomePlaying ? 'Stop metronome' : `Start metronome at ${tempo} BPM`}
+        >
+          <Timer className={`w-4 h-4 ${isMetronomePlaying ? 'animate-pulse' : ''}`} />
+          {isMetronomePlaying ? 'Stop' : `${tempo} BPM`}
+        </Button>
+
         {/* Loop Toggle */}
         <div className="flex items-center gap-2">
           <Repeat className={`w-4 h-4 ${loopEnabled ? 'text-purple-600' : 'text-gray-400'}`} />
@@ -130,10 +149,10 @@ export function PlaybackControls({
           />
         </div>
 
-        {/* Metronome Toggle */}
+        {/* Click Track Toggle (metronome during playback) */}
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full border-2 ${metronomeEnabled ? 'border-purple-600 bg-purple-600' : 'border-gray-400'}`} />
-          <Label htmlFor="metronome-toggle" className="text-sm">Click</Label>
+          <Label htmlFor="metronome-toggle" className="text-sm whitespace-nowrap">Click Track</Label>
           <Switch
             id="metronome-toggle"
             checked={metronomeEnabled}

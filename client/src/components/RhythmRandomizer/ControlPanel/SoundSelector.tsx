@@ -27,6 +27,12 @@ interface SoundOptionConfig {
 
 const SOUND_OPTIONS: SoundOptionConfig[] = [
   {
+    value: 'snare',
+    label: 'Snare Drum',
+    icon: '🥁',
+    description: 'Real Philharmonia snare',
+  },
+  {
     value: 'woodblock',
     label: 'Woodblock',
     icon: '🪵',
@@ -34,9 +40,9 @@ const SOUND_OPTIONS: SoundOptionConfig[] = [
   },
   {
     value: 'drums',
-    label: 'Drums',
-    icon: '🥁',
-    description: 'Snare drum sound',
+    label: 'Synth Drums',
+    icon: '🔊',
+    description: 'Synthesized drum hit',
   },
   {
     value: 'claps',
