@@ -109,11 +109,11 @@ export function StaffNotation({
                 <span
                   key={index}
                   className={`
-                    absolute text-purple-600 font-medium whitespace-nowrap
+                    absolute text-gray-600 font-medium whitespace-nowrap
                     transition-colors duration-150 -translate-x-1/2 pointer-events-auto
                     ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
                     ${currentEventIndex === item.globalIndex && isPlaying
-                      ? 'text-purple-800 bg-purple-100 rounded px-0.5'
+                      ? 'text-red-600 bg-red-100 rounded px-0.5'
                       : ''
                     }
                   `}

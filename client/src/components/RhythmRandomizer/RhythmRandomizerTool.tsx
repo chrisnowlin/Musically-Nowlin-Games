@@ -38,12 +38,14 @@ export function RhythmRandomizerTool() {
     playbackState,
     isReady,
     volume,
+    startMeasure,
     generate,
     play,
     stop,
     pause,
     resume,
     setVolume,
+    setStartMeasure,
     playMetronome,
     stopMetronome,
     regenerateEnsemblePart,
@@ -267,6 +269,8 @@ export function RhythmRandomizerTool() {
                   metronomeEnabled={settings.metronomeEnabled}
                   volume={volume}
                   tempo={settings.tempo}
+                  measureCount={pattern?.measures.length ?? settings.measureCount}
+                  startMeasure={startMeasure}
                   onPlay={play}
                   onStop={stop}
                   onPause={pause}
@@ -275,6 +279,7 @@ export function RhythmRandomizerTool() {
                   onCountInChange={(measures) => updateSetting('countInMeasures', measures)}
                   onMetronomeChange={(enabled) => updateSetting('metronomeEnabled', enabled)}
                   onVolumeChange={setVolume}
+                  onStartMeasureChange={setStartMeasure}
                   onPlayMetronome={playMetronome}
                   onStopMetronome={stopMetronome}
                 />

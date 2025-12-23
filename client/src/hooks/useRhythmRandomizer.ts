@@ -95,14 +95,16 @@ interface UseRhythmRandomizerReturn {
   playbackState: PlaybackState;
   isReady: boolean;
   volume: number;
+  startMeasure: number;
 
   // Actions
   generate: () => void;
-  play: () => Promise<void>;
+  play: (startFromMeasure?: number) => Promise<void>;
   stop: () => void;
   pause: () => void;
   resume: () => void;
   setVolume: (volume: number) => void;
+  setStartMeasure: (measure: number) => void;
 
   // Metronome Actions
   playMetronome: () => Promise<void>;
@@ -128,10 +130,12 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const [ensemblePattern, setEnsemblePattern] = useState<EnsemblePattern | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState>(INITIAL_PLAYBACK_STATE);
   const [volume, setVolumeState] = useState<number>(0.7);
+  const [startMeasure, setStartMeasure] = useState<number>(1); // 1-indexed starting measure
 
   // Refs for playback timing
   const playbackTimeoutsRef = useRef<Set<number>>(new Set());
   const playbackStartTimeRef = useRef<number>(0);
+  const pausedMeasureRef = useRef<number>(1); // 1-indexed measure where playback was paused
 
   // Refs for standalone metronome
   const metronomeTimeoutsRef = useRef<Set<number>>(new Set());
@@ -178,6 +182,8 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     try {
       // Reset playback state when generating new pattern
       setPlaybackState(INITIAL_PLAYBACK_STATE);
+      // Reset start measure to beginning
+      setStartMeasure(1);
 
       if (settings.ensembleMode === 'single') {
         // Generate single pattern
@@ -212,13 +218,23 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     msPerBeat: number,
     soundToUse: SoundOption,
     partIndex: number = -1,
-    bodyPart?: BodyPercussionPart
+    bodyPart?: BodyPercussionPart,
+    startFromMeasure: number = 0 // 0-indexed measure to start from
   ): number => {
     let currentTime = startTimeMs;
     let eventIndex = 0;
 
     for (let m = 0; m < patternToPlay.measures.length; m++) {
       const measure = patternToPlay.measures[m];
+
+      // Skip measures before startFromMeasure
+      if (m < startFromMeasure) {
+        // Still count events for proper indexing
+        const expandedEvents = expandBeamedGroups(measure.events);
+        eventIndex += expandedEvents.length;
+        continue;
+      }
+
       let beatInMeasure = 0;
 
       // Expand beamed groups into individual notes for playback
@@ -307,7 +323,9 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   }, []);
 
   // Play the pattern (single or ensemble)
-  const play = useCallback(async () => {
+  // Optional startFromMeasure parameter allows resuming from a specific measure
+  const play = useCallback(async (startFromMeasure?: number) => {
+    const effectiveStartMeasure = startFromMeasure ?? startMeasure;
     // For ensemble mode, we need ensemblePattern; for single mode, we need pattern
     const isEnsembleMode = settings.ensembleMode !== 'single' && ensemblePattern;
 
@@ -330,7 +348,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
         isMetronomePlaying: false, // Pattern takes over from standalone metronome
         currentMeasure: 0,
         currentBeat: 0,
-        currentEventIndex: 0,
+        currentEventIndex: -1, // -1 means no note highlighted yet (e.g., during count-in)
         currentPartIndex: -1,
       }));
 
@@ -365,17 +383,32 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       let totalDuration = currentTime;
 
       // Calculate pattern duration for metronome click scheduling
+      // Only count beats for measures being played (from effectiveStartMeasure onwards)
       let patternDurationBeats = 0;
+      const startMeasureIndex = effectiveStartMeasure - 1; // Convert to 0-indexed
+
       if (isEnsembleMode && ensemblePattern) {
         if (ensemblePattern.mode === 'callResponse') {
-          // Sequential: sum of all parts
-          patternDurationBeats = ensemblePattern.parts.reduce((sum, p) => sum + p.pattern.totalDurationBeats, 0);
+          // Sequential: sum of all parts, but only from startMeasure
+          patternDurationBeats = ensemblePattern.parts.reduce((sum, p) => {
+            const measuresPlayed = p.pattern.measures.slice(startMeasureIndex);
+            const beatsPlayed = measuresPlayed.reduce((beatSum, m) =>
+              beatSum + m.events.reduce((eventSum, e) => eventSum + e.duration, 0), 0);
+            return sum + beatsPlayed;
+          }, 0);
         } else {
-          // Simultaneous: max duration
-          patternDurationBeats = Math.max(...ensemblePattern.parts.map(p => p.pattern.totalDurationBeats));
+          // Simultaneous: max duration from startMeasure
+          patternDurationBeats = Math.max(...ensemblePattern.parts.map(p => {
+            const measuresPlayed = p.pattern.measures.slice(startMeasureIndex);
+            return measuresPlayed.reduce((beatSum, m) =>
+              beatSum + m.events.reduce((eventSum, e) => eventSum + e.duration, 0), 0);
+          }));
         }
       } else if (pattern) {
-        patternDurationBeats = pattern.totalDurationBeats;
+        // Only count beats from startMeasure onwards
+        const measuresPlayed = pattern.measures.slice(startMeasureIndex);
+        patternDurationBeats = measuresPlayed.reduce((beatSum, m) =>
+          beatSum + m.events.reduce((eventSum, e) => eventSum + e.duration, 0), 0);
       }
 
       // Schedule metronome clicks during playback (if enabled)
@@ -416,7 +449,8 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
                 msPerBeat,
                 partSound,
                 partIndex,
-                part.bodyPart
+                part.bodyPart,
+                effectiveStartMeasure - 1 // Convert 1-indexed to 0-indexed
               );
             } else {
               // Even if muted, advance time for the part duration
@@ -449,7 +483,8 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
                 msPerBeat,
                 partSound,
                 partIndex,
-                part.bodyPart
+                part.bodyPart,
+                effectiveStartMeasure - 1 // Convert 1-indexed to 0-indexed
               );
               maxEndTime = Math.max(maxEndTime, endTime);
             }
@@ -473,7 +508,9 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           currentTime,
           msPerBeat,
           settings.sound,
-          -1
+          -1,
+          undefined,
+          effectiveStartMeasure - 1 // Convert 1-indexed to 0-indexed
         );
       }
 
@@ -493,7 +530,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
       console.error('Playback error:', error);
       setPlaybackState(INITIAL_PLAYBACK_STATE);
     }
-  }, [pattern, ensemblePattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts, clearMetronomeTimeouts, schedulePatternPlayback, isPartAudible]);
+  }, [pattern, ensemblePattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts, clearMetronomeTimeouts, schedulePatternPlayback, isPartAudible, startMeasure]);
 
   // Stop playback
   const stop = useCallback(() => {
@@ -510,18 +547,23 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     if (audio) {
       audio.stopAll();
     }
-    setPlaybackState(prev => ({
-      ...prev,
-      isPlaying: false,
-      isPaused: true,
-      elapsedTime: Date.now() - playbackStartTimeRef.current,
-    }));
+    setPlaybackState(prev => {
+      // Store the current measure (1-indexed) for resuming
+      pausedMeasureRef.current = prev.currentMeasure + 1;
+      return {
+        ...prev,
+        isPlaying: false,
+        isPaused: true,
+        elapsedTime: Date.now() - playbackStartTimeRef.current,
+      };
+    });
   }, [audio, clearPlaybackTimeouts]);
 
-  // Resume playback (simplified - just restarts for now)
+  // Resume playback from paused position
   const resume = useCallback(() => {
     if (playbackState.isPaused) {
-      play();
+      // Play from the measure where we paused
+      play(pausedMeasureRef.current);
     }
   }, [playbackState.isPaused, play]);
 
@@ -665,12 +707,14 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     playbackState,
     isReady,
     volume,
+    startMeasure,
     generate,
     play,
     stop,
     pause,
     resume,
     setVolume,
+    setStartMeasure,
     playMetronome,
     stopMetronome,
     regenerateEnsemblePart,

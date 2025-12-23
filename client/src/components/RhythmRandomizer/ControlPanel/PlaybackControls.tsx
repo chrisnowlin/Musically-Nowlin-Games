@@ -3,7 +3,7 @@
  * Play/Stop/Pause, Loop, Count-in, Metronome, Volume controls
  */
 
-import { Play, Square, Pause, Repeat, Volume2, VolumeX, Timer } from 'lucide-react';
+import { Play, Square, Pause, Repeat, Volume2, VolumeX, Timer, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { PlaybackState } from '@/lib/rhythmRandomizer/types';
 
 interface PlaybackControlsProps {
@@ -26,6 +32,8 @@ interface PlaybackControlsProps {
   metronomeEnabled: boolean;
   volume: number;
   tempo: number;
+  measureCount: number;
+  startMeasure: number;
   onPlay: () => void;
   onStop: () => void;
   onPause: () => void;
@@ -34,6 +42,7 @@ interface PlaybackControlsProps {
   onCountInChange: (measures: 0 | 1 | 2) => void;
   onMetronomeChange: (enabled: boolean) => void;
   onVolumeChange: (volume: number) => void;
+  onStartMeasureChange: (measure: number) => void;
   onPlayMetronome: () => void;
   onStopMetronome: () => void;
 }
@@ -47,6 +56,8 @@ export function PlaybackControls({
   metronomeEnabled,
   volume,
   tempo,
+  measureCount,
+  startMeasure,
   onPlay,
   onStop,
   onPause,
@@ -55,6 +66,7 @@ export function PlaybackControls({
   onCountInChange,
   onMetronomeChange,
   onVolumeChange,
+  onStartMeasureChange,
   onPlayMetronome,
   onStopMetronome,
 }: PlaybackControlsProps) {
@@ -66,15 +78,41 @@ export function PlaybackControls({
       {/* Main Transport Controls */}
       <div className="flex items-center justify-center gap-2">
         {!isPlaying && !isPaused && (
-          <Button
-            onClick={onPlay}
-            disabled={!canPlay}
-            size="default"
-            className="gap-2 min-w-[100px]"
-          >
-            <Play className="w-4 h-4" />
-            Play
-          </Button>
+          <div className="flex items-center">
+            {/* Main play button */}
+            <Button
+              onClick={onPlay}
+              disabled={!canPlay}
+              size="default"
+              className="gap-2 rounded-r-none border-r border-primary-foreground/20 h-9"
+            >
+              <Play className="w-4 h-4" />
+              {startMeasure === 1 ? 'Play' : `Play from m.${startMeasure}`}
+            </Button>
+            {/* Dropdown trigger */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={!canPlay}
+                  size="default"
+                  className="px-2 rounded-l-none -ml-px h-9"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {Array.from({ length: measureCount }, (_, i) => (
+                  <DropdownMenuItem
+                    key={i + 1}
+                    onClick={() => onStartMeasureChange(i + 1)}
+                    className={startMeasure === i + 1 ? 'bg-accent' : ''}
+                  >
+                    {i + 1 === 1 ? 'From beginning' : `From measure ${i + 1}`}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
 
         {isPlaying && (

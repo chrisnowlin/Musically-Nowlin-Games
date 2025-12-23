@@ -229,7 +229,7 @@ function createStaveNote(event: RhythmEvent, isHighlighted: boolean, stemDir: nu
 
   // Apply highlight styling
   if (isHighlighted) {
-    staveNote.setStyle({ fillStyle: '#8b5cf6', strokeStyle: '#8b5cf6' });
+    staveNote.setStyle({ fillStyle: '#ef4444', strokeStyle: '#ef4444' });
   }
 
   return staveNote;
