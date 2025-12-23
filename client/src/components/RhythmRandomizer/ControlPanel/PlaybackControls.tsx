@@ -56,17 +56,17 @@ export function PlaybackControls({
   const canPlay = hasPattern && isReady;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Main Transport Controls */}
       <div className="flex items-center justify-center gap-2">
         {!isPlaying && !isPaused && (
           <Button
             onClick={onPlay}
             disabled={!canPlay}
-            size="lg"
+            size="default"
             className="gap-2 min-w-[100px]"
           >
-            <Play className="w-5 h-5" />
+            <Play className="w-4 h-4" />
             Play
           </Button>
         )}
@@ -75,20 +75,20 @@ export function PlaybackControls({
           <>
             <Button
               onClick={onPause}
-              size="lg"
+              size="default"
               variant="outline"
               className="gap-2"
             >
-              <Pause className="w-5 h-5" />
+              <Pause className="w-4 h-4" />
               Pause
             </Button>
             <Button
               onClick={onStop}
-              size="lg"
+              size="default"
               variant="destructive"
               className="gap-2"
             >
-              <Square className="w-5 h-5" />
+              <Square className="w-4 h-4" />
               Stop
             </Button>
           </>
@@ -98,33 +98,31 @@ export function PlaybackControls({
           <>
             <Button
               onClick={onResume}
-              size="lg"
+              size="default"
               className="gap-2 min-w-[100px]"
             >
-              <Play className="w-5 h-5" />
+              <Play className="w-4 h-4" />
               Resume
             </Button>
             <Button
               onClick={onStop}
-              size="lg"
+              size="default"
               variant="outline"
               className="gap-2"
             >
-              <Square className="w-5 h-5" />
+              <Square className="w-4 h-4" />
               Stop
             </Button>
           </>
         )}
       </div>
 
-      {/* Secondary Controls */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Secondary Controls - Inline */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Loop Toggle */}
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Repeat className={`w-4 h-4 ${loopEnabled ? 'text-purple-600' : 'text-gray-400'}`} />
-            <Label htmlFor="loop-toggle" className="text-sm">Loop</Label>
-          </div>
+        <div className="flex items-center gap-2">
+          <Repeat className={`w-4 h-4 ${loopEnabled ? 'text-purple-600' : 'text-gray-400'}`} />
+          <Label htmlFor="loop-toggle" className="text-sm">Loop</Label>
           <Switch
             id="loop-toggle"
             checked={loopEnabled}
@@ -133,60 +131,58 @@ export function PlaybackControls({
         </div>
 
         {/* Metronome Toggle */}
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-2">
-            <div className={`w-4 h-4 rounded-full border-2 ${metronomeEnabled ? 'border-purple-600 bg-purple-600' : 'border-gray-400'}`} />
-            <Label htmlFor="metronome-toggle" className="text-sm">Click</Label>
-          </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full border-2 ${metronomeEnabled ? 'border-purple-600 bg-purple-600' : 'border-gray-400'}`} />
+          <Label htmlFor="metronome-toggle" className="text-sm">Click</Label>
           <Switch
             id="metronome-toggle"
             checked={metronomeEnabled}
             onCheckedChange={onMetronomeChange}
           />
         </div>
-      </div>
 
-      {/* Count-in Selector */}
-      <div className="flex items-center gap-3">
-        <Label htmlFor="count-in" className="text-sm whitespace-nowrap">Count-in:</Label>
-        <Select
-          value={String(countInMeasures)}
-          onValueChange={(value) => onCountInChange(Number(value) as 0 | 1 | 2)}
-        >
-          <SelectTrigger id="count-in" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0">None</SelectItem>
-            <SelectItem value="1">1 measure</SelectItem>
-            <SelectItem value="2">2 measures</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        {/* Count-in Selector */}
+        <div className="flex items-center gap-2">
+          <Label htmlFor="count-in" className="text-sm whitespace-nowrap">Count-in:</Label>
+          <Select
+            value={String(countInMeasures)}
+            onValueChange={(value) => onCountInChange(Number(value) as 0 | 1 | 2)}
+          >
+            <SelectTrigger id="count-in" className="w-24 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">None</SelectItem>
+              <SelectItem value="1">1 measure</SelectItem>
+              <SelectItem value="2">2 measures</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Volume Control */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => onVolumeChange(volume > 0 ? 0 : 0.7)}
-          className="p-1 hover:bg-gray-100 rounded"
-        >
-          {volume > 0 ? (
-            <Volume2 className="w-4 h-4 text-gray-600" />
-          ) : (
-            <VolumeX className="w-4 h-4 text-gray-400" />
-          )}
-        </button>
-        <Slider
-          value={[volume * 100]}
-          onValueChange={([value]) => onVolumeChange(value / 100)}
-          min={0}
-          max={100}
-          step={5}
-          className="flex-1"
-        />
-        <span className="text-xs text-gray-500 w-8 text-right">
-          {Math.round(volume * 100)}%
-        </span>
+        {/* Volume Control */}
+        <div className="flex items-center gap-2 flex-1 min-w-[120px]">
+          <button
+            onClick={() => onVolumeChange(volume > 0 ? 0 : 0.7)}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            {volume > 0 ? (
+              <Volume2 className="w-4 h-4 text-gray-600" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+          <Slider
+            value={[volume * 100]}
+            onValueChange={([value]) => onVolumeChange(value / 100)}
+            min={0}
+            max={100}
+            step={5}
+            className="flex-1"
+          />
+          <span className="text-xs text-gray-500 w-8 text-right">
+            {Math.round(volume * 100)}%
+          </span>
+        </div>
       </div>
     </div>
   );

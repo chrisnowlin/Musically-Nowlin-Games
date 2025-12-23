@@ -6,13 +6,16 @@
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { NoteValue, RestValue } from '@/lib/rhythmRandomizer/types';
 
 interface NoteValueSelectorProps {
   selectedValues: NoteValue[];
   selectedRestValues: RestValue[];
+  restProbability: number;
   onNoteValuesChange: (values: NoteValue[]) => void;
   onRestValuesChange: (values: RestValue[]) => void;
+  onRestProbabilityChange: (value: number) => void;
 }
 
 interface NoteOption {
@@ -115,8 +118,10 @@ function getBeamedGroupConfig(value: NoteValue) {
 export function NoteValueSelector({
   selectedValues,
   selectedRestValues,
+  restProbability,
   onNoteValuesChange,
-  onRestValuesChange
+  onRestValuesChange,
+  onRestProbabilityChange,
 }: NoteValueSelectorProps) {
   const handleNoteToggle = (noteValue: NoteValue) => {
     if (selectedValues.includes(noteValue)) {
@@ -226,6 +231,27 @@ export function NoteValueSelector({
               </div>
             </label>
           ))}
+        </div>
+
+        {/* Rest Frequency Slider */}
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="rest-probability" className="text-sm">Rest Frequency</Label>
+            <span className="text-xs text-gray-500">{restProbability}%</span>
+          </div>
+          <Slider
+            id="rest-probability"
+            value={[restProbability]}
+            onValueChange={([value]) => onRestProbabilityChange(value)}
+            min={0}
+            max={50}
+            step={5}
+            disabled={selectedRestValues.length === 0}
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>No rests</span>
+            <span>Many rests</span>
+          </div>
         </div>
       </div>
     </div>

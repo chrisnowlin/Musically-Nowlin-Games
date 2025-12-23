@@ -160,6 +160,17 @@ export interface RenderOptions {
   containerWidth?: number; // If provided, staveWidth will be calculated to fit
 }
 
+export interface NotePosition {
+  x: number;
+  y: number;
+  globalIndex: number;
+  measureIndex: number;
+}
+
+export interface RenderResult {
+  notePositions: NotePosition[];
+}
+
 const DEFAULT_RENDER_OPTIONS: RenderOptions = {
   width: 800,
   height: 120,
@@ -277,10 +288,12 @@ function getTripletGroups(notes: StaveNote[], events: RhythmEvent[]): StaveNote[
 
 /**
  * Render a single measure to a stave
+ * Returns: { nextGlobalIndex, notePositions }
  */
 function renderMeasure(
   context: RenderContext,
   measure: Measure,
+  measureIndex: number,
   x: number,
   y: number,
   width: number,
@@ -288,7 +301,7 @@ function renderMeasure(
   isFirstMeasure: boolean,
   highlightEventIndex: number,
   globalEventOffset: number
-): number {
+): { nextGlobalIndex: number; notePositions: NotePosition[] } {
   const timeSig = TIME_SIGNATURES[timeSignature];
 
   // Create stave
@@ -322,7 +335,9 @@ function renderMeasure(
     staveNotes.push(staveNote);
   }
 
-  if (staveNotes.length === 0) return globalEventOffset;
+  if (staveNotes.length === 0) {
+    return { nextGlobalIndex: globalEventOffset, notePositions: [] };
+  }
 
   // Calculate actual beats in this measure (allowing for variable measure lengths)
   const actualBeats = measure.events.reduce((sum, event) => sum + event.duration, 0);
@@ -382,8 +397,19 @@ function renderMeasure(
     }
   });
 
+  // Collect note positions after rendering
+  const notePositions: NotePosition[] = staveNotes.map((note, i) => ({
+    x: note.getAbsoluteX(),
+    y: y + 60, // Below the stave (staff is typically ~50px, add some padding)
+    globalIndex: globalEventOffset + i,
+    measureIndex,
+  }));
+
   // Return offset using expanded event count to match playback indices
-  return globalEventOffset + expandedEvents.length;
+  return {
+    nextGlobalIndex: globalEventOffset + expandedEvents.length,
+    notePositions,
+  };
 }
 
 // ============================================
@@ -392,29 +418,37 @@ function renderMeasure(
 
 /**
  * Render a complete rhythm pattern to a div element
+ * Returns note positions for syllable alignment
  */
 export function renderPatternToDiv(
   containerDiv: HTMLDivElement,
   pattern: RhythmPattern,
   options: Partial<RenderOptions> = {}
-): void {
+): RenderResult {
   const opts = { ...DEFAULT_RENDER_OPTIONS, ...options };
 
   // Clear existing content
   containerDiv.innerHTML = '';
 
-  // Calculate measures per line and stave width based on container width
-  const measuresPerLine = Math.min(pattern.measures.length, 4);
-  const lines = Math.ceil(pattern.measures.length / measuresPerLine);
-
   // Get expected beats per measure from time signature
   const timeSig = TIME_SIGNATURES[pattern.settings.timeSignature];
   const expectedBeatsPerMeasure = timeSig.beatsPerMeasure;
 
-  // Calculate actual durations for each measure
-  const measureDurations = pattern.measures.map(measure => 
-    measure.events.reduce((sum, event) => sum + event.duration, 0)
+  // Calculate expanded note counts for each measure (for width calculations)
+  const measureNoteCounts = pattern.measures.map(measure =>
+    expandBeamedGroups(measure.events).length
   );
+
+  // Find the maximum note count to determine measures per line
+  const maxNoteCount = Math.max(...measureNoteCounts);
+
+  // Adjust measures per line based on density - fewer measures per line for dense patterns
+  // Standard: 4 measures per line for simple patterns (4-6 notes per measure)
+  // Reduce to 2 measures per line for dense patterns (10+ notes per measure)
+  // Reduce to 1 measure per line for very dense patterns (16+ notes per measure)
+  const densityFactor = maxNoteCount >= 16 ? 1 : maxNoteCount > 10 ? 2 : maxNoteCount > 6 ? 3 : 4;
+  const measuresPerLine = Math.min(pattern.measures.length, densityFactor);
+  const lines = Math.ceil(pattern.measures.length / measuresPerLine);
 
   // Calculate base stave width to fit within container
   // First measure needs extra 60px for clef and time signature
@@ -422,20 +456,26 @@ export function renderPatternToDiv(
   const availableWidth = opts.containerWidth || opts.width;
   const totalSpacing = opts.measureSpacing * (measuresPerLine - 1);
   const availableForStaves = availableWidth - opts.startX - totalSpacing - firstMeasureExtra - 20; // 20px padding
-  const baseStaveWidth = opts.containerWidth 
+  const baseStaveWidth = opts.containerWidth
     ? Math.max(120, Math.floor(availableForStaves / measuresPerLine))
     : opts.staveWidth;
 
-  // Calculate desired widths for each measure based on actual duration
-  // Scale width proportionally to actual beats vs expected beats
-  const desiredWidths = measureDurations.map((actualBeats, index) => {
+  // Minimum pixels per note to ensure readability of syllables
+  const minPixelsPerNote = 32;
+
+  // Calculate desired widths for each measure based on note count (not just duration)
+  // This ensures measures with many notes get more space
+  const desiredWidths = measureNoteCounts.map((noteCount, index) => {
     const isFirstInLine = index % measuresPerLine === 0;
     const baseWidth = isFirstInLine ? baseStaveWidth + firstMeasureExtra : baseStaveWidth;
-    // Scale width based on actual duration (with minimum width constraint)
-    const durationRatio = actualBeats / expectedBeatsPerMeasure;
-    const scaledWidth = baseWidth * durationRatio;
-    // Ensure minimum width for readability
-    return Math.max(isFirstInLine ? baseStaveWidth * 0.7 + firstMeasureExtra : baseStaveWidth * 0.7, scaledWidth);
+
+    // Calculate minimum width needed based on note count
+    const minWidthForNotes = noteCount * minPixelsPerNote;
+
+    // Use the larger of: base width or minimum for note count
+    const desiredWidth = Math.max(baseWidth, minWidthForNotes);
+
+    return desiredWidth;
   });
 
   // Calculate total width needed for each line and find the maximum
@@ -504,6 +544,7 @@ export function renderPatternToDiv(
   let currentY = opts.startY;
   let globalEventIndex = 0;
   let measuresInCurrentLine = 0;
+  const allNotePositions: NotePosition[] = [];
 
   pattern.measures.forEach((measure, measureIndex) => {
     const isFirstMeasure = measureIndex === 0;
@@ -517,9 +558,10 @@ export function renderPatternToDiv(
       measuresInCurrentLine = 0;
     }
 
-    globalEventIndex = renderMeasure(
+    const result = renderMeasure(
       context,
       measure,
+      measureIndex,
       currentX,
       currentY,
       measureWidth,
@@ -529,9 +571,14 @@ export function renderPatternToDiv(
       globalEventIndex
     );
 
+    globalEventIndex = result.nextGlobalIndex;
+    allNotePositions.push(...result.notePositions);
+
     currentX += measureWidth + opts.measureSpacing;
     measuresInCurrentLine++;
   });
+
+  return { notePositions: allNotePositions };
 }
 
 /**

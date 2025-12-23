@@ -273,9 +273,7 @@ function generateEvent(
 
 /**
  * Generate a single measure of rhythm
- * Allows slight variations in measure length (±1 beat) to improve readability
- * when measures are densely packed. Dense measures can end slightly early,
- * sparse measures can extend slightly to fill space better.
+ * Strictly enforces that measures fill exactly the time signature's beat count
  */
 function generateMeasure(
   measureNumber: number,
@@ -286,51 +284,51 @@ function generateMeasure(
   const targetBeats = getMeasureBeats(timeSignature);
   const events: RhythmEvent[] = [];
   let currentBeat = 0;
-  
-  // Allow measures to vary by up to 1 beat for readability
-  const minBeats = Math.max(0.5, targetBeats - 1);
-  const maxBeats = targetBeats + 1;
-  
-  // Track measure density (events per beat) to detect when a measure is getting too dense
-  let eventCount = 0;
-  const denseThreshold = 2.5; // More than 2.5 events per beat is considered dense
 
-  while (currentBeat < maxBeats) {
-    const remainingBeats = maxBeats - currentBeat;
-    
-    // Calculate current density
-    const currentDensity = eventCount / Math.max(0.1, currentBeat);
-    
-    // If we're past minimum beats, check if we should end early for readability
-    if (currentBeat >= minBeats) {
-      // If measure is dense and we're close to target, end early to improve readability
-      if (currentDensity > denseThreshold && currentBeat >= targetBeats - 0.5) {
-        // End if we're within 0.25 beats of target (close enough)
-        if (Math.abs(currentBeat - targetBeats) <= 0.25) {
-          break;
-        }
+  // Use small epsilon for floating point comparison
+  const epsilon = 0.001;
+
+  while (targetBeats - currentBeat > epsilon) {
+    const remainingBeats = targetBeats - currentBeat;
+
+    // Get notes that fit exactly in remaining space
+    const availableNotes = getAvailableNoteValues(remainingBeats, settings.allowedNoteValues, settings);
+    const availableRests = getAvailableRestValues(remainingBeats, allowedRestValues);
+
+    // If no notes or rests fit, we need to fill with the smallest available value
+    if (availableNotes.length === 0 && availableRests.length === 0) {
+      // Find the smallest note or rest that could fill the gap
+      const smallestFiller = findSmallestFiller(remainingBeats, settings, allowedRestValues);
+      if (smallestFiller) {
+        events.push(smallestFiller);
+        currentBeat += smallestFiller.duration;
+      } else {
+        // Ultimate fallback: create a rest with exact remaining duration
+        events.push({
+          type: 'rest',
+          value: 'sixteenthRest',
+          duration: remainingBeats,
+        });
+        currentBeat = targetBeats;
       }
-      
-      // If we've reached target beats, end the measure (allow slight overflow up to 0.5 beats)
-      if (currentBeat >= targetBeats) {
-        // End if we're within 0.5 beats of target (acceptable variation)
-        if (currentBeat <= targetBeats + 0.5) {
-          break;
-        }
-        // If we're over by more than 0.5 beats, only continue if there's significant space left
-        if (remainingBeats < 0.5) {
-          break;
-        }
-      }
+      continue;
     }
-    
+
     const event = generateEvent(remainingBeats, currentBeat, settings, timeSignature, allowedRestValues);
     events.push(event);
     currentBeat += event.duration;
-    eventCount++;
-    
+
     // Safety check: prevent infinite loops
-    if (events.length > 50) {
+    if (events.length > 64) {
+      // Fill remaining with appropriate rest
+      const remaining = targetBeats - currentBeat;
+      if (remaining > epsilon) {
+        events.push({
+          type: 'rest',
+          value: 'sixteenthRest',
+          duration: remaining,
+        });
+      }
       break;
     }
   }
@@ -339,6 +337,57 @@ function generateMeasure(
     events,
     measureNumber,
   };
+}
+
+/**
+ * Find the smallest note or rest value that can fill the remaining beats
+ */
+function findSmallestFiller(
+  remainingBeats: number,
+  settings: RhythmSettings,
+  allowedRestValues: RestValue[]
+): RhythmEvent | null {
+  // Check all possible note values, sorted by duration (smallest first)
+  const allNotes: NoteValue[] = ['sixteenth', 'eighth', 'quarter', 'half', 'whole'];
+  const allRests: RestValue[] = ['sixteenthRest', 'eighthRest', 'quarterRest', 'halfRest', 'wholeRest'];
+
+  // Try to find a note that fits exactly
+  for (const note of allNotes) {
+    const duration = NOTE_DURATIONS[note];
+    if (Math.abs(duration - remainingBeats) < 0.001) {
+      return {
+        type: 'note',
+        value: note,
+        duration: duration,
+      };
+    }
+  }
+
+  // Try to find a rest that fits exactly
+  for (const rest of allRests) {
+    const duration = REST_DURATIONS[rest];
+    if (Math.abs(duration - remainingBeats) < 0.001) {
+      return {
+        type: 'rest',
+        value: rest,
+        duration: duration,
+      };
+    }
+  }
+
+  // Try to find the smallest note that fits within remaining beats
+  for (const note of allNotes) {
+    const duration = NOTE_DURATIONS[note];
+    if (duration <= remainingBeats + 0.001) {
+      return {
+        type: 'note',
+        value: note,
+        duration: duration,
+      };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -397,20 +446,20 @@ export function getFlattenedEvents(pattern: RhythmPattern): RhythmEvent[] {
 
 /**
  * Validate that a pattern correctly fills all measures
- * Allows for slight variations (±1 beat) for readability
+ * Uses strict tolerance for floating point precision
  */
 export function validatePattern(pattern: RhythmPattern): boolean {
   const timeSignature = TIME_SIGNATURES[pattern.settings.timeSignature];
   const expectedBeats = getMeasureBeats(timeSignature);
-  const tolerance = 1.0; // Allow ±1 beat variation
+  const epsilon = 0.001; // Strict floating point tolerance
 
   for (const measure of pattern.measures) {
     const totalBeats = measure.events.reduce((sum, e) => sum + e.duration, 0);
     const difference = Math.abs(totalBeats - expectedBeats);
-    
-    if (difference > tolerance) {
+
+    if (difference > epsilon) {
       console.warn(
-        `Measure ${measure.measureNumber} has ${totalBeats} beats, expected ${expectedBeats} (±${tolerance})`
+        `Measure ${measure.measureNumber} has ${totalBeats} beats, expected ${expectedBeats}`
       );
       return false;
     }

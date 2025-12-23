@@ -17,15 +17,50 @@ import {
 // KODALY SYLLABLES
 // ============================================
 
-const KODALY_NOTE_SYLLABLES: Partial<Record<NoteValue, string>> = {
-  whole: 'ta-a-a-a',
-  half: 'ta-a',
-  quarter: 'ta',
-  eighth: 'ti',
-  sixteenth: 'ti-ka',
-  tripletQuarter: 'tri-o-la',
-  tripletEighth: 'tri',
-};
+// Kodály uses rhythm syllables based on note duration AND beat position
+// For sixteenth notes: ti-ri-ti-ri (or ti-ka-ti-ka in some regions)
+function getKodalySyllable(beatPosition: number, duration: number): string {
+  // Normalize position within beat (0-1)
+  const pos = beatPosition % 1;
+
+  // Whole note
+  if (duration >= 4) {
+    return 'ta-a-a-a';
+  }
+
+  // Half note
+  if (duration >= 2) {
+    return 'ta-a';
+  }
+
+  // Quarter note
+  if (duration >= 1) {
+    return 'ta';
+  }
+
+  // Eighth notes - "ti"
+  if (duration >= 0.5) {
+    return 'ti';
+  }
+
+  // Sixteenth notes - position-based: ti-ri-ti-ri
+  if (duration >= 0.25) {
+    // On the beat or on the "and" = "ti"
+    if (pos < 0.01 || pos > 0.99) return 'ti';
+    if (Math.abs(pos - 0.5) < 0.01) return 'ti';
+    // On the "e" or "a" positions = "ri"
+    if (Math.abs(pos - 0.25) < 0.01) return 'ri';
+    if (Math.abs(pos - 0.75) < 0.01) return 'ri';
+    return 'ti';
+  }
+
+  // Triplets
+  if (duration === 1/3 || duration === 2/3) {
+    return 'tri';
+  }
+
+  return 'ta';
+}
 
 const KODALY_REST_SYLLABLES: Record<RestValue, string> = {
   wholeRest: '(rest)',
@@ -177,7 +212,7 @@ export function getSyllableForEvent(
   // Handle notes
   switch (system) {
     case 'kodaly':
-      return KODALY_NOTE_SYLLABLES[event.value as NoteValue] || 'ta';
+      return getKodalySyllable(beatPosition, duration);
     case 'takadimi':
       return getTakadimiSyllable(beatPosition, duration);
     case 'gordon':

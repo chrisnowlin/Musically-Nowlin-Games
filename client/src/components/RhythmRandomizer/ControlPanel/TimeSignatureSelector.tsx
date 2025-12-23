@@ -39,7 +39,7 @@ export function TimeSignatureSelector({ value, onChange }: TimeSignatureSelector
         <SelectContent>
           {TIME_SIGNATURE_OPTIONS.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              <span className="font-mono font-bold">{option.label}</span>
+              <span className="font-bold text-lg" style={{ fontFamily: '"Noto Music", serif' }}>{option.label}</span>
               <span className="text-gray-500 ml-2 text-sm">({option.description})</span>
             </SelectItem>
           ))}
