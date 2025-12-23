@@ -43,6 +43,8 @@ export interface RhythmEvent {
   isTriplet?: boolean;
   tieToNext?: boolean;
   syllable?: string; // Counting syllable (e.g., "ta", "ti-ti")
+  pitch?: string; // e.g., 'C4', 'D#4', 'Eb5'
+  vexflowKey?: string; // e.g., 'c/4', 'd#/4', 'eb/5'
 }
 
 export interface Measure {
@@ -121,6 +123,8 @@ export type StaffLineMode = 'single' | 'full';
 
 export type StemDirection = 'up' | 'down';
 
+export type ClefType = 'treble' | 'bass';
+
 export type NoteDensity = 'sparse' | 'medium' | 'dense';
 
 export interface RhythmSettings {
@@ -152,6 +156,7 @@ export interface RhythmSettings {
   notationMode: NotationMode;
   staffLineMode: StaffLineMode;
   stemDirection: StemDirection;
+  clef: ClefType;
   countingSystem: CountingSystem;
   showSyllables: boolean;
 
@@ -183,6 +188,7 @@ export const DEFAULT_SETTINGS: RhythmSettings = {
   notationMode: 'staff',
   staffLineMode: 'single',
   stemDirection: 'up',
+  clef: 'treble',
   countingSystem: 'takadimi',
   showSyllables: true,
   ensembleMode: 'single',

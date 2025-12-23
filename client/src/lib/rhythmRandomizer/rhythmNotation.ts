@@ -24,6 +24,7 @@ import {
   RestValue,
   StaffLineMode,
   StemDirection,
+  ClefType,
   TIME_SIGNATURES,
 } from './types';
 
@@ -95,6 +96,7 @@ export function isBeamedGroup(noteValue: NoteValue): boolean {
 
 /**
  * Expand beamed group events into individual note events
+ * Preserves pitch and vexflowKey from the parent event for sight reading
  */
 export function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
   const expanded: RhythmEvent[] = [];
@@ -106,6 +108,7 @@ export function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
       // Check if it's a mixed group (has 'notes' array) or uniform group (has 'count')
       if ('notes' in groupInfo) {
         // Mixed group - expand each note in the sequence
+        // Copy pitch/vexflowKey from parent event to all expanded notes
         groupInfo.notes.forEach((note, i) => {
           expanded.push({
             type: 'note',
@@ -113,10 +116,13 @@ export function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
             duration: note.duration,
             isAccented: i === 0 ? event.isAccented : false,
             isTriplet: false,
+            pitch: event.pitch,
+            vexflowKey: event.vexflowKey,
           });
         });
       } else {
         // Uniform group - create identical notes
+        // Copy pitch/vexflowKey from parent event to all expanded notes
         for (let i = 0; i < groupInfo.count; i++) {
           expanded.push({
             type: 'note',
@@ -124,6 +130,8 @@ export function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
             duration: groupInfo.duration,
             isAccented: i === 0 ? event.isAccented : false,
             isTriplet: false,
+            pitch: event.pitch,
+            vexflowKey: event.vexflowKey,
           });
         }
       }
@@ -144,8 +152,44 @@ const REST_VALUE_TO_VEXFLOW: Record<RestValue, string> = {
   sixteenthRest: '16r',
 };
 
-// Rhythm-only note position (single line percussion clef uses 'b/4')
-const RHYTHM_NOTE_KEY = 'b/4';
+// Note positions for different clefs
+// For percussion/single line: b/4 (middle line)
+// For treble clef: b/4 (middle of staff)
+// For bass clef: d/3 (middle of staff)
+const NOTE_KEYS: Record<ClefType | 'percussion', string> = {
+  percussion: 'b/4',
+  treble: 'b/4',
+  bass: 'd/3',
+};
+
+/**
+ * Get the appropriate note key for the given staff configuration
+ */
+function getNoteKey(staffLineMode: StaffLineMode, clef: ClefType): string {
+  if (staffLineMode === 'single') {
+    return NOTE_KEYS.percussion;
+  }
+  return NOTE_KEYS[clef];
+}
+
+/**
+ * Get the note key for a specific event, checking for event-specific pitch
+ */
+function getNoteKeyForEvent(
+  event: { vexflowKey?: string },
+  staffLineMode: StaffLineMode,
+  clef: ClefType
+): string {
+  // If event has a pre-computed VexFlow key, use it
+  if (event.vexflowKey) {
+    return event.vexflowKey;
+  }
+  // Fall back to rhythm-only fixed position
+  if (staffLineMode === 'single') {
+    return NOTE_KEYS.percussion;
+  }
+  return NOTE_KEYS[clef];
+}
 
 // ============================================
 // STAVE RENDERING
@@ -162,8 +206,10 @@ export interface RenderOptions {
   containerWidth?: number; // If provided, staveWidth will be calculated to fit
   staffLineMode?: StaffLineMode; // 'single' for single-line percussion, 'full' for 5-line staff
   stemDirection?: StemDirection; // 'up' or 'down' for note stems
+  clef?: ClefType; // 'treble' or 'bass' clef (only used with 'full' staffLineMode)
   showMeasureNumbers?: boolean; // Show measure numbers above each measure
   totalMeasures?: number; // Total number of measures (used to auto-enable measure numbers)
+  keySignature?: string; // VexFlow key signature string (e.g., 'G', 'Bb', 'Am')
 }
 
 export interface NotePosition {
@@ -186,13 +232,21 @@ const DEFAULT_RENDER_OPTIONS: RenderOptions = {
   startY: 10,
   staffLineMode: 'single',
   stemDirection: 'up',
+  clef: 'treble',
 };
 
 /**
  * Create a VexFlow StaveNote from a RhythmEvent
  * Note: stem direction is set later, not in constructor, to work properly with beams
  */
-function createStaveNote(event: RhythmEvent, isHighlighted: boolean, stemDir: number = Stem.UP): StaveNote {
+function createStaveNote(
+  event: RhythmEvent,
+  isHighlighted: boolean,
+  stemDir: number = Stem.UP,
+  noteKey: string = 'b/4'
+): StaveNote {
+  // Use event's vexflowKey if present, otherwise use the passed noteKey
+  const keyToUse = event.vexflowKey || noteKey;
   const isRest = event.type === 'rest';
 
   let durationStr: string;
@@ -211,7 +265,7 @@ function createStaveNote(event: RhythmEvent, isHighlighted: boolean, stemDir: nu
   // Create the note - DON'T set stem_direction here, it will be set later
   // Setting it in constructor can interfere with beam flag hiding
   const staveNote = new StaveNote({
-    keys: [RHYTHM_NOTE_KEY],
+    keys: [keyToUse],
     duration: baseDuration,
   });
 
@@ -341,7 +395,9 @@ function renderMeasure(
   globalEventOffset: number,
   staffLineMode: StaffLineMode = 'single',
   stemDirection: StemDirection = 'up',
-  showMeasureNumbers: boolean = false
+  clef: ClefType = 'treble',
+  showMeasureNumbers: boolean = false,
+  keySignature?: string
 ): { nextGlobalIndex: number; notePositions: NotePosition[] } {
   // Convert stem direction to VexFlow format using Stem constants
   const stemDir = stemDirection === 'up' ? Stem.UP : Stem.DOWN;
@@ -364,7 +420,13 @@ function renderMeasure(
   }
 
   if (isFirstMeasure) {
-    stave.addClef('percussion');
+    // Use percussion clef for single-line, otherwise use the specified clef
+    const vexflowClef = staffLineMode === 'single' ? 'percussion' : clef;
+    stave.addClef(vexflowClef);
+    // Add key signature if provided and using full staff
+    if (keySignature && staffLineMode === 'full') {
+      stave.addKeySignature(keySignature);
+    }
     stave.addTimeSignature(timeSignature);
   }
 
@@ -410,6 +472,9 @@ function renderMeasure(
   // Expand beamed groups into individual notes for rendering
   const expandedEvents = expandBeamedGroups(measure.events);
 
+  // Get the appropriate note key for the clef
+  const noteKey = getNoteKey(staffLineMode, clef);
+
   // Create notes from expanded events
   // Use expanded event indices for highlighting to match playback
   const staveNotes: StaveNote[] = [];
@@ -417,7 +482,9 @@ function renderMeasure(
   for (let i = 0; i < expandedEvents.length; i++) {
     const globalIndex = globalEventOffset + i;
     const isHighlighted = globalIndex === highlightEventIndex;
-    const staveNote = createStaveNote(expandedEvents[i], isHighlighted, stemDir);
+    // Get note key from event if present, otherwise use clef default
+    const eventNoteKey = expandedEvents[i].vexflowKey || noteKey;
+    const staveNote = createStaveNote(expandedEvents[i], isHighlighted, stemDir, eventNoteKey);
     staveNotes.push(staveNote);
   }
 
@@ -662,7 +729,9 @@ export function renderPatternToDiv(
       globalEventIndex,
       opts.staffLineMode ?? 'single',
       opts.stemDirection ?? 'up',
-      showMeasureNumbers
+      opts.clef ?? 'treble',
+      showMeasureNumbers,
+      opts.keySignature
     );
 
     globalEventIndex = result.nextGlobalIndex;
@@ -760,7 +829,9 @@ export function renderPatternToCanvas(
       globalEventIndex,
       opts.staffLineMode ?? 'single',
       opts.stemDirection ?? 'up',
-      showMeasureNumbers
+      opts.clef ?? 'treble',
+      showMeasureNumbers,
+      opts.keySignature
     );
 
     globalEventIndex = result.nextGlobalIndex;

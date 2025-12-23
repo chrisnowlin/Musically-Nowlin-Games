@@ -77,6 +77,46 @@ function getBodyPercussionSoundParams(
     duration: params.minDuration,
   };
 }
+
+/**
+ * Convert pitch notation (e.g., 'C4', 'D#4', 'Eb5') to frequency in Hz
+ * Uses A4 = 440Hz as reference
+ */
+function pitchToFrequency(pitch: string): number {
+  // Note frequencies mapping - middle octave (C4-B4) and extended range
+  const NOTE_FREQUENCIES: Record<string, number> = {
+    // Octave 2
+    'E2': 82.41, 'F2': 87.31, 'F#2': 92.50, 'Gb2': 92.50,
+    'G2': 98.00, 'G#2': 103.83, 'Ab2': 103.83,
+    'A2': 110.00, 'A#2': 116.54, 'Bb2': 116.54,
+    'B2': 123.47,
+    // Octave 3
+    'C3': 130.81, 'C#3': 138.59, 'Db3': 138.59,
+    'D3': 146.83, 'D#3': 155.56, 'Eb3': 155.56,
+    'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'Gb3': 185.00,
+    'G3': 196.00, 'G#3': 207.65, 'Ab3': 207.65,
+    'A3': 220.00, 'A#3': 233.08, 'Bb3': 233.08,
+    'B3': 246.94,
+    // Octave 4 (middle C octave)
+    'C4': 261.63, 'C#4': 277.18, 'Db4': 277.18,
+    'D4': 293.66, 'D#4': 311.13, 'Eb4': 311.13,
+    'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'Gb4': 369.99,
+    'G4': 392.00, 'G#4': 415.30, 'Ab4': 415.30,
+    'A4': 440.00, 'A#4': 466.16, 'Bb4': 466.16,
+    'B4': 493.88,
+    // Octave 5
+    'C5': 523.25, 'C#5': 554.37, 'Db5': 554.37,
+    'D5': 587.33, 'D#5': 622.25, 'Eb5': 622.25,
+    'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'Gb5': 739.99,
+    'G5': 783.99, 'G#5': 830.61, 'Ab5': 830.61,
+    'A5': 880.00, 'A#5': 932.33, 'Bb5': 932.33,
+    'B5': 987.77,
+    // Octave 6
+    'C6': 1046.50,
+  };
+
+  return NOTE_FREQUENCIES[pitch] || 440; // Default to A4 if pitch not found
+}
 import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
 import { expandBeamedGroups } from '@/lib/rhythmRandomizer/rhythmNotation';
 import {
@@ -99,12 +139,13 @@ interface UseRhythmRandomizerReturn {
 
   // Actions
   generate: () => void;
-  play: (startFromMeasure?: number) => Promise<void>;
+  play: (startFromMeasure?: number, patternOverride?: RhythmPattern) => Promise<void>;
   stop: () => void;
   pause: () => void;
   resume: () => void;
   setVolume: (volume: number) => void;
   setStartMeasure: (measure: number) => void;
+  setPattern: (pattern: RhythmPattern | null) => void;
 
   // Metronome Actions
   playMetronome: () => Promise<void>;
@@ -285,6 +326,11 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
                 sampleUrl = eventCopy.isAccented ? SNARE_SAMPLES.accent : SNARE_SAMPLES.normal;
                 audio.playSample(sampleUrl);
               }
+            } else if (sound === 'piano' && eventCopy.pitch) {
+              // Piano with pitched notes - calculate frequency from pitch
+              const frequency = pitchToFrequency(eventCopy.pitch);
+              const soundParams = getSoundParams(sound, noteDurationSeconds, eventCopy.isAccented);
+              audio.playNoteWithDynamics(frequency, soundParams.duration, vol);
             } else {
               // Use body percussion sound if specified, otherwise use selected sound
               const soundParams = bodyPartCopy
@@ -324,12 +370,15 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
 
   // Play the pattern (single or ensemble)
   // Optional startFromMeasure parameter allows resuming from a specific measure
-  const play = useCallback(async (startFromMeasure?: number) => {
+  // Optional patternOverride allows passing a specific pattern (e.g., with pitch data)
+  const play = useCallback(async (startFromMeasure?: number, patternOverride?: RhythmPattern) => {
     const effectiveStartMeasure = startFromMeasure ?? startMeasure;
+    // Use pattern override if provided, otherwise use state
+    const patternToUse = patternOverride ?? pattern;
     // For ensemble mode, we need ensemblePattern; for single mode, we need pattern
     const isEnsembleMode = settings.ensembleMode !== 'single' && ensemblePattern;
 
-    if (!isEnsembleMode && !pattern) return;
+    if (!isEnsembleMode && !patternToUse) return;
     if (isEnsembleMode && (!ensemblePattern || ensemblePattern.parts.length === 0)) return;
 
     try {
@@ -404,9 +453,9 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
               beatSum + m.events.reduce((eventSum, e) => eventSum + e.duration, 0), 0);
           }));
         }
-      } else if (pattern) {
+      } else if (patternToUse) {
         // Only count beats from startMeasure onwards
-        const measuresPlayed = pattern.measures.slice(startMeasureIndex);
+        const measuresPlayed = patternToUse.measures.slice(startMeasureIndex);
         patternDurationBeats = measuresPlayed.reduce((beatSum, m) =>
           beatSum + m.events.reduce((eventSum, e) => eventSum + e.duration, 0), 0);
       }
@@ -501,10 +550,10 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
 
           totalDuration = maxEndTime;
         }
-      } else if (pattern) {
+      } else if (patternToUse) {
         // SINGLE PATTERN PLAYBACK
         totalDuration = schedulePatternPlayback(
-          pattern,
+          patternToUse,
           currentTime,
           msPerBeat,
           settings.sound,
@@ -715,6 +764,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     resume,
     setVolume,
     setStartMeasure,
+    setPattern,
     playMetronome,
     stopMetronome,
     regenerateEnsemblePart,
