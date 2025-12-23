@@ -67,28 +67,32 @@ const REST_OPTIONS: RestOption[] = [
  * - A single global `letter-spacing` can't independently overlap the *beam stack* (8th+16th)
  *   without also collapsing the noteheads.
  */
-const BEAMED_NOTE_RENDERING: Record<
+// Beamed group configurations using SMuFL text-combining glyphs (long stem versions)
+// These render as a single text string with letter-spacing to control overlap
+const BEAMED_GROUP_CONFIG: Record<
   'twoEighths' | 'twoSixteenths' | 'fourSixteenths',
-  { glyphs: string[]; kern: string[] }
+  { symbol: string; letterSpacing: string }
 > = {
   twoEighths: {
-    glyphs: ['\uE1F1', '\uE1F8', '\uE1F3'],
-    kern: ['0em', '0.0em', '-0.0em'],
+    // blackNoteLongStem + cont8thBeamLong + frac8thLong
+    symbol: '\uE1F1\uE1F8\uE1F3',
+    letterSpacing: '-0.01em',
   },
   twoSixteenths: {
-    glyphs: ['\uE1F0', '\uE1F7', '\uE1F9', '\uE1F4'],
-    // Tighten beam-to-beam overlap more than note-to-beam.
-    kern: ['0em', '0.00em', '0.00em', '-0.00em'],
+    // blackNoteLongStem + cont8thBeamLong + cont16thBeamLong + frac16thLong
+    symbol: '\uE1F1\uE1FA\uE1F5',
+    letterSpacing: '-0.01em',
   },
   fourSixteenths: {
-    glyphs: ['\uE1F0', '\uE1F7', '\uE1F9', '\uE1F0', '\uE1F7', '\uE1F9', '\uE1F0', '\uE1F7', '\uE1F9', '\uE1F4'],
-    kern: ['0em', '-0.0em', '0.0em', '-0.0em', '-0.0em', '-0.0em', '-0.0em', '-0.0em', '-0.0em', '-0.0em'],
+    // Four 16ths with long stems: (note + beams) x3 + final note with frac beam
+    symbol: '\uE1F1\uE1FA\uE1F5\uE1FA\uE1F5\uE1FA\uE1F5',
+    letterSpacing: '-0.02em',
   },
 };
 
-function getBeamedNoteRendering(value: NoteValue) {
-  return (BEAMED_NOTE_RENDERING as Partial<
-    Record<NoteValue, { glyphs: string[]; kern: string[] }>
+function getBeamedGroupConfig(value: NoteValue) {
+  return (BEAMED_GROUP_CONFIG as Partial<
+    Record<NoteValue, { symbol: string; letterSpacing: string }>
   >)[value];
 }
 
@@ -124,7 +128,7 @@ export function NoteValueSelector({
         <Label className="text-sm font-medium mb-2 block">Notes</Label>
         <div className="grid grid-cols-2 gap-2">
           {NOTE_OPTIONS.map((option) => {
-            const beamed = getBeamedNoteRendering(option.value);
+            const beamedConfig = getBeamedGroupConfig(option.value);
             const isSelected = selectedValues.includes(option.value);
 
             return (
@@ -148,26 +152,15 @@ export function NoteValueSelector({
                       className="text-2xl leading-none flex-shrink-0"
                       style={{
                         // Use Bravura Text for beamed groups (text-combining glyph metrics), regular Bravura for single notes
-                        fontFamily: beamed ? '"Bravura Text", Bravura, serif' : 'Bravura, serif',
+                        fontFamily: beamedConfig ? '"Bravura Text", Bravura, serif' : 'Bravura, serif',
                         fontKerning: 'normal',
                         fontFeatureSettings: '"kern" 1, "liga" 1',
                         textRendering: 'optimizeLegibility',
                         whiteSpace: 'nowrap',
+                        letterSpacing: beamedConfig?.letterSpacing ?? 'normal',
                       }}
                     >
-                      {beamed
-                        ? beamed.glyphs.map((glyph, idx) => (
-                          <span
-                            key={`${option.value}-${idx}`}
-                            style={{
-                              display: 'inline-block',
-                              marginLeft: idx === 0 ? undefined : beamed.kern[idx],
-                            }}
-                          >
-                            {glyph}
-                          </span>
-                        ))
-                        : option.symbol}
+                      {beamedConfig ? beamedConfig.symbol : option.symbol}
                     </span>
                     <span className="text-sm font-medium truncate">{option.label}</span>
                   </div>
