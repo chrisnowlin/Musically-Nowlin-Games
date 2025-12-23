@@ -71,6 +71,7 @@ export interface EnsemblePart {
   label: string;
   pattern: RhythmPattern;
   bodyPart?: BodyPercussionPart;
+  sound?: SoundOption; // Per-part sound selection for layered ensemble
   isMuted: boolean;
   isSoloed: boolean;
 }

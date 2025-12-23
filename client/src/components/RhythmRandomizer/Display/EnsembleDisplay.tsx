@@ -3,11 +3,18 @@
  * Displays multiple rhythm parts for ensemble mode
  */
 
-import { EnsemblePattern, CountingSystem, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizer/types';
+import { EnsemblePattern, CountingSystem, StaffLineMode, StemDirection, SoundOption } from '@/lib/rhythmRandomizer/types';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
 import { StaffNotation } from './StaffNotation';
 import { Button } from '@/components/ui/button';
-import { Volume2, VolumeX, Star, RefreshCw } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Volume2, VolumeX, Star, RefreshCw, Music } from 'lucide-react';
 
 interface EnsembleDisplayProps {
   ensemble: EnsemblePattern;
@@ -20,7 +27,18 @@ interface EnsembleDisplayProps {
   onToggleMute?: (partIndex: number) => void;
   onToggleSolo?: (partIndex: number) => void;
   onRegeneratePart?: (partIndex: number) => void;
+  onChangePartSound?: (partIndex: number, sound: SoundOption) => void;
 }
+
+// Sound options for per-part selection
+const SOUND_OPTIONS: { value: SoundOption; label: string; icon: string }[] = [
+  { value: 'snare', label: 'Snare', icon: '🥁' },
+  { value: 'drums', label: 'Drums', icon: '🔊' },
+  { value: 'woodblock', label: 'Wood', icon: '🪵' },
+  { value: 'claps', label: 'Claps', icon: '👏' },
+  { value: 'piano', label: 'Piano', icon: '🎹' },
+  { value: 'metronome', label: 'Click', icon: '⏱️' },
+];
 
 // Colors for different parts
 const PART_COLORS = [
@@ -49,6 +67,7 @@ export function EnsembleDisplay({
   onToggleMute,
   onToggleSolo,
   onRegeneratePart,
+  onChangePartSound,
 }: EnsembleDisplayProps) {
   // Check if any part is soloed
   const hasSoloedPart = ensemble.parts.some((p) => p.isSoloed);
@@ -132,6 +151,30 @@ export function EnsembleDisplay({
 
                 {/* Part controls */}
                 <div className="flex items-center gap-1">
+                  {/* Sound selector for layered mode (not body percussion) */}
+                  {ensemble.mode === 'layered' && (
+                    <Select
+                      value={part.sound || 'snare'}
+                      onValueChange={(value) => onChangePartSound?.(index, value as SoundOption)}
+                    >
+                      <SelectTrigger className="h-7 w-20 text-xs px-2">
+                        <SelectValue>
+                          {SOUND_OPTIONS.find(opt => opt.value === (part.sound || 'snare'))?.icon || '🎵'}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOUND_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <span className="flex items-center gap-1">
+                              <span>{option.icon}</span>
+                              <span>{option.label}</span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
                   {/* Mute button */}
                   <Button
                     variant="ghost"

@@ -49,6 +49,7 @@ export function RhythmRandomizerTool() {
     regenerateEnsemblePart,
     toggleEnsemblePartMute,
     toggleEnsemblePartSolo,
+    updateEnsemblePartSound,
     updateSetting,
     updateSettings,
     applyPreset,
@@ -231,6 +232,7 @@ export function RhythmRandomizerTool() {
                     onToggleMute={toggleEnsemblePartMute}
                     onToggleSolo={toggleEnsemblePartSolo}
                     onRegeneratePart={regenerateEnsemblePart}
+                    onChangePartSound={updateEnsemblePartSound}
                   />
                 ) : patternWithSyllables ? (
                   <StaffNotation

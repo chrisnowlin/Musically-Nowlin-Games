@@ -12,6 +12,7 @@ import {
   BodyPercussionPart,
   NoteValue,
   RestValue,
+  SoundOption,
   NOTE_DURATIONS,
 } from './types';
 import { generateRhythmPattern } from './rhythmGenerator';
@@ -23,6 +24,7 @@ import { generateRhythmPattern } from './rhythmGenerator';
 interface PartConfig {
   label: string;
   bodyPart?: BodyPercussionPart;
+  defaultSound?: SoundOption; // Default sound for layered ensemble
   densityMultiplier: number; // Relative to base pattern
   syncopationMultiplier: number;
   restMultiplier: number;
@@ -67,6 +69,7 @@ const BODY_PERCUSSION_CONFIGS: Record<BodyPercussionPart, PartConfig> = {
 const LAYERED_PART_CONFIGS: PartConfig[] = [
   {
     label: 'Part 1 (Foundation)',
+    defaultSound: 'drums',
     densityMultiplier: 0.5,
     syncopationMultiplier: 0.2,
     restMultiplier: 1.3,
@@ -74,6 +77,7 @@ const LAYERED_PART_CONFIGS: PartConfig[] = [
   },
   {
     label: 'Part 2 (Mid)',
+    defaultSound: 'snare',
     densityMultiplier: 0.8,
     syncopationMultiplier: 0.6,
     restMultiplier: 1.0,
@@ -81,6 +85,7 @@ const LAYERED_PART_CONFIGS: PartConfig[] = [
   },
   {
     label: 'Part 3 (Active)',
+    defaultSound: 'woodblock',
     densityMultiplier: 1.2,
     syncopationMultiplier: 1.0,
     restMultiplier: 0.7,
@@ -88,6 +93,7 @@ const LAYERED_PART_CONFIGS: PartConfig[] = [
   },
   {
     label: 'Part 4 (Complex)',
+    defaultSound: 'claps',
     densityMultiplier: 1.5,
     syncopationMultiplier: 1.3,
     restMultiplier: 0.5,
@@ -239,6 +245,7 @@ function generateLayeredParts(
       id: generateUniqueId(),
       label: config.label,
       pattern,
+      sound: config.defaultSound, // Assign default sound for layered parts
       isMuted: false,
       isSoloed: false,
     });
@@ -380,6 +387,22 @@ export function togglePartSolo(
     ...ensemble,
     parts: ensemble.parts.map((p, i) =>
       i === partIndex ? { ...p, isSoloed: !p.isSoloed } : p
+    ),
+  };
+}
+
+/**
+ * Update sound for a specific part
+ */
+export function updatePartSound(
+  ensemble: EnsemblePattern,
+  partIndex: number,
+  sound: SoundOption
+): EnsemblePattern {
+  return {
+    ...ensemble,
+    parts: ensemble.parts.map((p, i) =>
+      i === partIndex ? { ...p, sound } : p
     ),
   };
 }

@@ -84,6 +84,7 @@ import {
   regeneratePart,
   togglePartMute,
   togglePartSolo,
+  updatePartSound,
 } from '@/lib/rhythmRandomizer/ensembleGenerator';
 
 interface UseRhythmRandomizerReturn {
@@ -111,6 +112,7 @@ interface UseRhythmRandomizerReturn {
   regenerateEnsemblePart: (partIndex: number) => void;
   toggleEnsemblePartMute: (partIndex: number) => void;
   toggleEnsemblePartSolo: (partIndex: number) => void;
+  updateEnsemblePartSound: (partIndex: number, sound: SoundOption) => void;
 
   // Settings
   updateSetting: <K extends keyof RhythmSettings>(key: K, value: RhythmSettings[K]) => void;
@@ -404,13 +406,15 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           // CALL & RESPONSE: Parts play sequentially
           for (let partIndex = 0; partIndex < parts.length; partIndex++) {
             const part = parts[partIndex];
+            // Use per-part sound if defined, otherwise fall back to global setting
+            const partSound = part.sound ?? settings.sound;
 
             if (isPartAudible(part, parts)) {
               totalDuration = schedulePatternPlayback(
                 part.pattern,
                 totalDuration,
                 msPerBeat,
-                settings.sound,
+                partSound,
                 partIndex,
                 part.bodyPart
               );
@@ -435,13 +439,15 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
 
           for (let partIndex = 0; partIndex < parts.length; partIndex++) {
             const part = parts[partIndex];
+            // Use per-part sound if defined, otherwise fall back to global setting
+            const partSound = part.sound ?? settings.sound;
 
             if (isPartAudible(part, parts)) {
               const endTime = schedulePatternPlayback(
                 part.pattern,
                 currentTime,
                 msPerBeat,
-                settings.sound,
+                partSound,
                 partIndex,
                 part.bodyPart
               );
@@ -634,6 +640,13 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     setEnsemblePattern(updated);
   }, [ensemblePattern]);
 
+  // Ensemble: Update sound for a part
+  const updateEnsemblePartSound = useCallback((partIndex: number, sound: SoundOption) => {
+    if (!ensemblePattern) return;
+    const updated = updatePartSound(ensemblePattern, partIndex, sound);
+    setEnsemblePattern(updated);
+  }, [ensemblePattern]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -663,6 +676,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
     regenerateEnsemblePart,
     toggleEnsemblePartMute,
     toggleEnsemblePartSolo,
+    updateEnsemblePartSound,
     updateSetting,
     updateSettings,
     applyPreset,
