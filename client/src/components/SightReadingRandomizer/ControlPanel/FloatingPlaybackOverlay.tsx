@@ -201,6 +201,7 @@ export function FloatingPlaybackOverlay({
                 size="sm"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-1.5 h-8 w-8"
+                title={isExpanded ? 'Collapse' : 'More options'}
               >
                 {isExpanded ? (
                   <ChevronDown className="w-4 h-4" />
