@@ -117,12 +117,11 @@ export function StaffNotation({
   const isVeryDense = avgSpacing > 0 && avgSpacing < 20;
 
   return (
-    <div ref={wrapperRef} className="relative w-full h-full flex items-center justify-center">
+    <div ref={wrapperRef} className="relative w-full h-full overflow-auto">
       {/* VexFlow notation container with syllables positioned absolutely within */}
       <div
         ref={containerRef}
-        className="w-full relative flex items-center justify-center"
-        style={{ minHeight: '80px', maxHeight: containerHeight > 0 ? `${containerHeight}px` : undefined }}
+        className="w-full relative"
       />
 
       {/* Syllables overlay - positioned absolutely to align with notes on each line */}
