@@ -42,19 +42,31 @@ export function StaffNotation({
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   const [notePositions, setNotePositions] = useState<NotePosition[]>([]);
 
-  // Measure container width on mount and resize
+  // Measure container dimensions on mount and resize
   useEffect(() => {
-    const updateWidth = () => {
+    const updateDimensions = () => {
       if (wrapperRef.current) {
         setContainerWidth(wrapperRef.current.clientWidth);
+        setContainerHeight(wrapperRef.current.clientHeight);
       }
     };
 
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    // Also observe for container size changes (e.g., from flex layout)
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (wrapperRef.current) {
+      resizeObserver.observe(wrapperRef.current);
+    }
+    
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // Render the notation whenever pattern, highlight, or container width changes
@@ -105,12 +117,12 @@ export function StaffNotation({
   const isVeryDense = avgSpacing > 0 && avgSpacing < 20;
 
   return (
-    <div ref={wrapperRef} className="relative w-full h-full">
+    <div ref={wrapperRef} className="relative w-full h-full flex items-center justify-center">
       {/* VexFlow notation container with syllables positioned absolutely within */}
       <div
         ref={containerRef}
-        className="w-full relative"
-        style={{ minHeight: '80px' }}
+        className="w-full relative flex items-center justify-center"
+        style={{ minHeight: '80px', maxHeight: containerHeight > 0 ? `${containerHeight}px` : undefined }}
       />
 
       {/* Syllables overlay - positioned absolutely to align with notes on each line */}
