@@ -70,7 +70,10 @@ export function StaffNotation({
     };
   }, []);
 
-  // Render the notation whenever pattern, highlight, or container width changes
+  // Track if we've measured the initial SVG height for this pattern
+  const hasInitialHeight = useRef(false);
+
+  // Render the notation whenever pattern, highlight, or settings change
   const renderNotation = useCallback(() => {
     if (!containerRef.current || containerWidth === 0) return;
 
@@ -85,12 +88,24 @@ export function StaffNotation({
 
     setNotePositions(result.notePositions);
 
-    // Get the rendered SVG height
-    const svg = containerRef.current.querySelector('svg');
-    if (svg) {
-      setSvgHeight(svg.getBoundingClientRect().height);
+    // Only measure SVG height on initial render or when pattern structure changes
+    // Don't update during playback to prevent layout shifts
+    if (!hasInitialHeight.current || !isPlaying) {
+      const svg = containerRef.current.querySelector('svg');
+      if (svg) {
+        const height = svg.getBoundingClientRect().height;
+        if (height > 0) {
+          setSvgHeight(height);
+          hasInitialHeight.current = true;
+        }
+      }
     }
   }, [pattern, currentEventIndex, isPlaying, containerWidth, staffLineMode, stemDirection, clef, keySignature]);
+
+  // Reset height tracking when pattern changes
+  useEffect(() => {
+    hasInitialHeight.current = false;
+  }, [pattern, containerWidth, staffLineMode, clef, keySignature]);
 
   // Initial render and re-render on changes
   useEffect(() => {
