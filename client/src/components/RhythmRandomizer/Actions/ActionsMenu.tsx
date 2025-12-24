@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { RhythmSettings } from '@/lib/rhythmRandomizerV3/types';
+import { RhythmSettings } from '@/lib/rhythmRandomizer/types';
 import { WorksheetBuilder } from '../Worksheet/WorksheetBuilder';
 
 interface ActionsMenuProps {

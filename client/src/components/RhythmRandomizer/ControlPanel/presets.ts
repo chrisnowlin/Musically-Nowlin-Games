@@ -3,7 +3,7 @@
  * Defines difficulty presets with rhythm-specific settings
  */
 
-import { DifficultyPreset, RhythmSettings } from '@/lib/rhythmRandomizerV3/types';
+import { DifficultyPreset, RhythmSettings } from '@/lib/rhythmRandomizer/types';
 
 export interface RhythmPresetConfig {
   name: string;

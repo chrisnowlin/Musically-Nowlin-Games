@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CountingSystem, DifficultyPreset, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizerV3/types';
+import { CountingSystem, DifficultyPreset, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizer/types';
 import { RHYTHM_PRESETS, PRESET_TOOLTIPS } from './presets';
 
 type MeasureCountOption = 1 | 2 | 4 | 8 | 12 | 16;

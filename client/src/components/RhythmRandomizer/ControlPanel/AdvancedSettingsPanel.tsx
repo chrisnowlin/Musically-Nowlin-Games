@@ -12,7 +12,7 @@ import { TimeSignatureSelector } from './TimeSignatureSelector';
 import { TempoControl } from './TempoControl';
 import { NoteValueSelector } from './NoteValueSelector';
 import { SoundSelector } from './SoundSelector';
-import { NoteValue, RestValue, SoundOption } from '@/lib/rhythmRandomizerV3/types';
+import { NoteValue, RestValue, SoundOption } from '@/lib/rhythmRandomizer/types';
 
 interface AdvancedSettingsPanelProps {
   isOpen: boolean;

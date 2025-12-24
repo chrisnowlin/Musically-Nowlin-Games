@@ -3,7 +3,7 @@
  * Renders rhythm patterns using VexFlow staff notation
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { RhythmPattern, CountingSystem, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizer/types';
 import { renderPatternToDiv, expandBeamedGroups, NotePosition } from '@/lib/rhythmRandomizer/rhythmNotation';
 import { getSyllableForEvent } from '@/lib/rhythmRandomizer/countingSyllables';
@@ -16,6 +16,7 @@ interface StaffNotationProps {
   countingSystem?: CountingSystem;
   staffLineMode?: StaffLineMode;
   stemDirection?: StemDirection;
+  onMeasureClick?: (measureNumber: number) => void;
 }
 
 export function StaffNotation({
@@ -26,11 +27,13 @@ export function StaffNotation({
   countingSystem: countingSystemProp,
   staffLineMode = 'single',
   stemDirection = 'up',
+  onMeasureClick,
 }: StaffNotationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [notePositions, setNotePositions] = useState<NotePosition[]>([]);
+  const [hoveredMeasure, setHoveredMeasure] = useState<number | null>(null);
 
   // Measure container width on mount and resize
   useEffect(() => {
@@ -45,24 +48,89 @@ export function StaffNotation({
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
+  // Calculate effective width for notation - constrain short patterns
+  // to prevent overly stretched measures that hurt readability
+  const effectiveWidth = useMemo(() => {
+    const measureCount = pattern.measures.length;
+    if (containerWidth === 0) return 0;
+
+    // For short patterns, use a percentage of container width
+    // This prevents single measures from being too stretched
+    if (measureCount === 1) {
+      return Math.min(containerWidth * 0.35, 400); // 35% or max 400px
+    } else if (measureCount === 2) {
+      return Math.min(containerWidth * 0.55, 700); // 55% or max 700px
+    } else if (measureCount === 3) {
+      return Math.min(containerWidth * 0.75, 900); // 75% or max 900px
+    }
+    // For 4+ measures, use full width
+    return containerWidth;
+  }, [pattern.measures.length, containerWidth]);
+
   // Render the notation whenever pattern, highlight, or container width changes
   const renderNotation = useCallback(() => {
-    if (!containerRef.current || containerWidth === 0) return;
+    if (!containerRef.current || effectiveWidth === 0) return;
 
     const result = renderPatternToDiv(containerRef.current, pattern, {
-      containerWidth: containerWidth,
+      containerWidth: effectiveWidth,
       highlightEventIndex: isPlaying ? currentEventIndex : undefined,
       staffLineMode: staffLineMode,
       stemDirection: stemDirection,
     });
 
     setNotePositions(result.notePositions);
-  }, [pattern, currentEventIndex, isPlaying, containerWidth, staffLineMode, stemDirection]);
+  }, [pattern, currentEventIndex, isPlaying, effectiveWidth, staffLineMode, stemDirection]);
 
   // Initial render and re-render on changes
   useEffect(() => {
     renderNotation();
   }, [renderNotation]);
+
+  // Calculate measure boundaries for click detection
+  // Groups note positions by measure and calculates bounding boxes
+  const measureBounds = useMemo(() => {
+    if (notePositions.length === 0) return [];
+
+    // Group positions by measure
+    const positionsByMeasure = new Map<number, NotePosition[]>();
+    notePositions.forEach((pos) => {
+      if (!positionsByMeasure.has(pos.measureIndex)) {
+        positionsByMeasure.set(pos.measureIndex, []);
+      }
+      positionsByMeasure.get(pos.measureIndex)!.push(pos);
+    });
+
+    // Calculate bounds for each measure
+    const bounds: Array<{
+      measureIndex: number;
+      minX: number;
+      maxX: number;
+      y: number;
+    }> = [];
+
+    positionsByMeasure.forEach((positions, measureIndex) => {
+      if (positions.length === 0) return;
+
+      const xValues = positions.map((p) => p.x);
+      const minX = Math.min(...xValues) - 20; // Add padding before first note
+      const maxX = Math.max(...xValues) + 20; // Add padding after last note
+      const y = positions[0].y; // Use y position from first note in measure
+
+      bounds.push({ measureIndex, minX, maxX, y });
+    });
+
+    return bounds.sort((a, b) => a.measureIndex - b.measureIndex);
+  }, [notePositions]);
+
+  // Handle measure click
+  const handleMeasureClick = useCallback(
+    (measureIndex: number) => {
+      if (onMeasureClick) {
+        onMeasureClick(measureIndex + 1); // Convert to 1-indexed
+      }
+    },
+    [onMeasureClick]
+  );
 
   // Use prop if provided, otherwise fall back to pattern.settings
   const countingSystem: CountingSystem = countingSystemProp ?? pattern.settings?.countingSystem ?? 'none';
@@ -82,53 +150,90 @@ export function StaffNotation({
   const isVeryDense = avgSpacing > 0 && avgSpacing < 20;
 
   return (
-    <div ref={wrapperRef} className="relative w-full">
-      {/* VexFlow notation container with syllables positioned absolutely within */}
+    <div ref={wrapperRef} className="relative w-full h-full flex items-center justify-center">
+      {/* Centered container for notation + overlays */}
       <div
-        ref={containerRef}
-        className="w-full relative"
-        style={{ minHeight: '120px' }}
-      />
-
-      {/* Syllables overlay - positioned absolutely to align with notes on each line */}
-      {showSyllables && syllablesByLine.length > 0 && (
+        className="relative"
+        style={{ width: effectiveWidth > 0 ? effectiveWidth : '100%' }}
+      >
+        {/* VexFlow notation container */}
         <div
-          className="absolute top-0 left-0 w-full pointer-events-none"
-          style={{ height: containerRef.current?.clientHeight || 'auto' }}
-        >
-          {syllablesByLine.map((line, lineIndex) => (
-            <div
-              key={lineIndex}
-              className="absolute w-full"
-              style={{
-                top: `${line.y + 45}px`, // Additional offset to position below staff
-                height: isVeryDense ? '18px' : '24px',
-              }}
-            >
-              {line.syllables.map((item, index) => (
-                <span
-                  key={index}
-                  className={`
-                    absolute text-gray-600 font-medium whitespace-nowrap
-                    transition-colors duration-150 -translate-x-1/2 pointer-events-auto
-                    ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
-                    ${currentEventIndex === item.globalIndex && isPlaying
-                      ? 'text-red-600 bg-red-100 rounded px-0.5'
-                      : ''
-                    }
-                  `}
-                  style={{
-                    left: `${item.x}px`,
-                    top: 0,
-                  }}
-                >
-                  {isVeryDense ? abbreviateSyllable(item.syllable) : item.syllable}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+          ref={containerRef}
+          className="w-full relative"
+          style={{ minHeight: '120px' }}
+        />
+
+        {/* Clickable measure zones overlay */}
+        {onMeasureClick && measureBounds.length > 0 && (
+          <div
+            className="absolute top-0 left-0 w-full"
+            style={{ height: containerRef.current?.clientHeight || 'auto' }}
+          >
+            {measureBounds.map((bound) => (
+              <div
+                key={bound.measureIndex}
+                className={`
+                  absolute cursor-pointer transition-all duration-150
+                  ${hoveredMeasure === bound.measureIndex
+                    ? 'bg-purple-200/40 border-2 border-purple-400 rounded-md'
+                    : 'hover:bg-purple-100/30'
+                  }
+                `}
+                style={{
+                  left: `${bound.minX}px`,
+                  top: `${bound.y - 60}px`, // Position to cover staff area
+                  width: `${bound.maxX - bound.minX}px`,
+                  height: '80px', // Height to cover staff
+                }}
+                onClick={() => handleMeasureClick(bound.measureIndex)}
+                onMouseEnter={() => setHoveredMeasure(bound.measureIndex)}
+                onMouseLeave={() => setHoveredMeasure(null)}
+                title={`Click to play from measure ${bound.measureIndex + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Syllables overlay - positioned absolutely to align with notes on each line */}
+        {showSyllables && syllablesByLine.length > 0 && (
+          <div
+            className="absolute top-0 left-0 w-full pointer-events-none"
+            style={{ height: containerRef.current?.clientHeight || 'auto' }}
+          >
+            {syllablesByLine.map((line, lineIndex) => (
+              <div
+                key={lineIndex}
+                className="absolute w-full"
+                style={{
+                  top: `${line.y + 45}px`, // Additional offset to position below staff
+                  height: isVeryDense ? '18px' : '24px',
+                }}
+              >
+                {line.syllables.map((item, index) => (
+                  <span
+                    key={index}
+                    className={`
+                      absolute text-gray-600 font-medium whitespace-nowrap
+                      transition-colors duration-150 -translate-x-1/2 pointer-events-auto
+                      ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
+                      ${currentEventIndex === item.globalIndex && isPlaying
+                        ? 'text-red-600 bg-red-100 rounded px-0.5'
+                        : ''
+                      }
+                    `}
+                    style={{
+                      left: `${item.x}px`,
+                      top: 0,
+                    }}
+                  >
+                    {isVeryDense ? abbreviateSyllable(item.syllable) : item.syllable}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

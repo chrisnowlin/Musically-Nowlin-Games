@@ -1,40 +1,36 @@
 /**
  * Rhythm Randomizer Tool
- * Main container component for the rhythm generation tool
+ * Main container component with redesigned UI - hero layout
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, RefreshCw, Music, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useRhythmRandomizer } from '@/hooks/useRhythmRandomizer';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
+import { DifficultyPreset } from '@/lib/rhythmRandomizer/types';
 
-// Control Panel Components
-import { TimeSignatureSelector } from './ControlPanel/TimeSignatureSelector';
-import { TempoControl } from './ControlPanel/TempoControl';
-import { NoteValueSelector } from './ControlPanel/NoteValueSelector';
-import { PlaybackControls } from './ControlPanel/PlaybackControls';
-import { SoundSelector } from './ControlPanel/SoundSelector';
-import { MeasureCountSelector } from './ControlPanel/MeasureCountSelector';
+// UI Components
+import { AdvancedSettingsPanel } from './ControlPanel/AdvancedSettingsPanel';
+import { FloatingPlaybackOverlay } from './ControlPanel/FloatingPlaybackOverlay';
+import { ActionsMenu } from './Actions/ActionsMenu';
 
 // Display Components
 import { StaffNotation } from './Display/StaffNotation';
-import { SyllableSelector } from './Display/SyllableSelector';
-import { EnsembleDisplay } from './Display/EnsembleDisplay';
-import { EnsembleModeSelector } from './ControlPanel/EnsembleModeSelector';
-import { WorksheetBuilder } from './Worksheet/WorksheetBuilder';
-import { ShareButton } from './Actions/ShareButton';
-import { PrintButton } from './Actions/PrintButton';
+
+// Load settings from URL
 import { loadSettingsFromUrl, updateUrlWithSettings } from '@/lib/rhythmRandomizer/shareUtils';
+import { RHYTHM_PRESETS } from './ControlPanel/presets';
 
 export function RhythmRandomizerTool() {
+  const [advancedPanelOpen, setAdvancedPanelOpen] = useState(false);
+  const notationContainerRef = useRef<HTMLDivElement>(null);
+
   const {
     settings,
     pattern,
-    ensemblePattern,
     playbackState,
     isReady,
     volume,
@@ -48,14 +44,12 @@ export function RhythmRandomizerTool() {
     setStartMeasure,
     playMetronome,
     stopMetronome,
-    regenerateEnsemblePart,
-    toggleEnsemblePartMute,
-    toggleEnsemblePartSolo,
-    updateEnsemblePartSound,
     updateSetting,
     updateSettings,
-    applyPreset,
   } = useRhythmRandomizer();
+
+  // Track if initial load is complete
+  const initialLoadComplete = useRef(false);
 
   // Load settings from URL on mount and generate initial pattern
   useEffect(() => {
@@ -64,7 +58,15 @@ export function RhythmRandomizerTool() {
       updateSettings(urlSettings);
     }
     generate();
+    initialLoadComplete.current = true;
   }, []);
+
+  // Regenerate when measure count changes (after initial load)
+  useEffect(() => {
+    if (initialLoadComplete.current) {
+      generate();
+    }
+  }, [settings.measureCount]);
 
   // Update URL when settings change (debounced)
   useEffect(() => {
@@ -74,6 +76,23 @@ export function RhythmRandomizerTool() {
     return () => clearTimeout(timeoutId);
   }, [settings]);
 
+  // Handle preset selection
+  const handlePresetSelect = (preset: DifficultyPreset) => {
+    const presetConfig = RHYTHM_PRESETS[preset];
+    if (presetConfig.rhythm) {
+      updateSettings(presetConfig.rhythm);
+    }
+    generate();
+  };
+
+  // Handle clicking on a measure to start playback from that measure
+  const handleMeasureClick = useCallback((measureNumber: number) => {
+    // Stop any current playback
+    stop();
+    // Start playback from the clicked measure
+    play(measureNumber);
+  }, [play, stop]);
+
   // Add syllables to pattern based on current counting system
   const patternWithSyllables = useMemo(() => {
     if (!pattern) return null;
@@ -81,228 +100,114 @@ export function RhythmRandomizerTool() {
   }, [pattern, settings.countingSystem]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 overflow-hidden">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-purple-100 sticky top-0 z-10 print:hidden">
-        <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-purple-100 shrink-0 print:hidden">
+        <div className="max-w-[95vw] mx-auto px-4 py-1.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Link href="/games">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="gap-1.5 h-7">
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Back
               </Button>
             </Link>
-            <h1 className="text-xl font-bold text-purple-800">Rhythm Randomizer</h1>
-            <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">
-              For Educators
-            </span>
+            <div>
+              <h1 className="text-base font-bold text-purple-800">Rhythm Randomizer</h1>
+              <span className="text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full inline-block">
+                For Educators
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ShareButton settings={settings} />
-            <PrintButton />
-            <Button onClick={generate} className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              Regenerate
-            </Button>
-          </div>
+          <ActionsMenu settings={settings} />
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-[95vw] mx-auto px-4 py-3">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          {/* Control Panel - Left Column */}
-          <div className="lg:col-span-1 space-y-2 print:hidden">
-            {/* Settings Tabs */}
-            <Card>
-              <Tabs defaultValue="time-tempo" className="w-full">
-                <CardHeader className="py-2 px-4 pb-0">
-                  <TabsList className="grid w-full grid-cols-2 h-auto">
-                    <TabsTrigger value="time-tempo" className="text-xs py-1.5">Time & Tempo</TabsTrigger>
-                    <TabsTrigger value="note-values" className="text-xs py-1.5">Note Values</TabsTrigger>
-                  </TabsList>
-                  <TabsList className="grid w-full grid-cols-2 h-auto mt-1">
-                    <TabsTrigger value="ensemble" className="text-xs py-1.5">Ensemble</TabsTrigger>
-                    <TabsTrigger value="sound" className="text-xs py-1.5">Sound</TabsTrigger>
-                  </TabsList>
-                </CardHeader>
-                <CardContent className="px-4 pb-3 pt-2">
-                  <TabsContent value="time-tempo" className="space-y-3 mt-0">
-                    <TimeSignatureSelector
-                      value={settings.timeSignature}
-                      onChange={(value) => updateSetting('timeSignature', value)}
-                    />
-                    <TempoControl
-                      value={settings.tempo}
-                      onChange={(value) => updateSetting('tempo', value)}
-                    />
-                    <MeasureCountSelector
-                      value={settings.measureCount}
-                      onChange={(value) => updateSetting('measureCount', value)}
-                    />
-                  </TabsContent>
-                  <TabsContent value="note-values" className="space-y-3 mt-0">
-                    <NoteValueSelector
-                      selectedValues={settings.allowedNoteValues}
-                      selectedRestValues={settings.allowedRestValues}
-                      restProbability={settings.restProbability}
-                      onNoteValuesChange={(values) => updateSetting('allowedNoteValues', values)}
-                      onRestValuesChange={(values) => updateSetting('allowedRestValues', values)}
-                      onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
-                    />
-                  </TabsContent>
-                  <TabsContent value="ensemble" className="space-y-3 mt-0">
-                    <EnsembleModeSelector
-                      mode={settings.ensembleMode}
-                      partCount={settings.partCount}
-                      onModeChange={(mode) => updateSetting('ensembleMode', mode)}
-                      onPartCountChange={(count) => updateSetting('partCount', count)}
-                    />
-                  </TabsContent>
-                  <TabsContent value="sound" className="space-y-3 mt-0">
-                    <SoundSelector
-                      value={settings.sound}
-                      onChange={(value) => updateSetting('sound', value)}
-                    />
-                  </TabsContent>
-                </CardContent>
-              </Tabs>
-            </Card>
-          </div>
-
-          {/* Display & Playback - Right Column */}
-          <div className="lg:col-span-2 space-y-2 print:col-span-3">
-            {/* Notation Display */}
-            <Card className="print-pattern print:border-0 print:shadow-none">
-              <CardHeader className="py-2 px-4 print:hidden">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <CardTitle className="text-sm font-medium inline-block mr-3">
-                      {settings.ensembleMode === 'single' ? 'Pattern' : 'Ensemble'}
-                    </CardTitle>
-                    <span className="text-xs text-gray-500">
-                      {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
-                      {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Staff line mode toggle */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateSetting('staffLineMode', settings.staffLineMode === 'single' ? 'full' : 'single')}
-                      className="h-7 text-xs gap-1.5"
-                      title={settings.staffLineMode === 'single' ? 'Single-line staff' : 'Full 5-line staff'}
-                    >
-                      <Music className="w-3.5 h-3.5" />
-                      {settings.staffLineMode === 'single' ? '1 Line' : '5 Lines'}
-                    </Button>
-                    {/* Stem direction toggle */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateSetting('stemDirection', settings.stemDirection === 'up' ? 'down' : 'up')}
-                      className="h-7 text-xs gap-1.5"
-                      title={settings.stemDirection === 'up' ? 'Stems up' : 'Stems down'}
-                    >
-                      {settings.stemDirection === 'up' ? (
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      )}
-                      Stems {settings.stemDirection === 'up' ? 'Up' : 'Down'}
-                    </Button>
-                    <SyllableSelector
-                      value={settings.countingSystem}
-                      onChange={(system) => updateSetting('countingSystem', system)}
-                      showLabel={false}
-                      compact
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="px-4 pb-3 pt-0">
-                {settings.ensembleMode !== 'single' && ensemblePattern ? (
-                  <EnsembleDisplay
-                    ensemble={ensemblePattern}
-                    countingSystem={settings.countingSystem}
-                    staffLineMode={settings.staffLineMode}
-                    stemDirection={settings.stemDirection}
-                    currentPartIndex={playbackState.currentPartIndex}
-                    currentEventIndex={playbackState.currentEventIndex}
-                    isPlaying={playbackState.isPlaying}
-                    onToggleMute={toggleEnsemblePartMute}
-                    onToggleSolo={toggleEnsemblePartSolo}
-                    onRegeneratePart={regenerateEnsemblePart}
-                    onChangePartSound={updateEnsemblePartSound}
-                  />
-                ) : patternWithSyllables ? (
-                  <StaffNotation
-                    pattern={patternWithSyllables}
-                    currentEventIndex={playbackState.currentEventIndex}
-                    isPlaying={playbackState.isPlaying}
-                    showSyllables={settings.countingSystem !== 'none'}
-                    countingSystem={settings.countingSystem}
-                    staffLineMode={settings.staffLineMode}
-                    stemDirection={settings.stemDirection}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-32 text-gray-400">
-                    Click "Regenerate" to create a pattern
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Playback Controls */}
-            <Card className="print:hidden">
-              <CardHeader className="py-2 px-4">
-                <CardTitle className="text-sm font-medium">Playback</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-3 pt-0">
-                <PlaybackControls
-                  playbackState={playbackState}
-                  isReady={isReady}
-                  hasPattern={!!pattern}
-                  loopEnabled={settings.loopEnabled}
-                  countInMeasures={settings.countInMeasures}
-                  metronomeEnabled={settings.metronomeEnabled}
-                  volume={volume}
-                  tempo={settings.tempo}
-                  measureCount={pattern?.measures.length ?? settings.measureCount}
-                  startMeasure={startMeasure}
-                  onPlay={play}
-                  onStop={stop}
-                  onPause={pause}
-                  onResume={resume}
-                  onLoopChange={(enabled) => updateSetting('loopEnabled', enabled)}
-                  onCountInChange={(measures) => updateSetting('countInMeasures', measures)}
-                  onMetronomeChange={(enabled) => updateSetting('metronomeEnabled', enabled)}
-                  onVolumeChange={setVolume}
-                  onStartMeasureChange={setStartMeasure}
-                  onPlayMetronome={playMetronome}
-                  onStopMetronome={stopMetronome}
+      {/* Main Content - Hero Notation (fills remaining space, with bottom padding for fixed overlay) */}
+      <main className="flex-1 min-h-0 px-4 pt-2 pb-16">
+        <Card className="print-pattern print:border-0 print:shadow-none h-full flex flex-col">
+          <CardHeader className="py-1.5 px-3 print:hidden shrink-0">
+            <span className="text-xs text-gray-500">
+              {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
+            </span>
+          </CardHeader>
+          <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden">
+            <div ref={notationContainerRef} className="w-full h-full">
+              {patternWithSyllables ? (
+                <StaffNotation
+                  pattern={patternWithSyllables}
+                  currentEventIndex={playbackState.currentEventIndex}
+                  isPlaying={playbackState.isPlaying}
+                  showSyllables={settings.countingSystem !== 'none'}
+                  countingSystem={settings.countingSystem}
+                  staffLineMode={settings.staffLineMode}
+                  stemDirection={settings.stemDirection}
+                  onMeasureClick={handleMeasureClick}
                 />
-              </CardContent>
-            </Card>
-
-            {/* Worksheet Export */}
-            <Card className="print:hidden">
-              <CardHeader className="py-2 px-4">
-                <CardTitle className="text-sm font-medium">Worksheet Export</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-3 pt-0">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Generate printable PDFs with exercises and answer keys
-                  </div>
-                  <WorksheetBuilder rhythmSettings={settings} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  Click "New" to create a rhythm pattern
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </main>
+
+      {/* Floating Playback Overlay */}
+      <FloatingPlaybackOverlay
+        playbackState={playbackState}
+        isReady={isReady}
+        hasPattern={!!pattern}
+        loopEnabled={settings.loopEnabled}
+        countInMeasures={settings.countInMeasures}
+        metronomeEnabled={settings.metronomeEnabled}
+        volume={volume}
+        tempo={settings.tempo}
+        measureCount={pattern?.measures.length ?? settings.measureCount}
+        startMeasure={startMeasure}
+        selectedMeasureCount={settings.measureCount}
+        timeSignature={settings.timeSignature}
+        countingSystem={settings.countingSystem}
+        staffLineMode={settings.staffLineMode}
+        stemDirection={settings.stemDirection}
+        onPlay={play}
+        onStop={stop}
+        onPause={pause}
+        onResume={resume}
+        onLoopChange={(enabled) => updateSetting('loopEnabled', enabled)}
+        onCountInChange={(measures) => updateSetting('countInMeasures', measures)}
+        onMetronomeChange={(enabled) => updateSetting('metronomeEnabled', enabled)}
+        onVolumeChange={setVolume}
+        onStartMeasureChange={setStartMeasure}
+        onPlayMetronome={playMetronome}
+        onStopMetronome={stopMetronome}
+        onMeasureCountChange={(count) => updateSetting('measureCount', count)}
+        onTimeSignatureChange={(value) => updateSetting('timeSignature', value)}
+        onCountingSystemChange={(system) => updateSetting('countingSystem', system)}
+        onStaffLineModeChange={(mode) => updateSetting('staffLineMode', mode)}
+        onStemDirectionChange={(direction) => updateSetting('stemDirection', direction)}
+        onRegenerate={generate}
+        onPresetSelect={handlePresetSelect}
+        onToggleAdvanced={() => setAdvancedPanelOpen(true)}
+      />
+
+      {/* Advanced Settings Panel */}
+      <AdvancedSettingsPanel
+        isOpen={advancedPanelOpen}
+        onClose={() => setAdvancedPanelOpen(false)}
+        timeSignature={settings.timeSignature}
+        onTimeSignatureChange={(value) => updateSetting('timeSignature', value)}
+        tempo={settings.tempo}
+        onTempoChange={(value) => updateSetting('tempo', value)}
+        allowedNoteValues={settings.allowedNoteValues}
+        onNoteValuesChange={(values) => updateSetting('allowedNoteValues', values)}
+        allowedRestValues={settings.allowedRestValues}
+        onRestValuesChange={(values) => updateSetting('allowedRestValues', values)}
+        restProbability={settings.restProbability}
+        onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
+        sound={settings.sound}
+        onSoundChange={(value) => updateSetting('sound', value)}
+      />
     </div>
   );
 }
