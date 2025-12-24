@@ -42,7 +42,6 @@ export function StaffNotation({
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(0);
   const [notePositions, setNotePositions] = useState<NotePosition[]>([]);
 
   // Measure container dimensions on mount and resize
@@ -50,7 +49,6 @@ export function StaffNotation({
     const updateDimensions = () => {
       if (wrapperRef.current) {
         setContainerWidth(wrapperRef.current.clientWidth);
-        setContainerHeight(wrapperRef.current.clientHeight);
       }
     };
 
