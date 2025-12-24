@@ -313,7 +313,7 @@ export function StaffNotation({
                       transition-colors duration-150 -translate-x-1/2 pointer-events-auto
                       ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
                       ${currentEventIndex === item.globalIndex && isPlaying
-                        ? 'text-green-600 bg-green-100 rounded px-0.5'
+                        ? 'text-red-600 bg-red-100 rounded px-0.5'
                         : ''
                       }
                     `}
