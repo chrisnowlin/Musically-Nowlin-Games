@@ -3,6 +3,7 @@
  * Slide-in panel with detailed settings (time, tempo, note values, etc.)
  */
 
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -78,6 +79,20 @@ export function AdvancedSettingsPanel({
   tonicGravity,
   onTonicGravityChange,
 }: AdvancedSettingsPanelProps) {
+  // Handle Escape key to close panel
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <>
       {/* Backdrop */}
