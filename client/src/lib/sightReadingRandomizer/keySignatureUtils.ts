@@ -301,19 +301,43 @@ export function getScaleNotes(key: KeySignature): string[] {
 
 /**
  * Get diatonic pitches within a specific range for a key
+ * Pitches are spelled according to the key signature (flats for flat keys, sharps for sharp keys)
  * @param key - Key signature
  * @param range - Pitch range
- * @returns Array of diatonic pitches with octaves
+ * @returns Array of diatonic pitches with octaves, correctly spelled for the key
  */
 export function getDiatonicPitchesInRange(key: KeySignature, range: PitchRange): string[] {
   const scaleNotes = getScaleNotes(key);
   const allPitches = getAllPitchesInRange(range.lowest, range.highest);
 
-  // Filter to only include notes in the scale
-  return allPitches.filter(pitch => {
+  // Map for converting sharp pitches to flat equivalents
+  const sharpToFlatPitch: { [key: string]: string } = {
+    'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb'
+  };
+
+  // Filter and respell pitches to match the scale spelling
+  const result: string[] = [];
+
+  for (const pitch of allPitches) {
     const noteName = pitch.replace(/\d+$/, ''); // Remove octave number
-    return scaleNotes.some(scaleNote => areEnharmonic(noteName, scaleNote));
-  });
+    const octave = pitch.match(/\d+$/)?.[0] || '4';
+
+    // Check if this pitch (or its enharmonic) is in the scale
+    for (const scaleNote of scaleNotes) {
+      if (noteName === scaleNote) {
+        // Exact match - use as-is
+        result.push(pitch);
+        break;
+      } else if (areEnharmonic(noteName, scaleNote)) {
+        // Enharmonic match - respell to match the scale note
+        // e.g., if pitch is A#4 and scaleNote is Bb, use Bb4
+        result.push(`${scaleNote}${octave}`);
+        break;
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -418,10 +442,12 @@ function applyKeySignatureSpelling(note: string, keyData: KeySignatureData): str
     };
 
     if (sharpToFlat[note]) {
-      // Check if this note should be flat in this key
-      const baseNote = note[0];
-      if (keyData.flats.includes(baseNote)) {
-        return sharpToFlat[note];
+      // Check if the flat equivalent's base note is in the flats array
+      // e.g., for A# -> Bb, check if 'B' is in flats (meaning Bb is in the scale)
+      const flatEquivalent = sharpToFlat[note];
+      const baseOfFlat = flatEquivalent[0];
+      if (keyData.flats.includes(baseOfFlat)) {
+        return flatEquivalent;
       }
     }
   }
