@@ -3,7 +3,7 @@
  * Renders rhythm patterns using VexFlow staff notation
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { RhythmPattern, CountingSystem, StaffLineMode, StemDirection, ClefType } from '@/lib/rhythmRandomizer/types';
 import { renderPatternToDiv, expandBeamedGroups, NotePosition } from '@/lib/rhythmRandomizer/rhythmNotation';
 import { getSyllableForEvent } from '@/lib/rhythmRandomizer/countingSyllables';
@@ -42,13 +42,16 @@ export function StaffNotation({
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   const [notePositions, setNotePositions] = useState<NotePosition[]>([]);
+  const [svgHeight, setSvgHeight] = useState(0);
 
   // Measure container dimensions on mount and resize
   useEffect(() => {
     const updateDimensions = () => {
       if (wrapperRef.current) {
         setContainerWidth(wrapperRef.current.clientWidth);
+        setContainerHeight(wrapperRef.current.clientHeight);
       }
     };
 
@@ -81,12 +84,34 @@ export function StaffNotation({
     });
 
     setNotePositions(result.notePositions);
+
+    // Get the rendered SVG height
+    const svg = containerRef.current.querySelector('svg');
+    if (svg) {
+      setSvgHeight(svg.getBoundingClientRect().height);
+    }
   }, [pattern, currentEventIndex, isPlaying, containerWidth, staffLineMode, stemDirection, clef, keySignature]);
 
   // Initial render and re-render on changes
   useEffect(() => {
     renderNotation();
   }, [renderNotation]);
+
+  // Calculate scale factor to fit content within container
+  // Add space for syllables (approximately 30px per line of notation)
+  const scale = useMemo(() => {
+    if (containerHeight <= 0 || svgHeight <= 0) return 1;
+    
+    // Add padding for syllables below the notation
+    const syllableSpace = showSyllables ? 40 : 0;
+    const totalContentHeight = svgHeight + syllableSpace;
+    
+    // Only scale down if content exceeds container
+    if (totalContentHeight > containerHeight) {
+      return Math.min(1, containerHeight / totalContentHeight);
+    }
+    return 1;
+  }, [containerHeight, svgHeight, showSyllables]);
 
   // Use prop if provided, otherwise fall back to pattern.settings
   const countingSystem: CountingSystem = countingSystemProp ?? pattern.settings?.countingSystem ?? 'none';
@@ -115,52 +140,61 @@ export function StaffNotation({
   const isVeryDense = avgSpacing > 0 && avgSpacing < 20;
 
   return (
-    <div ref={wrapperRef} className="relative w-full h-full overflow-auto">
-      {/* VexFlow notation container with syllables positioned absolutely within */}
+    <div ref={wrapperRef} className="relative w-full h-full overflow-hidden">
+      {/* Scaled container for notation + syllables */}
       <div
-        ref={containerRef}
-        className="w-full relative"
-      />
-
-      {/* Syllables overlay - positioned absolutely to align with notes on each line */}
-      {showSyllables && syllablesByLine.length > 0 && (
+        className="origin-top-left"
+        style={{
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          width: scale < 1 ? `${100 / scale}%` : '100%',
+        }}
+      >
+        {/* VexFlow notation container with syllables positioned absolutely within */}
         <div
-          className="absolute top-0 left-0 w-full pointer-events-none"
-          style={{ height: containerRef.current?.clientHeight || 'auto' }}
-        >
-          {syllablesByLine.map((line, lineIndex) => (
-            <div
-              key={lineIndex}
-              className="absolute w-full"
-              style={{
-                top: `${line.y + 45}px`, // Additional offset to position below staff
-                height: isVeryDense ? '18px' : '24px',
-              }}
-            >
-              {line.syllables.map((item, index) => (
-                <span
-                  key={index}
-                  className={`
-                    absolute text-gray-600 font-medium whitespace-nowrap
-                    transition-colors duration-150 -translate-x-1/2 pointer-events-auto
-                    ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
-                    ${currentEventIndex === item.globalIndex && isPlaying
-                      ? 'text-red-600 bg-red-100 rounded px-0.5'
-                      : ''
-                    }
-                  `}
-                  style={{
-                    left: `${item.x}px`,
-                    top: 0,
-                  }}
-                >
-                  {isVeryDense ? abbreviateSyllable(item.syllable) : item.syllable}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+          ref={containerRef}
+          className="w-full relative"
+        />
+
+        {/* Syllables overlay - positioned absolutely to align with notes on each line */}
+        {showSyllables && syllablesByLine.length > 0 && (
+          <div
+            className="absolute top-0 left-0 w-full pointer-events-none"
+            style={{ height: containerRef.current?.clientHeight || 'auto' }}
+          >
+            {syllablesByLine.map((line, lineIndex) => (
+              <div
+                key={lineIndex}
+                className="absolute w-full"
+                style={{
+                  top: `${line.y + 45}px`, // Additional offset to position below staff
+                  height: isVeryDense ? '18px' : '24px',
+                }}
+              >
+                {line.syllables.map((item, index) => (
+                  <span
+                    key={index}
+                    className={`
+                      absolute text-gray-600 font-medium whitespace-nowrap
+                      transition-colors duration-150 -translate-x-1/2 pointer-events-auto
+                      ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
+                      ${currentEventIndex === item.globalIndex && isPlaying
+                        ? 'text-red-600 bg-red-100 rounded px-0.5'
+                        : ''
+                      }
+                    `}
+                    style={{
+                      left: `${item.x}px`,
+                      top: 0,
+                    }}
+                  >
+                    {isVeryDense ? abbreviateSyllable(item.syllable) : item.syllable}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
