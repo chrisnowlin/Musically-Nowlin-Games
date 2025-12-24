@@ -135,8 +135,8 @@ export function SightReadingRandomizerTool() {
         />
       </div>
 
-      {/* Main Content - Hero Notation (fills remaining space) */}
-      <main className="flex-1 min-h-0 px-4 py-1.5">
+      {/* Main Content - Hero Notation (fills remaining space, with bottom padding for fixed overlay) */}
+      <main className="flex-1 min-h-0 px-4 pt-1.5 pb-16">
         <Card className="print-pattern print:border-0 print:shadow-none h-full flex flex-col">
           <CardHeader className="py-1.5 px-3 print:hidden shrink-0">
             <div className="flex items-center justify-between gap-2">
