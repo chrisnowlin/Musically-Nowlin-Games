@@ -81,23 +81,32 @@ export function FloatingPlaybackOverlay({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30">
-      <div className={`
-        bg-white/95 backdrop-blur-md shadow-2xl border-t border-gray-200
-        transition-all duration-300 ease-in-out
-        ${isExpanded ? 'h-auto' : 'h-16'}
-      `}>
-        {/* Main Controls (Always Visible) */}
-        <div className="p-3 space-y-3">
-          {/* Primary Playback */}
-          <div className="flex items-center justify-center gap-2">
+      <div className="bg-white/95 backdrop-blur-md shadow-2xl border-t border-gray-200">
+        {/* Main Controls Bar (Always Visible) - Single Row */}
+        <div className="px-4 py-2 flex items-center justify-between gap-4">
+          {/* Left: Expand Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1.5 h-9 w-9 shrink-0"
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-5 h-5" />
+            ) : (
+              <ChevronUp className="w-5 h-5" />
+            )}
+          </Button>
+
+          {/* Center: Playback Controls */}
+          <div className="flex items-center gap-2">
             {!isPlaying && !isPaused && (
               <Button
                 onClick={onPlay}
                 disabled={!canPlay}
-                size="lg"
-                className="gap-2 min-w-[140px]"
+                className="gap-2 h-9"
               >
-                <Play className="w-5 h-5" />
+                <Play className="w-4 h-4" />
                 Play
               </Button>
             )}
@@ -106,18 +115,16 @@ export function FloatingPlaybackOverlay({
               <>
                 <Button
                   onClick={onPause}
-                  size="lg"
                   variant="outline"
-                  className="gap-2"
+                  className="gap-2 h-9"
                 >
-                  <Pause className="w-5 h-5" />
+                  <Pause className="w-4 h-4" />
                   Pause
                 </Button>
                 <Button
                   onClick={onStop}
-                  size="lg"
                   variant="destructive"
-                  className="gap-2"
+                  className="h-9 px-3"
                 >
                   <Square className="w-4 h-4" />
                 </Button>
@@ -128,17 +135,15 @@ export function FloatingPlaybackOverlay({
               <>
                 <Button
                   onClick={onResume}
-                  size="lg"
-                  className="gap-2 min-w-[140px]"
+                  className="gap-2 h-9"
                 >
-                  <Play className="w-5 h-5" />
+                  <Play className="w-4 h-4" />
                   Resume
                 </Button>
                 <Button
                   onClick={onStop}
-                  size="lg"
                   variant="outline"
-                  className="gap-2"
+                  className="h-9 px-3"
                 >
                   <Square className="w-4 h-4" />
                 </Button>
@@ -146,13 +151,13 @@ export function FloatingPlaybackOverlay({
             )}
           </div>
 
-          {/* Secondary Controls */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+          {/* Right: Volume & Quick Toggles */}
+          <div className="flex items-center gap-3">
             {/* Volume */}
-            <div className="flex items-center gap-2 flex-1 min-w-[100px]">
+            <div className="flex items-center gap-2 w-32">
               <button
                 onClick={() => onVolumeChange(volume > 0 ? 0 : 0.7)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 rounded shrink-0"
               >
                 {volume > 0 ? (
                   <Volume2 className="w-4 h-4 text-gray-600" />
@@ -168,47 +173,26 @@ export function FloatingPlaybackOverlay({
                 step={5}
                 className="flex-1"
               />
-              <span className="text-xs text-gray-500 w-8 text-right">
-                {Math.round(volume * 100)}%
-              </span>
             </div>
 
-            {/* Quick Toggles */}
-            <div className="flex items-center gap-3">
-              {/* Loop */}
-              <div className="flex items-center gap-1.5">
-                <Repeat className={`w-3.5 h-3.5 ${loopEnabled ? 'text-purple-600' : 'text-gray-400'}`} />
-                <Switch
-                  checked={loopEnabled}
-                  onCheckedChange={onLoopChange}
-                  className="scale-75"
-                />
-              </div>
+            {/* Loop */}
+            <div className="flex items-center gap-1.5">
+              <Repeat className={`w-4 h-4 ${loopEnabled ? 'text-purple-600' : 'text-gray-400'}`} />
+              <Switch
+                checked={loopEnabled}
+                onCheckedChange={onLoopChange}
+                className="scale-90"
+              />
+            </div>
 
-              {/* Click Track */}
-              <div className="flex items-center gap-1.5">
-                <div className={`w-2.5 h-2.5 rounded-full border-2 ${metronomeEnabled ? 'border-purple-600 bg-purple-600' : 'border-gray-400'}`} />
-                <Switch
-                  checked={metronomeEnabled}
-                  onCheckedChange={onMetronomeChange}
-                  className="scale-75"
-                />
-              </div>
-
-              {/* Expand Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1.5 h-8 w-8"
-                title={isExpanded ? 'Collapse' : 'More options'}
-              >
-                {isExpanded ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronUp className="w-4 h-4" />
-                )}
-              </Button>
+            {/* Click Track */}
+            <div className="flex items-center gap-1.5">
+              <div className={`w-3 h-3 rounded-full border-2 ${metronomeEnabled ? 'border-purple-600 bg-purple-600' : 'border-gray-400'}`} />
+              <Switch
+                checked={metronomeEnabled}
+                onCheckedChange={onMetronomeChange}
+                className="scale-90"
+              />
             </div>
           </div>
         </div>
