@@ -80,8 +80,8 @@ export function FloatingPlaybackOverlay({
   const canPlay = hasPattern && isReady;
 
   return (
-    <div className="fixed bottom-6 right-6 z-30 w-full max-w-md">
-      <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+    <div className="fixed bottom-4 right-4 z-30 w-full max-w-sm">
+      <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
         {/* Main Controls */}
         <div className="p-4 space-y-3">
           {/* Primary Playback */}

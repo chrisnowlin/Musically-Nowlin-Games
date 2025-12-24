@@ -41,7 +41,7 @@ export function TopActionBar({
   onMelodicDifficultyChange,
 }: TopActionBarProps) {
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-3 space-y-3">
+    <div className="bg-white border-b border-gray-200 px-4 py-2 space-y-2">
       {/* Preset Buttons */}
       <div className="flex items-center justify-center gap-2">
         {(['beginner', 'intermediate', 'advanced'] as DifficultyPreset[]).map((preset) => (
@@ -50,9 +50,9 @@ export function TopActionBar({
             variant="outline"
             size="sm"
             onClick={() => onPresetSelect(preset)}
-            className="flex-1 max-w-[120px] capitalize gap-1.5"
+            className="flex-1 max-w-[100px] capitalize gap-1 text-xs h-8"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-3.5 h-3.5" />
             {SIGHT_READING_PRESETS[preset].name}
           </Button>
         ))}
@@ -75,10 +75,9 @@ export function TopActionBar({
         {/* Center: Regenerate (Primary) */}
         <Button
           onClick={onRegenerate}
-          size="lg"
-          className="gap-2 px-6 min-w-[160px]"
+          className="gap-1.5 px-5 min-w-[140px] h-9"
         >
-          <RefreshCw className="w-5 h-5" />
+          <RefreshCw className="w-4 h-4" />
           Regenerate
         </Button>
 
@@ -88,7 +87,7 @@ export function TopActionBar({
             value={melodicDifficulty}
             onValueChange={onMelodicDifficultyChange}
           >
-            <SelectTrigger className="h-9 w-[120px]">
+            <SelectTrigger className="h-8 w-[110px] text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -101,10 +100,10 @@ export function TopActionBar({
             variant="outline"
             size="sm"
             onClick={onToggleAdvanced}
-            className="gap-1.5"
+            className="gap-1.5 h-8"
           >
-            <Settings2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Advanced</span>
+            <Settings2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-xs">Advanced</span>
           </Button>
         </div>
       </div>

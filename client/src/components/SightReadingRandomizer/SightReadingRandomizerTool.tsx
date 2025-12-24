@@ -98,20 +98,20 @@ export function SightReadingRandomizerTool() {
   }, [pattern, settings.countingSystem]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 overflow-hidden">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-amber-100 sticky top-0 z-20 print:hidden">
-        <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-amber-100 shrink-0 print:hidden">
+        <div className="max-w-[95vw] mx-auto px-4 py-1.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Link href="/games">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="gap-1.5 h-7">
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Back
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-amber-800">Sight Reading Randomizer</h1>
-              <span className="text-xs bg-amber-100 text-amber-600 px-2 py-1 rounded-full inline-block mt-1">
+              <h1 className="text-base font-bold text-amber-800">Sight Reading Randomizer</h1>
+              <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full inline-block">
                 For Educators
               </span>
             </div>
@@ -121,25 +121,27 @@ export function SightReadingRandomizerTool() {
       </header>
 
       {/* Top Action Bar */}
-      <TopActionBar
-        onPresetSelect={handlePresetSelect}
-        onRegenerate={generate}
-        onToggleAdvanced={() => setAdvancedPanelOpen(true)}
-        keySignature={sightReadingSettings.keySignature}
-        onKeySignatureChange={(value) => updateSightReadingSetting('keySignature', value as any)}
-        clef={settings.clef}
-        onClefChange={(clef) => updateSetting('clef', clef)}
-        melodicDifficulty={sightReadingSettings.melodicDifficulty}
-        onMelodicDifficultyChange={(value) => updateSightReadingSetting('melodicDifficulty', value)}
-      />
+      <div className="shrink-0">
+        <TopActionBar
+          onPresetSelect={handlePresetSelect}
+          onRegenerate={generate}
+          onToggleAdvanced={() => setAdvancedPanelOpen(true)}
+          keySignature={sightReadingSettings.keySignature}
+          onKeySignatureChange={(value) => updateSightReadingSetting('keySignature', value as any)}
+          clef={settings.clef}
+          onClefChange={(clef) => updateSetting('clef', clef)}
+          melodicDifficulty={sightReadingSettings.melodicDifficulty}
+          onMelodicDifficultyChange={(value) => updateSightReadingSetting('melodicDifficulty', value)}
+        />
+      </div>
 
-      {/* Main Content - Hero Notation */}
-      <main className="max-w-[95vw] mx-auto px-4 py-4 pb-32">
-        <Card className="print-pattern print:border-0 print:shadow-none">
-          <CardHeader className="py-3 px-4 print:hidden">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <CardTitle className="text-base font-medium inline-block mr-3">
+      {/* Main Content - Hero Notation (fills remaining space) */}
+      <main className="flex-1 min-h-0 px-4 py-1.5">
+        <Card className="print-pattern print:border-0 print:shadow-none h-full flex flex-col">
+          <CardHeader className="py-1.5 px-3 print:hidden shrink-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium">
                   {settings.ensembleMode === 'single' ? 'Sight Reading Exercise' : 'Ensemble'}
                 </CardTitle>
                 <span className="text-xs text-gray-500">
@@ -147,18 +149,18 @@ export function SightReadingRandomizerTool() {
                   {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <PitchSyllableSelector
                   value={sightReadingSettings.pitchSyllableSystem}
-                  onChange={(system) => updateSightReadingSetting('pitchSyllableSystem', system)}
+                  onChange={(system) => updateSightReadingSetting('pitchSyllableSystem', system as any)}
                   showLabel={false}
                   compact
                 />
               </div>
             </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4 pt-0">
-            <div ref={notationContainerRef} className="w-full">
+          <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden">
+            <div ref={notationContainerRef} className="w-full h-full">
               {settings.ensembleMode !== 'single' && ensemblePattern ? (
                 <EnsembleDisplay
                   ensemble={ensemblePattern}
@@ -187,7 +189,7 @@ export function SightReadingRandomizerTool() {
                   keySignatureForSolfege={sightReadingSettings.keySignature}
                 />
               ) : (
-                <div className="flex items-center justify-center h-48 text-gray-400">
+                <div className="flex items-center justify-center h-full text-gray-400">
                   Click "Regenerate" to create a pattern
                 </div>
               )}
