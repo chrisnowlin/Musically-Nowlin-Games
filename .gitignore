@@ -82,4 +82,5 @@ QUICK_START.md
 *_POC.md
 *_COMPLETE.md
 *_PROGRESS.md
-*_COMPARISON.md
+*_COMPARISON.mdclient/public/audio/philharmonia-backup/
+scripts/trim-sample-*.py
