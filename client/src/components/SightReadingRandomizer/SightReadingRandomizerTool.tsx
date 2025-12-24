@@ -159,8 +159,8 @@ export function SightReadingRandomizerTool() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden">
-            <div ref={notationContainerRef} className="w-full h-full">
+          <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden flex justify-center">
+            <div ref={notationContainerRef} className="w-full h-full max-w-6xl">
               {settings.ensembleMode !== 'single' && ensemblePattern ? (
                 <EnsembleDisplay
                   ensemble={ensemblePattern}
