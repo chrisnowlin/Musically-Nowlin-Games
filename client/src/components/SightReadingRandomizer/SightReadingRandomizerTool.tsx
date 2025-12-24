@@ -109,9 +109,9 @@ export function SightReadingRandomizerTool() {
   }, [pattern, settings.countingSystem]);
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 overflow-hidden">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-amber-100 shrink-0 print:hidden">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-green-100 shrink-0 print:hidden">
         <div className="max-w-[95vw] mx-auto px-4 py-1.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="/games">
@@ -121,8 +121,8 @@ export function SightReadingRandomizerTool() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-base font-bold text-amber-800">Sight Reading Randomizer</h1>
-              <span className="text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full inline-block">
+              <h1 className="text-base font-bold text-green-800">Sight Reading Randomizer</h1>
+              <span className="text-[10px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full inline-block">
                 For Educators
               </span>
             </div>

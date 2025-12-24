@@ -271,8 +271,8 @@ export function StaffNotation({
                 className={`
                   absolute cursor-pointer transition-all duration-150
                   ${hoveredMeasure === bound.measureIndex
-                    ? 'bg-amber-200/40 border-2 border-amber-400 rounded-md'
-                    : 'hover:bg-amber-100/30'
+                    ? 'bg-green-200/40 border-2 border-green-400 rounded-md'
+                    : 'hover:bg-green-100/30'
                   }
                 `}
                 style={{
@@ -313,7 +313,7 @@ export function StaffNotation({
                       transition-colors duration-150 -translate-x-1/2 pointer-events-auto
                       ${isVeryDense ? 'text-xs' : isDense ? 'text-xs' : 'text-sm'}
                       ${currentEventIndex === item.globalIndex && isPlaying
-                        ? 'text-red-600 bg-red-100 rounded px-0.5'
+                        ? 'text-green-600 bg-green-100 rounded px-0.5'
                         : ''
                       }
                     `}
