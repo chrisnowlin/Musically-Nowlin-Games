@@ -80,10 +80,14 @@ export function FloatingPlaybackOverlay({
   const canPlay = hasPattern && isReady;
 
   return (
-    <div className="fixed bottom-4 right-4 z-30 w-full max-w-sm">
-      <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
-        {/* Main Controls */}
-        <div className="p-4 space-y-3">
+    <div className="fixed bottom-0 left-0 right-0 z-30">
+      <div className={`
+        bg-white/95 backdrop-blur-md shadow-2xl border-t border-gray-200
+        transition-all duration-300 ease-in-out
+        ${isExpanded ? 'h-auto' : 'h-16'}
+      `}>
+        {/* Main Controls (Always Visible) */}
+        <div className="p-3 space-y-3">
           {/* Primary Playback */}
           <div className="flex items-center justify-center gap-2">
             {!isPlaying && !isPaused && (
@@ -208,9 +212,9 @@ export function FloatingPlaybackOverlay({
           </div>
         </div>
 
-        {/* Expanded Section */}
+        {/* Expanded Section (Slide up when expanded) */}
         {isExpanded && (
-          <div className="px-4 pb-4 pt-0 space-y-3 border-t border-gray-100">
+          <div className="px-4 pb-4 pt-3 space-y-3 border-t border-gray-100">
             {/* Tempo & Metronome */}
             <div className="grid grid-cols-2 gap-3">
               <Button
@@ -235,6 +239,7 @@ export function FloatingPlaybackOverlay({
                   <SelectItem value="0">No count-in</SelectItem>
                   <SelectItem value="1">1 measure</SelectItem>
                   <SelectItem value="2">2 measures</SelectItem>
+                  <SelectItem value="3">3 measures</SelectItem>
                 </SelectContent>
               </Select>
             </div>
