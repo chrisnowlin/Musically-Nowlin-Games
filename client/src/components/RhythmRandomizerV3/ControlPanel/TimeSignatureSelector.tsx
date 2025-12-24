@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { TIME_SIGNATURES } from '@/lib/rhythmRandomizerV2/types';
+import { TIME_SIGNATURES } from '@/lib/rhythmRandomizerV3/types';
 
 interface TimeSignatureSelectorProps {
   value: string;

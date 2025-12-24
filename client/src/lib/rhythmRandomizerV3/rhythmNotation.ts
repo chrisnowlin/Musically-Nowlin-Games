@@ -694,19 +694,20 @@ export function renderPatternToDiv(
   // 1. Target layout (prefer 4 measures per line for standard patterns)
   // 2. Available width (ensure measures physically fit)
 
-  // Calculate width-based max measures per line first
-  const avgNotesPerMeasure = measureNoteCounts.reduce((a, b) => a + b, 0) / measureNoteCounts.length;
-  const minMeasureWidth = Math.max(80, avgNotesPerMeasure * 18); // Compact: 18px per note, min 80px
-  const widthBasedMax = Math.max(1, Math.floor((availableWidth - opts.startX - firstMeasureExtra - 40) / (minMeasureWidth + opts.measureSpacing)));
-
-  // Target measures per line based on pattern length (prefer 4 for larger patterns)
-  const idealMeasuresPerLine = pattern.measures.length === 16 ? 4 :
+  // For 16 measures, strongly prefer 4 per line (4 rows)
+  // For other counts, calculate based on available width
+  const targetMeasuresPerLine = pattern.measures.length === 16 ? 4 :
     pattern.measures.length === 12 ? 4 :
     pattern.measures.length === 8 ? 4 :
     Math.min(4, pattern.measures.length);
 
-  // Use the smaller of target and width-based max to ensure it fits
-  const measuresPerLine = Math.min(pattern.measures.length, Math.max(1, Math.min(idealMeasuresPerLine, widthBasedMax)));
+  // Width-based calculation: estimate minimum width per measure (more compact)
+  const avgNotesPerMeasure = measureNoteCounts.reduce((a, b) => a + b, 0) / measureNoteCounts.length;
+  const minMeasureWidth = Math.max(100, avgNotesPerMeasure * 20); // Reduced from 28px to 20px per note
+  const widthBasedMax = Math.floor((availableWidth - opts.startX - firstMeasureExtra - 40) / (minMeasureWidth + opts.measureSpacing));
+
+  // Use target unless width constraints prevent it
+  const measuresPerLine = Math.min(pattern.measures.length, Math.max(1, Math.min(targetMeasuresPerLine, Math.max(targetMeasuresPerLine, widthBasedMax))));
 
   // Minimum pixels per note to ensure readability
   const minPixelsPerNote = 32;

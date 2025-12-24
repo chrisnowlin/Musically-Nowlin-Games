@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { SoundOption } from '@/lib/rhythmRandomizerV2/types';
+import { SoundOption } from '@/lib/rhythmRandomizerV3/types';
 
 interface SoundSelectorProps {
   value: SoundOption;

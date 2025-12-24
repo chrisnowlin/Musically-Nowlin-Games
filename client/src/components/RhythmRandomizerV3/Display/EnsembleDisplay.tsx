@@ -3,8 +3,8 @@
  * Displays multiple rhythm parts for ensemble mode
  */
 
-import { EnsemblePattern, CountingSystem, StaffLineMode, StemDirection, ClefType, SoundOption } from '@/lib/rhythmRandomizer/types';
-import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
+import { EnsemblePattern, CountingSystem, StaffLineMode, StemDirection, SoundOption } from '@/lib/rhythmRandomizerV3/types';
+import { addSyllablesToPattern } from '@/lib/rhythmRandomizerV3/countingSyllables';
 import { StaffNotation } from './StaffNotation';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +21,6 @@ interface EnsembleDisplayProps {
   countingSystem: CountingSystem;
   staffLineMode?: StaffLineMode;
   stemDirection?: StemDirection;
-  clef?: ClefType;
   currentPartIndex?: number;
   currentEventIndex?: number;
   isPlaying?: boolean;
@@ -62,7 +61,6 @@ export function EnsembleDisplay({
   countingSystem,
   staffLineMode = 'single',
   stemDirection = 'up',
-  clef = 'treble',
   currentPartIndex = -1,
   currentEventIndex = -1,
   isPlaying = false,
@@ -226,7 +224,6 @@ export function EnsembleDisplay({
                   countingSystem={countingSystem}
                   staffLineMode={staffLineMode}
                   stemDirection={stemDirection}
-                  clef={clef}
                 />
               </div>
             </div>

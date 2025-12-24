@@ -16,7 +16,7 @@ import {
   DEFAULT_SETTINGS,
   DIFFICULTY_PRESETS,
   INITIAL_PLAYBACK_STATE,
-} from '@/lib/rhythmRandomizerV2/types';
+} from '@/lib/rhythmRandomizerV3/types';
 
 // Sound parameters for different instrument options
 // isTonal: if true, sound duration matches note length; if false, uses short percussion hit
@@ -200,15 +200,15 @@ function buildInstrumentSampleUrl(
   return `${basePath}/${instrument}_${philNote}_${duration}_${dynamic}_normal.mp3`;
 }
 
-import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizerV2/rhythmGenerator';
-import { expandBeamedGroups } from '@/lib/rhythmRandomizerV2/rhythmNotation';
+import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizerV3/rhythmGenerator';
+import { expandBeamedGroups } from '@/lib/rhythmRandomizerV3/rhythmNotation';
 import {
   generateEnsemblePattern,
   regeneratePart,
   togglePartMute,
   togglePartSolo,
   updatePartSound,
-} from '@/lib/rhythmRandomizerV2/ensembleGenerator';
+} from '@/lib/rhythmRandomizerV3/ensembleGenerator';
 
 interface UseRhythmRandomizerReturn {
   // State
@@ -247,7 +247,7 @@ interface UseRhythmRandomizerReturn {
   resetSettings: () => void;
 }
 
-export function useRhythmRandomizerV2(): UseRhythmRandomizerReturn {
+export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   // Core state
   const [settings, setSettings] = useState<RhythmSettings>(DEFAULT_SETTINGS);
   const [pattern, setPattern] = useState<RhythmPattern | null>(null);

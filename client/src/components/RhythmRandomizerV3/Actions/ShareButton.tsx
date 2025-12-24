@@ -12,8 +12,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { RhythmSettings } from '@/lib/rhythmRandomizerV2/types';
-import { generateShareUrl, copyShareUrl } from '@/lib/rhythmRandomizerV2/shareUtils';
+import { RhythmSettings } from '@/lib/rhythmRandomizerV3/types';
+import { generateShareUrl, copyShareUrl } from '@/lib/rhythmRandomizerV3/shareUtils';
 
 interface ShareButtonProps {
   settings: RhythmSettings;

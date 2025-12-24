@@ -1,6 +1,7 @@
 /**
- * Floating Playback Overlay Component for Rhythm Randomizer V2
+ * Floating Playback Overlay Component
  * Compact floating playback controls with expandable advanced options
+ * Adapted for Rhythm Randomizer V3 (no pitch/key signature controls)
  */
 
 import { useState } from 'react';
@@ -20,27 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DifficultyPreset, CountingSystem } from '@/lib/rhythmRandomizerV2/types';
-import { RHYTHM_PRESETS } from './presets';
+import { CountingSystem, DifficultyPreset, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizerV3/types';
+import { RHYTHM_PRESETS, PRESET_TOOLTIPS } from './presets';
 
 type MeasureCountOption = 1 | 2 | 4 | 8 | 12 | 16;
-type StaffLineMode = 'single' | 'full';
-type StemDirection = 'up' | 'down';
 
-const PRESET_TOOLTIPS: Record<DifficultyPreset, string> = {
-  beginner: 'Quarter & half notes, simple patterns',
-  intermediate: 'Eighth notes with syncopation',
-  advanced: 'All note values with triplets & ties',
-  custom: 'Use your current custom settings',
+const TIME_SIGNATURE_OPTIONS = [
+  '2/4', '3/4', '4/4', '5/4', '6/8', '7/8', '9/8', '12/8'
+] as const;
+
+const COUNTING_SYSTEM_LABELS: Record<CountingSystem, string> = {
+  none: 'No syllables',
+  kodaly: 'Kodály (ta, ti-ti)',
+  takadimi: 'Takadimi',
+  gordon: 'Gordon',
+  numbers: 'Numbers (1 e & a)',
 };
-
-const COUNTING_SYSTEMS: { value: CountingSystem; label: string }[] = [
-  { value: 'none', label: 'No syllables' },
-  { value: 'kodaly', label: 'Kodály (ta, ti-ti)' },
-  { value: 'takadimi', label: 'Takadimi' },
-  { value: 'gordon', label: 'Gordon' },
-  { value: 'numbers', label: 'Numbers (1 e & a)' },
-];
 
 interface FloatingPlaybackOverlayProps {
   playbackState: {
@@ -58,6 +54,7 @@ interface FloatingPlaybackOverlayProps {
   measureCount: number;
   startMeasure: number;
   selectedMeasureCount: MeasureCountOption;
+  timeSignature: string;
   countingSystem: CountingSystem;
   staffLineMode: StaffLineMode;
   stemDirection: StemDirection;
@@ -73,6 +70,7 @@ interface FloatingPlaybackOverlayProps {
   onPlayMetronome: () => void;
   onStopMetronome: () => void;
   onMeasureCountChange: (count: MeasureCountOption) => void;
+  onTimeSignatureChange: (value: string) => void;
   onCountingSystemChange: (system: CountingSystem) => void;
   onStaffLineModeChange: (mode: StaffLineMode) => void;
   onStemDirectionChange: (direction: StemDirection) => void;
@@ -95,6 +93,7 @@ export function FloatingPlaybackOverlay({
   measureCount,
   startMeasure,
   selectedMeasureCount,
+  timeSignature,
   countingSystem,
   staffLineMode,
   stemDirection,
@@ -110,6 +109,7 @@ export function FloatingPlaybackOverlay({
   onPlayMetronome,
   onStopMetronome,
   onMeasureCountChange,
+  onTimeSignatureChange,
   onCountingSystemChange,
   onStaffLineModeChange,
   onStemDirectionChange,
@@ -226,15 +226,15 @@ export function FloatingPlaybackOverlay({
                 <div>
                   <Select
                     value={countingSystem}
-                    onValueChange={(v) => onCountingSystemChange(v as CountingSystem)}
+                    onValueChange={(value) => onCountingSystemChange(value as CountingSystem)}
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTING_SYSTEMS.map((sys) => (
-                        <SelectItem key={sys.value} value={sys.value}>
-                          {sys.label}
+                      {Object.entries(COUNTING_SYSTEM_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -242,27 +242,27 @@ export function FloatingPlaybackOverlay({
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Choose rhythm counting system</p>
+                <p>Choose counting syllable system</p>
               </TooltipContent>
             </Tooltip>
           </div>
 
-          {/* Staff Display Options */}
+          {/* Display Options */}
           <div className="flex items-center justify-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant={staffLineMode === 'full' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => onStaffLineModeChange(staffLineMode === 'single' ? 'full' : 'single')}
-                  className="gap-1.5 h-9 text-xs"
+                  className="gap-1.5 text-xs h-9"
                 >
                   <Music className="w-3.5 h-3.5" />
                   {staffLineMode === 'single' ? '1 Line' : '5 Lines'}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Toggle staff line mode</p>
+                <p>{staffLineMode === 'single' ? 'Single-line staff' : 'Full 5-line staff'}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -272,7 +272,7 @@ export function FloatingPlaybackOverlay({
                   variant="outline"
                   size="sm"
                   onClick={() => onStemDirectionChange(stemDirection === 'up' ? 'down' : 'up')}
-                  className="gap-1.5 h-9 text-xs"
+                  className="gap-1.5 text-xs h-9"
                 >
                   {stemDirection === 'up' ? (
                     <ArrowUp className="w-3.5 h-3.5" />
@@ -293,7 +293,7 @@ export function FloatingPlaybackOverlay({
       {/* Main Controls Bar (Always Visible) */}
       <div className="bg-white/95 backdrop-blur-md shadow-2xl border-t border-gray-200">
         <div className="max-w-5xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
-          {/* Left Section: Expand + Regenerate */}
+          {/* Left Section: Expand + Time Signature + Regenerate */}
           <div className="flex items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -312,6 +312,28 @@ export function FloatingPlaybackOverlay({
               </TooltipTrigger>
               <TooltipContent>
                 <p>{isExpanded ? 'Hide options' : 'More options'}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Select value={timeSignature} onValueChange={onTimeSignatureChange}>
+                    <SelectTrigger className="h-9 w-[80px] text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIME_SIGNATURE_OPTIONS.map((ts) => (
+                        <SelectItem key={ts} value={ts}>
+                          {ts}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Time signature</p>
               </TooltipContent>
             </Tooltip>
 

@@ -31,7 +31,7 @@ export const SIGHT_READING_PRESETS: Record<DifficultyPreset, SightReadingPreset>
     },
     sightReading: {
       keySignature: 'C',
-      melodicDifficulty: 'easy',
+      melodicDifficulty: 'beginner',
       tonicGravity: 70,
       pitchSyllableSystem: 'moveableDo',
     },
@@ -53,7 +53,7 @@ export const SIGHT_READING_PRESETS: Record<DifficultyPreset, SightReadingPreset>
     },
     sightReading: {
       keySignature: 'G',
-      melodicDifficulty: 'medium',
+      melodicDifficulty: 'intermediate',
       tonicGravity: 50,
       pitchSyllableSystem: 'moveableDo',
     },
@@ -77,7 +77,7 @@ export const SIGHT_READING_PRESETS: Record<DifficultyPreset, SightReadingPreset>
     },
     sightReading: {
       keySignature: 'D',
-      melodicDifficulty: 'hard',
+      melodicDifficulty: 'advanced',
       tonicGravity: 30,
       pitchSyllableSystem: 'moveableDo',
     },

@@ -22,21 +22,21 @@ interface IntervalWeight {
 
 /**
  * Interval weighting profiles by difficulty
- * Easy: 80% steps (2nds), 20% small leaps (3rds)
- * Medium: 50% steps, 30% small leaps, 20% larger leaps
- * Hard: Even distribution across all intervals
+ * Beginner: 80% steps (2nds), 20% small leaps (3rds)
+ * Intermediate: 50% steps, 30% small leaps, 20% larger leaps
+ * Advanced: Even distribution across all intervals
  */
 const DIFFICULTY_WEIGHTS: Record<MelodicDifficulty, IntervalWeight[]> = {
-  easy: [
+  beginner: [
     { minInterval: -2, maxInterval: 2, weight: 80, description: 'Steps (2nds)' },
     { minInterval: -4, maxInterval: 4, weight: 20, description: 'Small leaps (3rds)' }
   ],
-  medium: [
+  intermediate: [
     { minInterval: -2, maxInterval: 2, weight: 50, description: 'Steps (2nds)' },
     { minInterval: -4, maxInterval: 4, weight: 30, description: 'Small leaps (3rds)' },
     { minInterval: -7, maxInterval: 7, weight: 20, description: 'Larger leaps (4ths-5ths)' }
   ],
-  hard: [
+  advanced: [
     { minInterval: -2, maxInterval: 2, weight: 30, description: 'Steps (2nds)' },
     { minInterval: -4, maxInterval: 4, weight: 25, description: 'Small leaps (3rds)' },
     { minInterval: -7, maxInterval: 7, weight: 25, description: 'Medium leaps (4ths-5ths)' },

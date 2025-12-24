@@ -1,17 +1,16 @@
 /**
- * Rhythm Randomizer V2 Tool
- * Main container component for the rhythm generation tool - Redesigned UI
- * Based on Sight Reading Randomizer layout patterns
+ * Rhythm Randomizer V3 Tool
+ * Main container component with redesigned UI - hero layout inspired by Sight Reading Randomizer
  */
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { useRhythmRandomizerV2 } from '@/hooks/useRhythmRandomizerV2';
-import { addSyllablesToPattern } from '@/lib/rhythmRandomizerV2/countingSyllables';
-import { DifficultyPreset, CountingSystem } from '@/lib/rhythmRandomizerV2/types';
+import { useRhythmRandomizer } from '@/hooks/useRhythmRandomizerV3';
+import { addSyllablesToPattern } from '@/lib/rhythmRandomizerV3/countingSyllables';
+import { DifficultyPreset } from '@/lib/rhythmRandomizerV3/types';
 
 // UI Components
 import { AdvancedSettingsPanel } from './ControlPanel/AdvancedSettingsPanel';
@@ -20,22 +19,18 @@ import { ActionsMenu } from './Actions/ActionsMenu';
 
 // Display Components
 import { StaffNotation } from './Display/StaffNotation';
-import { EnsembleDisplay } from './Display/EnsembleDisplay';
 
-// Utils
-import { loadSettingsFromUrl, updateUrlWithSettings } from '@/lib/rhythmRandomizerV2/shareUtils';
+// Load settings from URL
+import { loadSettingsFromUrl, updateUrlWithSettings } from '@/lib/rhythmRandomizerV3/shareUtils';
 import { RHYTHM_PRESETS } from './ControlPanel/presets';
 
-type MeasureCountOption = 1 | 2 | 4 | 8 | 12 | 16;
-
-export function RhythmRandomizerV2Tool() {
+export function RhythmRandomizerV3Tool() {
   const [advancedPanelOpen, setAdvancedPanelOpen] = useState(false);
   const notationContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     settings,
     pattern,
-    ensemblePattern,
     playbackState,
     isReady,
     volume,
@@ -49,13 +44,9 @@ export function RhythmRandomizerV2Tool() {
     setStartMeasure,
     playMetronome,
     stopMetronome,
-    regenerateEnsemblePart,
-    toggleEnsemblePartMute,
-    toggleEnsemblePartSolo,
-    updateEnsemblePartSound,
     updateSetting,
     updateSettings,
-  } = useRhythmRandomizerV2();
+  } = useRhythmRandomizer();
 
   // Track if initial load is complete
   const initialLoadComplete = useRef(false);
@@ -88,11 +79,19 @@ export function RhythmRandomizerV2Tool() {
   // Handle preset selection
   const handlePresetSelect = (preset: DifficultyPreset) => {
     const presetConfig = RHYTHM_PRESETS[preset];
-    if (presetConfig.settings) {
-      updateSettings(presetConfig.settings);
+    if (presetConfig.rhythm) {
+      updateSettings(presetConfig.rhythm);
     }
     generate();
   };
+
+  // Handle clicking on a measure to start playback from that measure
+  const handleMeasureClick = useCallback((measureNumber: number) => {
+    // Stop any current playback
+    stop();
+    // Start playback from the clicked measure
+    play(measureNumber);
+  }, [play, stop]);
 
   // Add syllables to pattern based on current counting system
   const patternWithSyllables = useMemo(() => {
@@ -113,7 +112,7 @@ export function RhythmRandomizerV2Tool() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-base font-bold text-purple-800">Rhythm Randomizer V2</h1>
+              <h1 className="text-base font-bold text-purple-800">Rhythm Randomizer</h1>
               <span className="text-[10px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full inline-block">
                 For Educators
               </span>
@@ -129,26 +128,11 @@ export function RhythmRandomizerV2Tool() {
           <CardHeader className="py-1.5 px-3 print:hidden shrink-0">
             <span className="text-xs text-gray-500">
               {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
-              {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts (${settings.ensembleMode})`}
             </span>
           </CardHeader>
           <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden">
             <div ref={notationContainerRef} className="w-full h-full">
-              {settings.ensembleMode !== 'single' && ensemblePattern ? (
-                <EnsembleDisplay
-                  ensemble={ensemblePattern}
-                  countingSystem={settings.countingSystem}
-                  staffLineMode={settings.staffLineMode}
-                  stemDirection={settings.stemDirection}
-                  currentPartIndex={playbackState.currentPartIndex}
-                  currentEventIndex={playbackState.currentEventIndex}
-                  isPlaying={playbackState.isPlaying}
-                  onToggleMute={toggleEnsemblePartMute}
-                  onToggleSolo={toggleEnsemblePartSolo}
-                  onRegeneratePart={regenerateEnsemblePart}
-                  onChangePartSound={updateEnsemblePartSound}
-                />
-              ) : patternWithSyllables ? (
+              {patternWithSyllables ? (
                 <StaffNotation
                   pattern={patternWithSyllables}
                   currentEventIndex={playbackState.currentEventIndex}
@@ -157,10 +141,11 @@ export function RhythmRandomizerV2Tool() {
                   countingSystem={settings.countingSystem}
                   staffLineMode={settings.staffLineMode}
                   stemDirection={settings.stemDirection}
+                  onMeasureClick={handleMeasureClick}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
-                  Click "New" to create a rhythm
+                  Click "New" to create a rhythm pattern
                 </div>
               )}
             </div>
@@ -180,7 +165,8 @@ export function RhythmRandomizerV2Tool() {
         tempo={settings.tempo}
         measureCount={pattern?.measures.length ?? settings.measureCount}
         startMeasure={startMeasure}
-        selectedMeasureCount={settings.measureCount as MeasureCountOption}
+        selectedMeasureCount={settings.measureCount}
+        timeSignature={settings.timeSignature}
         countingSystem={settings.countingSystem}
         staffLineMode={settings.staffLineMode}
         stemDirection={settings.stemDirection}
@@ -196,6 +182,7 @@ export function RhythmRandomizerV2Tool() {
         onPlayMetronome={playMetronome}
         onStopMetronome={stopMetronome}
         onMeasureCountChange={(count) => updateSetting('measureCount', count)}
+        onTimeSignatureChange={(value) => updateSetting('timeSignature', value)}
         onCountingSystemChange={(system) => updateSetting('countingSystem', system)}
         onStaffLineModeChange={(mode) => updateSetting('staffLineMode', mode)}
         onStemDirectionChange={(direction) => updateSetting('stemDirection', direction)}
@@ -220,10 +207,6 @@ export function RhythmRandomizerV2Tool() {
         onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
         sound={settings.sound}
         onSoundChange={(value) => updateSetting('sound', value)}
-        ensembleMode={settings.ensembleMode}
-        onEnsembleModeChange={(mode) => updateSetting('ensembleMode', mode)}
-        partCount={settings.partCount}
-        onPartCountChange={(count) => updateSetting('partCount', count)}
       />
     </div>
   );

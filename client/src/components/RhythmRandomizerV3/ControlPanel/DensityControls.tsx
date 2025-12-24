@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { NoteDensity } from '@/lib/rhythmRandomizerV2/types';
+import { NoteDensity } from '@/lib/rhythmRandomizerV3/types';
 
 interface DensityControlsProps {
   syncopation: number;

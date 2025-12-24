@@ -4,7 +4,7 @@
  */
 
 import { Button } from '@/components/ui/button';
-import { DifficultyPreset } from '@/lib/rhythmRandomizerV2/types';
+import { DifficultyPreset } from '@/lib/rhythmRandomizerV3/types';
 
 interface PresetSelectorProps {
   onSelectPreset: (preset: DifficultyPreset) => void;

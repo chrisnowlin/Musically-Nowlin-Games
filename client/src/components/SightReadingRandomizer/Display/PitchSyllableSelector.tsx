@@ -13,6 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
 import type { PitchSyllableSystem } from '@/lib/sightReadingRandomizer/types';
 import {
@@ -51,34 +57,45 @@ export function PitchSyllableSelector({
 }: PitchSyllableSelectorProps) {
   if (compact) {
     return (
-      <Select value={value} onValueChange={(v) => onChange(v as PitchSyllableSystem)}>
-        <SelectTrigger className="w-[130px] h-8 text-xs">
-          <SelectValue placeholder="Syllables" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel className="text-xs text-gray-500">Pitch Syllables</SelectLabel>
-            {PITCH_SYLLABLE_SYSTEMS.map((system) => (
-              <SelectItem key={system} value={system} className="text-xs">
-                {getPitchSyllableSystemName(system)}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <SelectGroup>
-            <SelectLabel className="text-xs text-gray-500">Rhythm Syllables</SelectLabel>
-            {RHYTHM_SYLLABLE_SYSTEMS.map((system) => (
-              <SelectItem key={system} value={system} className="text-xs">
-                {getPitchSyllableSystemName(system)}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <SelectGroup>
-            <SelectItem value="none" className="text-xs">
-              None
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Select value={value} onValueChange={(v) => onChange(v as PitchSyllableSystem)}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue placeholder="Syllables" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel className="text-xs text-gray-500">Pitch Syllables</SelectLabel>
+                    {PITCH_SYLLABLE_SYSTEMS.map((system) => (
+                      <SelectItem key={system} value={system} className="text-xs">
+                        {getPitchSyllableSystemName(system)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectLabel className="text-xs text-gray-500">Rhythm Syllables</SelectLabel>
+                    {RHYTHM_SYLLABLE_SYSTEMS.map((system) => (
+                      <SelectItem key={system} value={system} className="text-xs">
+                        {getPitchSyllableSystemName(system)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectGroup>
+                    <SelectItem value="none" className="text-xs">
+                      None
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Syllable naming system for notes</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 

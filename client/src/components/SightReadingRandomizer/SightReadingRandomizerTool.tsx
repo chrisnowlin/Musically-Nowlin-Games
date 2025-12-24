@@ -3,25 +3,22 @@
  * Main container component for the sight reading generation tool - Redesigned UI
  */
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useSightReadingRandomizer } from '@/hooks/useSightReadingRandomizer';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
 import { DifficultyPreset } from '@/lib/rhythmRandomizer/types';
 
-// New UI Components
-import { TopActionBar } from './ControlPanel/TopActionBar';
+// UI Components
 import { AdvancedSettingsPanel } from './ControlPanel/AdvancedSettingsPanel';
 import { FloatingPlaybackOverlay } from './ControlPanel/FloatingPlaybackOverlay';
 import { ActionsMenu } from './Actions/ActionsMenu';
 
 // Display Components
 import { StaffNotation } from './Display/StaffNotation';
-import { PitchSyllableSelector } from './Display/PitchSyllableSelector';
-import { EnsembleDisplay } from './Display/EnsembleDisplay';
 
 // Load settings from URL
 import { loadSettingsFromUrl, updateUrlWithSettings } from '@/lib/rhythmRandomizer/shareUtils';
@@ -34,7 +31,6 @@ export function SightReadingRandomizerTool() {
   const {
     settings,
     pattern,
-    ensemblePattern,
     playbackState,
     isReady,
     volume,
@@ -48,10 +44,6 @@ export function SightReadingRandomizerTool() {
     setStartMeasure,
     playMetronome,
     stopMetronome,
-    regenerateEnsemblePart,
-    toggleEnsemblePartMute,
-    toggleEnsemblePartSolo,
-    updateEnsemblePartSound,
     updateSetting,
     updateSettings,
     // Sight reading specific
@@ -60,6 +52,9 @@ export function SightReadingRandomizerTool() {
     vexflowKeySignature,
   } = useSightReadingRandomizer();
 
+  // Track if initial load is complete
+  const initialLoadComplete = useRef(false);
+
   // Load settings from URL on mount and generate initial pattern
   useEffect(() => {
     const urlSettings = loadSettingsFromUrl();
@@ -67,7 +62,15 @@ export function SightReadingRandomizerTool() {
       updateSettings(urlSettings);
     }
     generate();
+    initialLoadComplete.current = true;
   }, []);
+
+  // Regenerate when measure count changes (after initial load)
+  useEffect(() => {
+    if (initialLoadComplete.current) {
+      generate();
+    }
+  }, [settings.measureCount]);
 
   // Update URL when settings change (debounced)
   useEffect(() => {
@@ -90,6 +93,14 @@ export function SightReadingRandomizerTool() {
     }
     generate();
   };
+
+  // Handle clicking on a measure to start playback from that measure
+  const handleMeasureClick = useCallback((measureNumber: number) => {
+    // Stop any current playback
+    stop();
+    // Start playback from the clicked measure
+    play(measureNumber);
+  }, [play, stop]);
 
   // Add syllables to pattern based on current counting system
   const patternWithSyllables = useMemo(() => {
@@ -120,73 +131,29 @@ export function SightReadingRandomizerTool() {
         </div>
       </header>
 
-      {/* Top Action Bar */}
-      <div className="shrink-0">
-        <TopActionBar
-          onPresetSelect={handlePresetSelect}
-          onRegenerate={generate}
-          onToggleAdvanced={() => setAdvancedPanelOpen(true)}
-          keySignature={sightReadingSettings.keySignature}
-          onKeySignatureChange={(value) => updateSightReadingSetting('keySignature', value as any)}
-          clef={settings.clef}
-          onClefChange={(clef) => updateSetting('clef', clef)}
-          melodicDifficulty={sightReadingSettings.melodicDifficulty}
-          onMelodicDifficultyChange={(value) => updateSightReadingSetting('melodicDifficulty', value)}
-        />
-      </div>
-
       {/* Main Content - Hero Notation (fills remaining space, with bottom padding for fixed overlay) */}
-      <main className="flex-1 min-h-0 px-4 pt-1.5 pb-16">
+      <main className="flex-1 min-h-0 px-4 pt-2 pb-16">
         <Card className="print-pattern print:border-0 print:shadow-none h-full flex flex-col">
           <CardHeader className="py-1.5 px-3 print:hidden shrink-0">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-sm font-medium">
-                  {settings.ensembleMode === 'single' ? 'Sight Reading Exercise' : 'Ensemble'}
-                </CardTitle>
-                <span className="text-xs text-gray-500">
-                  {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
-                  {settings.ensembleMode !== 'single' && ` | ${settings.partCount} parts`}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <PitchSyllableSelector
-                  value={sightReadingSettings.pitchSyllableSystem}
-                  onChange={(system) => updateSightReadingSetting('pitchSyllableSystem', system as any)}
-                  showLabel={false}
-                  compact
-                />
-              </div>
-            </div>
+            <span className="text-xs text-gray-500">
+              {settings.timeSignature} | {settings.tempo} BPM | {settings.measureCount} measures
+            </span>
           </CardHeader>
-          <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden flex justify-center">
-            <div ref={notationContainerRef} className="w-full h-full max-w-6xl">
-              {settings.ensembleMode !== 'single' && ensemblePattern ? (
-                <EnsembleDisplay
-                  ensemble={ensemblePattern}
-                  countingSystem={settings.countingSystem}
-                  staffLineMode={settings.staffLineMode}
-                  clef={settings.clef}
-                  currentPartIndex={playbackState.currentPartIndex}
-                  currentEventIndex={playbackState.currentEventIndex}
-                  isPlaying={playbackState.isPlaying}
-                  onToggleMute={toggleEnsemblePartMute}
-                  onToggleSolo={toggleEnsemblePartSolo}
-                  onRegeneratePart={regenerateEnsemblePart}
-                  onChangePartSound={updateEnsemblePartSound}
-                />
-              ) : patternWithSyllables ? (
+          <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden">
+            <div ref={notationContainerRef} className="w-full h-full">
+              {patternWithSyllables ? (
                 <StaffNotation
                   pattern={patternWithSyllables}
                   currentEventIndex={playbackState.currentEventIndex}
                   isPlaying={playbackState.isPlaying}
                   showSyllables={sightReadingSettings.pitchSyllableSystem !== 'none'}
                   countingSystem={settings.countingSystem}
-                  staffLineMode={settings.staffLineMode}
-                  clef={settings.clef}
-                  keySignature={settings.staffLineMode === 'full' ? vexflowKeySignature : undefined}
+                  staffLineMode="full"
+                  clef="treble"
+                  keySignature={vexflowKeySignature}
                   pitchSyllableSystem={sightReadingSettings.pitchSyllableSystem}
                   keySignatureForSolfege={sightReadingSettings.keySignature}
+                  onMeasureClick={handleMeasureClick}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
@@ -210,6 +177,9 @@ export function SightReadingRandomizerTool() {
         tempo={settings.tempo}
         measureCount={pattern?.measures.length ?? settings.measureCount}
         startMeasure={startMeasure}
+        selectedMeasureCount={settings.measureCount}
+        keySignature={sightReadingSettings.keySignature}
+        pitchSyllableSystem={sightReadingSettings.pitchSyllableSystem}
         onPlay={play}
         onStop={stop}
         onPause={pause}
@@ -221,10 +191,12 @@ export function SightReadingRandomizerTool() {
         onStartMeasureChange={setStartMeasure}
         onPlayMetronome={playMetronome}
         onStopMetronome={stopMetronome}
-        staffLineMode={settings.staffLineMode}
-        onStaffLineModeChange={(mode) => updateSetting('staffLineMode', mode)}
-        pitchSyllableSystem={sightReadingSettings.pitchSyllableSystem}
+        onMeasureCountChange={(count) => updateSetting('measureCount', count)}
+        onKeySignatureChange={(value) => updateSightReadingSetting('keySignature', value as any)}
         onPitchSyllableSystemChange={(system) => updateSightReadingSetting('pitchSyllableSystem', system as any)}
+        onRegenerate={generate}
+        onPresetSelect={handlePresetSelect}
+        onToggleAdvanced={() => setAdvancedPanelOpen(true)}
       />
 
       {/* Advanced Settings Panel */}
@@ -235,8 +207,6 @@ export function SightReadingRandomizerTool() {
         onTimeSignatureChange={(value) => updateSetting('timeSignature', value)}
         tempo={settings.tempo}
         onTempoChange={(value) => updateSetting('tempo', value)}
-        measureCount={settings.measureCount}
-        onMeasureCountChange={(value) => updateSetting('measureCount', value)}
         allowedNoteValues={settings.allowedNoteValues}
         onNoteValuesChange={(values) => updateSetting('allowedNoteValues', values)}
         allowedRestValues={settings.allowedRestValues}
@@ -245,11 +215,6 @@ export function SightReadingRandomizerTool() {
         onRestProbabilityChange={(value) => updateSetting('restProbability', value)}
         sound={settings.sound}
         onSoundChange={(value) => updateSetting('sound', value)}
-        ensembleMode={settings.ensembleMode}
-        partCount={settings.partCount}
-        onEnsembleModeChange={(mode) => updateSetting('ensembleMode', mode)}
-        onPartCountChange={(count) => updateSetting('partCount', count)}
-        clef={settings.clef}
         selectedNotes={sightReadingSettings.allowedPitches}
         onNotesChange={(notes) => updateSightReadingSetting('allowedPitches', notes)}
         tonicGravity={sightReadingSettings.tonicGravity}

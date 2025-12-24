@@ -6,7 +6,7 @@
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-type MeasureCount = 1 | 2 | 4 | 8 | 12 | 16 | 24;
+type MeasureCount = 1 | 2 | 4 | 8 | 12 | 16;
 
 interface MeasureCountSelectorProps {
   value: MeasureCount;
@@ -20,7 +20,6 @@ const MEASURE_OPTIONS: { value: MeasureCount; label: string }[] = [
   { value: 8, label: '8' },
   { value: 12, label: '12' },
   { value: 16, label: '16' },
-  { value: 24, label: '24' },
 ];
 
 export function MeasureCountSelector({ value, onChange }: MeasureCountSelectorProps) {

@@ -253,7 +253,6 @@ export interface PlaybackState {
   currentBeat: number;
   currentEventIndex: number;
   currentPartIndex: number; // For ensemble playback: which part is currently playing
-  partEventIndices: Record<number, number>; // Per-part event indices for simultaneous playback
   elapsedTime: number;
 }
 
@@ -265,7 +264,6 @@ export const INITIAL_PLAYBACK_STATE: PlaybackState = {
   currentBeat: 0,
   currentEventIndex: 0,
   currentPartIndex: -1, // -1 = single mode or no part active
-  partEventIndices: {}, // Empty initially
   elapsedTime: 0,
 };
 

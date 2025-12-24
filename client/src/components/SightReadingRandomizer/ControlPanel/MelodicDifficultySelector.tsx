@@ -1,12 +1,11 @@
 /**
  * Melodic Difficulty Selector Component
- * Toggle buttons for Easy/Medium/Hard difficulty levels
+ * Toggle buttons for Beginner/Intermediate/Advanced difficulty levels
  */
 
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
-export type MelodicDifficulty = 'easy' | 'medium' | 'hard';
+export type MelodicDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 interface MelodicDifficultySelectorProps {
   value: MelodicDifficulty;
@@ -21,18 +20,18 @@ interface DifficultyOption {
 
 const DIFFICULTY_OPTIONS: DifficultyOption[] = [
   {
-    value: 'easy',
-    label: 'Easy',
+    value: 'beginner',
+    label: 'Beginner',
     description: 'Stepwise motion (2nds, occasional 3rds)',
   },
   {
-    value: 'medium',
-    label: 'Medium',
+    value: 'intermediate',
+    label: 'Intermediate',
     description: 'Mix of steps and small leaps (up to 5ths)',
   },
   {
-    value: 'hard',
-    label: 'Hard',
+    value: 'advanced',
+    label: 'Advanced',
     description: 'Wide range with larger leaps',
   },
 ];

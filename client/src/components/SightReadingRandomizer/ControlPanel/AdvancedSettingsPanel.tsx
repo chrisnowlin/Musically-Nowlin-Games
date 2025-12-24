@@ -11,12 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeSignatureSelector } from './TimeSignatureSelector';
 import { TempoControl } from './TempoControl';
 import { NoteValueSelector } from './NoteValueSelector';
-import { MeasureCountSelector } from './MeasureCountSelector';
 import { SoundSelector } from './SoundSelector';
-import { EnsembleModeSelector } from './EnsembleModeSelector';
 import { NoteRangeSelector } from './NoteRangeSelector';
 import { TonicGravitySlider } from './TonicGravitySlider';
-import { RhythmSettings, NoteValue, RestValue, SoundOption, EnsembleMode } from '@/lib/rhythmRandomizer/types';
+import { NoteValue, RestValue, SoundOption } from '@/lib/rhythmRandomizer/types';
 
 interface AdvancedSettingsPanelProps {
   isOpen: boolean;
@@ -27,8 +25,6 @@ interface AdvancedSettingsPanelProps {
   onTimeSignatureChange: (value: string) => void;
   tempo: number;
   onTempoChange: (value: number) => void;
-  measureCount: RhythmSettings['measureCount'];
-  onMeasureCountChange: (value: RhythmSettings['measureCount']) => void;
   allowedNoteValues: NoteValue[];
   onNoteValuesChange: (values: NoteValue[]) => void;
   allowedRestValues: RestValue[];
@@ -37,13 +33,8 @@ interface AdvancedSettingsPanelProps {
   onRestProbabilityChange: (value: number) => void;
   sound: SoundOption;
   onSoundChange: (value: SoundOption) => void;
-  ensembleMode: EnsembleMode;
-  partCount: RhythmSettings['partCount'];
-  onEnsembleModeChange: (mode: EnsembleMode) => void;
-  onPartCountChange: (count: RhythmSettings['partCount']) => void;
 
   // Sight reading settings
-  clef: 'treble' | 'bass';
   selectedNotes: string[];
   onNotesChange: (notes: string[]) => void;
   tonicGravity: number;
@@ -58,8 +49,6 @@ export function AdvancedSettingsPanel({
   onTimeSignatureChange,
   tempo,
   onTempoChange,
-  measureCount,
-  onMeasureCountChange,
   allowedNoteValues,
   onNoteValuesChange,
   allowedRestValues,
@@ -68,12 +57,7 @@ export function AdvancedSettingsPanel({
   onRestProbabilityChange,
   sound,
   onSoundChange,
-  ensembleMode,
-  partCount,
-  onEnsembleModeChange,
-  onPartCountChange,
 
-  clef,
   selectedNotes,
   onNotesChange,
   tonicGravity,
@@ -137,10 +121,6 @@ export function AdvancedSettingsPanel({
                 value={tempo}
                 onChange={onTempoChange}
               />
-              <MeasureCountSelector
-                value={measureCount}
-                onChange={onMeasureCountChange}
-              />
             </TabsContent>
 
             <TabsContent value="note-values" className="space-y-4 mt-4">
@@ -159,14 +139,8 @@ export function AdvancedSettingsPanel({
                 value={sound}
                 onChange={onSoundChange}
               />
-              <EnsembleModeSelector
-                mode={ensembleMode}
-                partCount={partCount}
-                onModeChange={onEnsembleModeChange}
-                onPartCountChange={onPartCountChange}
-              />
               <NoteRangeSelector
-                clef={clef}
+                clef="treble"
                 selectedNotes={selectedNotes}
                 onNotesChange={onNotesChange}
               />

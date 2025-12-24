@@ -19,7 +19,7 @@ export type KeySignature =
 // MELODIC DIFFICULTY TYPES
 // ============================================
 
-export type MelodicDifficulty = 'easy' | 'medium' | 'hard';
+export type MelodicDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 // ============================================
 // PITCH RANGE TYPES
@@ -96,7 +96,7 @@ export function isRhythmSyllableSystem(system: PitchSyllableSystem): boolean {
 export const DEFAULT_SIGHT_READING_SETTINGS: SightReadingSettings = {
   keySignature: 'C',
   allowedPitches: [],
-  melodicDifficulty: 'easy',
+  melodicDifficulty: 'beginner',
   pitchRange: TREBLE_CLEF_RANGE,
   useDiatonicOnly: true,
   allowLeaps: false,

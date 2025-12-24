@@ -38,7 +38,7 @@ import {
   WorksheetFormat,
   RhythmSettings,
   DEFAULT_WORKSHEET_SETTINGS,
-} from '@/lib/rhythmRandomizerV2/types';
+} from '@/lib/rhythmRandomizerV3/types';
 import {
   downloadWorksheetPdf,
   generatePreviewUrl,
@@ -48,7 +48,7 @@ import {
   PageSize,
   PageOrientation,
   DEFAULT_PAGE_SETTINGS,
-} from '@/lib/rhythmRandomizerV2/worksheetGenerator';
+} from '@/lib/rhythmRandomizerV3/worksheetGenerator';
 
 interface WorksheetBuilderProps {
   rhythmSettings: RhythmSettings;

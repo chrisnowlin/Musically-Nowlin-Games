@@ -110,7 +110,7 @@ const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
 
 // Tools
 const RhythmRandomizerPage = lazy(() => import("@/pages/tools/RhythmRandomizerPage"));
-const RhythmRandomizerV2Page = lazy(() => import("@/pages/tools/RhythmRandomizerV2Page"));
+const RhythmRandomizerV3Page = lazy(() => import("@/pages/tools/RhythmRandomizerV3Page"));
 const SolfegeRandomizerPage = lazy(() => import("@/pages/tools/SolfegeRandomizerPage"));
 const SightReadingRandomizerPage = lazy(() => import("@/pages/tools/SightReadingRandomizerPage"));
 
@@ -201,7 +201,7 @@ function Router() {
       <Route path="/games/:slug" component={PlaceholderGame} />
       {/* Tools */}
       <Route path="/tools/rhythm-randomizer" component={RhythmRandomizerPage} />
-      <Route path="/tools/rhythm-randomizer-v2" component={RhythmRandomizerV2Page} />
+      <Route path="/tools/rhythm-randomizer-v3" component={RhythmRandomizerV3Page} />
       <Route path="/tools/solfege-randomizer" component={SolfegeRandomizerPage} />
       <Route path="/tools/sight-reading-randomizer" component={SightReadingRandomizerPage} />
       <Route component={NotFound} />

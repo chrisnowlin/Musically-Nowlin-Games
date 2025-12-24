@@ -7,7 +7,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { NoteValue, RestValue } from '@/lib/rhythmRandomizerV2/types';
+import { NoteValue, RestValue } from '@/lib/rhythmRandomizerV3/types';
 
 interface NoteValueSelectorProps {
   selectedValues: NoteValue[];

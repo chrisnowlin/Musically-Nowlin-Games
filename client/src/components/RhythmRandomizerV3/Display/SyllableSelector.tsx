@@ -11,11 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { CountingSystem } from '@/lib/rhythmRandomizerV2/types';
+import { CountingSystem } from '@/lib/rhythmRandomizerV3/types';
 import {
   getCountingSystemName,
   getCountingSystemDescription,
-} from '@/lib/rhythmRandomizerV2/countingSyllables';
+} from '@/lib/rhythmRandomizerV3/countingSyllables';
 
 interface SyllableSelectorProps {
   value: CountingSystem;

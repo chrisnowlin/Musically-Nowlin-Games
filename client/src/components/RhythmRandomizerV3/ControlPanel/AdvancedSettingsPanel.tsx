@@ -1,6 +1,6 @@
 /**
- * Advanced Settings Panel Component for Rhythm Randomizer V2
- * Slide-in panel with detailed settings (time, tempo, note values, ensemble, etc.)
+ * Advanced Settings Panel Component
+ * Slide-in panel with detailed rhythm settings (time, tempo, note values, sound)
  */
 
 import { useEffect } from 'react';
@@ -12,8 +12,7 @@ import { TimeSignatureSelector } from './TimeSignatureSelector';
 import { TempoControl } from './TempoControl';
 import { NoteValueSelector } from './NoteValueSelector';
 import { SoundSelector } from './SoundSelector';
-import { EnsembleModeSelector } from './EnsembleModeSelector';
-import { NoteValue, RestValue, SoundOption, EnsembleMode } from '@/lib/rhythmRandomizerV2/types';
+import { NoteValue, RestValue, SoundOption } from '@/lib/rhythmRandomizerV3/types';
 
 interface AdvancedSettingsPanelProps {
   isOpen: boolean;
@@ -33,13 +32,9 @@ interface AdvancedSettingsPanelProps {
   restProbability: number;
   onRestProbabilityChange: (value: number) => void;
 
-  // Sound & Ensemble settings
+  // Sound settings
   sound: SoundOption;
   onSoundChange: (value: SoundOption) => void;
-  ensembleMode: EnsembleMode;
-  onEnsembleModeChange: (mode: EnsembleMode) => void;
-  partCount: number;
-  onPartCountChange: (count: number) => void;
 }
 
 export function AdvancedSettingsPanel({
@@ -60,10 +55,6 @@ export function AdvancedSettingsPanel({
 
   sound,
   onSoundChange,
-  ensembleMode,
-  onEnsembleModeChange,
-  partCount,
-  onPartCountChange,
 }: AdvancedSettingsPanelProps) {
   // Handle Escape key to close panel
   useEffect(() => {
@@ -106,12 +97,12 @@ export function AdvancedSettingsPanel({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4" style={{ maxHeight: 'calc(100vh - 140px)' }}>
+        <div className="flex-1 overflow-y-auto px-6 py-4 h-[calc(100%-140px)]">
           <Tabs defaultValue="time" className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-auto">
               <TabsTrigger value="time" className="text-xs py-1.5">Time & Tempo</TabsTrigger>
               <TabsTrigger value="note-values" className="text-xs py-1.5">Note Values</TabsTrigger>
-              <TabsTrigger value="sound" className="text-xs py-1.5">Sound & Ensemble</TabsTrigger>
+              <TabsTrigger value="sound" className="text-xs py-1.5">Sound</TabsTrigger>
             </TabsList>
 
             <TabsContent value="time" className="space-y-4 mt-4">
@@ -141,14 +132,6 @@ export function AdvancedSettingsPanel({
                 value={sound}
                 onChange={onSoundChange}
               />
-              <div className="pt-4 border-t border-gray-100">
-                <EnsembleModeSelector
-                  mode={ensembleMode}
-                  partCount={partCount}
-                  onModeChange={onEnsembleModeChange}
-                  onPartCountChange={onPartCountChange}
-                />
-              </div>
             </TabsContent>
           </Tabs>
         </div>

@@ -685,17 +685,29 @@ export function renderPatternToDiv(
     : 0;
   const keySignatureWidth = accidentalCount * 18; // ~18px per accidental
 
-  // Adjust measures per line based on density - fewer measures per line for dense patterns
-  // Standard: 4 measures per line for simple patterns (4-6 notes per measure)
-  // Reduce to 2 measures per line for dense patterns (10+ notes per measure)
-  // Reduce to 1 measure per line for very dense patterns (16+ notes per measure)
-  const densityFactor = maxNoteCount >= 16 ? 1 : maxNoteCount > 10 ? 2 : maxNoteCount > 6 ? 3 : 4;
-  const measuresPerLine = Math.min(pattern.measures.length, densityFactor);
-
   // Calculate base stave width to fit within container
   // First measure needs extra space for clef, key signature, and time signature
   const firstMeasureExtra = 100 + keySignatureWidth; // clef + time sig + key sig
   const availableWidth = opts.containerWidth || opts.width;
+
+  // Calculate measures per line based on:
+  // 1. Target layout (prefer 4 measures per line for standard patterns)
+  // 2. Available width (ensure measures physically fit)
+
+  // For 16 measures, strongly prefer 4 per line (4 rows)
+  // For other counts, calculate based on available width
+  const targetMeasuresPerLine = pattern.measures.length === 16 ? 4 :
+    pattern.measures.length === 12 ? 4 :
+    pattern.measures.length === 8 ? 4 :
+    Math.min(4, pattern.measures.length);
+
+  // Width-based calculation: estimate minimum width per measure (more compact)
+  const avgNotesPerMeasure = measureNoteCounts.reduce((a, b) => a + b, 0) / measureNoteCounts.length;
+  const minMeasureWidth = Math.max(100, avgNotesPerMeasure * 20); // Reduced from 28px to 20px per note
+  const widthBasedMax = Math.floor((availableWidth - opts.startX - firstMeasureExtra - 40) / (minMeasureWidth + opts.measureSpacing));
+
+  // Use target unless width constraints prevent it
+  const measuresPerLine = Math.min(pattern.measures.length, Math.max(1, Math.min(targetMeasuresPerLine, Math.max(targetMeasuresPerLine, widthBasedMax))));
 
   // Minimum pixels per note to ensure readability
   const minPixelsPerNote = 32;
@@ -782,12 +794,14 @@ export function renderPatternToDiv(
   lineWidths.push(currentLineWidth);
   const maxLineWidth = Math.max(...lineWidths);
 
-  // Scale down all widths proportionally if they exceed container width
-  const maxAllowedWidth = availableWidth - 20; // 20px padding
+  // Scale widths to maximize horizontal space usage
+  const maxAllowedWidth = availableWidth - 10; // Minimal padding
+  const targetWidth = maxAllowedWidth * 0.98; // Use 98% of available width
   let measureWidths = desiredWidths;
 
-  if (maxLineWidth > maxAllowedWidth && maxAllowedWidth > 0) {
-    const scaleFactor = maxAllowedWidth / maxLineWidth;
+  if (maxLineWidth > 0) {
+    // Scale to fill available width - allow up to 1.5x for smaller patterns
+    const scaleFactor = Math.min(1.5, Math.max(0.5, targetWidth / maxLineWidth));
     measureWidths = desiredWidths.map(width => width * scaleFactor);
   }
 

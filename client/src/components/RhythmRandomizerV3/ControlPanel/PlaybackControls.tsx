@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PlaybackState } from '@/lib/rhythmRandomizerV2/types';
+import { PlaybackState } from '@/lib/rhythmRandomizerV3/types';
 
 interface PlaybackControlsProps {
   playbackState: PlaybackState;

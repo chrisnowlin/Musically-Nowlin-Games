@@ -12,8 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { EnsembleMode } from '@/lib/rhythmRandomizer/types';
-import { getEnsembleModeDisplayName } from '@/lib/rhythmRandomizer/ensembleGenerator';
+import { EnsembleMode } from '@/lib/rhythmRandomizerV3/types';
+import { getEnsembleModeDisplayName } from '@/lib/rhythmRandomizerV3/ensembleGenerator';
 import { Users, MessageSquare, Layers, HandMetal } from 'lucide-react';
 
 interface EnsembleModeSelectorProps {

@@ -133,7 +133,7 @@ export interface RhythmSettings {
   // Core Parameters
   timeSignature: string;
   tempo: number; // 40-208 BPM
-  measureCount: 1 | 2 | 4 | 8 | 12 | 16 | 24;
+  measureCount: 1 | 2 | 4 | 8 | 12 | 16;
 
   // Note Value Selection
   allowedNoteValues: NoteValue[];
