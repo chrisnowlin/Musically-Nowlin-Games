@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Music2, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, generateDecorativeOrbs } from "@/theme/playful";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 interface GameState {
   currentRound: SameOrDifferentRound | null;
@@ -38,51 +39,116 @@ export default function SameOrDifferentGame() {
 
   // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
   const { setTimeout, clearAll, isMounted } = useGameCleanup();
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
+
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = volume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [volume]);
 
   // Play phrases for the current round
   const playPhrases = useCallback(async (round: SameOrDifferentRound) => {
+    const scheduler = getScheduler();
+    if (!scheduler || !isMounted.current) return;
+
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    // Stop any existing playback
+    scheduler.stop();
+
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
     setCanAnswer(false);
 
     try {
-      // Play first phrase
-      if (!isMounted.current) return; // Exit early if unmounted
-      await audioService.playPhrase(
-        round.phrase1,
-        round.phraseDurations1,
-        round.dynamics1,
-        0.05
-      );
+      // Build scheduled events for both phrases
+      const events: ScheduledSound[] = [];
+      let currentTime = 0;
+      const gap = 0.05; // Gap between notes
 
-      // Check if still mounted before pause
-      if (!isMounted.current) return;
+      // First phrase
+      for (let i = 0; i < round.phrase1.length; i++) {
+        const frequency = round.phrase1[i];
+        const durationSeconds = round.phraseDurations1[i] / 1000; // Convert ms to seconds
+        const volume = round.dynamics1[i] !== undefined ? round.dynamics1[i] : 0.7;
 
-      // Pause between phrases
-      await new Promise(resolve => setTimeout(resolve, 800));
+        events.push({
+          time: currentTime,
+          frequency: frequency,
+          duration: durationSeconds,
+          volume: volume,
+          eventIndex: i,
+          partIndex: 1,
+        });
 
-      // Check if still mounted before second phrase
-      if (!isMounted.current) return;
-
-      // Play second phrase
-      await audioService.playPhrase(
-        round.phrase2,
-        round.phraseDurations2,
-        round.dynamics2,
-        0.05
-      );
-
-      // Only update state if still mounted
-      if (isMounted.current) {
-        setGameState(prev => ({ ...prev, isPlaying: false }));
-        setCanAnswer(true);
+        currentTime += durationSeconds + gap;
       }
+
+      // Pause between phrases (800ms)
+      currentTime += 0.8;
+
+      // Second phrase
+      for (let i = 0; i < round.phrase2.length; i++) {
+        const frequency = round.phrase2[i];
+        const durationSeconds = round.phraseDurations2[i] / 1000; // Convert ms to seconds
+        const volume = round.dynamics2[i] !== undefined ? round.dynamics2[i] : 0.7;
+
+        events.push({
+          time: currentTime,
+          frequency: frequency,
+          duration: durationSeconds,
+          volume: volume,
+          eventIndex: i,
+          partIndex: 2,
+        });
+
+        currentTime += durationSeconds + gap;
+      }
+
+      // Schedule all events
+      await scheduler.scheduleSequence(events, {
+        onComplete: () => {
+          if (isMounted.current) {
+            setGameState(prev => ({ ...prev, isPlaying: false }));
+            setCanAnswer(true);
+          }
+        },
+      });
     } catch (error) {
       console.error('Error playing phrases:', error);
       if (isMounted.current) {
         setGameState(prev => ({ ...prev, isPlaying: false }));
       }
     }
-  }, [isMounted]);
+  }, [getScheduler, isMounted]);
 
   // Start a new round
   const startNewRound = useCallback(async () => {
@@ -160,6 +226,9 @@ export default function SameOrDifferentGame() {
   // Initialize and start the game
   const handleStartGame = useCallback(async () => {
     await audioService.initialize();
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
     setGameStarted(true);
     startNewRound();
   }, [startNewRound]);
@@ -167,7 +236,21 @@ export default function SameOrDifferentGame() {
   // Apply volume changes
   useEffect(() => {
     audioService.setVolume(volume / 100);
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(volume / 100, now + 0.05);
+    }
   }, [volume]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   const decorativeOrbs = generateDecorativeOrbs();
 

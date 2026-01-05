@@ -165,11 +165,15 @@ export function AnimalOrchestraConductorV2() {
         // Get current tempo (allows live adjustment)
         const tempoMs = Math.round(60000 / tempoRef.current / 2);
 
+        // Stop any existing playback before starting new loop iteration
+        orchestraAudioService.stop();
+
         // Play all enabled instruments simultaneously with their current patterns
+        // Use stopExisting: false so concurrent instruments don't stop each other
         await Promise.all(
           currentEnabledInstruments.map(i => {
             const pattern = instrumentStatesRef.current[i.id].pattern!;
-            return orchestraAudioService.playSequence(i.instrument, pattern.events, tempoMs, signal);
+            return orchestraAudioService.playSequence(i.instrument, pattern.events, tempoMs, signal, { stopExisting: false });
           })
         );
       } while (isLoopingRef.current && !signal.aborted);

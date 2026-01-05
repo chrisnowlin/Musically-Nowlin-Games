@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, TrendingUp, TrendingDown, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 type ScaleType = "complete-ascending" | "complete-descending" | "incomplete-ascending" | "incomplete-descending";
 
@@ -52,15 +53,48 @@ export default function ScaleClimberGame() {
   });
 
   const [gameStarted, setGameStarted] = useState(false);
-  const audioContext = useRef<AudioContext | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
 
   // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
   const { setTimeout, clearAll, isMounted } = useGameCleanup();
 
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = gameState.volume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [gameState.volume]);
+
+  // Cleanup on unmount
   useEffect(() => {
-    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
-      audioContext.current?.close();
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
     };
   }, []);
 
@@ -70,43 +104,43 @@ export default function ScaleClimberGame() {
     }
   }, [gameStarted]);
 
-  const playNote = useCallback(async (frequency: number, duration: number) => {
-    if (!audioContext.current) return;
-
-    const masterVolume = gameState.volume / 100;
-
-    const oscillator = audioContext.current.createOscillator();
-    const gainNode = audioContext.current.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.current.destination);
-
-    oscillator.frequency.value = frequency;
-    oscillator.type = "sine";
-
-    const volume = 0.3 * masterVolume;
-    const startTime = audioContext.current.currentTime;
-    gainNode.gain.setValueAtTime(volume, startTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration);
-
-    await new Promise(resolve => setTimeout(resolve, duration * 1000));
-  }, [gameState.volume]);
-
   const playScale = useCallback(async (scale: ScalePattern) => {
-    if (!audioContext.current) return;
+    const scheduler = getScheduler();
+    if (!scheduler || !isMounted.current) return;
+
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    // Stop any existing playback
+    scheduler.stop();
 
     const noteDuration = 0.4;
+    const masterVolume = gameState.volume / 100;
+    const events: ScheduledSound[] = [];
+    let currentTime = 0;
 
-    for (const noteIndex of scale.noteIndices) {
-      if (!isMounted.current) return; // Exit early if unmounted
+    // Build scheduled events
+    for (let i = 0; i < scale.noteIndices.length; i++) {
+      if (!isMounted.current) break;
+      const noteIndex = scale.noteIndices[i];
       const note = SCALE_NOTES[noteIndex];
-      await playNote(note.freq, noteDuration);
-      if (!isMounted.current) return; // Check again after note
+
+      events.push({
+        time: currentTime,
+        frequency: note.freq,
+        duration: noteDuration,
+        volume: 0.3 * masterVolume,
+        eventIndex: i,
+      });
+
+      currentTime += noteDuration;
     }
-  }, [playNote, isMounted]);
+
+    // Schedule all events
+    await scheduler.scheduleSequence(events, {});
+  }, [getScheduler, gameState.volume, isMounted]);
 
   const generateNewScale = useCallback(() => {
     // Randomly choose: complete (70%) or incomplete (30%)
@@ -187,8 +221,19 @@ export default function ScaleClimberGame() {
 
   const handleStartGame = async () => {
     await audioService.initialize();
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
     setGameStarted(true);
   };
+
+  // Update master gain when volume changes
+  useEffect(() => {
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(gameState.volume / 100, now + 0.05);
+    }
+  }, [gameState.volume]);
 
   const resetGame = useCallback(() => {
     // Clear all pending timeouts and stop audio

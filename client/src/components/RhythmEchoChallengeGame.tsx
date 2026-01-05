@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Music2, Loader2, Star, Sparkles, Drum, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 interface RhythmPattern {
   beats: number[]; // Timestamps in ms relative to start
@@ -93,57 +94,100 @@ export default function RhythmEchoChallengeGame() {
 
   // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
   const { setTimeout, clearAll, isMounted } = useGameCleanup();
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
+
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = 0.7;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, []);
 
   const playPattern = useCallback(async (pattern: RhythmPattern) => {
+    const scheduler = getScheduler();
+    if (!scheduler || !isMounted.current) return;
+
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    // Stop any existing playback
+    scheduler.stop();
+
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
     setShowVisualBeats([]);
     
-    const startTime = Date.now();
-    
+    // Build scheduled events - convert ms to seconds
+    const events: ScheduledSound[] = [];
     for (let i = 0; i < pattern.beats.length; i++) {
-      if (!isMounted.current) return; // Exit early if unmounted
+      const beatTimeSeconds = pattern.beats[i] / 1000; // Convert ms to seconds
       
-      const beatTime = pattern.beats[i];
-      const delay = beatTime - (Date.now() - startTime);
-      
-      if (delay > 0) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-      
-      // Check if still mounted before playing note
-      if (!isMounted.current) return;
-      
-      // Show visual feedback
-      setShowVisualBeats(prev => {
-        const newBeats = [...prev];
-        newBeats[i] = true;
-        return newBeats;
+      events.push({
+        time: beatTimeSeconds,
+        frequency: NOTE_FREQUENCY,
+        duration: NOTE_DURATION,
+        volume: 0.7,
+        eventIndex: i,
       });
-      
-      await audioService.playNote(NOTE_FREQUENCY, NOTE_DURATION);
-      
-      // Check if still mounted after note
-      if (!isMounted.current) return;
-      
-      // Hide visual feedback after a short time
-      setTimeout(() => {
-        if (isMounted.current) {
+    }
+    
+    // Schedule all events
+    await scheduler.scheduleSequence(events, {
+      onEventStart: (event) => {
+        if (event.eventIndex !== undefined && isMounted.current) {
+          // Show visual feedback
           setShowVisualBeats(prev => {
             const newBeats = [...prev];
-            newBeats[i] = false;
+            newBeats[event.eventIndex!] = true;
             return newBeats;
           });
+          
+          // Hide visual feedback after a short time
+          setTimeout(() => {
+            if (isMounted.current) {
+              setShowVisualBeats(prev => {
+                const newBeats = [...prev];
+                newBeats[event.eventIndex!] = false;
+                return newBeats;
+              });
+            }
+          }, 200);
         }
-      }, 200);
-    }
-    
-    // Only update state if still mounted
-    if (isMounted.current) {
-      setGameState(prev => ({ ...prev, isPlaying: false, isRecording: true }));
-      setRecordingStartTime(Date.now());
-      setUserTaps([]);
-    }
-  }, [isMounted, setTimeout]);
+      },
+      onComplete: () => {
+        if (isMounted.current) {
+          setGameState(prev => ({ ...prev, isPlaying: false, isRecording: true }));
+          setRecordingStartTime(Date.now());
+          setUserTaps([]);
+        }
+      },
+    });
+  }, [getScheduler, isMounted, setTimeout]);
 
   const startNewRound = useCallback(async () => {
     const newRound: RhythmRound = {
@@ -213,9 +257,22 @@ export default function RhythmEchoChallengeGame() {
 
   const handleStartGame = async () => {
     await audioService.initialize();
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
     setGameStarted(true);
     startNewRound();
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   const handleReplay = () => {
     if (gameState.currentRound && !gameState.isPlaying && !gameState.isRecording) {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Music, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
@@ -62,14 +63,7 @@ function createDeck(): Card[] {
   return cards;
 }
 
-async function playMelody(melody: number[], isMounted: React.MutableRefObject<boolean>, setTimeout: <T = void>(callback: (value?: T) => void, delay: number) => NodeJS.Timeout): Promise<void> {
-  for (const freq of melody) {
-    if (!isMounted.current) return; // Exit early if unmounted
-    await audioService.playNote(freq, 0.3);
-    if (!isMounted.current) return; // Check again after note
-    await new Promise<void>(resolve => setTimeout(resolve, 100));
-  }
-}
+// playMelody is now handled inline with Web Audio scheduling
 
 export default function MelodyMemoryMatchGame() {
   const [, setLocation] = useLocation();
@@ -86,6 +80,78 @@ export default function MelodyMemoryMatchGame() {
   
   // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
   const { setTimeout, clearAll, isMounted } = useGameCleanup();
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
+
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = 0.7;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, []);
+
+  const playMelody = useCallback(async (melody: number[]) => {
+    const scheduler = getScheduler();
+    if (!scheduler || !isMounted.current) return;
+
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    scheduler.stop();
+
+    const events: ScheduledSound[] = [];
+    let currentTime = 0;
+    const noteDuration = 0.3;
+    const noteGap = 0.1;
+
+    for (let i = 0; i < melody.length; i++) {
+      if (!isMounted.current) break;
+      events.push({
+        time: currentTime,
+        frequency: melody[i],
+        duration: noteDuration,
+        volume: 0.7,
+        eventIndex: i,
+      });
+      currentTime += noteDuration + noteGap;
+    }
+
+    await scheduler.scheduleSequence(events, {});
+  }, [getScheduler, isMounted]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   const handleCardClick = useCallback(async (cardId: number) => {
     if (gameState.isPlaying || isCheckingMatch) return;
@@ -106,7 +172,7 @@ export default function MelodyMemoryMatchGame() {
       isPlaying: true,
     }));
     
-    await playMelody(card.melody, isMounted, setTimeout);
+    await playMelody(card.melody);
     
     setGameState(prev => ({ ...prev, isPlaying: false }));
     

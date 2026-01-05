@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
 import ScoreDisplay from "@/components/ScoreDisplay";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import { motion, AnimatePresence } from "framer-motion";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 const CHARACTERS = [
   { image: "/images/leo-lion.jpeg", name: "Leo Lion", id: "leo", color: "bg-orange-500" },
@@ -98,14 +99,7 @@ function generateRound(): Round {
   };
 }
 
-async function playMelodyAtTempo(melody: number[], tempo: number, isMounted: React.MutableRefObject<boolean>, setTimeout: <T = void>(callback: (value?: T) => void, delay: number) => NodeJS.Timeout): Promise<void> {
-  for (const freq of melody) {
-    if (!isMounted.current) return; // Exit early if unmounted
-    await audioService.playNote(freq, tempo * 0.8);
-    if (!isMounted.current) return; // Check again after note
-    await new Promise<void>(resolve => setTimeout(resolve, tempo * 200));
-  }
-}
+// This function is now replaced by Web Audio scheduling in the component
 
 export default function FastOrSlowRaceGame() {
   const [, setLocation] = useLocation();
@@ -125,6 +119,84 @@ export default function FastOrSlowRaceGame() {
 
   // Use the cleanup hook for auto-cleanup of timeouts and audio on unmount
   const { setTimeout, clearAll, isMounted } = useGameCleanup();
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
+
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    // Create AudioContext if needed
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    // Create master gain if needed
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = volume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [volume]);
+
+  /**
+   * Play melody at specific tempo using Web Audio scheduling
+   */
+  const playMelodyAtTempo = useCallback(async (
+    melody: number[],
+    tempo: number,
+    startTime: number = 0
+  ): Promise<number> => {
+    const scheduler = getScheduler();
+    if (!scheduler || !isMounted.current) {
+      return startTime;
+    }
+
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    const noteDuration = tempo * 0.8;
+    const noteSpacing = tempo * 0.2;
+    const events: ScheduledSound[] = [];
+    let currentTime = startTime;
+
+    // Build scheduled events
+    for (let i = 0; i < melody.length; i++) {
+      if (!isMounted.current) break;
+      
+      events.push({
+        time: currentTime,
+        frequency: melody[i],
+        duration: noteDuration,
+        volume: 0.7 * (volume / 100),
+        eventIndex: i,
+      });
+
+      currentTime += noteDuration + noteSpacing;
+    }
+
+    // Schedule all events
+    await scheduler.scheduleSequence(events, {});
+
+    return currentTime;
+  }, [getScheduler, volume, isMounted]);
 
   // Update volume when changed
   useEffect(() => {
@@ -147,28 +219,74 @@ export default function FastOrSlowRaceGame() {
   }, [clearAll]);
 
   const playBothMelodies = useCallback(async (round: Round) => {
+    const scheduler = getScheduler();
+    if (!scheduler || !isMounted.current) return;
+
+    // Stop any existing playback
+    scheduler.stop();
+
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
     setGameState(prev => ({ ...prev, isPlaying: true, feedback: null }));
     setWinner(null); // Reset winner animation position
 
-    setPlayingCharacter(1);
-    await playMelodyAtTempo(round.melody, round.tempo1, isMounted, setTimeout);
-    setPlayingCharacter(null);
+    // Build events for both melodies with pause between
+    const allEvents: ScheduledSound[] = [];
+    let currentTime = 0;
 
-    // Check if still mounted before pause
-    if (!isMounted.current) return;
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Check if still mounted before second melody
-    if (!isMounted.current) return;
-    setPlayingCharacter(2);
-    await playMelodyAtTempo(round.melody, round.tempo2, isMounted, setTimeout);
-    setPlayingCharacter(null);
-
-    // Only update state if still mounted
-    if (isMounted.current) {
-      setGameState(prev => ({ ...prev, isPlaying: false }));
+    // First melody
+    const noteDuration1 = round.tempo1 * 0.8;
+    const noteSpacing1 = round.tempo1 * 0.2;
+    for (let i = 0; i < round.melody.length; i++) {
+      allEvents.push({
+        time: currentTime,
+        frequency: round.melody[i],
+        duration: noteDuration1,
+        volume: 0.7 * (volume / 100),
+        eventIndex: i,
+        partIndex: 1,
+      });
+      currentTime += noteDuration1 + noteSpacing1;
     }
-  }, [isMounted, setTimeout]);
+
+    // Pause between melodies (800ms)
+    currentTime += 0.8;
+
+    // Second melody
+    const noteDuration2 = round.tempo2 * 0.8;
+    const noteSpacing2 = round.tempo2 * 0.2;
+    for (let i = 0; i < round.melody.length; i++) {
+      allEvents.push({
+        time: currentTime,
+        frequency: round.melody[i],
+        duration: noteDuration2,
+        volume: 0.7 * (volume / 100),
+        eventIndex: i,
+        partIndex: 2,
+      });
+      currentTime += noteDuration2 + noteSpacing2;
+    }
+
+    // Schedule all events
+    await scheduler.scheduleSequence(allEvents, {
+      onEventStart: (event) => {
+        if (event.partIndex === 1) {
+          setPlayingCharacter(1);
+        } else if (event.partIndex === 2) {
+          setPlayingCharacter(2);
+        }
+      },
+      onComplete: () => {
+        setPlayingCharacter(null);
+        if (isMounted.current) {
+          setGameState(prev => ({ ...prev, isPlaying: false }));
+        }
+      },
+    });
+  }, [getScheduler, volume, isMounted]);
 
   const startNewRound = useCallback(async () => {
     const newRound = generateRound();
@@ -217,9 +335,30 @@ export default function FastOrSlowRaceGame() {
 
   const handleStartGame = async () => {
     await audioService.initialize();
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
     setGameStarted(true);
     startNewRound();
   };
+
+  // Update master gain when volume changes
+  useEffect(() => {
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(volume / 100, now + 0.05);
+    }
+  }, [volume]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   if (!gameStarted) {
     return (

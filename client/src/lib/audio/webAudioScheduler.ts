@@ -255,25 +255,27 @@ export function createWebAudioScheduler(audioContext: AudioContext, masterGain: 
 
   /**
    * Schedule and play a sequence of sounds with precise timing
+   * @param stopExisting - If true, stops existing playback before scheduling (default: true)
+   * @returns Promise that resolves when playback completes
    */
   async function scheduleSequence(
     events: ScheduledSound[],
-    callbacks: SchedulerCallbacks = {}
+    callbacks: SchedulerCallbacks = {},
+    options: { stopExisting?: boolean } = {}
   ): Promise<void> {
+    const { stopExisting = true } = options;
+    
     // Ensure audio context is running
     if (audioContext.state === 'suspended') {
       await audioContext.resume();
     }
 
-    // Stop any existing playback
-    stop();
+    // Stop any existing playback (unless we're adding to concurrent playback)
+    if (stopExisting) {
+      stop();
+    }
 
-    // Store callbacks and events
-    currentCallbacks = callbacks;
-    scheduledEvents = [...events].sort((a, b) => a.time - b.time);
-    lastTriggeredEventIndex = -1;
-
-    // Preload any samples
+    // Preload any samples first (before updating state)
     const sampleUrls = events
       .filter(e => e.sampleUrl)
       .map(e => e.sampleUrl!);
@@ -284,13 +286,44 @@ export function createWebAudioScheduler(audioContext: AudioContext, masterGain: 
 
     // Calculate start time with a small buffer for scheduling
     const scheduleAheadTime = 0.025; // 25ms buffer
-    state.startTime = audioContext.currentTime + scheduleAheadTime;
-    state.isPlaying = true;
-    state.isPaused = false;
+    const sequenceStartTime = audioContext.currentTime + scheduleAheadTime;
+    
+    // Calculate sequence duration for this sequence
+    const lastEvent = events[events.length - 1];
+    const sequenceDuration = lastEvent ? lastEvent.time + lastEvent.duration : 0;
+    
+    // Track whether this is the first sequence in a concurrent batch
+    const isFirstSequence = stopExisting || !state.isPlaying;
+    
+    if (isFirstSequence) {
+      // First sequence - initialize state
+      state.startTime = sequenceStartTime;
+      state.isPlaying = true;
+      state.isPaused = false;
+      
+      // Store callbacks and events
+      currentCallbacks = callbacks;
+      scheduledEvents = [...events].sort((a, b) => a.time - b.time);
+      lastTriggeredEventIndex = -1;
+      
+      // Start animation loop for UI updates
+      if (animationFrameId === null) {
+        animationFrameId = requestAnimationFrame(animationLoop);
+      }
+    } else {
+      // Concurrent sequence - merge events to track the longest sequence for completion
+      // Add new events with adjusted times (relative to original start time)
+      const timeOffset = sequenceStartTime - state.startTime;
+      const adjustedEvents = events.map(e => ({
+        ...e,
+        time: e.time + timeOffset
+      }));
+      scheduledEvents = [...scheduledEvents, ...adjustedEvents].sort((a, b) => a.time - b.time);
+    }
 
     // Schedule all sounds
     for (const event of events) {
-      const absoluteTime = state.startTime + event.time;
+      const absoluteTime = sequenceStartTime + event.time;
 
       if (event.sampleUrl) {
         // Sample-based sound
@@ -310,8 +343,25 @@ export function createWebAudioScheduler(audioContext: AudioContext, masterGain: 
       }
     }
 
-    // Start animation loop for UI updates
-    animationFrameId = requestAnimationFrame(animationLoop);
+    // Return a promise that resolves when this sequence's playback completes
+    return new Promise<void>((resolve) => {
+      const checkCompletion = () => {
+        const elapsed = audioContext.currentTime - sequenceStartTime;
+        if (elapsed >= sequenceDuration) {
+          resolve();
+        } else {
+          // Check again next frame
+          requestAnimationFrame(checkCompletion);
+        }
+      };
+      
+      // Start checking for completion
+      if (sequenceDuration > 0) {
+        requestAnimationFrame(checkCompletion);
+      } else {
+        resolve();
+      }
+    });
   }
 
   /**

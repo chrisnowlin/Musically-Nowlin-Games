@@ -8,6 +8,7 @@ import { playfulColors, playfulTypography, playfulShapes, playfulComponents, pla
 import { useAudioService } from "@/hooks/useAudioService";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import AudioErrorFallback from "@/components/AudioErrorFallback";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 interface GameState {
   score: number;
@@ -45,21 +46,56 @@ export default function MusicalSimonSaysGame() {
 
   const [gameStarted, setGameStarted] = useState(false);
   const [activeNote, setActiveNote] = useState<number | null>(null);
-  const audioContext = useRef<AudioContext | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
 
   // Use audio service and cleanup hooks
   const { audio, isReady, error, initialize } = useAudioService();
   const { setTimeout: setGameTimeout } = useGameCleanup();
+
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    // Create AudioContext if needed
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    // Create master gain if needed
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = gameState.volume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [gameState.volume]);
 
   // Handle audio errors
   if (error) {
     return <AudioErrorFallback error={error} onRetry={initialize} />;
   }
 
+  // Cleanup on unmount
   useEffect(() => {
-    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
-      audioContext.current?.close();
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
     };
   }, []);
 
@@ -69,25 +105,64 @@ export default function MusicalSimonSaysGame() {
     }
   }, [gameStarted]);
 
-  const playNote = useCallback(async (noteId: number, duration: number = 0.6) => {
-    const note = NOTES[noteId];
-    setActiveNote(noteId);
-
-    await audio.playNoteWithDynamics(note.frequency, duration, gameState.volume / 100);
-
-    setActiveNote(null);
-    await new Promise(resolve => setGameTimeout(resolve, 200)); // Gap between notes
-  }, [gameState.volume, audio, setGameTimeout]);
-
   const playSequence = useCallback(async (sequence: number[]) => {
-    setGameState(prev => ({ ...prev, isPlaying: true, isListening: true }));
-
-    for (const noteId of sequence) {
-      await playNote(noteId);
+    const scheduler = getScheduler();
+    if (!scheduler) {
+      console.error('Failed to create audio scheduler');
+      return;
     }
 
-    setGameState(prev => ({ ...prev, isPlaying: false, isListening: false }));
-  }, [playNote]);
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    // Stop any existing playback
+    scheduler.stop();
+
+    setGameState(prev => ({ ...prev, isPlaying: true, isListening: true }));
+
+    // Build scheduled events
+    const events: ScheduledSound[] = [];
+    let currentTime = 0;
+    const noteDuration = 0.6;
+    const noteGap = 0.2;
+
+    for (let i = 0; i < sequence.length; i++) {
+      const noteId = sequence[i];
+      const note = NOTES[noteId];
+
+      events.push({
+        time: currentTime,
+        frequency: note.frequency,
+        duration: noteDuration,
+        volume: gameState.volume / 100,
+        eventIndex: i,
+        eventId: `note-${noteId}`,
+      });
+
+      currentTime += noteDuration + noteGap;
+    }
+
+    // Schedule all events
+    await scheduler.scheduleSequence(events, {
+      onEventStart: (event) => {
+        // Find note ID from frequency
+        const noteId = NOTES.findIndex(n => n.frequency === event.frequency);
+        if (noteId !== -1) {
+          setActiveNote(noteId);
+        }
+      },
+      onTick: () => {
+        // Clear active note between notes
+        // This is handled by the gap timing
+      },
+      onComplete: () => {
+        setActiveNote(null);
+        setGameState(prev => ({ ...prev, isPlaying: false, isListening: false }));
+      },
+    });
+  }, [getScheduler, gameState.volume]);
 
   const startNewRound = useCallback(() => {
     // Add a random note to the sequence
@@ -110,8 +185,11 @@ export default function MusicalSimonSaysGame() {
   const handleNoteClick = useCallback(async (noteId: number) => {
     if (gameState.isPlaying || gameState.isListening || gameState.feedback || gameState.gameOver) return;
 
-    // Play the note
-    await playNote(noteId, 0.3);
+    // Play the note immediately (user input, not sequential)
+    const note = NOTES[noteId];
+    setActiveNote(noteId);
+    await audio.playNoteWithDynamics(note.frequency, 0.3, gameState.volume / 100);
+    setActiveNote(null);
 
     const newUserSequence = [...gameState.userSequence, noteId];
     const currentIndex = gameState.userSequence.length;

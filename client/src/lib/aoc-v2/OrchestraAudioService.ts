@@ -2,7 +2,10 @@
  * OrchestraAudioService - Unified audio service for all orchestra instruments
  * 
  * Supports: violin, flute, clarinet, trumpet, tuba, bass drum
+ * 
+ * Uses Web Audio API scheduling for precise timing
  */
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 export type NoteName = 'G' | 'Gs' | 'A' | 'As' | 'B' | 'C' | 'Cs' | 'D' | 'Ds' | 'E' | 'F' | 'Fs';
 export type Octave = 1 | 2 | 3 | 4 | 5 | 6;
@@ -62,12 +65,14 @@ class OrchestraAudioService {
   private isInitialized = false;
   private gainNode: GainNode | null = null;
   private activeSources: AudioBufferSourceNode[] = [];
+  private scheduler: WebAudioScheduler | null = null;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
     this.audioContext = new AudioContext();
     this.gainNode = this.audioContext.createGain();
     this.gainNode.connect(this.audioContext.destination);
+    this.scheduler = createWebAudioScheduler(this.audioContext, this.gainNode);
     this.isInitialized = true;
     console.log('[OrchestraAudioService] Initialized');
   }
@@ -149,27 +154,65 @@ class OrchestraAudioService {
     instrument: InstrumentType,
     events: SoundEvent[],
     tempoMs: number = 500,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    options: { stopExisting?: boolean } = {}
   ): Promise<void> {
-    if (!this.audioContext) await this.initialize();
+    if (!this.audioContext || !this.scheduler) await this.initialize();
+    if (!this.scheduler) {
+      throw new Error('Failed to initialize scheduler');
+    }
 
-    // Preload all non-rest samples
-    const soundEvents = events.filter(e => !isRest(e));
-    await Promise.all(soundEvents.map(e => this.loadSample(instrument, e)));
+    // Check abort signal
+    if (signal?.aborted) return;
+
+    // Resume audio context if suspended
+    if (this.audioContext?.state === 'suspended') {
+      await this.audioContext.resume();
+    }
+
+    // Build scheduled events with URLs
+    const scheduledEvents: ScheduledSound[] = [];
+    let currentTime = 0;
 
     for (const event of events) {
       if (signal?.aborted) return;
 
-      // For rests, just wait without playing
-      if (!isRest(event)) {
-        await this.playSound(instrument, event);
-      }
       const durationMultiplier = event.duration === '025' ? 0.5 : event.duration === '05' ? 1 : 2;
-      await this.delay(tempoMs * durationMultiplier, signal);
+      const durationSeconds = (tempoMs * durationMultiplier) / 1000;
+
+      if (!isRest(event)) {
+        const filename = this.buildFilename(instrument, event);
+        const sampleUrl = `${INSTRUMENT_PATHS[instrument]}/${filename}`;
+        
+        scheduledEvents.push({
+          time: currentTime,
+          sampleUrl: sampleUrl,
+          duration: durationSeconds,
+          volume: 1.0,
+        });
+      } else {
+        // Rest - add silent event for timing
+        scheduledEvents.push({
+          time: currentTime,
+          duration: durationSeconds,
+          volume: 0,
+        });
+      }
+
+      currentTime += durationSeconds;
     }
+
+    // Schedule all events - scheduler will handle loading samples
+    // Use stopExisting option to allow concurrent playback of multiple instruments
+    await this.scheduler.scheduleSequence(scheduledEvents, {}, { stopExisting: options.stopExisting ?? true });
   }
 
   stop(): void {
+    // Stop the scheduler (which handles Web Audio scheduled sounds)
+    if (this.scheduler) {
+      this.scheduler.stop();
+    }
+    // Also stop any legacy active sources
     this.activeSources.forEach(source => {
       try { source.stop(); } catch { /* Already stopped */ }
     });

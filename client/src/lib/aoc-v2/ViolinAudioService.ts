@@ -6,7 +6,10 @@
  * - duration: 025 (quarter), 05 (half), 1 (whole)
  * - dynamic: piano, mezzo-piano, mezzo-forte, forte, fortissimo
  * - technique: arco-normal (default bowed)
+ * 
+ * Uses Web Audio API scheduling for precise timing
  */
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 export type NoteName = 'G' | 'Gs' | 'A' | 'As' | 'B' | 'C' | 'Cs' | 'D' | 'Ds' | 'E' | 'F' | 'Fs';
 export type Octave = 3 | 4 | 5 | 6;
@@ -29,6 +32,7 @@ class ViolinAudioService {
   private gainNode: GainNode | null = null;
   private activeSources: AudioBufferSourceNode[] = [];
   private abortController: AbortController | null = null;
+  private scheduler: WebAudioScheduler | null = null;
 
   /**
    * Initialize the audio context (must be called after user interaction)
@@ -39,6 +43,7 @@ class ViolinAudioService {
     this.audioContext = new AudioContext();
     this.gainNode = this.audioContext.createGain();
     this.gainNode.connect(this.audioContext.destination);
+    this.scheduler = createWebAudioScheduler(this.audioContext, this.gainNode);
     this.isInitialized = true;
     console.log('[ViolinAudioService] Initialized');
   }
@@ -117,28 +122,51 @@ class ViolinAudioService {
    * Play a sequence of notes with timing (can be aborted)
    */
   async playSequence(notes: Note[], tempoMs: number = 500, signal?: AbortSignal): Promise<void> {
-    if (!this.audioContext) {
+    if (!this.audioContext || !this.scheduler) {
       await this.initialize();
     }
+    if (!this.scheduler) {
+      throw new Error('Failed to initialize scheduler');
+    }
 
-    // Preload all samples
-    await Promise.all(notes.map(note => this.loadSample(note)));
+    // Check abort signal
+    if (signal?.aborted) return;
 
-    // Play each note in sequence
+    // Resume audio context if suspended
+    if (this.audioContext?.state === 'suspended') {
+      await this.audioContext.resume();
+    }
+
+    // Stop any existing playback
+    this.scheduler.stop();
+
+    // Build scheduled events
+    const scheduledEvents: ScheduledSound[] = [];
+    let currentTime = 0;
+
     for (let i = 0; i < notes.length; i++) {
-      // Check if aborted
-      if (signal?.aborted) {
-        return;
-      }
+      if (signal?.aborted) return;
 
       const note = notes[i];
-      await this.playNote(note);
-
-      // Wait for duration before playing next note
-      // Duration 025 = quarter, 05 = half, 1 = whole
       const durationMultiplier = note.duration === '025' ? 0.5 : note.duration === '05' ? 1 : 2;
-      await this.delay(tempoMs * durationMultiplier, signal);
+      const durationSeconds = (tempoMs * durationMultiplier) / 1000;
+
+      const filename = this.buildFilename(note);
+      const sampleUrl = `${AUDIO_BASE_PATH}/${filename}`;
+
+      scheduledEvents.push({
+        time: currentTime,
+        sampleUrl: sampleUrl,
+        duration: durationSeconds,
+        volume: 1.0,
+        eventIndex: i,
+      });
+
+      currentTime += durationSeconds;
     }
+
+    // Schedule all events - scheduler will handle loading samples
+    await this.scheduler.scheduleSequence(scheduledEvents, {});
   }
 
   /**

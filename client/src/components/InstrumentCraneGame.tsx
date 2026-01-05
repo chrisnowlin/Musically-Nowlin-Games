@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Music, Play, ArrowLeft, ArrowRight, ArrowDown, RefreshCw, Sparkles, Star } from "lucide-react";
@@ -6,6 +6,7 @@ import { playfulColors, playfulTypography, playfulShapes, playfulComponents, pla
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import { audioService } from "@/lib/audioService";
 import { instrumentLibrary } from "@/lib/instrumentLibrary";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 // Instrument icon imports
 import { 
@@ -370,6 +371,38 @@ export default function InstrumentCraneGame() {
   const [, setLocation] = useLocation();
   const { setTimeout: setGameTimeout } = useGameCleanup();
   
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
+
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = 0.7;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, []);
+  
   // Game State
   const [gameStarted, setGameStarted] = useState(false);
   const [score, setScore] = useState(0);
@@ -407,13 +440,30 @@ export default function InstrumentCraneGame() {
     preloadChunk();
   }, []);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
   // Fixed positions for 4 items
   const POSITIONS = [20, 40, 60, 80];
 
   // Play instrument sound - plays a characteristic phrase using available samples
   // This makes the instrument more recognizable and educational
   const playInstrumentSound = useCallback(async (instrumentId: string, audioPaths: string[]) => {
+    const scheduler = getScheduler();
+    if (!scheduler) {
+      console.error('Failed to create audio scheduler');
+      return;
+    }
+
     // Stop any currently playing audio
+    scheduler.stop();
     audioService.stopSample();
 
     // Mark that sound has been played this round
@@ -422,55 +472,112 @@ export default function InstrumentCraneGame() {
 
     try {
       // CRITICAL for iOS Safari: Ensure audio is initialized on every play attempt
-      // This handles the case where the user presses the Listen button directly
       if (!audioService.isAudioUnlocked()) {
         await audioService.initialize();
+      }
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+
+      // Resume audio context if suspended
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
       }
 
       // Set normalized volume for this instrument (matching Instrument Detective)
       const normalizedVolume = getNormalizedVolume(instrumentId);
       audioService.setVolume(normalizedVolume);
+      if (masterGainRef.current && audioContextRef.current) {
+        const now = audioContextRef.current.currentTime;
+        masterGainRef.current.gain.linearRampToValueAtTime(normalizedVolume, now + 0.05);
+      }
 
       // Determine if this is likely an unpitched percussion instrument
-      // by checking if paths contain rhythm patterns or special articulations
       const isPercussion = audioPaths.some(p => 
         p.includes('rhythm') || p.includes('roll') || p.includes('shaken') || 
         p.includes('struck') || p.includes('hand') || p.includes('flam')
       );
 
+      // Build scheduled events
+      const events: ScheduledSound[] = [];
+      let currentTime = 0;
+
       if (isPercussion && audioPaths.length >= 3) {
-        // For percussion: Play a varied selection showcasing different techniques
-        // Pick 2-3 contrasting samples to demonstrate the instrument's character
+        // For percussion: Play single hit, then rhythm/roll pattern
         const singleHit = audioPaths.find(p => p.includes('025') || p.includes('struck-singly') || p.includes('_1_')) || audioPaths[0];
         const rhythmOrRoll = audioPaths.find(p => p.includes('rhythm') || p.includes('roll') || p.includes('shaken') || p.includes('phrase')) || audioPaths[1];
         
-        // Play: single hit, then rhythm/roll pattern
-        await audioService.playSample(singleHit, 1);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        await audioService.playSample(rhythmOrRoll, 1);
+        events.push({
+          time: currentTime,
+          sampleUrl: singleHit,
+          duration: 1.0,
+          volume: 1.0,
+        });
+        currentTime += 1.0 + 0.3; // Sample duration + gap
+        
+        events.push({
+          time: currentTime,
+          sampleUrl: rhythmOrRoll,
+          duration: 1.0,
+          volume: 1.0,
+        });
       } else if (audioPaths.length >= 3) {
-        // For melodic instruments: Play a short melodic phrase
-        // root, up, root pattern for recognition
+        // For melodic instruments: Play root, up, root pattern
         const phrase = [audioPaths[0], audioPaths[Math.min(1, audioPaths.length - 1)], audioPaths[0]];
         for (const path of phrase) {
-          await audioService.playSample(path, 1);
-          await new Promise(resolve => setTimeout(resolve, 200));
+          events.push({
+            time: currentTime,
+            sampleUrl: path,
+            duration: 1.0,
+            volume: 1.0,
+          });
+          currentTime += 1.0 + 0.2; // Sample duration + gap
         }
       } else if (audioPaths.length === 2) {
         // Two samples: play both
-        await audioService.playSample(audioPaths[0], 1);
-        await new Promise(resolve => setTimeout(resolve, 250));
-        await audioService.playSample(audioPaths[1], 1);
+        events.push({
+          time: currentTime,
+          sampleUrl: audioPaths[0],
+          duration: 1.0,
+          volume: 1.0,
+        });
+        currentTime += 1.0 + 0.25;
+        
+        events.push({
+          time: currentTime,
+          sampleUrl: audioPaths[1],
+          duration: 1.0,
+          volume: 1.0,
+        });
       } else {
         // Single sample: play it twice
-        await audioService.playSample(audioPaths[0], 2);
+        events.push({
+          time: currentTime,
+          sampleUrl: audioPaths[0],
+          duration: 1.0,
+          volume: 1.0,
+        });
+        currentTime += 1.0 + 0.2;
+        
+        events.push({
+          time: currentTime,
+          sampleUrl: audioPaths[0],
+          duration: 1.0,
+          volume: 1.0,
+        });
       }
+
+      // Schedule all events
+      await scheduler.scheduleSequence(events, {
+        onComplete: () => {
+          setIsPlayingAudio(false);
+        },
+      });
     } catch (e) {
       console.error(`Audio play failed:`, e);
-    } finally {
       setIsPlayingAudio(false);
     }
-  }, []);
+  }, [getScheduler]);
 
   // Initialize Round
   const startRound = useCallback((autoPlay: boolean = false) => {

@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAudioService } from "@/hooks/useAudioService";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import ScoreDisplay from "@/components/ScoreDisplay";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 import { Button } from "@/components/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Circle, Music, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
@@ -36,6 +37,10 @@ export default function RestFinderGame() {
   const [, setLocation] = useLocation();
   const { audio, isReady, error, initialize } = useAudioService();
   const { setTimeout: setGameTimeout } = useGameCleanup();
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
     score: 0,
@@ -50,41 +55,98 @@ export default function RestFinderGame() {
 
   const [gameStarted, setGameStarted] = useState(false);
 
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    // Create AudioContext if needed
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    // Create master gain if needed
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = gameState.volume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [gameState.volume]);
+
   useEffect(() => {
     if (gameStarted && !gameState.currentSequence) {
       generateNewSequence();
     }
   }, [gameStarted]);
 
-  const playNote = useCallback(async (frequency: number, duration: number) => {
-    const masterVolume = gameState.volume / 100;
-    audio.setVolume(masterVolume);
-
-    try {
-      await audio.playNoteWithDynamics(frequency, duration, 0.7);
-    } catch (err) {
-      console.error('Failed to play note:', err);
-    }
-  }, [gameState.volume, audio]);
-
   const playSequence = useCallback(async (sequence: MusicalSequence) => {
-    const beatDuration = 500; // milliseconds per beat
+    const scheduler = getScheduler();
+    if (!scheduler) {
+      console.error('Failed to create audio scheduler');
+      return;
+    }
 
+    // Resume audio context if suspended
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    // Stop any existing playback
+    scheduler.stop();
+
+    const beatDurationSeconds = 0.5; // 500ms per beat in seconds
+    const events: ScheduledSound[] = [];
+    let currentTime = 0;
+
+    // Build scheduled events
     for (let i = 0; i < sequence.beats.length; i++) {
       const beat = sequence.beats[i];
 
-      setGameState(prev => ({ ...prev, currentBeatIndex: i }));
-
       if (beat.type === "note" && beat.frequency) {
-        await playNote(beat.frequency, beatDuration);
+        events.push({
+          time: currentTime,
+          frequency: beat.frequency,
+          duration: beatDurationSeconds,
+          volume: 0.7 * (gameState.volume / 100),
+          eventIndex: i,
+        });
       } else {
-        // Rest - just silence
-        await new Promise(resolve => setGameTimeout(resolve, beatDuration));
+        // Rest - add event with volume 0 for UI tracking
+        events.push({
+          time: currentTime,
+          duration: beatDurationSeconds,
+          volume: 0,
+          eventIndex: i,
+        });
       }
+
+      currentTime += beatDurationSeconds;
     }
 
-    setGameState(prev => ({ ...prev, currentBeatIndex: -1 }));
-  }, [playNote, setGameTimeout]);
+    // Schedule all events
+    await scheduler.scheduleSequence(events, {
+      onEventStart: (event) => {
+        if (event.eventIndex !== undefined) {
+          setGameState(prev => ({ ...prev, currentBeatIndex: event.eventIndex! }));
+        }
+      },
+      onComplete: () => {
+        setGameState(prev => ({ ...prev, currentBeatIndex: -1 }));
+      },
+    });
+  }, [getScheduler, gameState.volume]);
 
   const generateNewSequence = useCallback(() => {
     // Create a sequence of 8 beats with 0-3 rests
@@ -156,8 +218,29 @@ export default function RestFinderGame() {
     if (!isReady) {
       await initialize();
     }
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
     setGameStarted(true);
   };
+
+  // Update master gain when volume changes
+  useEffect(() => {
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(gameState.volume / 100, now + 0.05);
+    }
+  }, [gameState.volume]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   // Show audio error if initialization failed
   if (error) {

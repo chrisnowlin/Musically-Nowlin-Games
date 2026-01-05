@@ -22,6 +22,7 @@ import {
 import { useAudioService } from '@/hooks/useAudioService';
 import { useGameCleanup } from '@/hooks/useGameCleanup';
 import AudioErrorFallback from '@/components/AudioErrorFallback';
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
 
 import { useFinishTheTuneGame } from '@/hooks/useFinishTheTuneGame';
 import { useFinishTheTunePersistence } from '@/hooks/useFinishTheTunePersistence';
@@ -49,7 +50,9 @@ export default function FinishTheTuneGame() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
 
-  const audioContext = useRef<AudioContext | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
   const loopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const melodyEndTimeRef = useRef<number | null>(null);
 
@@ -81,10 +84,40 @@ export default function FinishTheTuneGame() {
     return <AudioErrorFallback error={error} onRetry={initialize} />;
   }
 
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    // Create AudioContext if needed
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    // Create master gain if needed
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = state.volume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [state.volume]);
+
   const handleStartGame = async () => {
     await initialize();
-    if (!audioContext.current) {
-      audioContext.current = new AudioContext();
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
     }
     setGameStarted(true);
     actions.generateNewQuestion();
@@ -92,20 +125,58 @@ export default function FinishTheTuneGame() {
 
   const playMelody = useCallback(
     async (notes: NoteEvent[], sequenceId: string) => {
-      actions.playMelody(sequenceId);
-
-      for (let i = 0; i < notes.length; i++) {
-        actions.updateActiveNote(i);
-
-        // Apply playback speed
-        const duration = notes[i].duration * (1 / state.playbackSpeed);
-        await audio.playNoteWithDynamics(notes[i].freq, duration, state.volume / 100);
+      const scheduler = getScheduler();
+      if (!scheduler) {
+        console.error('Failed to create audio scheduler');
+        return;
       }
 
-      actions.stopPlaying();
-      melodyEndTimeRef.current = Date.now();
+      // Resume audio context if suspended
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      // Stop any existing playback
+      scheduler.stop();
+
+      actions.playMelody(sequenceId);
+
+      // Build scheduled events
+      const events: ScheduledSound[] = [];
+      let currentTime = 0;
+      const noteSpacing = 0.1; // Small gap between notes
+
+      for (let i = 0; i < notes.length; i++) {
+        const note = notes[i];
+        const duration = note.duration * (1 / state.playbackSpeed);
+        const volume = state.volume / 100;
+
+        events.push({
+          time: currentTime,
+          frequency: note.freq,
+          duration: duration,
+          volume: volume,
+          eventId: `note-${i}`,
+          eventIndex: i,
+        });
+
+        currentTime += duration + noteSpacing;
+      }
+
+      // Schedule all events
+      await scheduler.scheduleSequence(events, {
+        onEventStart: (event) => {
+          if (event.eventIndex !== undefined) {
+            actions.updateActiveNote(event.eventIndex);
+          }
+        },
+        onComplete: () => {
+          actions.stopPlaying();
+          melodyEndTimeRef.current = Date.now();
+        },
+      });
     },
-    [state.playbackSpeed, state.volume, audio, actions]
+    [state.playbackSpeed, state.volume, getScheduler, actions]
   );
 
   const handlePlayMelodyStart = useCallback(async () => {
@@ -184,8 +255,14 @@ export default function FinishTheTuneGame() {
     const firstSequence = [...state.currentQuestion.melodyStart, ...firstEnding];
     await playMelody(firstSequence, `compare-${first}`);
 
-    // 500ms pause between endings
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 500ms pause between endings - use scheduler's elapsed time
+    const scheduler = getScheduler();
+    if (scheduler) {
+      const elapsed = scheduler.getElapsedTime();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
 
     // Play second ending with melody start
     const secondSequence = [...state.currentQuestion.melodyStart, ...secondEnding];
@@ -267,6 +344,27 @@ export default function FinishTheTuneGame() {
       playMelody,
     ]
   );
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      schedulerRef.current?.stop();
+      if (loopTimeoutRef.current) {
+        clearTimeout(loopTimeoutRef.current);
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
+  // Update master gain when volume changes
+  useEffect(() => {
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(state.volume / 100, now + 0.05);
+    }
+  }, [state.volume]);
 
   // Keyboard navigation
   useKeyboardShortcuts({
