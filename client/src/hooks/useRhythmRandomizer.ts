@@ -1,5 +1,8 @@
 /**
  * Hook for Rhythm Randomizer state management
+ * 
+ * Uses Web Audio API scheduling for sample-accurate playback timing.
+ * This ensures precise rhythm playback regardless of browser state or deployment environment.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -7,6 +10,7 @@ import { useAudioService } from './useAudioService';
 import {
   RhythmSettings,
   RhythmPattern,
+  RhythmEvent,
   PlaybackState,
   EnsemblePattern,
   EnsemblePart,
@@ -17,6 +21,11 @@ import {
   DIFFICULTY_PRESETS,
   INITIAL_PLAYBACK_STATE,
 } from '@/lib/rhythmRandomizer/types';
+import {
+  createWebAudioScheduler,
+  WebAudioScheduler,
+  ScheduledSound,
+} from '@/lib/audio/webAudioScheduler';
 
 // Sound parameters for different instrument options
 // isTonal: if true, sound duration matches note length; if false, uses short percussion hit
@@ -200,7 +209,7 @@ function buildInstrumentSampleUrl(
   return `${basePath}/${instrument}_${philNote}_${duration}_${dynamic}_normal.mp3`;
 }
 
-import { generateRhythmPattern, getPatternDurationMs } from '@/lib/rhythmRandomizer/rhythmGenerator';
+import { generateRhythmPattern } from '@/lib/rhythmRandomizer/rhythmGenerator';
 import { expandBeamedGroups } from '@/lib/rhythmRandomizer/rhythmNotation';
 import {
   generateEnsemblePattern,
@@ -256,49 +265,255 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   const [volume, setVolumeState] = useState<number>(0.7);
   const [startMeasure, setStartMeasure] = useState<number>(1); // 1-indexed starting measure
 
-  // Refs for playback timing
-  const playbackTimeoutsRef = useRef<Set<number>>(new Set());
-  const playbackStartTimeRef = useRef<number>(0);
+  // Refs for playback
   const pausedMeasureRef = useRef<number>(1); // 1-indexed measure where playback was paused
+  const schedulerRef = useRef<WebAudioScheduler | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const masterGainRef = useRef<GainNode | null>(null);
 
-  // Refs for standalone metronome
-  const metronomeTimeoutsRef = useRef<Set<number>>(new Set());
+  // Refs for standalone metronome (still uses setTimeout for looping control)
+  const metronomeSchedulerRef = useRef<WebAudioScheduler | null>(null);
   const metronomeLoopRef = useRef<boolean>(false);
+  const metronomeTimeoutRef = useRef<number | null>(null);
 
   // Audio hook
   const { audio, isReady, initialize } = useAudioService();
 
-  // Helper to schedule a timeout and track it for cleanup
-  const scheduleTimeout = useCallback((callback: () => void, delay: number): number => {
-    const id = window.setTimeout(() => {
-      playbackTimeoutsRef.current.delete(id);
-      callback();
-    }, delay);
-    playbackTimeoutsRef.current.add(id);
-    return id;
+  /**
+   * Initialize Web Audio scheduler
+   */
+  const getScheduler = useCallback((): WebAudioScheduler | null => {
+    if (schedulerRef.current) {
+      return schedulerRef.current;
+    }
+
+    // Create AudioContext if needed
+    if (!audioContextRef.current) {
+      const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContextRef.current = new AudioCtx();
+    }
+
+    // Create master gain if needed
+    if (!masterGainRef.current && audioContextRef.current) {
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = volume;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    if (audioContextRef.current && masterGainRef.current) {
+      schedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      return schedulerRef.current;
+    }
+
+    return null;
+  }, [volume]);
+
+  /**
+   * Build scheduled events from a pattern
+   */
+  const buildScheduledEvents = useCallback((
+    patternToPlay: RhythmPattern,
+    msPerBeat: number,
+    soundToUse: SoundOption,
+    partIndex: number = -1,
+    bodyPart?: BodyPercussionPart,
+    startFromMeasure: number = 0,
+    timeOffset: number = 0
+  ): { events: ScheduledSound[]; endTime: number } => {
+    const events: ScheduledSound[] = [];
+    let currentTime = timeOffset;
+    let eventIndex = 0;
+
+    for (let m = 0; m < patternToPlay.measures.length; m++) {
+      const measure = patternToPlay.measures[m];
+
+      // Skip measures before startFromMeasure
+      if (m < startFromMeasure) {
+        const expandedEvents = expandBeamedGroups(measure.events);
+        eventIndex += expandedEvents.length;
+        continue;
+      }
+
+      let beatInMeasure = 0;
+      const expandedEvents = expandBeamedGroups(measure.events);
+
+      for (const event of expandedEvents) {
+        const eventTimeSeconds = currentTime / 1000;
+        const noteDurationSeconds = (event.duration * msPerBeat) / 1000;
+
+        if (event.type === 'note') {
+          const vol = event.isAccented ? 0.9 : 0.7;
+          const soundConfig = SOUND_PARAMS[soundToUse];
+
+          let scheduledEvent: ScheduledSound;
+
+          if (soundConfig?.isSample && soundToUse === 'snare') {
+            // Snare drum samples
+            const useRoll = event.duration >= 2;
+            let sampleUrl: string;
+            let duration: number;
+            
+            if (useRoll) {
+              sampleUrl = event.isAccented ? SNARE_SAMPLES.rollAccent : SNARE_SAMPLES.rollNormal;
+              duration = Math.max(0.2, noteDurationSeconds - 0.05);
+            } else {
+              sampleUrl = event.isAccented ? SNARE_SAMPLES.accent : SNARE_SAMPLES.normal;
+              duration = noteDurationSeconds;
+            }
+
+            scheduledEvent = {
+              time: eventTimeSeconds,
+              sampleUrl,
+              duration,
+              volume: vol,
+              isAccented: event.isAccented,
+              measureIndex: m,
+              beatIndex: beatInMeasure,
+              eventIndex,
+              partIndex,
+            };
+          } else if (soundConfig?.isSample && event.pitch && ['trumpet', 'clarinet', 'trombone', 'tuba'].includes(soundToUse)) {
+            // Pitched instrument samples
+            const sampleUrl = buildInstrumentSampleUrl(
+              soundToUse,
+              event.pitch,
+              event.duration,
+              event.isAccented
+            );
+
+            scheduledEvent = {
+              time: eventTimeSeconds,
+              sampleUrl,
+              duration: noteDurationSeconds,
+              volume: vol,
+              isAccented: event.isAccented,
+              measureIndex: m,
+              beatIndex: beatInMeasure,
+              eventIndex,
+              partIndex,
+            };
+          } else if (soundToUse === 'piano' && event.pitch) {
+            // Piano with pitched notes
+            const frequency = pitchToFrequency(event.pitch);
+            const soundParams = getSoundParams(soundToUse, noteDurationSeconds, event.isAccented);
+
+            scheduledEvent = {
+              time: eventTimeSeconds,
+              frequency,
+              duration: soundParams.duration,
+              volume: vol,
+              isAccented: event.isAccented,
+              measureIndex: m,
+              beatIndex: beatInMeasure,
+              eventIndex,
+              partIndex,
+            };
+          } else {
+            // Synthesized sound (oscillator)
+            const soundParams = bodyPart
+              ? getBodyPercussionSoundParams(bodyPart, event.isAccented)
+              : getSoundParams(soundToUse, noteDurationSeconds, event.isAccented);
+
+            scheduledEvent = {
+              time: eventTimeSeconds,
+              frequency: soundParams.frequency,
+              duration: soundParams.duration,
+              volume: vol,
+              isAccented: event.isAccented,
+              measureIndex: m,
+              beatIndex: beatInMeasure,
+              eventIndex,
+              partIndex,
+            };
+          }
+
+          events.push(scheduledEvent);
+        } else {
+          // Rest - still add event for UI tracking but no sound
+          events.push({
+            time: eventTimeSeconds,
+            duration: noteDurationSeconds,
+            volume: 0,
+            measureIndex: m,
+            beatIndex: beatInMeasure,
+            eventIndex,
+            partIndex,
+          });
+        }
+
+        currentTime += event.duration * msPerBeat;
+        beatInMeasure += event.duration;
+        eventIndex++;
+      }
+    }
+
+    return { events, endTime: currentTime };
   }, []);
 
-  // Clear all playback timeouts
-  const clearPlaybackTimeouts = useCallback(() => {
-    playbackTimeoutsRef.current.forEach(id => window.clearTimeout(id));
-    playbackTimeoutsRef.current.clear();
+  /**
+   * Build metronome click events
+   */
+  const buildMetronomeEvents = useCallback((
+    startTimeMs: number,
+    durationBeats: number,
+    msPerBeat: number,
+    beatsPerMeasure: number
+  ): ScheduledSound[] => {
+    const events: ScheduledSound[] = [];
+    const totalClicks = Math.ceil(durationBeats);
+    const beatDurationSeconds = msPerBeat / 1000;
+
+    for (let beat = 0; beat < totalClicks; beat++) {
+      const beatTimeSeconds = (startTimeMs + beat * msPerBeat) / 1000;
+      const isFirstBeatOfMeasure = beat % beatsPerMeasure === 0;
+      const clickParams = getSoundParams('metronome', beatDurationSeconds, isFirstBeatOfMeasure);
+
+      events.push({
+        time: beatTimeSeconds,
+        frequency: clickParams.frequency,
+        duration: clickParams.duration,
+        volume: 0.7, // Lower volume for metronome during playback
+        isAccented: isFirstBeatOfMeasure,
+      });
+    }
+
+    return events;
   }, []);
 
-  // Helper to schedule a metronome timeout and track it for cleanup
-  const scheduleMetronomeTimeout = useCallback((callback: () => void, delay: number): number => {
-    const id = window.setTimeout(() => {
-      metronomeTimeoutsRef.current.delete(id);
-      callback();
-    }, delay);
-    metronomeTimeoutsRef.current.add(id);
-    return id;
-  }, []);
+  /**
+   * Build count-in events
+   */
+  const buildCountInEvents = useCallback((
+    countInMeasures: number,
+    msPerBeat: number,
+    beatsPerMeasure: number
+  ): { events: ScheduledSound[]; endTime: number } => {
+    if (countInMeasures === 0) {
+      return { events: [], endTime: 0 };
+    }
 
-  // Clear all metronome timeouts
-  const clearMetronomeTimeouts = useCallback(() => {
-    metronomeTimeoutsRef.current.forEach(id => window.clearTimeout(id));
-    metronomeTimeoutsRef.current.clear();
-    metronomeLoopRef.current = false;
+    const events: ScheduledSound[] = [];
+    const countInBeats = countInMeasures * beatsPerMeasure;
+    const beatDurationSeconds = msPerBeat / 1000;
+    let currentTime = 0;
+
+    for (let i = 0; i < countInBeats; i++) {
+      const isFirstBeat = i % beatsPerMeasure === 0;
+      const clickParams = getSoundParams('metronome', beatDurationSeconds, isFirstBeat);
+
+      events.push({
+        time: currentTime / 1000,
+        frequency: clickParams.frequency,
+        duration: clickParams.duration,
+        volume: 0.85,
+        isAccented: isFirstBeat,
+      });
+
+      currentTime += msPerBeat;
+    }
+
+    return { events, endTime: currentTime };
   }, []);
 
   // Generate new pattern (single or ensemble)
@@ -333,205 +548,80 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   }, [settings]);
 
   /**
-   * Schedule playback for a single pattern
-   * Returns the end time in ms
-   */
-  const schedulePatternPlayback = useCallback((
-    patternToPlay: RhythmPattern,
-    startTimeMs: number,
-    msPerBeat: number,
-    soundToUse: SoundOption,
-    partIndex: number = -1,
-    bodyPart?: BodyPercussionPart,
-    startFromMeasure: number = 0 // 0-indexed measure to start from
-  ): number => {
-    let currentTime = startTimeMs;
-    let eventIndex = 0;
-
-    for (let m = 0; m < patternToPlay.measures.length; m++) {
-      const measure = patternToPlay.measures[m];
-
-      // Skip measures before startFromMeasure
-      if (m < startFromMeasure) {
-        // Still count events for proper indexing
-        const expandedEvents = expandBeamedGroups(measure.events);
-        eventIndex += expandedEvents.length;
-        continue;
-      }
-
-      let beatInMeasure = 0;
-
-      // Expand beamed groups into individual notes for playback
-      const expandedEvents = expandBeamedGroups(measure.events);
-
-      for (const event of expandedEvents) {
-        const eventTime = currentTime;
-        const currentEventIdx = eventIndex;
-        const currentMeasureIdx = m;
-        const currentBeatVal = beatInMeasure;
-        const partIdx = partIndex;
-
-        // Copy values to avoid closure issues
-        const eventCopy = { ...event };
-        const bodyPartCopy = bodyPart;
-        const sound = soundToUse;
-        // Calculate note duration in seconds for sound generation
-        const noteDurationSeconds = (event.duration * msPerBeat) / 1000;
-
-        scheduleTimeout(() => {
-          // Update playback state
-          setPlaybackState(prev => ({
-            ...prev,
-            currentMeasure: currentMeasureIdx,
-            currentBeat: currentBeatVal,
-            currentEventIndex: currentEventIdx,
-            currentPartIndex: partIdx,
-          }));
-
-          // Play sound for notes
-          if (eventCopy.type === 'note' && audio) {
-            const vol = eventCopy.isAccented ? 0.9 : 0.7;
-
-            // Check if this is a sample-based sound (like snare or pitched instruments)
-            const soundConfig = SOUND_PARAMS[sound];
-            if (soundConfig?.isSample && sound === 'snare') {
-              // Use real audio samples for snare
-              // Use rolls for half notes (2 beats) and longer, single hits for shorter
-              const useRoll = eventCopy.duration >= 2;
-              let sampleUrl: string;
-              if (useRoll) {
-                sampleUrl = eventCopy.isAccented ? SNARE_SAMPLES.rollAccent : SNARE_SAMPLES.rollNormal;
-                // Play roll with duration limit to prevent overlap with next note
-                // Subtract a small amount for clean cutoff
-                const rollDuration = Math.max(0.2, noteDurationSeconds - 0.05);
-                audio.playSampleWithDuration(sampleUrl, rollDuration);
-              } else {
-                sampleUrl = eventCopy.isAccented ? SNARE_SAMPLES.accent : SNARE_SAMPLES.normal;
-                audio.playSample(sampleUrl);
-              }
-            } else if (soundConfig?.isSample && eventCopy.pitch && ['trumpet', 'clarinet', 'trombone', 'tuba'].includes(sound)) {
-              // Pitched instrument samples with duration-aware sample selection
-              const sampleUrl = buildInstrumentSampleUrl(
-                sound,
-                eventCopy.pitch,
-                eventCopy.duration,
-                eventCopy.isAccented
-              );
-              // Play sample from the beginning (no offset)
-              audio.playSampleWithOffset(sampleUrl, 0.00);
-            } else if (sound === 'piano' && eventCopy.pitch) {
-              // Piano with pitched notes - calculate frequency from pitch
-              const frequency = pitchToFrequency(eventCopy.pitch);
-              const soundParams = getSoundParams(sound, noteDurationSeconds, eventCopy.isAccented);
-              audio.playNoteWithDynamics(frequency, soundParams.duration, vol);
-            } else {
-              // Use body percussion sound if specified, otherwise use selected sound
-              const soundParams = bodyPartCopy
-                ? getBodyPercussionSoundParams(bodyPartCopy, eventCopy.isAccented)
-                : getSoundParams(sound, noteDurationSeconds, eventCopy.isAccented);
-
-              audio.playNoteWithDynamics(soundParams.frequency, soundParams.duration, vol);
-            }
-          }
-        }, eventTime);
-
-        currentTime += event.duration * msPerBeat;
-        beatInMeasure += event.duration;
-        eventIndex++;
-      }
-    }
-
-    return currentTime;
-  }, [audio, scheduleTimeout]);
-
-  /**
    * Check if a part should be audible based on mute/solo states
    */
   const isPartAudible = useCallback((part: EnsemblePart, allParts: EnsemblePart[]): boolean => {
-    // If part is muted, it's not audible
     if (part.isMuted) return false;
-
-    // If any part is soloed, only soloed parts are audible
     const hasSoloedPart = allParts.some(p => p.isSoloed);
     if (hasSoloedPart) {
       return part.isSoloed;
     }
-
-    // Otherwise, part is audible
     return true;
   }, []);
 
-  // Play the pattern (single or ensemble)
-  // Optional startFromMeasure parameter allows resuming from a specific measure
-  // Optional patternOverride allows passing a specific pattern (e.g., with pitch data)
+  // Play the pattern (single or ensemble) using Web Audio scheduling
   const play = useCallback(async (startFromMeasure?: number, patternOverride?: RhythmPattern) => {
     const effectiveStartMeasure = startFromMeasure ?? startMeasure;
-    // Use pattern override if provided, otherwise use state
     const patternToUse = patternOverride ?? pattern;
-    // For ensemble mode, we need ensemblePattern; for single mode, we need pattern
     const isEnsembleMode = settings.ensembleMode !== 'single' && ensemblePattern;
 
     if (!isEnsembleMode && !patternToUse) return;
     if (isEnsembleMode && (!ensemblePattern || ensemblePattern.parts.length === 0)) return;
 
     try {
-      // Clear any existing timeouts
-      clearPlaybackTimeouts();
-
-      // Stop standalone metronome (pattern takes over)
-      clearMetronomeTimeouts();
-
+      // Initialize audio service for iOS compatibility
       await initialize();
+
+      // Get or create scheduler
+      const scheduler = getScheduler();
+      if (!scheduler) {
+        console.error('Failed to create audio scheduler');
+        return;
+      }
+
+      // Resume audio context if suspended
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      // Stop any existing playback
+      scheduler.stop();
 
       setPlaybackState(prev => ({
         ...prev,
         isPlaying: true,
         isPaused: false,
-        isMetronomePlaying: false, // Pattern takes over from standalone metronome
+        isMetronomePlaying: false,
         currentMeasure: 0,
         currentBeat: 0,
-        currentEventIndex: -1, // -1 means no note highlighted yet (e.g., during count-in)
+        currentEventIndex: -1,
         currentPartIndex: -1,
       }));
 
-      playbackStartTimeRef.current = Date.now();
-
       // Calculate timing
       const msPerBeat = 60000 / settings.tempo;
-      let currentTime = 0;
-
-      // Get beats per measure from time signature
       const timeSigMatch = settings.timeSignature.match(/^(\d+)\/\d+$/);
       const beatsPerMeasure = timeSigMatch ? parseInt(timeSigMatch[1], 10) : 4;
 
-      // Count-in
-      if (settings.countInMeasures > 0) {
-        const countInBeats = settings.countInMeasures * beatsPerMeasure;
-        const countInBeatDurationSeconds = msPerBeat / 1000;
-        for (let i = 0; i < countInBeats; i++) {
-          const beatTime = currentTime;
-          const isFirstBeat = i % beatsPerMeasure === 0; // Accent first beat of measure
-          scheduleTimeout(() => {
-            if (audio) {
-              // Use metronome sound for count-in
-              const clickParams = getSoundParams('metronome', countInBeatDurationSeconds, isFirstBeat);
-              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.85);
-            }
-          }, beatTime);
-          currentTime += msPerBeat;
-        }
-      }
+      // Build all scheduled events
+      let allEvents: ScheduledSound[] = [];
+      let totalDuration = 0;
 
-      let totalDuration = currentTime;
+      // Count-in events
+      const { events: countInEvents, endTime: countInEndTime } = buildCountInEvents(
+        settings.countInMeasures,
+        msPerBeat,
+        beatsPerMeasure
+      );
+      allEvents.push(...countInEvents);
+      totalDuration = countInEndTime;
 
-      // Calculate pattern duration for metronome click scheduling
-      // Only count beats for measures being played (from effectiveStartMeasure onwards)
+      // Calculate pattern duration for metronome
       let patternDurationBeats = 0;
-      const startMeasureIndex = effectiveStartMeasure - 1; // Convert to 0-indexed
+      const startMeasureIndex = effectiveStartMeasure - 1;
 
       if (isEnsembleMode && ensemblePattern) {
         if (ensemblePattern.mode === 'callResponse') {
-          // Sequential: sum of all parts, but only from startMeasure
           patternDurationBeats = ensemblePattern.parts.reduce((sum, p) => {
             const measuresPlayed = p.pattern.measures.slice(startMeasureIndex);
             const beatsPlayed = measuresPlayed.reduce((beatSum, m) =>
@@ -539,7 +629,6 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
             return sum + beatsPlayed;
           }, 0);
         } else {
-          // Simultaneous: max duration from startMeasure
           patternDurationBeats = Math.max(...ensemblePattern.parts.map(p => {
             const measuresPlayed = p.pattern.measures.slice(startMeasureIndex);
             return measuresPlayed.reduce((beatSum, m) =>
@@ -547,183 +636,191 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
           }));
         }
       } else if (patternToUse) {
-        // Only count beats from startMeasure onwards
         const measuresPlayed = patternToUse.measures.slice(startMeasureIndex);
         patternDurationBeats = measuresPlayed.reduce((beatSum, m) =>
           beatSum + m.events.reduce((eventSum, e) => eventSum + e.duration, 0), 0);
       }
 
-      // Schedule metronome clicks during playback (if enabled)
+      // Metronome events during playback
       if (settings.metronomeEnabled && patternDurationBeats > 0) {
-        const totalClicks = Math.ceil(patternDurationBeats);
-        const beatDurationSeconds = msPerBeat / 1000;
-
-        for (let beat = 0; beat < totalClicks; beat++) {
-          const beatTime = currentTime + beat * msPerBeat;
-          const isFirstBeatOfMeasure = beat % beatsPerMeasure === 0;
-
-          scheduleTimeout(() => {
-            if (audio) {
-              const clickParams = getSoundParams('metronome', beatDurationSeconds, isFirstBeatOfMeasure);
-              // Lower volume so it doesn't overpower the pattern
-              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.7);
-            }
-          }, beatTime);
-        }
+        const metronomeEvents = buildMetronomeEvents(
+          totalDuration,
+          patternDurationBeats,
+          msPerBeat,
+          beatsPerMeasure
+        );
+        allEvents.push(...metronomeEvents);
       }
 
+      // Pattern events
       if (isEnsembleMode && ensemblePattern) {
-        // ENSEMBLE PLAYBACK
         const mode = ensemblePattern.mode;
         const parts = ensemblePattern.parts;
 
         if (mode === 'callResponse') {
-          // CALL & RESPONSE: Parts play sequentially
+          // Sequential playback
+          let currentOffset = totalDuration;
           for (let partIndex = 0; partIndex < parts.length; partIndex++) {
             const part = parts[partIndex];
-            // Use per-part sound if defined, otherwise fall back to global setting
             const partSound = part.sound ?? settings.sound;
 
             if (isPartAudible(part, parts)) {
-              totalDuration = schedulePatternPlayback(
+              const { events: partEvents, endTime } = buildScheduledEvents(
                 part.pattern,
-                totalDuration,
                 msPerBeat,
                 partSound,
                 partIndex,
                 part.bodyPart,
-                effectiveStartMeasure - 1 // Convert 1-indexed to 0-indexed
+                effectiveStartMeasure - 1,
+                currentOffset
               );
+              allEvents.push(...partEvents);
+              currentOffset = endTime;
             } else {
-              // Even if muted, advance time for the part duration
-              totalDuration += part.pattern.totalDurationBeats * msPerBeat;
+              currentOffset += part.pattern.totalDurationBeats * msPerBeat;
             }
-
-            // For call & response, update part index at start of each part
-            const startTime = partIndex === 0 ? currentTime : totalDuration - (part.pattern.totalDurationBeats * msPerBeat);
-            const pIdx = partIndex;
-            scheduleTimeout(() => {
-              setPlaybackState(prev => ({
-                ...prev,
-                currentPartIndex: pIdx,
-              }));
-            }, startTime);
           }
+          totalDuration = currentOffset;
         } else {
-          // LAYERED / BODY PERCUSSION: All parts play simultaneously
-          let maxEndTime = currentTime;
-
+          // Simultaneous playback
+          let maxEndTime = totalDuration;
           for (let partIndex = 0; partIndex < parts.length; partIndex++) {
             const part = parts[partIndex];
-            // Use per-part sound if defined, otherwise fall back to global setting
             const partSound = part.sound ?? settings.sound;
 
             if (isPartAudible(part, parts)) {
-              const endTime = schedulePatternPlayback(
+              const { events: partEvents, endTime } = buildScheduledEvents(
                 part.pattern,
-                currentTime,
                 msPerBeat,
                 partSound,
                 partIndex,
                 part.bodyPart,
-                effectiveStartMeasure - 1 // Convert 1-indexed to 0-indexed
+                effectiveStartMeasure - 1,
+                totalDuration
               );
+              allEvents.push(...partEvents);
               maxEndTime = Math.max(maxEndTime, endTime);
             }
           }
-
-          // For simultaneous playback, show all parts as active (-1 means "all")
-          // We'll set currentPartIndex to 0 but the UI should show all parts as playing
-          scheduleTimeout(() => {
-            setPlaybackState(prev => ({
-              ...prev,
-              currentPartIndex: 0,
-            }));
-          }, currentTime);
-
           totalDuration = maxEndTime;
         }
       } else if (patternToUse) {
-        // SINGLE PATTERN PLAYBACK
-        totalDuration = schedulePatternPlayback(
+        // Single pattern playback
+        const { events: patternEvents, endTime } = buildScheduledEvents(
           patternToUse,
-          currentTime,
           msPerBeat,
           settings.sound,
           -1,
           undefined,
-          effectiveStartMeasure - 1 // Convert 1-indexed to 0-indexed
+          effectiveStartMeasure - 1,
+          totalDuration
         );
+        allEvents.push(...patternEvents);
+        totalDuration = endTime;
       }
 
-      // Schedule end of playback
-      const shouldLoop = settings.loopEnabled;
-
-      scheduleTimeout(() => {
-        if (shouldLoop) {
-          // Restart playback
-          play();
-        } else {
-          setPlaybackState(INITIAL_PLAYBACK_STATE);
-        }
-      }, totalDuration);
+      // Schedule all events using Web Audio
+      await scheduler.scheduleSequence(allEvents, {
+        onEventStart: (event) => {
+          // Update UI state when events fire
+          if (event.measureIndex !== undefined) {
+            setPlaybackState(prev => ({
+              ...prev,
+              currentMeasure: event.measureIndex!,
+              currentBeat: event.beatIndex ?? prev.currentBeat,
+              currentEventIndex: event.eventIndex ?? prev.currentEventIndex,
+              currentPartIndex: event.partIndex ?? prev.currentPartIndex,
+            }));
+          }
+        },
+        onComplete: () => {
+          if (settings.loopEnabled) {
+            // Restart playback
+            play();
+          } else {
+            setPlaybackState(INITIAL_PLAYBACK_STATE);
+          }
+        },
+      });
 
     } catch (error) {
       console.error('Playback error:', error);
       setPlaybackState(INITIAL_PLAYBACK_STATE);
     }
-  }, [pattern, ensemblePattern, settings, audio, initialize, scheduleTimeout, clearPlaybackTimeouts, clearMetronomeTimeouts, schedulePatternPlayback, isPartAudible, startMeasure]);
+  }, [pattern, ensemblePattern, settings, initialize, getScheduler, buildCountInEvents, buildMetronomeEvents, buildScheduledEvents, isPartAudible, startMeasure]);
 
   // Stop playback
   const stop = useCallback(() => {
-    clearPlaybackTimeouts();
+    schedulerRef.current?.stop();
     if (audio) {
       audio.stopAll();
     }
     setPlaybackState(INITIAL_PLAYBACK_STATE);
-  }, [audio, clearPlaybackTimeouts]);
+  }, [audio]);
 
   // Pause playback
   const pause = useCallback(() => {
-    clearPlaybackTimeouts();
+    schedulerRef.current?.pause();
     if (audio) {
       audio.stopAll();
     }
     setPlaybackState(prev => {
-      // Store the current measure (1-indexed) for resuming
       pausedMeasureRef.current = prev.currentMeasure + 1;
       return {
         ...prev,
         isPlaying: false,
         isPaused: true,
-        elapsedTime: Date.now() - playbackStartTimeRef.current,
       };
     });
-  }, [audio, clearPlaybackTimeouts]);
+  }, [audio]);
 
   // Resume playback from paused position
   const resume = useCallback(() => {
     if (playbackState.isPaused) {
-      // Play from the measure where we paused
       play(pausedMeasureRef.current);
     }
   }, [playbackState.isPaused, play]);
 
   // Stop standalone metronome
   const stopMetronome = useCallback(() => {
-    clearMetronomeTimeouts();
+    metronomeLoopRef.current = false;
+    if (metronomeTimeoutRef.current) {
+      window.clearTimeout(metronomeTimeoutRef.current);
+      metronomeTimeoutRef.current = null;
+    }
+    metronomeSchedulerRef.current?.stop();
     setPlaybackState(prev => ({
       ...prev,
       isMetronomePlaying: false,
     }));
-  }, [clearMetronomeTimeouts]);
+  }, []);
 
   // Play standalone metronome (loops until stopped)
   const playMetronome = useCallback(async () => {
     try {
       await initialize();
 
-      // Mark metronome as playing
+      // Create separate scheduler for metronome
+      if (!audioContextRef.current) {
+        const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioCtx) return;
+        audioContextRef.current = new AudioCtx();
+      }
+
+      if (!masterGainRef.current && audioContextRef.current) {
+        masterGainRef.current = audioContextRef.current.createGain();
+        masterGainRef.current.gain.value = volume;
+        masterGainRef.current.connect(audioContextRef.current.destination);
+      }
+
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      if (!metronomeSchedulerRef.current && audioContextRef.current && masterGainRef.current) {
+        metronomeSchedulerRef.current = createWebAudioScheduler(audioContextRef.current, masterGainRef.current);
+      }
+
       setPlaybackState(prev => ({
         ...prev,
         isMetronomePlaying: true,
@@ -731,45 +828,35 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
 
       metronomeLoopRef.current = true;
       const msPerBeat = 60000 / settings.tempo;
-
-      // Get beats per measure from time signature
       const timeSigMatch = settings.timeSignature.match(/^(\d+)\/\d+$/);
       const beatsPerMeasure = timeSigMatch ? parseInt(timeSigMatch[1], 10) : 4;
 
-      // Schedule one measure of clicks, then schedule next measure
-      const scheduleMeasure = (startTime: number) => {
-        if (!metronomeLoopRef.current) return;
+      // Schedule one measure at a time using Web Audio
+      const scheduleMeasure = async () => {
+        if (!metronomeLoopRef.current || !metronomeSchedulerRef.current) return;
 
-        for (let beat = 0; beat < beatsPerMeasure; beat++) {
-          const beatTime = startTime + beat * msPerBeat;
-          const isFirstBeat = beat === 0;
+        const events = buildMetronomeEvents(0, beatsPerMeasure, msPerBeat, beatsPerMeasure);
+        
+        // Set volume higher for standalone metronome
+        events.forEach(e => e.volume = 0.85);
 
-          scheduleMetronomeTimeout(() => {
-            if (!metronomeLoopRef.current) return;
-            if (audio) {
-              const clickParams = getSoundParams('metronome', msPerBeat / 1000, isFirstBeat);
-              audio.playNoteWithDynamics(clickParams.frequency, clickParams.duration, 0.85);
+        await metronomeSchedulerRef.current.scheduleSequence(events, {
+          onComplete: () => {
+            if (metronomeLoopRef.current) {
+              // Schedule next measure
+              metronomeTimeoutRef.current = window.setTimeout(scheduleMeasure, 0);
             }
-          }, beatTime);
-        }
-
-        // Schedule next measure
-        const nextMeasureTime = startTime + beatsPerMeasure * msPerBeat;
-        scheduleMetronomeTimeout(() => {
-          if (metronomeLoopRef.current) {
-            scheduleMeasure(0); // Start from 0 since this is a new timeout chain
-          }
-        }, nextMeasureTime);
+          },
+        });
       };
 
-      // Start the first measure
-      scheduleMeasure(0);
+      scheduleMeasure();
 
     } catch (error) {
       console.error('Metronome error:', error);
       stopMetronome();
     }
-  }, [settings.tempo, settings.timeSignature, audio, initialize, scheduleMetronomeTimeout, stopMetronome]);
+  }, [settings.tempo, settings.timeSignature, volume, initialize, buildMetronomeEvents, stopMetronome]);
 
   // Update single setting
   const updateSetting = useCallback(<K extends keyof RhythmSettings>(
@@ -797,9 +884,15 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
 
   // Set volume
   const setVolume = useCallback((newVolume: number) => {
-    setVolumeState(Math.max(0, Math.min(1, newVolume)));
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+    setVolumeState(clampedVolume);
     if (audio) {
-      audio.setVolume(newVolume);
+      audio.setVolume(clampedVolume);
+    }
+    // Also update master gain for Web Audio scheduler
+    if (masterGainRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      masterGainRef.current.gain.linearRampToValueAtTime(clampedVolume, now + 0.05);
     }
   }, [audio]);
 
@@ -834,13 +927,20 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      clearPlaybackTimeouts();
-      clearMetronomeTimeouts();
+      schedulerRef.current?.stop();
+      metronomeSchedulerRef.current?.stop();
+      if (metronomeTimeoutRef.current) {
+        window.clearTimeout(metronomeTimeoutRef.current);
+      }
       if (audio) {
         audio.stopAll();
       }
+      // Close audio context
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
     };
-  }, [clearPlaybackTimeouts, clearMetronomeTimeouts, audio]);
+  }, [audio]);
 
   return {
     settings,
