@@ -366,6 +366,8 @@ export default function TrebleRunner() {
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const noteIdRef = useRef(0);
   const correctCountRef = useRef(0);
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+  const bgmStartedRef = useRef(false);
   
   const MAX_HEALTH = 100;
   const DAMAGE = 20;
@@ -379,6 +381,50 @@ export default function TrebleRunner() {
       // Storage not available
     }
   }, [highScores]);
+
+  // Initialize background music audio element once
+  useEffect(() => {
+    const audio = new Audio('/audio/gentle-steps-through-the-green.mp3');
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0.25;
+    bgmRef.current = audio;
+
+    return () => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      bgmRef.current = null;
+      bgmStartedRef.current = false;
+    };
+  }, []);
+
+  // Keep background music playing when game is active (and sound is enabled)
+  useEffect(() => {
+    const audio = bgmRef.current;
+    if (!audio) return;
+
+    const shouldPlay =
+      bgmStartedRef.current &&
+      gameState === 'playing' &&
+      soundEnabled;
+
+    if (!shouldPlay) {
+      try {
+        audio.pause();
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
+    void audio.play().catch(() => {
+      // If play fails due to browser gesture rules, we'll retry on next user gesture.
+    });
+  }, [gameState, soundEnabled]);
 
   // Spawn new note
   const spawnNote = useCallback(() => {
@@ -558,6 +604,15 @@ export default function TrebleRunner() {
     noteIdRef.current = 0;
     correctCountRef.current = 0;
     setGameState('playing');
+    
+    // Unlock background music on user gesture (game start)
+    const audio = bgmRef.current;
+    if (audio && !bgmStartedRef.current) {
+      bgmStartedRef.current = true;
+      void audio.play().catch(() => {
+        // If blocked, the effect above will retry when possible.
+      });
+    }
   };
 
   // End game and save score
@@ -567,6 +622,18 @@ export default function TrebleRunner() {
       setHighScores(prev => ({ ...prev, [levelKey]: score }));
     }
     setGameState('menu');
+    
+    // Reset background music when returning to menu
+    const audio = bgmRef.current;
+    if (audio && bgmStartedRef.current) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      bgmStartedRef.current = false;
+    }
   };
 
   // Calculate accuracy
