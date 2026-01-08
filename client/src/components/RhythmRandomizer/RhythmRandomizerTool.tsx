@@ -170,7 +170,7 @@ export function RhythmRandomizerTool() {
         countingSystem={settings.countingSystem}
         staffLineMode={settings.staffLineMode}
         stemDirection={settings.stemDirection}
-        onPlay={play}
+        onPlay={() => play(startMeasure)}
         onStop={stop}
         onPause={pause}
         onResume={resume}
