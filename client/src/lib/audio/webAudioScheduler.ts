@@ -171,6 +171,12 @@ export function createWebAudioScheduler(audioContext: AudioContext, masterGain: 
 
   /**
    * Schedule a sample-based sound at a precise time
+   *
+   * For instrument samples (like Philharmonia), we let the sample play its natural
+   * duration rather than cutting it to the rhythm duration. This allows samples to
+   * ring out naturally - the rhythm duration only controls WHEN notes start, not
+   * how long they play. This is especially important for short notes (eighth notes)
+   * where cutting the sample would make it sound unnatural.
    */
   async function scheduleSample(
     startTime: number,
@@ -184,21 +190,21 @@ export function createWebAudioScheduler(audioContext: AudioContext, masterGain: 
     source.buffer = buffer;
     gainNode.gain.setValueAtTime(volume, startTime);
 
-    // If duration is specified and shorter than buffer, add fade out
-    if (duration && duration < buffer.duration) {
-      const fadeOutStart = Math.max(0, duration - 0.05);
-      gainNode.gain.setValueAtTime(volume, startTime + fadeOutStart);
-      gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
-    }
+    // Let the sample play its natural duration - don't cut it short based on rhythm
+    // The natural decay of instrument samples sounds much better than abrupt cutoffs
+    // Only add a gentle fade at the very end of the sample's natural duration
+    const playDuration = buffer.duration;
+    const fadeOutStart = Math.max(0, playDuration - 0.05);
+    gainNode.gain.setValueAtTime(volume, startTime + fadeOutStart);
+    gainNode.gain.linearRampToValueAtTime(0.01, startTime + playDuration);
 
     source.connect(gainNode);
     gainNode.connect(masterGain);
 
-    const actualDuration = duration ? Math.min(duration, buffer.duration) : buffer.duration;
-    
-    source.start(startTime, 0, duration);
-    
-    const stopTime = startTime + actualDuration;
+    // Play the full sample - don't pass duration parameter to avoid cutting it short
+    source.start(startTime);
+
+    const stopTime = startTime + playDuration;
     scheduledSources.push({ source, stopTime });
 
     source.onended = () => {

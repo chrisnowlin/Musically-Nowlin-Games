@@ -50,8 +50,8 @@ const INSTRUMENTS: InstrumentConfig[] = [
   { id: 'flute', image: '/aoc/characters/aoc_character_flute.png', alt: 'Bird flutist', patterns: FLUTE_PATTERNS, instrument: 'flute', position: { xPct: 20, yPct: 65, scale: 0.9, zIndex: 10 } },
 
   // Front row - strings (larger, lower on stage)
-  { id: 'violin1', image: '/images/violinist-fox.png', alt: 'Fox violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin', position: { xPct: 35, yPct: 79, scale: 1.0, zIndex: 20 } },
-  { id: 'violin2', image: '/images/violinist-2.png', alt: 'Cat violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin', position: { xPct: 65, yPct: 78, scale: 0.9, zIndex: 20 } },
+  { id: 'violin1', image: '/images/violinist-fox.png', alt: 'Fox violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin', position: { xPct: 35, yPct: 84, scale: 1.0, zIndex: 20 } },
+  { id: 'violin2', image: '/images/violinist-2.png', alt: 'Cat violinist', patterns: VIOLIN_PATTERNS, instrument: 'violin', position: { xPct: 65, yPct: 83, scale: 0.9, zIndex: 20 } },
 ];
 
 interface InstrumentState {
