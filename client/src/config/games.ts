@@ -836,3 +836,29 @@ export const getComingSoonGames = (): GameConfig[] => {
   return games.filter((game) => game.status === "coming-soon");
 };
 
+/** Game IDs shown in the "Available Now" section on the main landing page. */
+export const AVAILABLE_NOW_IDS = [
+  "staff-invaders",
+  "pitch-match",
+  "fast-or-slow-race",
+  "dynamics-001",
+  "finish-the-tune",
+  "instrument-crane",
+  "instrument-detective",
+  "treble-runner",
+  "animal-orchestra-conductor",
+] as const;
+
+/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
+export const getUnderDevelopmentGames = (): GameConfig[] => {
+  return games
+    .filter((game) => !AVAILABLE_NOW_IDS.includes(game.id as (typeof AVAILABLE_NOW_IDS)[number]))
+    .sort((a, b) => a.title.localeCompare(b.title));
+};
+
+/** Single passcode for Under Development page and landing button. Protects access to work-in-progress games. */
+export const UNDER_DEVELOPMENT_PASSCODE = "games";
+
+/** SessionStorage key; when set, user has unlocked Under Development for this session. */
+export const UNDER_DEVELOPMENT_SESSION_KEY = "under-development-unlocked";
+

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { games, GameConfig } from "@/config/games";
+import { games, AVAILABLE_NOW_IDS, UNDER_DEVELOPMENT_PASSCODE, UNDER_DEVELOPMENT_SESSION_KEY } from "@/config/games";
 import { Button } from "@/components/ui/button";
 import { Music, Star, Sparkles, Lock, Play, KeyRound, Shuffle } from "lucide-react";
 import { useState } from "react";
@@ -22,35 +22,22 @@ import { Input } from "@/components/ui/input";
  * - Character-driven design with mascot elements
  * - Emphasis on joy and discovery
  */
-const PLAYTEST_PASSCODE = "games";
-
 export default function LandingVariation2() {
   const [hoveredGame, setHoveredGame] = useState<string | null>(null);
-  const [passcodeModalOpen, setPasscodeModalOpen] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<GameConfig | null>(null);
+  const [underDevModalOpen, setUnderDevModalOpen] = useState(false);
   const [passcodeInput, setPasscodeInput] = useState("");
   const [passcodeError, setPasscodeError] = useState(false);
   const [, setLocation] = useLocation();
 
-  const handlePlaytestClick = (game: GameConfig) => {
-    setSelectedGame(game);
-    setPasscodeInput("");
-    setPasscodeError(false);
-    setPasscodeModalOpen(true);
-  };
-
-  const handlePasscodeSubmit = () => {
-    if (passcodeInput === PLAYTEST_PASSCODE && selectedGame) {
-      setPasscodeModalOpen(false);
-      setLocation(selectedGame.route);
+  const handleUnderDevPasscodeSubmit = () => {
+    if (passcodeInput === UNDER_DEVELOPMENT_PASSCODE) {
+      sessionStorage.setItem(UNDER_DEVELOPMENT_SESSION_KEY, "true");
+      setUnderDevModalOpen(false);
+      setPasscodeInput("");
+      setPasscodeError(false);
+      setLocation("/games/under-development");
     } else {
       setPasscodeError(true);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handlePasscodeSubmit();
     }
   };
 
@@ -103,7 +90,7 @@ export default function LandingVariation2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {games
-              .filter(game => game.id === "staff-invaders" || game.id === "pitch-match" || game.id === "fast-or-slow-race" || game.id === "dynamics-001" || game.id === "finish-the-tune" || game.id === "instrument-crane" || game.id === "instrument-detective" || game.id === "treble-runner" || game.id === "animal-orchestra-conductor")
+              .filter(game => AVAILABLE_NOW_IDS.includes(game.id as (typeof AVAILABLE_NOW_IDS)[number]))
               .sort((a, b) => a.title.localeCompare(b.title))
               .map((game, index) => {
             const Icon = game.icon;
@@ -329,109 +316,40 @@ export default function LandingVariation2() {
           </div>
         </section>
 
-        {/* Under Development Section */}
+        {/* Under Development Section - link to dedicated page */}
         <section>
           <div className="text-center mb-8">
             <h2 className="font-fredoka font-bold text-4xl md:text-5xl text-orange-800 dark:text-orange-200 mb-2">
               Under Development
             </h2>
-            <p className="font-nunito text-lg text-gray-700 dark:text-gray-300">
+            <p className="font-nunito text-lg text-gray-700 dark:text-gray-300 mb-6">
               🚧 Coming soon! 🚧
             </p>
+            <Button
+              onClick={() => {
+                setPasscodeInput("");
+                setPasscodeError(false);
+                setUnderDevModalOpen(true);
+              }}
+              className="font-fredoka text-xl py-6 px-8 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+              size="lg"
+            >
+              <KeyRound className="w-6 h-6 mr-2" />
+              View games in development
+            </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {games
-              .filter(game => game.id !== "staff-invaders" && game.id !== "pitch-match" && game.id !== "fast-or-slow-race" && game.id !== "dynamics-001" && game.id !== "finish-the-tune" && game.id !== "instrument-crane" && game.id !== "instrument-detective" && game.id !== "treble-runner" && game.id !== "animal-orchestra-conductor")
-              .sort((a, b) => a.title.localeCompare(b.title))
-              .map((game, index) => {
-            const Icon = game.icon;
-            const isAvailable = game.status === "available";
-            const isLocked = game.status === "locked";
-            const isHovered = hoveredGame === game.id;
-            
-            return (
-              <div
-                key={game.id}
-                className="relative"
-                onMouseEnter={() => setHoveredGame(game.id)}
-                onMouseLeave={() => setHoveredGame(null)}
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {/* Floating Card */}
-                <div
-                  className={`
-                    bg-white dark:bg-gray-800 rounded-[2rem] shadow-xl 
-                    transition-all duration-300 overflow-hidden border-4
-                    ${isAvailable ? "border-green-400 hover:border-green-500" : "border-gray-300"}
-                    ${isHovered && isAvailable ? "scale-105 -rotate-1" : ""}
-                    ${!isAvailable ? "opacity-75" : ""}
-                  `}
-                >
-                  {/* Sparkle Effect for Available Games */}
-                  {isAvailable && isHovered && (
-                    <div className="absolute top-2 right-2 z-20">
-                      <Sparkles className="w-8 h-8 text-yellow-400 animate-spin" />
-                    </div>
-                  )}
-
-                  {/* Icon Circle */}
-                  <div className="relative pt-8 pb-4">
-                    <div
-                      className={`
-                        w-24 h-24 mx-auto rounded-full flex items-center justify-center
-                        ${game.color} shadow-lg
-                        ${isHovered && isAvailable ? "animate-bounce" : ""}
-                      `}
-                    >
-                      {isLocked ? (
-                        <Lock className="w-12 h-12 text-white" />
-                      ) : (
-                        <Icon className="w-12 h-12 text-white" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="px-6 pb-6 text-center">
-                    {/* Title */}
-                    <h2 className="font-fredoka font-bold text-2xl md:text-3xl text-foreground mb-2">
-                      {game.title}
-                    </h2>
-
-
-                    {/* Description */}
-                    <p className="font-nunito text-muted-foreground mb-4 min-h-[4.5rem] text-sm md:text-base">
-                      {game.description}
-                    </p>
-
-                    {/* Status Indicator - Playtest Button with Passcode Lock */}
-                    <Button
-                      onClick={() => handlePlaytestClick(game)}
-                      className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
-                      size="lg"
-                    >
-                      <KeyRound className="w-6 h-6 mr-2" />
-                      Playtest
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
         </section>
       </main>
 
-      {/* Passcode Modal */}
-      <Dialog open={passcodeModalOpen} onOpenChange={setPasscodeModalOpen}>
+      <Dialog open={underDevModalOpen} onOpenChange={setUnderDevModalOpen}>
         <DialogContent className="sm:max-w-md rounded-3xl border-4 border-amber-400">
           <DialogHeader>
             <DialogTitle className="font-fredoka text-2xl text-center text-amber-800 dark:text-amber-200">
               <KeyRound className="w-8 h-8 inline-block mr-2 text-amber-500" />
-              Playtest Access
+              Under Development Access
             </DialogTitle>
             <DialogDescription className="font-nunito text-center">
-              Enter the passcode to playtest <span className="font-bold">{selectedGame?.title}</span>
+              Enter the passcode to view games in development.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
@@ -443,7 +361,7 @@ export default function LandingVariation2() {
                 setPasscodeInput(e.target.value);
                 setPasscodeError(false);
               }}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e) => e.key === "Enter" && handleUnderDevPasscodeSubmit()}
               className={`font-nunito text-lg py-6 text-center rounded-xl ${
                 passcodeError ? "border-red-500 border-2" : ""
               }`}
@@ -455,12 +373,12 @@ export default function LandingVariation2() {
               </p>
             )}
             <Button
-              onClick={handlePasscodeSubmit}
+              onClick={handleUnderDevPasscodeSubmit}
               className="w-full font-fredoka text-xl py-6 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
               size="lg"
             >
               <Play className="w-6 h-6 mr-2" />
-              Start Playtest
+              Continue
             </Button>
           </div>
         </DialogContent>

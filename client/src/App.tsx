@@ -107,6 +107,7 @@ const Advanced001Page = lazy(() => import("@/pages/games/Advanced001Page"));
 const Challenge001Page = lazy(() => import("@/pages/games/Challenge001Page"));
 const TrebleRunnerGamePage = lazy(() => import("@/pages/games/TrebleRunnerGamePage"));
 const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
+const UnderDevelopmentPage = lazy(() => import("@/pages/UnderDevelopmentPage"));
 
 // Tools
 const RhythmRandomizerPage = lazy(() => import("@/pages/tools/RhythmRandomizerPage"));
@@ -191,8 +192,7 @@ function Router() {
       <Route path="/games/advanced-001" component={Advanced001Page} />
       <Route path="/games/challenge-001" component={Challenge001Page} />
       <Route path="/games/treble-runner" component={TrebleRunnerGamePage} />
-
-
+      <Route path="/games/under-development" component={UnderDevelopmentPage} />
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-invaders" component={StaffInvadersGamePage} />
