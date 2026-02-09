@@ -856,6 +856,7 @@ export const AVAILABLE_NOW_IDS = [
   "finish-the-tune",
   "instrument-crane",
   "instrument-detective",
+  "instrument-family-sorter",
   "treble-runner",
   "animal-orchestra-conductor",
 ] as const;/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
