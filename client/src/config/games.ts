@@ -29,6 +29,17 @@ export const games: GameConfig[] = [
     ageRange: "5-9 years",
   },
   {
+    id: "instrument-family-sorter",
+    title: "Instrument Family Sorter",
+    description: "Listen to the sound and sort the instrument into the correct family!",
+    route: "/games/instrument-family-sorter",
+    status: "available",
+    icon: Gamepad2,
+    color: "bg-teal-500",
+    difficulty: "easy",
+    ageRange: "5-9 years",
+  },
+  {
     id: "pitch-match",
     title: "High or Low?",
     description: "Learn to identify higher and lower pitched sounds with friendly animal musicians!",
@@ -847,9 +858,7 @@ export const AVAILABLE_NOW_IDS = [
   "instrument-detective",
   "treble-runner",
   "animal-orchestra-conductor",
-] as const;
-
-/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
+] as const;/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
 export const getUnderDevelopmentGames = (): GameConfig[] => {
   return games
     .filter((game) => !AVAILABLE_NOW_IDS.includes(game.id as (typeof AVAILABLE_NOW_IDS)[number]))
@@ -861,4 +870,3 @@ export const UNDER_DEVELOPMENT_PASSCODE = "games";
 
 /** SessionStorage key; when set, user has unlocked Under Development for this session. */
 export const UNDER_DEVELOPMENT_SESSION_KEY = "under-development-unlocked";
-
