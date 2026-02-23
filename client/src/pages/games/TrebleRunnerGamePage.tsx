@@ -458,6 +458,8 @@ export default function TrebleRunner() {
     
     // Main game loop - move notes
     gameLoopRef.current = setInterval(() => {
+      let newlyMissed: Array<{ id: number; name: string }> = [];
+
       setNotes(prev => {
         // Speed increases by 2% with each correct answer
         const speedMultiplier = Math.pow(1.02, correctCountRef.current);
@@ -470,39 +472,47 @@ export default function TrebleRunner() {
         
         // Check for missed notes (passed the answer zone)
         const answerZone = 80;
-        updated.forEach(note => {
+        newlyMissed = [];
+        const result = updated.map(note => {
           if (!note.answered && note.x < answerZone - 30) {
-            note.answered = true;
-            note.feedback = 'wrong';
-            setHealth(h => {
-              const newHealth = Math.max(0, h - DAMAGE);
-              if (newHealth <= 0) {
-                setGameState('gameOver');
-                if (soundEnabled) playGameOverSound();
-              }
-              return newHealth;
-            });
-            setStreak(0);
-            setStats(s => ({
-              ...s,
-              wrong: s.wrong + 1,
-              notesPlayed: {
-                ...s.notesPlayed,
-                [note.name]: {
-                  ...(s.notesPlayed[note.name] || { correct: 0, wrong: 0 }),
-                  wrong: ((s.notesPlayed[note.name]?.wrong) || 0) + 1,
-                },
-              },
-            }));
-            setRunnerState({ isJumping: false, isStumbling: true });
-            setTimeout(() => setRunnerState({ isJumping: false, isStumbling: false }), 300);
-            if (soundEnabled) playWrongSound();
+            newlyMissed.push({ id: note.id, name: note.name });
+            return { ...note, answered: true, feedback: 'wrong' as const };
           }
+          return note;
         });
         
         // Remove notes that are off screen
-        return updated.filter(note => note.x > -50);
+        return result.filter(note => note.x > -50);
       });
+
+      // Side effects run outside the updater so they only fire once
+      if (newlyMissed.length > 0) {
+        newlyMissed.forEach(missed => {
+          setHealth(h => {
+            const newHealth = Math.max(0, h - DAMAGE);
+            if (newHealth <= 0) {
+              setGameState('gameOver');
+              if (soundEnabled) playGameOverSound();
+            }
+            return newHealth;
+          });
+          setStats(s => ({
+            ...s,
+            wrong: s.wrong + 1,
+            notesPlayed: {
+              ...s.notesPlayed,
+              [missed.name]: {
+                ...(s.notesPlayed[missed.name] || { correct: 0, wrong: 0 }),
+                wrong: ((s.notesPlayed[missed.name]?.wrong) || 0) + 1,
+              },
+            },
+          }));
+        });
+        setStreak(0);
+        setRunnerState({ isJumping: false, isStumbling: true });
+        setTimeout(() => setRunnerState({ isJumping: false, isStumbling: false }), 300);
+        if (soundEnabled) playWrongSound();
+      }
     }, 16);
     
     // Spawn timer
@@ -525,6 +535,8 @@ export default function TrebleRunner() {
     setPressedNote(noteName);
     setTimeout(() => setPressedNote(null), 100);
 
+    let feedback: { isCorrect: boolean; targetNoteName: string } | null = null;
+
     // Find the leftmost (closest) unanswered note that is visible on screen
     setNotes(prev => {
       const unansweredNotes = prev.filter(note => !note.answered && note.x < 350);
@@ -538,51 +550,7 @@ export default function TrebleRunner() {
       if (!targetNote) return prev;
       
       const isCorrect = targetNote.name === noteName;
-      
-      if (isCorrect) {
-        correctCountRef.current += 1;
-        const streakBonus = Math.floor(streak / 5) * 10;
-        setScore(s => s + 100 + streakBonus);
-        setStreak(s => s + 1);
-        setStats(s => ({
-          ...s,
-          correct: s.correct + 1,
-          notesPlayed: {
-            ...s.notesPlayed,
-            [targetNote.name]: {
-              ...(s.notesPlayed[targetNote.name] || { correct: 0, wrong: 0 }),
-              correct: ((s.notesPlayed[targetNote.name]?.correct) || 0) + 1,
-            },
-          },
-        }));
-        setRunnerState({ isJumping: true, isStumbling: false });
-        setTimeout(() => setRunnerState({ isJumping: false, isStumbling: false }), 200);
-        if (soundEnabled) playCorrectSound();
-      } else {
-        setHealth(h => {
-          const newHealth = Math.max(0, h - DAMAGE);
-          if (newHealth <= 0) {
-            setGameState('gameOver');
-            if (soundEnabled) playGameOverSound();
-          }
-          return newHealth;
-        });
-        setStreak(0);
-        setStats(s => ({
-          ...s,
-          wrong: s.wrong + 1,
-          notesPlayed: {
-            ...s.notesPlayed,
-            [targetNote.name]: {
-              ...(s.notesPlayed[targetNote.name] || { correct: 0, wrong: 0 }),
-              wrong: ((s.notesPlayed[targetNote.name]?.wrong) || 0) + 1,
-            },
-          },
-        }));
-        setRunnerState({ isJumping: false, isStumbling: true });
-        setTimeout(() => setRunnerState({ isJumping: false, isStumbling: false }), 300);
-        if (soundEnabled) playWrongSound();
-      }
+      feedback = { isCorrect, targetNoteName: targetNote.name };
       
       return prev.map(note => 
         note.id === targetNote.id 
@@ -590,6 +558,54 @@ export default function TrebleRunner() {
           : note
       );
     });
+
+    // Side effects run outside the updater so they only fire once
+    if (!feedback) return;
+
+    if (feedback.isCorrect) {
+      correctCountRef.current += 1;
+      const streakBonus = Math.floor(streak / 5) * 10;
+      setScore(s => s + 100 + streakBonus);
+      setStreak(s => s + 1);
+      setStats(s => ({
+        ...s,
+        correct: s.correct + 1,
+        notesPlayed: {
+          ...s.notesPlayed,
+          [feedback!.targetNoteName]: {
+            ...(s.notesPlayed[feedback!.targetNoteName] || { correct: 0, wrong: 0 }),
+            correct: ((s.notesPlayed[feedback!.targetNoteName]?.correct) || 0) + 1,
+          },
+        },
+      }));
+      setRunnerState({ isJumping: true, isStumbling: false });
+      setTimeout(() => setRunnerState({ isJumping: false, isStumbling: false }), 200);
+      if (soundEnabled) playCorrectSound();
+    } else {
+      setHealth(h => {
+        const newHealth = Math.max(0, h - DAMAGE);
+        if (newHealth <= 0) {
+          setGameState('gameOver');
+          if (soundEnabled) playGameOverSound();
+        }
+        return newHealth;
+      });
+      setStreak(0);
+      setStats(s => ({
+        ...s,
+        wrong: s.wrong + 1,
+        notesPlayed: {
+          ...s.notesPlayed,
+          [feedback!.targetNoteName]: {
+            ...(s.notesPlayed[feedback!.targetNoteName] || { correct: 0, wrong: 0 }),
+            wrong: ((s.notesPlayed[feedback!.targetNoteName]?.wrong) || 0) + 1,
+          },
+        },
+      }));
+      setRunnerState({ isJumping: false, isStumbling: true });
+      setTimeout(() => setRunnerState({ isJumping: false, isStumbling: false }), 300);
+      if (soundEnabled) playWrongSound();
+    }
   }, [gameState, streak, soundEnabled]);
 
   // Start game
