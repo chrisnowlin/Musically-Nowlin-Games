@@ -15,7 +15,7 @@ import type {
   DifficultyLevel,
   ChallengeType,
 } from '@/lib/gameLogic/dungeonTypes';
-import { generateDungeon } from '@/lib/gameLogic/dungeonGenerator';
+import { generateDungeon, moveEnemies } from '@/lib/gameLogic/dungeonGenerator';
 import {
   createDifficultyState,
   recordResult,
@@ -88,6 +88,7 @@ const MelodyDungeonGame: React.FC = () => {
     }
   });
   const moveLockedRef = useRef(false);
+  const [facingLeft, setFacingLeft] = useState(false);
 
   const difficulty: DifficultyLevel = diffState.level;
   const floorNumber = floor.floorNumber;
@@ -156,6 +157,9 @@ const MelodyDungeonGame: React.FC = () => {
     (dx: number, dy: number) => {
       if (phase !== 'playing' || moveLockedRef.current) return;
 
+      if (dx < 0) setFacingLeft(true);
+      if (dx > 0) setFacingLeft(false);
+
       setPlayer((prev) => {
         const nx = prev.position.x + dx;
         const ny = prev.position.y + dy;
@@ -191,7 +195,7 @@ const MelodyDungeonGame: React.FC = () => {
                 rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Floor } : t
               )
             );
-            return updateVisibility({ ...f, tiles }, newPos);
+            return moveEnemies(updateVisibility({ ...f, tiles }, newPos), newPos);
           });
           return {
             ...prev,
@@ -203,11 +207,11 @@ const MelodyDungeonGame: React.FC = () => {
           };
         }
 
-        // Encounter uncleared interactive tile (enemy, boss, door, treasure)
+        // Encounter uncleared interactive tile (enemy, dragon, treasure)
         if (
           !tile.cleared &&
           (tile.type === TileType.Enemy ||
-            tile.type === TileType.Boss ||
+            tile.type === TileType.Dragon ||
             tile.type === TileType.Treasure)
         ) {
           setFloor((f) => updateVisibility(f, newPos));
@@ -221,12 +225,12 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Stairs
         if (tile.type === TileType.Stairs) {
-          setFloor((f) => updateVisibility(f, newPos));
+          setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
           setPhase('floorComplete');
           return { ...prev, position: newPos };
         }
 
-        setFloor((f) => updateVisibility(f, newPos));
+        setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
         return { ...prev, position: newPos };
       });
     },
@@ -244,15 +248,15 @@ const MelodyDungeonGame: React.FC = () => {
         let updated = { ...prev };
 
         if (correct) {
-          const isBoss = activeTileType === TileType.Boss;
+          const isDragon = activeTileType === TileType.Dragon;
           const streakBonus = Math.floor(prev.streak / 3) * 25;
-          updated.score += (isBoss ? 500 : 100) + streakBonus;
+          updated.score += (isDragon ? 500 : 100) + streakBonus;
           updated.streak += 1;
 
           if (activeTileType === TileType.Enemy) {
             updated.keys += 1;
           }
-          if (isBoss) {
+          if (isDragon) {
             updated.keys += 2;
             updated.potions += 1;
           }
@@ -569,7 +573,7 @@ const MelodyDungeonGame: React.FC = () => {
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-4 px-2 py-2">
-        <DungeonGrid floor={floor} playerPosition={player.position} />
+        <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} />
         <div className="shrink-0 flex flex-col items-center gap-3">
           <MiniMap floor={floor} playerPosition={player.position} />
           <MobileDPad

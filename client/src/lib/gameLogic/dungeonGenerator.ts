@@ -5,8 +5,8 @@ import {
   type Rect,
   type ChallengeType,
   TileType,
-  DUNGEON_WIDTH,
-  DUNGEON_HEIGHT,
+  getDungeonSize,
+  DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
 
 function rand(min: number, max: number): number {
@@ -297,19 +297,21 @@ function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
 }
 
 export function generateDungeon(floorNumber: number): DungeonFloor {
-  const width = DUNGEON_WIDTH;
-  const height = DUNGEON_HEIGHT;
+  const { width, height } = getDungeonSize(floorNumber);
   const grid = createEmptyGrid(width, height);
 
-  const roomCount = rand(3, 5);
+  // Scale room count and max room size with dungeon size
+  const growth = width - DUNGEON_BASE_SIZE;
+  const roomCount = rand(3, 5 + Math.floor(growth / 2));
+  const maxRoomDim = Math.min(5 + Math.floor(growth / 3), 7);
   const rooms: Rect[] = [];
   const maxAttempts = 100;
 
   for (let i = 0; i < roomCount; i++) {
     let placed = false;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const w = rand(3, 5);
-      const h = rand(3, 5);
+      const w = rand(3, maxRoomDim);
+      const h = rand(3, maxRoomDim);
       const x = rand(1, width - w - 1);
       const y = rand(1, height - h - 1);
       const room: Rect = { x, y, w, h };
@@ -348,16 +350,61 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
   const placedPositions = [playerStart, stairsPosition];
   const challengeTypes = getChallengeTypesForFloor(floorNumber);
 
-  // Place enemies
-  const enemyCount = Math.min(2 + floorNumber, 6);
-  for (let i = 0; i < enemyCount; i++) {
+  // Place locked chests first so dragons can spawn adjacent to them.
+  const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
+  const chestPositions: Position[] = [];
+  for (let i = 0; i < chestCount; i++) {
+    const pos = pickValidChestTile(grid, placedPositions, playerStart);
+    if (pos) {
+      placedPositions.push(pos);
+      chestPositions.push(pos);
+    }
+  }
+
+  // Place dragon adjacent to a chest (floor >= 3).
+  const hasDragon = floorNumber >= 3;
+  if (hasDragon && chestPositions.length > 0) {
+    const chest = chestPositions[rand(0, chestPositions.length - 1)];
+    const dirs = [
+      { x: 0, y: -1 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+    ];
+    const adjacentCandidates = dirs
+      .map((d) => ({ x: chest.x + d.x, y: chest.y + d.y }))
+      .filter(
+        (p) =>
+          p.y >= 0 &&
+          p.y < height &&
+          p.x >= 0 &&
+          p.x < width &&
+          grid[p.y][p.x].type === TileType.Floor &&
+          !placedPositions.some((e) => e.x === p.x && e.y === p.y) &&
+          isOpenEnough(grid, p)
+      );
+    const dragonPos =
+      adjacentCandidates.length > 0
+        ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
+        : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+    if (dragonPos) {
+      grid[dragonPos.y][dragonPos.x].type = TileType.Dragon;
+      grid[dragonPos.y][dragonPos.x].challengeType =
+        challengeTypes[rand(0, challengeTypes.length - 1)];
+      grid[dragonPos.y][dragonPos.x].cleared = false;
+      placedPositions.push(dragonPos);
+    }
+  }
+
+  // Place regular enemies.
+  const totalEnemies = Math.min(2 + floorNumber, 6);
+  const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
+  for (let i = 0; i < regularCount; i++) {
     const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
     if (pos) {
-      const isBoss = floorNumber >= 3 && i === 0;
-      grid[pos.y][pos.x].type = isBoss ? TileType.Boss : TileType.Enemy;
-      grid[pos.y][pos.x].challengeType = isBoss
-        ? challengeTypes[rand(0, challengeTypes.length - 1)]
-        : challengeTypes[rand(0, challengeTypes.length - 1)];
+      grid[pos.y][pos.x].type = TileType.Enemy;
+      grid[pos.y][pos.x].challengeType =
+        challengeTypes[rand(0, challengeTypes.length - 1)];
       grid[pos.y][pos.x].cleared = false;
       placedPositions.push(pos);
     }
@@ -385,15 +432,6 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  // Place locked chests only where they cannot block no-key hallway traversal.
-  const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
-  for (let i = 0; i < chestCount; i++) {
-    const pos = pickValidChestTile(grid, placedPositions, playerStart);
-    if (pos) {
-      placedPositions.push(pos);
-    }
-  }
-
   return {
     tiles: grid,
     width,
@@ -403,4 +441,116 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     playerStart,
     stairsPosition,
   };
+}
+
+/**
+ * Move all uncleared enemies one step in a random cardinal direction.
+ * Dragons stay within Chebyshev distance 2 of the nearest uncleared chest.
+ */
+export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFloor {
+  const tiles = floor.tiles.map((row) => row.map((t) => ({ ...t })));
+
+  // Collect enemies and uncleared chests.
+  const enemies: { pos: Position; tile: Tile }[] = [];
+  const chests: Position[] = [];
+  for (let y = 0; y < floor.height; y++) {
+    for (let x = 0; x < floor.width; x++) {
+      const t = tiles[y][x];
+      if (!t.cleared && (t.type === TileType.Enemy || t.type === TileType.Dragon)) {
+        enemies.push({ pos: { x, y }, tile: t });
+      }
+      if (t.type === TileType.Chest && !t.cleared) {
+        chests.push({ x, y });
+      }
+    }
+  }
+
+  if (enemies.length === 0) return floor;
+
+  // Fisher-Yates shuffle to avoid processing-order bias.
+  for (let i = enemies.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [enemies[i], enemies[j]] = [enemies[j], enemies[i]];
+  }
+
+  // Track positions that are already claimed (non-floor entities + player).
+  const occupied = new Set<string>();
+  occupied.add(`${playerPos.x},${playerPos.y}`);
+  for (let y = 0; y < floor.height; y++) {
+    for (let x = 0; x < floor.width; x++) {
+      const t = tiles[y][x];
+      if (
+        t.type !== TileType.Floor &&
+        t.type !== TileType.PlayerStart
+      ) {
+        occupied.add(`${x},${y}`);
+      }
+    }
+  }
+
+  const dirs = [
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
+  ];
+
+  for (const enemy of enemies) {
+    const { pos, tile } = enemy;
+
+    // Shuffle directions for this enemy.
+    const shuffled = [...dirs];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    let moved = false;
+    for (const d of shuffled) {
+      const nx = pos.x + d.x;
+      const ny = pos.y + d.y;
+      if (nx < 0 || nx >= floor.width || ny < 0 || ny >= floor.height) continue;
+
+      const target = tiles[ny][nx];
+      if (target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+      if (nx === playerPos.x && ny === playerPos.y) continue;
+
+      const key = `${nx},${ny}`;
+      if (occupied.has(key)) continue;
+
+      // Dragon tether: stay within Chebyshev distance 2 of nearest uncleared chest.
+      if (tile.type === TileType.Dragon && chests.length > 0) {
+        const nearestDist = Math.min(
+          ...chests.map((c) => Math.max(Math.abs(nx - c.x), Math.abs(ny - c.y)))
+        );
+        if (nearestDist > 2) continue;
+      }
+
+      // Execute move: transfer entity to new tile, old tile becomes floor.
+      tiles[ny][nx] = {
+        ...target,
+        type: tile.type,
+        challengeType: tile.challengeType,
+        cleared: false,
+      };
+      tiles[pos.y][pos.x] = {
+        ...tiles[pos.y][pos.x],
+        type: TileType.Floor,
+        challengeType: undefined,
+        cleared: undefined,
+      };
+
+      // Update occupied set.
+      occupied.delete(`${pos.x},${pos.y}`);
+      occupied.add(key);
+      moved = true;
+      break;
+    }
+
+    if (!moved) {
+      // Enemy stays; position already in occupied set.
+    }
+  }
+
+  return { ...floor, tiles };
 }

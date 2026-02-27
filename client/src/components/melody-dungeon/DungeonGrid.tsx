@@ -6,6 +6,7 @@ import { getTheme } from './dungeonThemes';
 interface DungeonGridProps {
   floor: DungeonFloor;
   playerPosition: Position;
+  facingLeft?: boolean;
 }
 
 type Visibility = 'lit' | 'dim' | 'dark';
@@ -39,10 +40,10 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.Treasure]: '/images/melody-dungeon-treasure.png',
   [TileType.Chest]: '/images/melody-dungeon-chest.png',
   [TileType.Stairs]: '/images/melody-dungeon-stairs.png',
-  [TileType.Boss]: '/images/melody-dungeon-boss.png',
+  [TileType.Dragon]: '/images/melody-dungeon-boss.png',
 };
 
-const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
+const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft }) => {
   const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
   const viewportSize = VIEWPORT_RADIUS * 2 + 1;
   const startX = Math.max(0, Math.min(playerPosition.x - VIEWPORT_RADIUS, floor.width - viewportSize));
@@ -106,7 +107,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
           const fullTileSprite =
             tile.type === TileType.Door || tile.type === TileType.Stairs;
           const isEnemy =
-            tile.type === TileType.Enemy || tile.type === TileType.Boss;
+            tile.type === TileType.Enemy || tile.type === TileType.Dragon;
 
           return (
             <div
@@ -124,7 +125,8 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
                   <img
                     src="/images/melody-dungeon-character.png"
                     alt="Player"
-                    className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]"
+                    className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)] transition-transform duration-150"
+                    style={facingLeft ? { transform: 'scaleX(-1)' } : undefined}
                     draggable={false}
                   />
                 </div>

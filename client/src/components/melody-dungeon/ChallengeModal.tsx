@@ -21,8 +21,8 @@ const TILE_THEME: Record<string, { title: string; borderColor: string; bgColor: 
     borderColor: 'border-red-500',
     bgColor: 'from-red-950/90 to-gray-900/95',
   },
-  [TileType.Boss]: {
-    title: 'Boss Battle!',
+  [TileType.Dragon]: {
+    title: 'Dragon Battle!',
     borderColor: 'border-purple-500',
     bgColor: 'from-purple-950/90 to-gray-900/95',
   },
@@ -159,7 +159,7 @@ const BossBattle: React.FC<{
       {/* Health bar for boss */}
       <div className="w-full max-w-[200px]">
         <div className="flex justify-between text-xs text-gray-400 mb-1">
-          <span>Boss HP</span>
+          <span>Dragon HP</span>
           <span>{Math.max(0, BOSS_ROUNDS - hits)}/{BOSS_ROUNDS}</span>
         </div>
         <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
@@ -193,7 +193,7 @@ const BossBattle: React.FC<{
 
 const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult }) => {
   const theme = TILE_THEME[tileType] || DEFAULT_THEME;
-  const isBoss = tileType === TileType.Boss;
+  const isDragon = tileType === TileType.Dragon;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -208,7 +208,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
           {theme.title}
         </h2>
 
-        {isBoss ? (
+        {isDragon ? (
           <BossBattle difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
         ) : (
           <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />

@@ -7,7 +7,7 @@ export enum TileType {
   Chest = 'chest',
   Stairs = 'stairs',
   PlayerStart = 'playerStart',
-  Boss = 'boss',
+  Dragon = 'dragon',
 }
 
 export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
@@ -71,7 +71,18 @@ export interface GameState {
   soundEnabled: boolean;
 }
 
-export const DUNGEON_WIDTH = 12;
-export const DUNGEON_HEIGHT = 12;
+export const DUNGEON_BASE_SIZE = 12;
+export const DUNGEON_MAX_SIZE = 20;
+
+/** Dungeon dimensions grow with floor depth, starting at 12×12 and capping at 20×20. */
+export function getDungeonSize(floorNumber: number): { width: number; height: number } {
+  const size = Math.min(DUNGEON_BASE_SIZE + floorNumber - 1, DUNGEON_MAX_SIZE);
+  return { width: size, height: size };
+}
+
+/** @deprecated Use getDungeonSize(floorNumber) instead */
+export const DUNGEON_WIDTH = DUNGEON_BASE_SIZE;
+/** @deprecated Use getDungeonSize(floorNumber) instead */
+export const DUNGEON_HEIGHT = DUNGEON_BASE_SIZE;
 export const VISIBILITY_RADIUS = 3;
 export const MAX_HEALTH = 5;
