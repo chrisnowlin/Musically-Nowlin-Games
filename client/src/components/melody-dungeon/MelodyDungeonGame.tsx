@@ -45,6 +45,12 @@ function updateVisibility(floor: DungeonFloor, pos: Position): DungeonFloor {
   return { ...floor, tiles };
 }
 
+/** Check if an uncleared Dragon occupies the given position. */
+function findDragonAtPosition(floor: DungeonFloor, pos: Position): boolean {
+  const tile = floor.tiles[pos.y]?.[pos.x];
+  return tile?.type === TileType.Dragon && !tile.cleared;
+}
+
 function createPlayer(start: Position): PlayerState {
   return {
     position: { ...start },
@@ -90,11 +96,24 @@ const MelodyDungeonGame: React.FC = () => {
     }
   });
   const moveLockedRef = useRef(false);
+  const dragonCaughtRef = useRef(false);
   const [facingLeft, setFacingLeft] = useState(false);
 
   const difficulty: DifficultyLevel = diffState.level;
   const floorNumber = floor.floorNumber;
   const themeName = getTheme(floor.themeIndex).name;
+
+  /** Run moveEnemies and flag if a chasing Dragon lands on the player. */
+  function moveEnemiesAndDetectCatch(
+    f: DungeonFloor,
+    pos: Position
+  ): DungeonFloor {
+    const result = moveEnemies(f, pos);
+    if (findDragonAtPosition(result, pos)) {
+      dragonCaughtRef.current = true;
+    }
+    return result;
+  }
 
   // Keyboard input
   useEffect(() => {
@@ -143,6 +162,33 @@ const MelodyDungeonGame: React.FC = () => {
       window.removeEventListener('keydown', unlock);
     };
   }, []);
+
+  // Detect Dragon catch after state settles
+  useEffect(() => {
+    if (!dragonCaughtRef.current || phase !== 'playing') return;
+    dragonCaughtRef.current = false;
+
+    // Apply 1 heart penalty
+    setPlayer((prev) => {
+      const newHealth = Math.max(0, prev.health - 1);
+      if (newHealth <= 0) {
+        setPhase('gameOver');
+        return { ...prev, health: 0 };
+      }
+
+      // Find the Dragon at player position to get its challenge type
+      const tile = floor.tiles[prev.position.y]?.[prev.position.x];
+      if (tile?.type === TileType.Dragon && !tile.cleared) {
+        moveLockedRef.current = true;
+        const challengeType: ChallengeType = tile.challengeType || 'noteReading';
+        setActiveChallenge({ type: challengeType, tilePosition: prev.position });
+        setActiveTileType(TileType.Dragon);
+        setPhase('challenge');
+      }
+
+      return { ...prev, health: newHealth };
+    });
+  }, [floor, phase]);
 
   const usePotion = useCallback(() => {
     setPlayer((prev) => {
@@ -197,7 +243,7 @@ const MelodyDungeonGame: React.FC = () => {
                 rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Floor } : t
               )
             );
-            return moveEnemies(updateVisibility({ ...f, tiles }, newPos), newPos);
+            return moveEnemiesAndDetectCatch(updateVisibility({ ...f, tiles }, newPos), newPos);
           });
           return {
             ...prev,
@@ -227,7 +273,7 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Merchant: open the shop (no challenge, not cleared)
         if (tile.type === TileType.Merchant) {
-          setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos), newPos));
           moveLockedRef.current = true;
           setPhase('shopping');
           return { ...prev, position: newPos };
@@ -235,12 +281,12 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Stairs
         if (tile.type === TileType.Stairs) {
-          setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos), newPos));
           setPhase('floorComplete');
           return { ...prev, position: newPos };
         }
 
-        setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
+        setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos), newPos));
         return { ...prev, position: newPos };
       });
     },
