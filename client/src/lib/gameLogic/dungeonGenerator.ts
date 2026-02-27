@@ -421,8 +421,8 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  // Place merchant pair (stall + merchant) on ~40% of floors, never on floor 1.
-  if (floorNumber > 1 && Math.random() < 0.4) {
+  // Place merchant pair (stall + merchant): always on floor 2, ~40% on later floors.
+  if (floorNumber === 2 || (floorNumber > 2 && Math.random() < 0.4)) {
     // Place stall first: needs open room tile (not hallway).
     const stallCandidates = getFloorTiles(grid).filter((p) => {
       if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) return false;

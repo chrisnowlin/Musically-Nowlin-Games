@@ -153,6 +153,16 @@ describe('Melody Dungeon generator placement rules', () => {
     }
   });
 
+  it('always places a merchant on floor 2', () => {
+    for (let i = 0; i < 50; i++) {
+      const floor = generateDungeon(2);
+      const merchants = getAllPositionsByType(floor, TileType.Merchant);
+      const stalls = getAllPositionsByType(floor, TileType.MerchantStall);
+      expect(merchants).toHaveLength(1);
+      expect(stalls).toHaveLength(1);
+    }
+  });
+
   it('merchant stall does not block hallway reachability', () => {
     for (let floorNumber = 2; floorNumber <= 10; floorNumber++) {
       for (let i = 0; i < 40; i++) {
