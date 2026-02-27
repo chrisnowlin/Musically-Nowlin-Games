@@ -39,6 +39,11 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName })
             <img src="/images/melody-dungeon-potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
           </span>
         )}
+        {player.shieldCharm > 0 && (
+          <span className="flex items-center gap-0.5 text-cyan-400" title="Shield Charm">
+            {'\uD83D\uDEE1\uFE0F'} 1
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
