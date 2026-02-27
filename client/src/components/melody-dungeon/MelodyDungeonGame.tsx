@@ -111,7 +111,8 @@ const MelodyDungeonGame: React.FC = () => {
   ): DungeonFloor {
     const result = moveEnemies(f, pos);
     if (findDragonAtPosition(result, pos)) {
-      dragonCaughtRef.current = true;
+      const tile = result.tiles[pos.y][pos.x];
+      dragonCaughtRef.current = tile.challengeType || 'noteReading';
     }
     return result;
   }
@@ -167,6 +168,7 @@ const MelodyDungeonGame: React.FC = () => {
   // Detect Dragon catch after state settles
   useEffect(() => {
     if (!dragonCaughtRef.current || phase !== 'playing') return;
+    const challengeType = dragonCaughtRef.current;
     dragonCaughtRef.current = false;
 
     // Apply 1 heart penalty
@@ -177,15 +179,10 @@ const MelodyDungeonGame: React.FC = () => {
         return { ...prev, health: 0 };
       }
 
-      // Find the Dragon at player position to get its challenge type
-      const tile = floor.tiles[prev.position.y]?.[prev.position.x];
-      if (tile?.type === TileType.Dragon && !tile.cleared) {
-        moveLockedRef.current = true;
-        const challengeType: ChallengeType = tile.challengeType || 'noteReading';
-        setActiveChallenge({ type: challengeType, tilePosition: prev.position });
-        setActiveTileType(TileType.Dragon);
-        setPhase('challenge');
-      }
+      moveLockedRef.current = true;
+      setActiveChallenge({ type: challengeType, tilePosition: prev.position });
+      setActiveTileType(TileType.Dragon);
+      setPhase('challenge');
 
       return { ...prev, health: newHealth };
     });
