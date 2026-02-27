@@ -54,14 +54,15 @@ function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
   return ['noteReading', 'rhythmTap', 'interval'];
 }
 
-function ChallengeRenderer({ type, difficulty, onResult }: {
+function ChallengeRenderer({ type, difficulty, floorNumber, onResult }: {
   type: ChallengeType;
   difficulty: DifficultyLevel;
+  floorNumber: number;
   onResult: (correct: boolean) => void;
 }) {
   switch (type) {
     case 'noteReading':
-      return <NoteReadingChallenge difficulty={difficulty} onResult={onResult} />;
+      return <NoteReadingChallenge floorNumber={floorNumber} onResult={onResult} />;
     case 'rhythmTap':
       return <RhythmTapChallenge difficulty={difficulty} onResult={onResult} />;
     case 'interval':
@@ -175,6 +176,7 @@ const BossBattle: React.FC<{
           key={currentRound}
           type={rounds[currentRound]}
           difficulty={difficulty}
+          floorNumber={floorNumber}
           onResult={handleRoundResult}
         />
       ) : (
@@ -209,7 +211,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
         {isBoss ? (
           <BossBattle difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
         ) : (
-          <ChallengeRenderer type={challengeType} difficulty={difficulty} onResult={onResult} />
+          <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
         )}
       </div>
     </div>

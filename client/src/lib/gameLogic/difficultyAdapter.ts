@@ -34,33 +34,53 @@ export function getAccuracy(state: DifficultyState): number {
   return state.history.filter(Boolean).length / state.history.length;
 }
 
+/** Note-reading difficulty by staff position (treble clef) */
+export type NoteReadingMode = 'space' | 'line' | 'both' | 'ledger';
+
+/** Space notes only: F4, A4, C5, E5 */
+const SPACE_NOTES = ['F4', 'A4', 'C5', 'E5'];
+/** Line notes only: E4, G4, B4, D5, F5 */
+const LINE_NOTES = ['E4', 'G4', 'B4', 'D5', 'F5'];
+/** Both space and line notes within the staff */
+const BOTH_STAFF_NOTES = ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'];
+/** Ledger-line notes outside the staff: C4, D4, G5, A5 */
+const LEDGER_NOTES = ['C4', 'D4', 'G5', 'A5'];
+
 export interface NoteReadingParams {
   notes: string[];
   useBassClef: boolean;
-  useLedgerLines: boolean;
+  mode: NoteReadingMode;
 }
 
+/** Get note-reading params from floor number (1–100). Mode advances every 25 floors. */
+export function getNoteReadingParamsForFloor(floorNumber: number): NoteReadingParams {
+  let mode: NoteReadingMode;
+  if (floorNumber <= 25) mode = 'space';
+  else if (floorNumber <= 50) mode = 'line';
+  else if (floorNumber <= 75) mode = 'both';
+  else mode = 'ledger';
+
+  const notes = mode === 'space' ? SPACE_NOTES
+    : mode === 'line' ? LINE_NOTES
+    : mode === 'both' ? BOTH_STAFF_NOTES
+    : LEDGER_NOTES;
+
+  return {
+    notes: [...notes],
+    useBassClef: false,
+    mode,
+  };
+}
+
+/** @deprecated Use getNoteReadingParamsForFloor for floor-based progression. */
 export function getNoteReadingParams(level: DifficultyLevel): NoteReadingParams {
-  switch (level) {
-    case 'easy':
-      return {
-        notes: ['C4', 'D4', 'E4', 'F4', 'G4'],
-        useBassClef: false,
-        useLedgerLines: false,
-      };
-    case 'medium':
-      return {
-        notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'],
-        useBassClef: false,
-        useLedgerLines: false,
-      };
-    case 'hard':
-      return {
-        notes: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5'],
-        useBassClef: false,
-        useLedgerLines: true,
-      };
-  }
+  const mode: NoteReadingMode = level === 'easy' ? 'space' : level === 'medium' ? 'line' : 'both';
+  const notes = mode === 'space' ? SPACE_NOTES : mode === 'line' ? LINE_NOTES : BOTH_STAFF_NOTES;
+  return {
+    notes: [...notes],
+    useBassClef: false,
+    mode,
+  };
 }
 
 export interface RhythmParams {

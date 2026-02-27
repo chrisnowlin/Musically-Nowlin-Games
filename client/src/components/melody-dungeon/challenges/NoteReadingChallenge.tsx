@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { DifficultyLevel } from '@/lib/gameLogic/dungeonTypes';
-import { getNoteReadingParams } from '@/lib/gameLogic/difficultyAdapter';
+import { getNoteReadingParamsForFloor } from '@/lib/gameLogic/difficultyAdapter';
 import { playNote, noteKeyToName } from '../dungeonAudio';
 
 interface Props {
-  difficulty: DifficultyLevel;
+  floorNumber: number;
   onResult: (correct: boolean) => void;
 }
 
@@ -63,8 +62,8 @@ const StaffSVG: React.FC<{ noteKey: string }> = ({ noteKey }) => {
   );
 };
 
-const NoteReadingChallenge: React.FC<Props> = ({ difficulty, onResult }) => {
-  const params = useMemo(() => getNoteReadingParams(difficulty), [difficulty]);
+const NoteReadingChallenge: React.FC<Props> = ({ floorNumber, onResult }) => {
+  const params = useMemo(() => getNoteReadingParamsForFloor(floorNumber), [floorNumber]);
   const [targetNote, setTargetNote] = useState('');
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 

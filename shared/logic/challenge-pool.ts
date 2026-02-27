@@ -21,9 +21,14 @@ type Difficulty = 'easy' | 'medium' | 'hard';
 
 const NOTE_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const OCTAVES = [3, 4, 5];
-const NOTES_EASY = ['C4', 'D4', 'E4', 'F4', 'G4'];
-const NOTES_MEDIUM = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'];
-const NOTES_HARD = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5'];
+/** Space notes only (in staff): F4, A4, C5, E5 */
+const NOTES_SPACE = ['F4', 'A4', 'C5', 'E5'];
+/** Line notes only (in staff): E4, G4, B4, D5, F5 */
+const NOTES_LINE = ['E4', 'G4', 'B4', 'D5', 'F5'];
+/** Both space and line notes in staff */
+const NOTES_BOTH = ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'];
+/** Ledger-line notes outside staff: C4, D4, G5, A5 */
+const NOTES_LEDGER = ['C4', 'D4', 'G5', 'A5'];
 
 const INTERVALS = [
   { name: 'Unison', semitones: 0 },
@@ -110,14 +115,17 @@ function generateId(): string {
 
 // ---- Note Reading ----
 
+/** Note-reading mode by difficulty: space -> line -> both -> ledger */
 export function generateNoteReadingChallenge(
   difficulty: Difficulty,
   discipline: MusicDiscipline = 'pitch'
 ): NoteReadingChallenge {
   const notes =
-    difficulty === 'easy' ? NOTES_EASY : difficulty === 'medium' ? NOTES_MEDIUM : NOTES_HARD;
+    difficulty === 'easy' ? NOTES_SPACE
+    : difficulty === 'medium' ? NOTES_LINE
+    : NOTES_BOTH;
   const targetNote = pick(notes);
-  const options = pickOptions(targetNote, NOTES_EASY, 4);
+  const options = pickOptions(targetNote, notes, 4);
   return {
     id: generateId(),
     type: 'noteReading',
