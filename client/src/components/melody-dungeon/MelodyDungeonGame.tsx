@@ -26,6 +26,7 @@ import HUD from './HUD';
 import MobileDPad from './MobileDPad';
 import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
+import MerchantModal from './MerchantModal';
 import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
@@ -53,6 +54,7 @@ function createPlayer(start: Position): PlayerState {
     keys: 0,
     potions: 0,
     streak: 0,
+    shieldCharm: 0,
   };
 }
 
@@ -223,6 +225,14 @@ const MelodyDungeonGame: React.FC = () => {
           return { ...prev, position: newPos };
         }
 
+        // Merchant: open the shop (no challenge, not cleared)
+        if (tile.type === TileType.Merchant) {
+          setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
+          moveLockedRef.current = true;
+          setPhase('shopping');
+          return { ...prev, position: newPos };
+        }
+
         // Stairs
         if (tile.type === TileType.Stairs) {
           setFloor((f) => moveEnemies(updateVisibility(f, newPos), newPos));
@@ -266,7 +276,11 @@ const MelodyDungeonGame: React.FC = () => {
         } else {
           // Doors allow unlimited attempts: wrong answers do not punish health.
           if (activeTileType !== TileType.Door) {
-            updated.health = Math.max(0, prev.health - 1);
+            if (prev.shieldCharm > 0) {
+              updated.shieldCharm = 0;
+            } else {
+              updated.health = Math.max(0, prev.health - 1);
+            }
             updated.streak = 0;
           }
         }
@@ -314,6 +328,15 @@ const MelodyDungeonGame: React.FC = () => {
     },
     [diffState, activeChallenge, activeTileType]
   );
+
+  const handleMerchantBuy = useCallback((updatedPlayer: PlayerState) => {
+    setPlayer(updatedPlayer);
+  }, []);
+
+  const handleMerchantClose = useCallback(() => {
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, []);
 
   const startNewGame = useCallback(() => {
     const newFloor = generateDungeon(selectedStartFloor);
@@ -592,6 +615,15 @@ const MelodyDungeonGame: React.FC = () => {
           difficulty={difficulty}
           floorNumber={floorNumber}
           onResult={handleChallengeResult}
+        />
+      )}
+
+      {phase === 'shopping' && (
+        <MerchantModal
+          player={player}
+          floorNumber={floorNumber}
+          onBuy={handleMerchantBuy}
+          onClose={handleMerchantClose}
         />
       )}
     </div>
