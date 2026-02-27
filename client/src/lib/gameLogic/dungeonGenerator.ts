@@ -199,7 +199,7 @@ function getReachableWithoutKey(grid: Tile[][], start: Position): Set<string> {
       if (ny < 0 || ny >= grid.length || nx < 0 || nx >= grid[0].length) continue;
 
       const tile = grid[ny][nx];
-      if (tile.type === TileType.Wall || tile.type === TileType.Chest) continue;
+      if (tile.type === TileType.Wall || tile.type === TileType.Chest || tile.type === TileType.MerchantStall) continue;
 
       const nextKey = `${nx},${ny}`;
       if (visited.has(nextKey)) continue;
@@ -418,6 +418,48 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     const pos = pickValidDoorTile(grid, placedPositions, playerStart, floorNumber);
     if (pos) {
       placedPositions.push(pos);
+    }
+  }
+
+  // Place merchant pair (stall + merchant) on ~40% of floors, never on floor 1.
+  if (floorNumber > 1 && Math.random() < 0.4) {
+    // Place stall first: needs open room tile (not hallway).
+    const stallCandidates = getFloorTiles(grid).filter((p) => {
+      if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) return false;
+      if (distanceSq(p, playerStart) < 4) return false;
+      if (isStraightHallwayTile(grid, p)) return false;
+      return isOpenEnough(grid, p);
+    });
+
+    if (stallCandidates.length > 0) {
+      const stallPos = stallCandidates[rand(0, stallCandidates.length - 1)];
+
+      // Find adjacent floor tile for the merchant character.
+      const dirs = [
+        { x: 0, y: -1 },
+        { x: 0, y: 1 },
+        { x: -1, y: 0 },
+        { x: 1, y: 0 },
+      ];
+      const merchantCandidates = dirs
+        .map((d) => ({ x: stallPos.x + d.x, y: stallPos.y + d.y }))
+        .filter(
+          (p) =>
+            p.y >= 0 &&
+            p.y < height &&
+            p.x >= 0 &&
+            p.x < width &&
+            grid[p.y][p.x].type === TileType.Floor &&
+            !placedPositions.some((e) => e.x === p.x && e.y === p.y)
+        );
+
+      if (merchantCandidates.length > 0) {
+        const merchantPos = merchantCandidates[rand(0, merchantCandidates.length - 1)];
+
+        grid[stallPos.y][stallPos.x].type = TileType.MerchantStall;
+        grid[merchantPos.y][merchantPos.x].type = TileType.Merchant;
+        placedPositions.push(stallPos, merchantPos);
+      }
     }
   }
 
