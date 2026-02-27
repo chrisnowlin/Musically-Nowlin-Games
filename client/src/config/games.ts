@@ -1,4 +1,4 @@
-import { Music2, Drum, Piano, Mic, Gamepad2, Brain, Calculator } from "lucide-react";
+import { Music2, Drum, Piano, Mic, Gamepad2, Brain, Calculator, Swords } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export type GameStatus = "available" | "coming-soon" | "locked";
@@ -390,6 +390,17 @@ export const games: GameConfig[] = [
     color: "bg-indigo-500",
     difficulty: "medium",
     ageRange: "7-12 years",
+  },
+  {
+    id: "cadence-quest",
+    title: "Cadence Quest",
+    description: "Music RPG with character classes, turn-based battles, and PvP!",
+    route: "/games/cadence-quest",
+    status: "available",
+    icon: Swords,
+    color: "bg-violet-600",
+    difficulty: "medium",
+    ageRange: "8-12 years",
   },
   {
     id: "beat-and-pulse-trainer",
@@ -833,6 +844,17 @@ export const games: GameConfig[] = [
     difficulty: "medium",
     ageRange: "7-12 years",
   },
+  {
+    id: "melody-dungeon",
+    title: "Melody Dungeon",
+    description: "Explore a music-themed dungeon! Defeat enemies with note reading, rhythm, intervals, and dynamics.",
+    route: "/games/melody-dungeon",
+    status: "available",
+    icon: Swords,
+    color: "bg-purple-700",
+    difficulty: "medium",
+    ageRange: "6-12 years",
+  },
 ];
 
 export const getGameById = (id: string): GameConfig | undefined => {
@@ -859,6 +881,7 @@ export const AVAILABLE_NOW_IDS = [
   "instrument-family-sorter",
   "treble-runner",
   "animal-orchestra-conductor",
+  "melody-dungeon",
 ] as const;/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
 export const getUnderDevelopmentGames = (): GameConfig[] => {
   return games
