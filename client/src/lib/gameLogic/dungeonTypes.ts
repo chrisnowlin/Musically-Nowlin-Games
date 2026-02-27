@@ -14,12 +14,15 @@ export enum TileType {
 
 export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
 
+export type EnemyState = 'guarding' | 'chasing' | 'patrolling';
+
 export interface Tile {
   type: TileType;
   visible: boolean;
   visited: boolean;
   challengeType?: ChallengeType;
   cleared?: boolean;
+  enemyState?: EnemyState;
 }
 
 export interface Position {
