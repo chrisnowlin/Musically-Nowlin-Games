@@ -844,6 +844,17 @@ export const games: GameConfig[] = [
     difficulty: "medium",
     ageRange: "6-12 years",
   },
+  {
+    id: "cadence-quest",
+    title: "Cadence Quest",
+    description: "A music RPG! Master rhythm, pitch, harmony, dynamics, and theory through turn-based battles. PvE and PvP.",
+    route: "/games/cadence-quest",
+    status: "available",
+    icon: Swords,
+    color: "bg-purple-600",
+    difficulty: "medium",
+    ageRange: "8-14 years",
+  },
 ];
 
 export const getGameById = (id: string): GameConfig | undefined => {

@@ -4,6 +4,11 @@ const NOTE_FREQUENCIES: Record<string, number> = {
   F5: 698.46, G5: 783.99, A5: 880.0,
 };
 
+const SEMITONE_OFFSET: Record<string, number> = {
+  C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5,
+  'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+};
+
 let audioCtx: AudioContext | null = null;
 
 function getAudioCtx(): AudioContext {
@@ -12,6 +17,31 @@ function getAudioCtx(): AudioContext {
     audioCtx = new AC();
   }
   return audioCtx;
+}
+
+/** Resume AudioContext if suspended (required after user interaction) */
+export function resumeAudioContext(): void {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/** Get frequency for any note key (e.g. C4, C#4, Gb5) */
+export function noteKeyToFrequency(noteKey: string): number {
+  const cached = NOTE_FREQUENCIES[noteKey];
+  if (cached != null) return cached;
+  const match = noteKey.match(/^([A-G][#b]?)(\d+)$/i);
+  if (!match) return 440;
+  const [_, name, oct] = match;
+  const semitone = SEMITONE_OFFSET[name] ?? 0;
+  const octave = parseInt(oct, 10);
+  const midi = (octave + 1) * 12 + semitone;
+  return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
 export function playNote(noteKey: string, duration = 0.4, volume = 0.3): void {
@@ -101,6 +131,67 @@ export function playPassageAtDynamic(dynamicLevel: string, duration = 1.5): void
   notes.forEach((n, i) => {
     setTimeout(() => playNote(n, duration / notes.length, vol), i * (duration / notes.length) * 1000);
   });
+}
+
+/** Play a chord (all notes simultaneously) */
+export function playChord(noteKeys: string[], duration = 0.8, volume = 0.25): void {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    for (const key of noteKeys) {
+      const freq = NOTE_FREQUENCIES[key] ?? noteKeyToFrequency(key);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'triangle';
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+  } catch {
+    // Audio not available
+  }
+}
+
+/** Play a scale (notes in sequence) */
+export function playScale(noteKeys: string[], gap = 0.35, duration = 0.35, volume = 0.3): void {
+  noteKeys.forEach((key, i) => {
+    setTimeout(() => {
+      const freq = NOTE_FREQUENCIES[key] ?? noteKeyToFrequency(key);
+      playNoteAtFrequency(freq, duration, volume);
+    }, i * gap * 1000);
+  });
+}
+
+/** Play a phrase for listening challenges (ascending, descending, or interval) */
+export function playListeningPhrase(correctAnswer: string): void {
+  if (correctAnswer === 'Ascending') {
+    const notes = ['C4', 'E4', 'G4', 'C5'];
+    notes.forEach((n, i) => setTimeout(() => playNote(n, 0.4), i * 400));
+  } else if (correctAnswer === 'Descending') {
+    const notes = ['C5', 'G4', 'E4', 'C4'];
+    notes.forEach((n, i) => setTimeout(() => playNote(n, 0.4), i * 400));
+  } else if (correctAnswer === 'Same') {
+    playNote('C4', 0.5);
+    setTimeout(() => playNote('C4', 0.5), 600);
+  } else if (correctAnswer === '3rd') {
+    playTwoNotes('C4', 'E4', 0.5);
+  } else if (correctAnswer === '2nd') {
+    playTwoNotes('C4', 'D4', 0.5);
+  } else if (correctAnswer === '5th') {
+    playTwoNotes('C4', 'G4', 0.5);
+  } else if (correctAnswer === '4' || correctAnswer === '2' || correctAnswer === '3') {
+    const beats = parseInt(correctAnswer, 10);
+    const interval = 450;
+    for (let m = 0; m < 2; m++) {
+      for (let i = 0; i < beats; i++) {
+        setTimeout(() => playClick(0.3), (m * beats + i) * interval);
+      }
+    }
+  }
 }
 
 export function getFrequency(noteKey: string): number {

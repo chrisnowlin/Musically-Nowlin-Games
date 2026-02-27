@@ -60,6 +60,12 @@ This project features a comprehensive audio system with real orchestra samples:
 
 📖 See [SOUND_AND_MELODY_SYSTEMS.md](./SOUND_AND_MELODY_SYSTEMS.md) for detailed documentation.
 
+### Cadence Quest (Music RPG + PvP)
+
+Turn-based music RPG with PvE battles and real-time PvP matchmaking. Requires database and API server for full features.
+
+📖 See [docs/CADENCE_QUEST_SETUP.md](./docs/CADENCE_QUEST_SETUP.md) for setup instructions.
+
 ## Prerequisites
 
 This project uses **Bun 1.3** for faster development and builds.
@@ -94,6 +100,9 @@ bun install
 bun run dev
 # or shorthand:
 bun dev
+
+# Cadence Quest (API + PvP): run client and server together
+bun run dev:all
 
 # Run tests
 bun test
