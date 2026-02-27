@@ -131,20 +131,161 @@ function isOpenEnough(grid: Tile[][], pos: Position): boolean {
   return walkable >= 3;
 }
 
-function pickOpenFloorTile(
+function getCardinalWalkableNeighbors(grid: Tile[][], pos: Position): Position[] {
+  const dirs = [
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
+  ];
+
+  return dirs
+    .map((d) => ({ x: pos.x + d.x, y: pos.y + d.y }))
+    .filter(
+      (p) =>
+        p.y >= 0 &&
+        p.y < grid.length &&
+        p.x >= 0 &&
+        p.x < grid[0].length &&
+        grid[p.y][p.x].type !== TileType.Wall
+    );
+}
+
+function isStraightHallwayTile(grid: Tile[][], pos: Position): boolean {
+  if (grid[pos.y][pos.x].type !== TileType.Floor) return false;
+
+  const neighbors = getCardinalWalkableNeighbors(grid, pos);
+  if (neighbors.length !== 2) return false;
+
+  const [a, b] = neighbors;
+  const sameX = a.x === pos.x && b.x === pos.x;
+  const sameY = a.y === pos.y && b.y === pos.y;
+  return sameX || sameY;
+}
+
+function isStraightHallwayNonWallTile(grid: Tile[][], pos: Position): boolean {
+  if (grid[pos.y][pos.x].type === TileType.Wall) return false;
+
+  const neighbors = getCardinalWalkableNeighbors(grid, pos);
+  if (neighbors.length !== 2) return false;
+
+  const [a, b] = neighbors;
+  const sameX = a.x === pos.x && b.x === pos.x;
+  const sameY = a.y === pos.y && b.y === pos.y;
+  return sameX || sameY;
+}
+
+function keyOf(pos: Position): string {
+  return `${pos.x},${pos.y}`;
+}
+
+function getReachableWithoutKey(grid: Tile[][], start: Position): Set<string> {
+  const visited = new Set<string>();
+  const queue: Position[] = [start];
+  visited.add(keyOf(start));
+
+  while (queue.length > 0) {
+    const current = queue.shift() as Position;
+    const dirs = [
+      { x: 0, y: -1 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+    ];
+
+    for (const d of dirs) {
+      const nx = current.x + d.x;
+      const ny = current.y + d.y;
+      if (ny < 0 || ny >= grid.length || nx < 0 || nx >= grid[0].length) continue;
+
+      const tile = grid[ny][nx];
+      if (tile.type === TileType.Wall || tile.type === TileType.Chest) continue;
+
+      const nextKey = `${nx},${ny}`;
+      if (visited.has(nextKey)) continue;
+      visited.add(nextKey);
+      queue.push({ x: nx, y: ny });
+    }
+  }
+
+  return visited;
+}
+
+function noKeyTraversalIsValid(grid: Tile[][], playerStart: Position): boolean {
+  const reachable = getReachableWithoutKey(grid, playerStart);
+
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[0].length; x++) {
+      const pos = { x, y };
+      const tile = grid[y][x];
+      if (tile.type === TileType.Door && !reachable.has(keyOf(pos))) return false;
+      if (isStraightHallwayNonWallTile(grid, pos) && !reachable.has(keyOf(pos))) return false;
+    }
+  }
+
+  return true;
+}
+
+function pickValidDoorTile(
   grid: Tile[][],
   exclude: Position[],
-  minDistFrom?: Position,
-  minDist: number = 3
+  playerStart: Position,
+  floorNumber: number
 ): Position | null {
-  const floors = getFloorTiles(grid).filter(
-    (p) =>
-      !exclude.some((e) => e.x === p.x && e.y === p.y) &&
-      (!minDistFrom || distanceSq(p, minDistFrom) >= minDist * minDist) &&
-      isOpenEnough(grid, p)
-  );
-  if (floors.length === 0) return null;
-  return floors[rand(0, floors.length - 1)];
+  const candidates = getFloorTiles(grid).filter((p) => {
+    if (exclude.some((e) => e.x === p.x && e.y === p.y)) return false;
+    if (distanceSq(p, playerStart) < 4) return false;
+    return isStraightHallwayTile(grid, p);
+  });
+
+  while (candidates.length > 0) {
+    const idx = rand(0, candidates.length - 1);
+    const candidate = candidates.splice(idx, 1)[0];
+    const previous = { ...grid[candidate.y][candidate.x] };
+
+    grid[candidate.y][candidate.x].type = TileType.Door;
+    grid[candidate.y][candidate.x].challengeType =
+      floorNumber >= 2 ? 'rhythmTap' : 'noteReading';
+    grid[candidate.y][candidate.x].cleared = false;
+
+    if (noKeyTraversalIsValid(grid, playerStart)) {
+      return candidate;
+    }
+
+    grid[candidate.y][candidate.x] = previous;
+  }
+
+  return null;
+}
+
+function pickValidChestTile(
+  grid: Tile[][],
+  exclude: Position[],
+  playerStart: Position
+): Position | null {
+  const candidates = getFloorTiles(grid).filter((p) => {
+    if (exclude.some((e) => e.x === p.x && e.y === p.y)) return false;
+    if (distanceSq(p, playerStart) < 4) return false;
+    if (isStraightHallwayTile(grid, p)) return false;
+    return isOpenEnough(grid, p);
+  });
+
+  while (candidates.length > 0) {
+    const idx = rand(0, candidates.length - 1);
+    const candidate = candidates.splice(idx, 1)[0];
+    const previous = { ...grid[candidate.y][candidate.x] };
+
+    grid[candidate.y][candidate.x].type = TileType.Chest;
+    grid[candidate.y][candidate.x].cleared = false;
+
+    if (noKeyTraversalIsValid(grid, playerStart)) {
+      return candidate;
+    }
+
+    grid[candidate.y][candidate.x] = previous;
+  }
+
+  return null;
 }
 
 function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
@@ -221,15 +362,11 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  // Place doors between corridors if possible
+  // Place doors only on straight hallway choke points.
   const doorCount = Math.min(1 + Math.floor(floorNumber / 2), 3);
   for (let i = 0; i < doorCount; i++) {
-    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+    const pos = pickValidDoorTile(grid, placedPositions, playerStart, floorNumber);
     if (pos) {
-      grid[pos.y][pos.x].type = TileType.Door;
-      grid[pos.y][pos.x].challengeType =
-        floorNumber >= 2 ? 'rhythmTap' : 'noteReading';
-      grid[pos.y][pos.x].cleared = false;
       placedPositions.push(pos);
     }
   }
@@ -247,13 +384,11 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  // Place locked chests only in open areas so they can't block corridors
+  // Place locked chests only where they cannot block no-key hallway traversal.
   const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
   for (let i = 0; i < chestCount; i++) {
-    const pos = pickOpenFloorTile(grid, placedPositions, playerStart, 2);
+    const pos = pickValidChestTile(grid, placedPositions, playerStart);
     if (pos) {
-      grid[pos.y][pos.x].type = TileType.Chest;
-      grid[pos.y][pos.x].cleared = false;
       placedPositions.push(pos);
     }
   }
