@@ -431,8 +431,9 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       return isOpenEnough(grid, p);
     });
 
-    if (stallCandidates.length > 0) {
-      const stallPos = stallCandidates[rand(0, stallCandidates.length - 1)];
+    while (stallCandidates.length > 0) {
+      const idx = rand(0, stallCandidates.length - 1);
+      const stallPos = stallCandidates.splice(idx, 1)[0];
 
       // Find adjacent floor tile for the merchant character.
       const dirs = [
@@ -456,9 +457,20 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       if (merchantCandidates.length > 0) {
         const merchantPos = merchantCandidates[rand(0, merchantCandidates.length - 1)];
 
+        const previousStall = { ...grid[stallPos.y][stallPos.x] };
+        const previousMerchant = { ...grid[merchantPos.y][merchantPos.x] };
+
         grid[stallPos.y][stallPos.x].type = TileType.MerchantStall;
         grid[merchantPos.y][merchantPos.x].type = TileType.Merchant;
-        placedPositions.push(stallPos, merchantPos);
+
+        if (noKeyTraversalIsValid(grid, playerStart)) {
+          placedPositions.push(stallPos, merchantPos);
+          break;
+        }
+
+        // Revert placement if it breaks reachability
+        grid[stallPos.y][stallPos.x] = previousStall;
+        grid[merchantPos.y][merchantPos.x] = previousMerchant;
       }
     }
   }
@@ -517,9 +529,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
     [enemies[i], enemies[j]] = [enemies[j], enemies[i]];
   }
 
-  // Track positions that are already claimed (non-floor entities + player).
+  // Track positions that are already claimed (non-floor entities).
   const occupied = new Set<string>();
-  occupied.add(`${playerPos.x},${playerPos.y}`);
   for (let y = 0; y < floor.height; y++) {
     for (let x = 0; x < floor.width; x++) {
       const t = tiles[y][x];
@@ -541,6 +552,55 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
 
   for (const enemy of enemies) {
     const { pos, tile } = enemy;
+
+    // Dragon state transition: guarding → chasing when no uncleared chests.
+    if (tile.type === TileType.Dragon && tile.enemyState === 'guarding' && chests.length === 0) {
+      tile.enemyState = 'chasing';
+      tiles[pos.y][pos.x].enemyState = 'chasing';
+    }
+
+    if (tile.enemyState === 'chasing') {
+      // Direct pursuit: pick the cardinal direction that minimizes Manhattan distance to player.
+      const sorted = [...dirs].sort((a, b) => {
+        const distA = Math.abs(pos.x + a.x - playerPos.x) + Math.abs(pos.y + a.y - playerPos.y);
+        const distB = Math.abs(pos.x + b.x - playerPos.x) + Math.abs(pos.y + b.y - playerPos.y);
+        return distA - distB;
+      });
+
+      let moved = false;
+      for (const d of sorted) {
+        const nx = pos.x + d.x;
+        const ny = pos.y + d.y;
+        if (nx < 0 || nx >= floor.width || ny < 0 || ny >= floor.height) continue;
+
+        const target = tiles[ny][nx];
+        if (target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+
+        const key = `${nx},${ny}`;
+        if (occupied.has(key)) continue;
+
+        tiles[ny][nx] = {
+          ...target,
+          type: tile.type,
+          challengeType: tile.challengeType,
+          cleared: false,
+          enemyState: tile.enemyState,
+        };
+        tiles[pos.y][pos.x] = {
+          ...tiles[pos.y][pos.x],
+          type: TileType.Floor,
+          challengeType: undefined,
+          cleared: undefined,
+          enemyState: undefined,
+        };
+
+        occupied.delete(`${pos.x},${pos.y}`);
+        occupied.add(key);
+        moved = true;
+        break;
+      }
+      continue; // Skip the default random movement
+    }
 
     // Shuffle directions for this enemy.
     const shuffled = [...dirs];
@@ -576,12 +636,14 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         type: tile.type,
         challengeType: tile.challengeType,
         cleared: false,
+        enemyState: tile.enemyState,
       };
       tiles[pos.y][pos.x] = {
         ...tiles[pos.y][pos.x],
         type: TileType.Floor,
         challengeType: undefined,
         cleared: undefined,
+        enemyState: undefined,
       };
 
       // Update occupied set.

@@ -56,7 +56,7 @@ function getReachableWithoutKey(floor: DungeonFloor): Set<string> {
       if (!inBounds(floor, next.x, next.y)) continue;
 
       const tile = floor.tiles[next.y][next.x];
-      if (tile.type === TileType.Wall || tile.type === TileType.Chest) continue;
+      if (tile.type === TileType.Wall || tile.type === TileType.Chest || tile.type === TileType.MerchantStall) continue;
 
       const nextKey = keyOf(next);
       if (visited.has(nextKey)) continue;
@@ -113,6 +113,63 @@ describe('Melody Dungeon generator placement rules', () => {
 
         for (const door of doors) {
           expect(reachable.has(keyOf(door))).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('places merchant and stall as adjacent pair', () => {
+    let merchantFound = false;
+    // Run enough times to hit the 40% spawn chance
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const floor = generateDungeon(5);
+      const merchants = getAllPositionsByType(floor, TileType.Merchant);
+      const stalls = getAllPositionsByType(floor, TileType.MerchantStall);
+
+      if (merchants.length === 0 && stalls.length === 0) continue;
+
+      merchantFound = true;
+
+      // Always paired: exactly 1 merchant and 1 stall
+      expect(merchants).toHaveLength(1);
+      expect(stalls).toHaveLength(1);
+
+      // They must be cardinally adjacent
+      const m = merchants[0];
+      const s = stalls[0];
+      const dist = Math.abs(m.x - s.x) + Math.abs(m.y - s.y);
+      expect(dist).toBe(1);
+    }
+    expect(merchantFound).toBe(true);
+  });
+
+  it('never places merchants on floor 1', () => {
+    for (let i = 0; i < 100; i++) {
+      const floor = generateDungeon(1);
+      const merchants = getAllPositionsByType(floor, TileType.Merchant);
+      const stalls = getAllPositionsByType(floor, TileType.MerchantStall);
+      expect(merchants).toHaveLength(0);
+      expect(stalls).toHaveLength(0);
+    }
+  });
+
+  it('merchant stall does not block hallway reachability', () => {
+    for (let floorNumber = 2; floorNumber <= 10; floorNumber++) {
+      for (let i = 0; i < 40; i++) {
+        const floor = generateDungeon(floorNumber);
+        const reachable = getReachableWithoutKey(floor);
+
+        for (let y = 0; y < floor.height; y++) {
+          for (let x = 0; x < floor.width; x++) {
+            const pos = { x, y };
+            const tile = floor.tiles[y][x];
+            if (!isNonWall(tile)) continue;
+            if (tile.type === TileType.MerchantStall) continue;
+
+            if (isStraightHallwayTile(floor, pos)) {
+              expect(reachable.has(keyOf(pos))).toBe(true);
+            }
+          }
         }
       }
     }
