@@ -1,12 +1,12 @@
 import React from 'react';
 import type { PlayerState } from '@/lib/gameLogic/dungeonTypes';
-import { MERCHANT_ITEMS, getMerchantPrice } from '@/lib/gameLogic/merchantItems';
+import { MERCHANT_ITEMS } from '@/lib/gameLogic/merchantItems';
 import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
 
 interface Props {
   player: PlayerState;
   floorNumber: number;
-  onBuy: (updatedPlayer: PlayerState) => void;
+  onBuy: (item: MerchantItem) => void;
   onClose: () => void;
 }
 
@@ -14,7 +14,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
   const handleBuy = (item: MerchantItem) => {
     const price = item.getPrice(floorNumber);
     if (player.score < price || !item.canBuy(player)) return;
-    onBuy(getMerchantPrice(player, item, floorNumber));
+    onBuy(item);
   };
 
   return (

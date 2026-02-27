@@ -27,6 +27,7 @@ import MobileDPad from './MobileDPad';
 import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
 import MerchantModal from './MerchantModal';
+import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
 import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
@@ -96,7 +97,7 @@ const MelodyDungeonGame: React.FC = () => {
     }
   });
   const moveLockedRef = useRef(false);
-  const dragonCaughtRef = useRef(false);
+  const dragonCaughtRef = useRef<ChallengeType | false>(false);
   const [facingLeft, setFacingLeft] = useState(false);
 
   const difficulty: DifficultyLevel = diffState.level;
@@ -375,9 +376,13 @@ const MelodyDungeonGame: React.FC = () => {
     [diffState, activeChallenge, activeTileType]
   );
 
-  const handleMerchantBuy = useCallback((updatedPlayer: PlayerState) => {
-    setPlayer(updatedPlayer);
-  }, []);
+  const handleMerchantBuy = useCallback((item: MerchantItem) => {
+    setPlayer((prev) => {
+      const price = item.getPrice(floorNumber);
+      if (prev.score < price || !item.canBuy(prev)) return prev;
+      return item.apply({ ...prev, score: prev.score - price });
+    });
+  }, [floorNumber]);
 
   const handleMerchantClose = useCallback(() => {
     moveLockedRef.current = false;
