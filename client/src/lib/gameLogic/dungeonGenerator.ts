@@ -232,6 +232,7 @@ function pickValidDoorTile(
   playerStart: Position,
   floorNumber: number
 ): Position | null {
+  const challengeTypes = getChallengeTypesForFloor(floorNumber);
   const candidates = getFloorTiles(grid).filter((p) => {
     if (exclude.some((e) => e.x === p.x && e.y === p.y)) return false;
     if (distanceSq(p, playerStart) < 4) return false;
@@ -245,7 +246,7 @@ function pickValidDoorTile(
 
     grid[candidate.y][candidate.x].type = TileType.Door;
     grid[candidate.y][candidate.x].challengeType =
-      floorNumber >= 2 ? 'rhythmTap' : 'noteReading';
+      challengeTypes[rand(0, challengeTypes.length - 1)];
     grid[candidate.y][candidate.x].cleared = false;
 
     if (noKeyTraversalIsValid(grid, playerStart)) {
@@ -289,10 +290,10 @@ function pickValidChestTile(
 }
 
 function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
-  if (floorNumber <= 1) return ['noteReading'];
-  if (floorNumber === 2) return ['noteReading', 'rhythmTap'];
-  if (floorNumber === 3) return ['noteReading', 'rhythmTap', 'interval'];
-  return ['noteReading', 'rhythmTap', 'interval', 'dynamics'];
+  // Keep early floors simpler, then gradually introduce harder question types.
+  if (floorNumber <= 5) return ['noteReading', 'dynamics'];
+  if (floorNumber <= 10) return ['noteReading', 'dynamics', 'rhythmTap'];
+  return ['noteReading', 'dynamics', 'rhythmTap', 'interval'];
 }
 
 export function generateDungeon(floorNumber: number): DungeonFloor {
@@ -355,7 +356,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       const isBoss = floorNumber >= 3 && i === 0;
       grid[pos.y][pos.x].type = isBoss ? TileType.Boss : TileType.Enemy;
       grid[pos.y][pos.x].challengeType = isBoss
-        ? 'dynamics'
+        ? challengeTypes[rand(0, challengeTypes.length - 1)]
         : challengeTypes[rand(0, challengeTypes.length - 1)];
       grid[pos.y][pos.x].cleared = false;
       placedPositions.push(pos);
@@ -378,7 +379,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     if (pos) {
       grid[pos.y][pos.x].type = TileType.Treasure;
       grid[pos.y][pos.x].challengeType =
-        floorNumber >= 3 ? 'interval' : 'noteReading';
+        challengeTypes[rand(0, challengeTypes.length - 1)];
       grid[pos.y][pos.x].cleared = false;
       placedPositions.push(pos);
     }

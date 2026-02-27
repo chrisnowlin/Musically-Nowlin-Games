@@ -10,10 +10,10 @@ interface Props {
   challengeType: ChallengeType;
   tileType: TileType;
   difficulty: DifficultyLevel;
+  floorNumber: number;
   onResult: (correct: boolean) => void;
 }
 
-const ALL_CHALLENGE_TYPES: ChallengeType[] = ['noteReading', 'rhythmTap', 'interval', 'dynamics'];
 const BOSS_ROUNDS = 3;
 
 const TILE_THEME: Record<string, { title: string; borderColor: string; bgColor: string }> = {
@@ -49,6 +49,12 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
+  if (floorNumber <= 5) return ['noteReading', 'dynamics'];
+  if (floorNumber <= 10) return ['noteReading', 'dynamics', 'rhythmTap'];
+  return ['noteReading', 'dynamics', 'rhythmTap', 'interval'];
+}
+
 function ChallengeRenderer({ type, difficulty, onResult }: {
   type: ChallengeType;
   difficulty: DifficultyLevel;
@@ -68,11 +74,13 @@ function ChallengeRenderer({ type, difficulty, onResult }: {
 
 const BossBattle: React.FC<{
   difficulty: DifficultyLevel;
+  floorNumber: number;
   onResult: (correct: boolean) => void;
-}> = ({ difficulty, onResult }) => {
+}> = ({ difficulty, floorNumber, onResult }) => {
+  const challengeTypes = useMemo(() => getChallengeTypesForFloor(floorNumber), [floorNumber]);
   const rounds = useMemo(
-    () => Array.from({ length: BOSS_ROUNDS }, () => pickRandom(ALL_CHALLENGE_TYPES)),
-    []
+    () => Array.from({ length: BOSS_ROUNDS }, () => pickRandom(challengeTypes)),
+    [challengeTypes]
   );
   const [currentRound, setCurrentRound] = useState(0);
   const [hits, setHits] = useState(0);
@@ -184,7 +192,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, onResult }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult }) => {
   const theme = TILE_THEME[tileType] || DEFAULT_THEME;
   const isBoss = tileType === TileType.Boss;
 
@@ -202,7 +210,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
         </h2>
 
         {isBoss ? (
-          <BossBattle difficulty={difficulty} onResult={onResult} />
+          <BossBattle difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
         ) : (
           <ChallengeRenderer type={challengeType} difficulty={difficulty} onResult={onResult} />
         )}

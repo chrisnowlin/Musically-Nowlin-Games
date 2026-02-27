@@ -554,6 +554,7 @@ const MelodyDungeonGame: React.FC = () => {
           challengeType={activeChallenge.type}
           tileType={activeTileType}
           difficulty={difficulty}
+          floorNumber={floorNumber}
           onResult={handleChallengeResult}
         />
       )}
