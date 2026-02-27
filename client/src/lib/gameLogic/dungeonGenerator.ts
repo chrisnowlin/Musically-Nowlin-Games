@@ -553,10 +553,15 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
   for (const enemy of enemies) {
     const { pos, tile } = enemy;
 
-    // Dragon state transition: guarding → chasing when no uncleared chests.
-    if (tile.type === TileType.Dragon && tile.enemyState === 'guarding' && chests.length === 0) {
-      tile.enemyState = 'chasing';
-      tiles[pos.y][pos.x].enemyState = 'chasing';
+    // Dragon state transition: guarding → chasing when no uncleared chests are nearby.
+    if (tile.type === TileType.Dragon && tile.enemyState === 'guarding') {
+      const hasNearbyChest = chests.some(
+        (c) => Math.max(Math.abs(pos.x - c.x), Math.abs(pos.y - c.y)) <= 2
+      );
+      if (!hasNearbyChest) {
+        tile.enemyState = 'chasing';
+        tiles[pos.y][pos.x].enemyState = 'chasing';
+      }
     }
 
     if (tile.enemyState === 'chasing') {

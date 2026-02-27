@@ -115,6 +115,39 @@ describe('moveEnemies', () => {
     }
   });
 
+  it('Dragon transitions to chasing when its nearby chest is opened but a distant chest remains', () => {
+    // 10x1 corridor: [player] ... [dragon at x=3] ... [distant chest at x=9]
+    // Dragon's nearby chest was opened (not present). Distant chest is beyond tether range.
+    const floor = createTestFloor(10, 1, (tiles) => {
+      tiles[0][3] = {
+        type: TileType.Dragon,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'guarding',
+      };
+      tiles[0][9] = {
+        type: TileType.Chest,
+        visible: false,
+        visited: false,
+        cleared: false,
+      };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    const result = moveEnemies(floor, playerPos);
+
+    // Dragon should transition to chasing (distant chest is beyond Chebyshev distance 2)
+    // and move toward the player, NOT freeze in place
+    let dragonX = -1;
+    for (let x = 0; x < 10; x++) {
+      if (result.tiles[0][x].type === TileType.Dragon) dragonX = x;
+    }
+    expect(dragonX).toBe(2); // Moved toward player from x=3
+    expect(result.tiles[0][dragonX].enemyState).toBe('chasing');
+  });
+
   it('Dragon transitions from guarding to chasing when no uncleared chests remain', () => {
     // 5x1 corridor: [player] [floor] [floor] [dragon] [floor]
     // No chests on the floor at all
