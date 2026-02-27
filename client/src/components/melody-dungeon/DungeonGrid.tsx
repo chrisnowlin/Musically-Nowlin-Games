@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TileType, VISIBILITY_RADIUS } from '@/lib/gameLogic/dungeonTypes';
 import type { DungeonFloor, Position } from '@/lib/gameLogic/dungeonTypes';
+import { getTheme } from './dungeonThemes';
 
 interface DungeonGridProps {
   floor: DungeonFloor;
@@ -24,9 +25,8 @@ function getTileVisibility(
 
 function getFogOverlayOpacity(vis: Visibility, dist: number): number {
   if (vis === 'lit') {
-    // Smooth darkening toward edge of visible radius
     const t = dist / VISIBILITY_RADIUS;
-    return t * 0.35; // 0 at center, 0.35 at edge
+    return t * 0.35;
   }
   if (vis === 'dim') return 0.7;
   return 0.92;
@@ -44,27 +44,30 @@ const TILE_EMOJI: Record<string, string> = {
   [TileType.Boss]: '\uD83D\uDC32',
 };
 
-const TILE_BG: Record<string, string> = {
-  [TileType.Wall]: 'bg-gray-800',
-  [TileType.Floor]: 'bg-stone-700',
-  [TileType.Door]: 'bg-amber-900',
-  [TileType.Enemy]: 'bg-red-900/70',
-  [TileType.Treasure]: 'bg-yellow-900/70',
-  [TileType.Chest]: 'bg-amber-800/70',
-  [TileType.Stairs]: 'bg-emerald-900/70',
-  [TileType.PlayerStart]: 'bg-stone-700',
-  [TileType.Boss]: 'bg-purple-900/70',
+const TILE_ACCENT: Partial<Record<TileType, string>> = {
+  [TileType.Door]: '#92400e',
+  [TileType.Enemy]: '#7f1d1d',
+  [TileType.Treasure]: '#854d0e',
+  [TileType.Chest]: '#92400e',
+  [TileType.Stairs]: '#065f46',
+  [TileType.Boss]: '#581c87',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
+  const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
+
   return (
     <div
-      className="grid gap-0 mx-auto select-none bg-gray-950 rounded-lg overflow-hidden border border-gray-800"
+      className="grid gap-0 mx-auto select-none rounded-lg overflow-hidden"
       style={{
         gridTemplateColumns: `repeat(${floor.width}, 1fr)`,
         width: '100%',
         maxWidth: 'min(90vw, 70vh, 720px)',
         aspectRatio: '1 / 1',
+        backgroundColor: theme.containerBg,
+        borderWidth: '1px',
+        borderColor: theme.border,
+        borderStyle: 'solid',
       }}
     >
       {floor.tiles.map((row, y) =>
@@ -76,14 +79,16 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
           const showContent = vis === 'lit';
           const cleared = tile.cleared;
 
-          const bgClass =
-            vis === 'dark'
-              ? 'bg-gray-950'
-              : tile.type === TileType.Wall
-                ? TILE_BG[TileType.Wall]
-                : cleared
-                  ? 'bg-stone-700'
-                  : TILE_BG[tile.type] || TILE_BG[TileType.Floor];
+          let bgColor: string;
+          if (vis === 'dark') {
+            bgColor = theme.containerBg;
+          } else if (tile.type === TileType.Wall) {
+            bgColor = theme.wall;
+          } else if (cleared) {
+            bgColor = theme.floorCleared;
+          } else {
+            bgColor = TILE_ACCENT[tile.type] || theme.floor;
+          }
 
           const showEmoji =
             showContent &&
@@ -96,10 +101,9 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
           return (
             <div
               key={`${x}-${y}`}
-              className={`relative flex items-center justify-center ${bgClass}`}
-              style={{ aspectRatio: '1 / 1' }}
+              className="relative flex items-center justify-center"
+              style={{ aspectRatio: '1 / 1', backgroundColor: bgColor }}
             >
-              {/* Tile content */}
               {isPlayer && showContent && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden">
                   <img
@@ -114,18 +118,24 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
                 <span className="text-xs sm:text-base z-10">{TILE_EMOJI[tile.type]}</span>
               )}
               {tile.type === TileType.Wall && showContent && (
-                <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.15)_2px,rgba(0,0,0,0.15)_4px)]" />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `repeating-linear-gradient(0deg,transparent,transparent 2px,${theme.wallPattern} 2px,${theme.wallPattern} 4px)`,
+                  }}
+                />
               )}
 
-              {/* Fog overlay -- always present, varies in darkness */}
               <div
-                className="absolute inset-0 bg-gray-950 pointer-events-none transition-opacity duration-200 z-20"
-                style={{ opacity: fogOpacity }}
+                className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-20"
+                style={{ opacity: fogOpacity, backgroundColor: theme.fog }}
               />
 
-              {/* Grid lines for visible/dim tiles */}
               {vis !== 'dark' && (
-                <div className="absolute inset-0 border border-gray-700/20 pointer-events-none z-20" />
+                <div
+                  className="absolute inset-0 pointer-events-none z-20"
+                  style={{ border: `1px solid ${theme.gridLine}` }}
+                />
               )}
             </div>
           );

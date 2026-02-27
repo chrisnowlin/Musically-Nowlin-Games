@@ -5,9 +5,10 @@ interface HUDProps {
   player: PlayerState;
   floorNumber: number;
   difficulty: DifficultyLevel;
+  themeName?: string;
 }
 
-const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty }) => {
+const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName }) => {
   const hearts = Array.from({ length: player.maxHealth }, (_, i) =>
     i < player.health ? '\u2764\uFE0F' : '\uD83E\uDD0D'
   );
@@ -49,6 +50,11 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty }) => {
         <span className="text-purple-300 font-medium" title="Floor">
           B{floorNumber}F
         </span>
+        {themeName && (
+          <span className="text-gray-400 text-xs italic hidden sm:inline" title="Dungeon Theme">
+            {themeName}
+          </span>
+        )}
         <span className={`text-xs font-medium uppercase ${difficultyColors[difficulty]}`} title="Difficulty">
           {difficulty}
         </span>

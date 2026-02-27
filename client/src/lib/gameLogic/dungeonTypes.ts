@@ -49,11 +49,12 @@ export interface DungeonFloor {
   width: number;
   height: number;
   floorNumber: number;
+  themeIndex: number;
   playerStart: Position;
   stairsPosition: Position;
 }
 
-export type GamePhase = 'menu' | 'playing' | 'challenge' | 'gameOver' | 'floorComplete';
+export type GamePhase = 'menu' | 'playing' | 'challenge' | 'gameOver' | 'floorComplete' | 'victory';
 
 export interface ActiveChallenge {
   type: ChallengeType;

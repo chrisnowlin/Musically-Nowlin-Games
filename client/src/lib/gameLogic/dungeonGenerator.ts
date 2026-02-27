@@ -103,6 +103,50 @@ function pickRandomFloorTile(
   return floors[rand(0, floors.length - 1)];
 }
 
+/**
+ * Returns true if the tile has 3+ walkable cardinal neighbors,
+ * meaning a blocking object here won't trap the player in a corridor.
+ */
+function isOpenEnough(grid: Tile[][], pos: Position): boolean {
+  const dirs = [
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
+  ];
+  let walkable = 0;
+  for (const d of dirs) {
+    const nx = pos.x + d.x;
+    const ny = pos.y + d.y;
+    if (
+      ny >= 0 &&
+      ny < grid.length &&
+      nx >= 0 &&
+      nx < grid[0].length &&
+      grid[ny][nx].type !== TileType.Wall
+    ) {
+      walkable++;
+    }
+  }
+  return walkable >= 3;
+}
+
+function pickOpenFloorTile(
+  grid: Tile[][],
+  exclude: Position[],
+  minDistFrom?: Position,
+  minDist: number = 3
+): Position | null {
+  const floors = getFloorTiles(grid).filter(
+    (p) =>
+      !exclude.some((e) => e.x === p.x && e.y === p.y) &&
+      (!minDistFrom || distanceSq(p, minDistFrom) >= minDist * minDist) &&
+      isOpenEnough(grid, p)
+  );
+  if (floors.length === 0) return null;
+  return floors[rand(0, floors.length - 1)];
+}
+
 function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
   if (floorNumber <= 1) return ['noteReading'];
   if (floorNumber === 2) return ['noteReading', 'rhythmTap'];
@@ -203,10 +247,10 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  // Place locked chests (require a key to open, better rewards)
+  // Place locked chests only in open areas so they can't block corridors
   const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
   for (let i = 0; i < chestCount; i++) {
-    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+    const pos = pickOpenFloorTile(grid, placedPositions, playerStart, 2);
     if (pos) {
       grid[pos.y][pos.x].type = TileType.Chest;
       grid[pos.y][pos.x].cleared = false;
@@ -219,6 +263,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     width,
     height,
     floorNumber,
+    themeIndex: rand(0, 7),
     playerStart,
     stairsPosition,
   };
