@@ -5,15 +5,22 @@ import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
 
+export interface BossBattleMeta {
+  damageDealt: number;
+  shieldUsed: boolean;
+}
+
 interface Props {
   challengeType: ChallengeType;
   tileType: TileType;
   difficulty: DifficultyLevel;
   floorNumber: number;
-  onResult: (correct: boolean) => void;
+  onResult: (correct: boolean, meta?: BossBattleMeta) => void;
+  playerHealth?: number;
+  shieldCharm?: number;
 }
 
-const BOSS_ROUNDS = 3;
+const BOSS_HP = 3;
 
 const TILE_THEME: Record<string, { title: string; borderColor: string; bgColor: string }> = {
   [TileType.Enemy]: {
@@ -73,100 +80,97 @@ function ChallengeRenderer({ type, difficulty, floorNumber, onResult }: {
 const BossBattle: React.FC<{
   difficulty: DifficultyLevel;
   floorNumber: number;
-  onResult: (correct: boolean) => void;
-}> = ({ difficulty, floorNumber, onResult }) => {
+  onResult: (correct: boolean, meta?: BossBattleMeta) => void;
+  playerHealth: number;
+  shieldCharm: number;
+}> = ({ difficulty, floorNumber, onResult, playerHealth, shieldCharm }) => {
   const challengeTypes = useMemo(() => getChallengeTypesForFloor(floorNumber), [floorNumber]);
-  const rounds = useMemo(
-    () => Array.from({ length: BOSS_ROUNDS }, () => pickRandom(challengeTypes)),
-    [challengeTypes]
-  );
   const [currentRound, setCurrentRound] = useState(0);
-  const [hits, setHits] = useState(0);
-  const [misses, setMisses] = useState(0);
+  const [dragonHp, setDragonHp] = useState(BOSS_HP);
+  const [effectiveHealth, setEffectiveHealth] = useState(playerHealth);
+  const [shieldActive, setShieldActive] = useState(shieldCharm > 0);
+  const [damageDealt, setDamageDealt] = useState(0);
+  const [shieldUsed, setShieldUsed] = useState(false);
   const [roundTransition, setRoundTransition] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
 
+  const currentChallengeType = useMemo(
+    () => pickRandom(challengeTypes),
+    [challengeTypes, currentRound]
+  );
+
   const handleRoundResult = useCallback((correct: boolean) => {
-    const newHits = hits + (correct ? 1 : 0);
-    const newMisses = misses + (correct ? 0 : 1);
-    setHits(newHits);
-    setMisses(newMisses);
     setLastResult(correct);
 
-    const nextRound = currentRound + 1;
-    if (nextRound >= BOSS_ROUNDS) {
-      // Boss defeated if majority correct
-      const won = newHits > newMisses;
-      setTimeout(() => onResult(won), 1200);
+    if (correct) {
+      const newDragonHp = dragonHp - 1;
+      setDragonHp(newDragonHp);
+      if (newDragonHp <= 0) {
+        // Dragon defeated
+        setTimeout(() => onResult(true, { damageDealt, shieldUsed }), 1200);
+      } else {
+        setRoundTransition(true);
+        setTimeout(() => {
+          setCurrentRound((r) => r + 1);
+          setLastResult(null);
+          setRoundTransition(false);
+        }, 1200);
+      }
     } else {
-      setRoundTransition(true);
-      setTimeout(() => {
-        setCurrentRound(nextRound);
-        setLastResult(null);
-        setRoundTransition(false);
-      }, 1200);
-    }
-  }, [currentRound, hits, misses, onResult]);
+      // Wrong answer — player takes damage
+      let newHealth = effectiveHealth;
+      let newShieldUsed = shieldUsed;
+      if (shieldActive) {
+        setShieldActive(false);
+        newShieldUsed = true;
+        setShieldUsed(true);
+      } else {
+        newHealth = effectiveHealth - 1;
+        setEffectiveHealth(newHealth);
+        setDamageDealt((d) => d + 1);
+      }
 
-  const roundPips = Array.from({ length: BOSS_ROUNDS }, (_, i) => {
-    if (i < currentRound) {
-      // Past round
-      const wasHit = i < hits + misses
-        ? (i < hits || (i - hits) >= misses ? i < hits : false)
-        : false;
-      // Simplified: track results array
-      return null; // handled below
+      if (newHealth <= 0) {
+        // Player defeated
+        setTimeout(() => onResult(false, { damageDealt: damageDealt + 1, shieldUsed: newShieldUsed }), 1200);
+      } else {
+        setRoundTransition(true);
+        setTimeout(() => {
+          setCurrentRound((r) => r + 1);
+          setLastResult(null);
+          setRoundTransition(false);
+        }, 1200);
+      }
     }
-    return null;
-  });
-
-  // Build results array for pip display
-  const results: (boolean | null)[] = [];
-  let h = hits, m = misses;
-  for (let i = 0; i < BOSS_ROUNDS; i++) {
-    if (i < currentRound) {
-      // We need to reconstruct — just use hits/misses in order
-      results.push(null); // placeholder, will recalculate
-    } else if (i === currentRound && lastResult !== null) {
-      results.push(lastResult);
-    } else {
-      results.push(null);
-    }
-  }
+  }, [dragonHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, onResult]);
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Round indicator */}
-      <div className="flex items-center gap-1.5">
-        {rounds.map((_, i) => {
-          let color = 'bg-gray-600';
-          if (i < currentRound) {
-            // Reconstruct: first `hits` correct rounds happened among the first currentRound rounds
-            // Simpler: just show current round indicator
-            color = 'bg-gray-500';
-          }
-          if (i === currentRound) color = 'ring-2 ring-purple-400 bg-purple-700';
-          if (i > currentRound) color = 'bg-gray-700';
-          return (
-            <div key={i} className={`w-3 h-3 rounded-full ${color}`} />
-          );
-        })}
-        <span className="text-xs text-gray-400 ml-2">
-          Round {currentRound + 1}/{BOSS_ROUNDS}
-        </span>
-      </div>
-
-      {/* Health bar for boss */}
-      <div className="w-full max-w-[200px]">
-        <div className="flex justify-between text-xs text-gray-400 mb-1">
-          <span>Dragon HP</span>
-          <span>{Math.max(0, BOSS_ROUNDS - hits)}/{BOSS_ROUNDS}</span>
+      {/* Health bars */}
+      <div className="w-full max-w-[200px] space-y-2">
+        <div>
+          <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Dragon HP</span>
+            <span>{dragonHp}/{BOSS_HP}</span>
+          </div>
+          <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-purple-600 to-red-500 transition-all duration-500"
+              style={{ width: `${(dragonHp / BOSS_HP) * 100}%` }}
+            />
+          </div>
         </div>
-        <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-purple-600 to-red-500 transition-all duration-500"
-            style={{ width: `${(Math.max(0, BOSS_ROUNDS - hits) / BOSS_ROUNDS) * 100}%` }}
-          />
+        <div>
+          <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Your HP{shieldActive ? ' (shielded)' : ''}</span>
+            <span>{effectiveHealth}/{playerHealth}</span>
+          </div>
+          <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-green-600 to-emerald-400 transition-all duration-500"
+              style={{ width: `${(effectiveHealth / playerHealth) * 100}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -174,7 +178,7 @@ const BossBattle: React.FC<{
       {!roundTransition ? (
         <ChallengeRenderer
           key={currentRound}
-          type={rounds[currentRound]}
+          type={currentChallengeType}
           difficulty={difficulty}
           floorNumber={floorNumber}
           onResult={handleRoundResult}
@@ -182,7 +186,7 @@ const BossBattle: React.FC<{
       ) : (
         <div className="py-8 text-center">
           <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : 'text-red-400'}`}>
-            {lastResult ? 'Hit!' : 'Miss!'}
+            {lastResult ? 'Hit!' : 'Miss! -1 HP'}
           </p>
           <p className="text-sm text-gray-400 mt-1">Next round...</p>
         </div>
@@ -191,7 +195,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, shieldCharm = 0 }) => {
   const theme = TILE_THEME[tileType] || DEFAULT_THEME;
   const isDragon = tileType === TileType.Dragon;
 
@@ -209,7 +213,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
         </h2>
 
         {isDragon ? (
-          <BossBattle difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
+          <BossBattle difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} playerHealth={playerHealth} shieldCharm={shieldCharm} />
         ) : (
           <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
         )}

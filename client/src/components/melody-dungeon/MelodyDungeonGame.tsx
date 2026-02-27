@@ -26,6 +26,7 @@ import HUD from './HUD';
 import MobileDPad from './MobileDPad';
 import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
+import type { BossBattleMeta } from './ChallengeModal';
 import MerchantModal from './MerchantModal';
 import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
 import { playNote, resumeAudioContext } from './dungeonAudio';
@@ -292,27 +293,39 @@ const MelodyDungeonGame: React.FC = () => {
   );
 
   const handleChallengeResult = useCallback(
-    (correct: boolean) => {
+    (correct: boolean, meta?: BossBattleMeta) => {
       const newDiffState = recordResult(diffState, correct);
       setDiffState(newDiffState);
 
       if (!activeChallenge) return;
 
+      const isDragon = activeTileType === TileType.Dragon;
+
       setPlayer((prev) => {
         let updated = { ...prev };
 
-        if (correct) {
-          const isDragon = activeTileType === TileType.Dragon;
+        if (isDragon && meta) {
+          // Dragon battle: damage was tracked inside the battle
+          if (meta.shieldUsed) {
+            updated.shieldCharm = 0;
+          }
+          updated.health = Math.max(0, prev.health - meta.damageDealt);
+          if (correct) {
+            const streakBonus = Math.floor(prev.streak / 3) * 25;
+            updated.score += 500 + streakBonus;
+            updated.streak += 1;
+            updated.keys += 2;
+            updated.potions += 1;
+          } else {
+            updated.streak = 0;
+          }
+        } else if (correct) {
           const streakBonus = Math.floor(prev.streak / 3) * 25;
-          updated.score += (isDragon ? 500 : 100) + streakBonus;
+          updated.score += 100 + streakBonus;
           updated.streak += 1;
 
           if (activeTileType === TileType.Enemy) {
             updated.keys += 1;
-          }
-          if (isDragon) {
-            updated.keys += 2;
-            updated.potions += 1;
           }
           if (activeTileType === TileType.Treasure) {
             updated.potions += 1;
@@ -663,6 +676,8 @@ const MelodyDungeonGame: React.FC = () => {
           difficulty={difficulty}
           floorNumber={floorNumber}
           onResult={handleChallengeResult}
+          playerHealth={player.health}
+          shieldCharm={player.shieldCharm}
         />
       )}
 
