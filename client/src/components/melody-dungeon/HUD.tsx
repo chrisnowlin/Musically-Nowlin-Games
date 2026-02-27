@@ -31,12 +31,12 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName })
         <span className="text-amber-400 font-bold" title="Score">
           {'\u2B50'} {player.score}
         </span>
-        <span className="text-yellow-300" title="Keys">
-          {'\uD83D\uDD11'} {player.keys}
+        <span className="flex items-center gap-0.5 text-yellow-300" title="Keys">
+          <img src="/images/melody-dungeon-key.png" alt="Key" className="w-5 h-5 object-contain" /> {player.keys}
         </span>
         {player.potions > 0 && (
-          <span className="text-pink-400" title="Potions">
-            {'\uD83E\uDDEA'} {player.potions}
+          <span className="flex items-center gap-0.5 text-pink-400" title="Potions">
+            <img src="/images/melody-dungeon-potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
           </span>
         )}
       </div>

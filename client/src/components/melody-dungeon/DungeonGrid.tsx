@@ -32,25 +32,13 @@ function getFogOverlayOpacity(vis: Visibility, dist: number): number {
   return 0.92;
 }
 
-const TILE_EMOJI: Record<string, string> = {
-  [TileType.Wall]: '',
-  [TileType.Floor]: '',
-  [TileType.Door]: '\uD83D\uDEAA',
-  [TileType.Enemy]: '\uD83D\uDC7E',
-  [TileType.Treasure]: '\uD83C\uDF81',
-  [TileType.Chest]: '\uD83D\uDD12',
-  [TileType.Stairs]: '\u2B07\uFE0F',
-  [TileType.PlayerStart]: '',
-  [TileType.Boss]: '\uD83D\uDC32',
-};
-
-const TILE_ACCENT: Partial<Record<TileType, string>> = {
-  [TileType.Door]: '#92400e',
-  [TileType.Enemy]: '#7f1d1d',
-  [TileType.Treasure]: '#854d0e',
-  [TileType.Chest]: '#92400e',
-  [TileType.Stairs]: '#065f46',
-  [TileType.Boss]: '#581c87',
+const TILE_SPRITE: Partial<Record<TileType, string>> = {
+  [TileType.Door]: '/images/melody-dungeon-door.png',
+  [TileType.Enemy]: '/images/melody-dungeon-enemy.png',
+  [TileType.Treasure]: '/images/melody-dungeon-treasure.png',
+  [TileType.Chest]: '/images/melody-dungeon-chest.png',
+  [TileType.Stairs]: '/images/melody-dungeon-stairs.png',
+  [TileType.Boss]: '/images/melody-dungeon-boss.png',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
@@ -79,58 +67,79 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
           const showContent = vis === 'lit';
           const cleared = tile.cleared;
 
+          const isWall = tile.type === TileType.Wall;
+          const isFloorLike =
+            !isWall &&
+            (cleared ||
+              tile.type === TileType.Floor ||
+              tile.type === TileType.PlayerStart);
+
           let bgColor: string;
+          let bgImage: string | undefined;
           if (vis === 'dark') {
             bgColor = theme.containerBg;
-          } else if (tile.type === TileType.Wall) {
+          } else if (isWall) {
             bgColor = theme.wall;
-          } else if (cleared) {
+            bgImage = theme.wallImg;
+          } else if (isFloorLike) {
             bgColor = theme.floorCleared;
+            bgImage = theme.floorImg;
           } else {
-            bgColor = TILE_ACCENT[tile.type] || theme.floor;
+            bgColor = theme.floor;
+            bgImage = theme.floorImg;
           }
 
-          const showEmoji =
+          const spriteSrc =
             showContent &&
             !isPlayer &&
             !cleared &&
-            tile.type !== TileType.Wall &&
-            tile.type !== TileType.Floor &&
-            tile.type !== TileType.PlayerStart;
+            TILE_SPRITE[tile.type];
+          const fullTileSprite =
+            tile.type === TileType.Door || tile.type === TileType.Stairs;
 
           return (
             <div
               key={`${x}-${y}`}
               className="relative flex items-center justify-center"
-              style={{ aspectRatio: '1 / 1', backgroundColor: bgColor }}
+              style={{
+                aspectRatio: '1 / 1',
+                backgroundColor: bgColor,
+                backgroundImage: bgImage && vis !== 'dark' ? `url(${bgImage})` : undefined,
+                backgroundSize: 'cover',
+              }}
             >
               {isPlayer && showContent && (
-                <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[4%]">
                   <img
                     src="/images/melody-dungeon-character.png"
                     alt="Player"
-                    className="w-[160%] h-[160%] object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.9)]"
+                    className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]"
                     draggable={false}
                   />
                 </div>
               )}
-              {showEmoji && (
-                <span className="text-xs sm:text-base z-10">{TILE_EMOJI[tile.type]}</span>
-              )}
-              {tile.type === TileType.Wall && showContent && (
+              {spriteSrc && (
                 <div
-                  className="absolute inset-0"
-                  style={{
-                    backgroundImage: `repeating-linear-gradient(0deg,transparent,transparent 2px,${theme.wallPattern} 2px,${theme.wallPattern} 4px)`,
-                  }}
-                />
+                  className={`absolute inset-0 flex items-center justify-center z-10 overflow-hidden ${
+                    fullTileSprite ? 'p-0' : 'p-[8%]'
+                  }`}
+                >
+                  <img
+                    src={spriteSrc}
+                    alt={tile.type}
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                  />
+                </div>
               )}
 
+              {/* Fog overlay */}
               <div
                 className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-20"
                 style={{ opacity: fogOpacity, backgroundColor: theme.fog }}
               />
 
+              {/* Grid lines for visible/dim tiles */}
               {vis !== 'dark' && (
                 <div
                   className="absolute inset-0 pointer-events-none z-20"

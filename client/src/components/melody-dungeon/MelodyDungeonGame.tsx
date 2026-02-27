@@ -535,17 +535,16 @@ const MelodyDungeonGame: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex items-center justify-center px-2">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-4 px-2 py-2">
         <DungeonGrid floor={floor} playerPosition={player.position} />
-      </div>
-
-      <div className="p-2 pb-4 shrink-0">
-        <MobileDPad
-          onMove={handleMove}
-          onPotion={usePotion}
-          disabled={phase !== 'playing'}
-          hasPotions={player.potions > 0}
-        />
+        <div className="shrink-0">
+          <MobileDPad
+            onMove={handleMove}
+            onPotion={usePotion}
+            disabled={phase !== 'playing'}
+            hasPotions={player.potions > 0}
+          />
+        </div>
       </div>
 
       {phase === 'challenge' && activeChallenge && (

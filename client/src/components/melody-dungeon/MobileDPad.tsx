@@ -12,7 +12,7 @@ const dirBtnClass =
 
 const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, disabled, hasPotions }) => {
   return (
-    <div className="flex items-end justify-center gap-6">
+    <div className="flex flex-col items-center gap-3">
       <div className="grid grid-cols-3 gap-1.5 w-fit" role="group" aria-label="Movement controls">
         <div />
         <button
@@ -63,7 +63,7 @@ const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, disabled, has
           aria-label="Use potion"
           title="Use potion"
         >
-          {'\uD83E\uDDEA'}
+          <img src="/images/melody-dungeon-potion.png" alt="Potion" className="w-8 h-8 object-contain" />
         </button>
       )}
     </div>
