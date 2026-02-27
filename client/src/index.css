@@ -464,6 +464,15 @@
     animation: bounce-subtle 1s infinite;
   }
 
+  /* Gentle floating hover for dungeon enemy sprites */
+  @keyframes sprite-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6%); }
+  }
+  .animate-sprite-float {
+    animation: sprite-float 2.4s ease-in-out infinite;
+  }
+
   /* Subtle side-to-side tilt for "playing" characters (used by AOC) */
   @keyframes tilt-subtle {
     0%, 100% { transform: rotate(-3deg); }

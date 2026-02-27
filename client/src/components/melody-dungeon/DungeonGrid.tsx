@@ -105,6 +105,8 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
             TILE_SPRITE[tile.type];
           const fullTileSprite =
             tile.type === TileType.Door || tile.type === TileType.Stairs;
+          const isEnemy =
+            tile.type === TileType.Enemy || tile.type === TileType.Boss;
 
           return (
             <div
@@ -136,7 +138,8 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
                   <img
                     src={spriteSrc}
                     alt={tile.type}
-                    className="w-full h-full object-contain"
+                    className={`w-full h-full object-contain ${isEnemy ? 'animate-sprite-float' : ''}`}
+                    style={isEnemy ? { animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` } : undefined}
                     draggable={false}
                   />
                 </div>

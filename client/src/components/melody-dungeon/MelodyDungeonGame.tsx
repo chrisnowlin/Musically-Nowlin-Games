@@ -168,8 +168,15 @@ const MelodyDungeonGame: React.FC = () => {
 
         const newPos = { x: nx, y: ny };
 
-        // Always update fog of war for any valid move
-        setFloor((f) => updateVisibility(f, newPos));
+        // Locked door: challenge from current tile; only opens on correct answer.
+        if (!tile.cleared && tile.type === TileType.Door) {
+          moveLockedRef.current = true;
+          const challengeType: ChallengeType = tile.challengeType || 'noteReading';
+          setActiveChallenge({ type: challengeType, tilePosition: newPos });
+          setActiveTileType(TileType.Door);
+          setPhase('challenge');
+          return prev;
+        }
 
         // Locked chest -- requires a key, no challenge
         if (!tile.cleared && tile.type === TileType.Chest) {
@@ -184,7 +191,7 @@ const MelodyDungeonGame: React.FC = () => {
                 rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Floor } : t
               )
             );
-            return { ...f, tiles };
+            return updateVisibility({ ...f, tiles }, newPos);
           });
           return {
             ...prev,
@@ -201,9 +208,9 @@ const MelodyDungeonGame: React.FC = () => {
           !tile.cleared &&
           (tile.type === TileType.Enemy ||
             tile.type === TileType.Boss ||
-            tile.type === TileType.Door ||
             tile.type === TileType.Treasure)
         ) {
+          setFloor((f) => updateVisibility(f, newPos));
           moveLockedRef.current = true;
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
@@ -214,10 +221,12 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Stairs
         if (tile.type === TileType.Stairs) {
+          setFloor((f) => updateVisibility(f, newPos));
           setPhase('floorComplete');
           return { ...prev, position: newPos };
         }
 
+        setFloor((f) => updateVisibility(f, newPos));
         return { ...prev, position: newPos };
       });
     },
@@ -251,8 +260,11 @@ const MelodyDungeonGame: React.FC = () => {
             updated.potions += 1;
           }
         } else {
-          updated.health = Math.max(0, prev.health - 1);
-          updated.streak = 0;
+          // Doors allow unlimited attempts: wrong answers do not punish health.
+          if (activeTileType !== TileType.Door) {
+            updated.health = Math.max(0, prev.health - 1);
+            updated.streak = 0;
+          }
         }
 
         return updated;
@@ -264,6 +276,13 @@ const MelodyDungeonGame: React.FC = () => {
         const tiles = prev.tiles.map((row, ry) =>
           row.map((tile, rx) => {
             if (rx === x && ry === y) {
+              if (tile.type === TileType.Door) {
+                return {
+                  ...tile,
+                  cleared: correct,
+                  type: correct ? TileType.Floor : TileType.Door,
+                };
+              }
               return {
                 ...tile,
                 cleared: true,
