@@ -9,6 +9,7 @@ interface DungeonGridProps {
 }
 
 type Visibility = 'lit' | 'dim' | 'dark';
+const VIEWPORT_RADIUS = 3;
 
 function getTileVisibility(
   tileX: number,
@@ -43,12 +44,18 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
   const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
+  const viewportSize = VIEWPORT_RADIUS * 2 + 1;
+  const startX = Math.max(0, Math.min(playerPosition.x - VIEWPORT_RADIUS, floor.width - viewportSize));
+  const startY = Math.max(0, Math.min(playerPosition.y - VIEWPORT_RADIUS, floor.height - viewportSize));
+  const endX = Math.min(floor.width, startX + viewportSize);
+  const endY = Math.min(floor.height, startY + viewportSize);
+  const viewWidth = endX - startX;
 
   return (
     <div
       className="grid gap-0 mx-auto select-none rounded-lg overflow-hidden"
       style={{
-        gridTemplateColumns: `repeat(${floor.width}, 1fr)`,
+        gridTemplateColumns: `repeat(${viewWidth}, 1fr)`,
         width: '100%',
         maxWidth: 'min(90vw, 70vh, 720px)',
         aspectRatio: '1 / 1',
@@ -58,8 +65,10 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
         borderStyle: 'solid',
       }}
     >
-      {floor.tiles.map((row, y) =>
-        row.map((tile, x) => {
+      {floor.tiles.slice(startY, endY).map((row, rowIndex) => {
+        const y = startY + rowIndex;
+        return row.slice(startX, endX).map((tile, colIndex) => {
+          const x = startX + colIndex;
           const isPlayer = playerPosition.x === x && playerPosition.y === y;
           const dist = Math.max(Math.abs(x - playerPosition.x), Math.abs(y - playerPosition.y));
           const vis = getTileVisibility(x, y, playerPosition.x, playerPosition.y, tile.visited);
@@ -148,8 +157,8 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition }) => {
               )}
             </div>
           );
-        })
-      )}
+        });
+      })}
     </div>
   );
 };

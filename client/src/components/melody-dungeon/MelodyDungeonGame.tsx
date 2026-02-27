@@ -24,6 +24,7 @@ import {
 import DungeonGrid from './DungeonGrid';
 import HUD from './HUD';
 import MobileDPad from './MobileDPad';
+import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
 import { playNote } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
@@ -55,7 +56,7 @@ function createPlayer(start: Position): PlayerState {
   };
 }
 
-const MAX_FLOOR = 50;
+const MAX_FLOOR = 100;
 
 const MelodyDungeonGame: React.FC = () => {
   const [, setLocation] = useLocation();
@@ -537,7 +538,8 @@ const MelodyDungeonGame: React.FC = () => {
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-4 px-2 py-2">
         <DungeonGrid floor={floor} playerPosition={player.position} />
-        <div className="shrink-0">
+        <div className="shrink-0 flex flex-col items-center gap-3">
+          <MiniMap floor={floor} playerPosition={player.position} />
           <MobileDPad
             onMove={handleMove}
             onPotion={usePotion}
