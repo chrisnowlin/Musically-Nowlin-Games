@@ -41,6 +41,8 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.Chest]: '/images/melody-dungeon-chest.png',
   [TileType.Stairs]: '/images/melody-dungeon-stairs.png',
   [TileType.Dragon]: '/images/melody-dungeon-boss.png',
+  [TileType.Merchant]: '/images/melody-dungeon-merchant.png',
+  [TileType.MerchantStall]: '/images/melody-dungeon-stall.png',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft }) => {
@@ -105,9 +107,10 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             !cleared &&
             TILE_SPRITE[tile.type];
           const fullTileSprite =
-            tile.type === TileType.Door || tile.type === TileType.Stairs;
+            tile.type === TileType.Door || tile.type === TileType.Stairs || tile.type === TileType.MerchantStall;
           const isEnemy =
             tile.type === TileType.Enemy || tile.type === TileType.Dragon;
+          const isAnimated = isEnemy || tile.type === TileType.Merchant;
 
           return (
             <div
@@ -140,8 +143,8 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
                   <img
                     src={spriteSrc}
                     alt={tile.type}
-                    className={`w-full h-full object-contain ${isEnemy ? 'animate-sprite-float' : ''}`}
-                    style={isEnemy ? { animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` } : undefined}
+                    className={`w-full h-full object-contain ${isAnimated ? 'animate-sprite-float' : ''}`}
+                    style={isAnimated ? { animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` } : undefined}
                     draggable={false}
                   />
                 </div>
