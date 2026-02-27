@@ -392,6 +392,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       grid[dragonPos.y][dragonPos.x].challengeType =
         challengeTypes[rand(0, challengeTypes.length - 1)];
       grid[dragonPos.y][dragonPos.x].cleared = false;
+      grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
       placedPositions.push(dragonPos);
     }
   }
@@ -406,6 +407,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       grid[pos.y][pos.x].challengeType =
         challengeTypes[rand(0, challengeTypes.length - 1)];
       grid[pos.y][pos.x].cleared = false;
+      grid[pos.y][pos.x].enemyState = 'patrolling';
       placedPositions.push(pos);
     }
   }
