@@ -20,15 +20,20 @@ function getAudioCtx(): AudioContext {
 }
 
 /** Resume AudioContext if suspended (required after user interaction) */
-export function resumeAudioContext(): void {
+export function resumeAudioContext(): Promise<boolean> {
   try {
     const ctx = getAudioCtx();
+    if (ctx.state === 'running') return Promise.resolve(true);
     if (ctx.state === 'suspended') {
-      ctx.resume();
+      return ctx
+        .resume()
+        .then(() => getAudioCtx().state === 'running')
+        .catch(() => false);
     }
   } catch {
     // ignore
   }
+  return Promise.resolve(false);
 }
 
 /** Get frequency for any note key (e.g. C4, C#4, Gb5) */
@@ -47,6 +52,12 @@ export function noteKeyToFrequency(noteKey: string): number {
 export function playNote(noteKey: string, duration = 0.4, volume = 0.3): void {
   try {
     const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      void resumeAudioContext().then((ok) => {
+        if (ok) playNote(noteKey, duration, volume);
+      });
+      return;
+    }
     const freq = NOTE_FREQUENCIES[noteKey];
     if (!freq) return;
 
@@ -70,6 +81,12 @@ export function playNote(noteKey: string, duration = 0.4, volume = 0.3): void {
 export function playNoteAtFrequency(freq: number, duration = 0.4, volume = 0.3): void {
   try {
     const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      void resumeAudioContext().then((ok) => {
+        if (ok) playNoteAtFrequency(freq, duration, volume);
+      });
+      return;
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -100,6 +117,12 @@ export function playTwoNotes(
 export function playClick(volume = 0.2): void {
   try {
     const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      void resumeAudioContext().then((ok) => {
+        if (ok) playClick(volume);
+      });
+      return;
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -137,6 +160,12 @@ export function playPassageAtDynamic(dynamicLevel: string, duration = 1.5): void
 export function playChord(noteKeys: string[], duration = 0.8, volume = 0.25): void {
   try {
     const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      void resumeAudioContext().then((ok) => {
+        if (ok) playChord(noteKeys, duration, volume);
+      });
+      return;
+    }
     const now = ctx.currentTime;
     for (const key of noteKeys) {
       const freq = NOTE_FREQUENCIES[key] ?? noteKeyToFrequency(key);

@@ -4,7 +4,6 @@ import {
   playNote,
   playClick,
   playTwoNotes,
-  playPassageAtDynamic,
   playChord,
   playScale,
   playListeningPhrase,
@@ -80,8 +79,6 @@ const ChallengePanel: React.FC<ChallengePanelProps> = ({ challenge, shownAt, onA
       playNote(challenge.targetNote, 0.4);
     } else if (challenge.type === 'interval') {
       playTwoNotes(challenge.note1, challenge.note2);
-    } else if (challenge.type === 'dynamics') {
-      playPassageAtDynamic(challenge.dynamicLevel, 1.5);
     } else if (challenge.type === 'tempoIdentify') {
       const interval = 60000 / challenge.bpm;
       for (let i = 0; i < 4; i++) {
@@ -155,33 +152,6 @@ const ChallengePanel: React.FC<ChallengePanelProps> = ({ challenge, shownAt, onA
               }}
               disabled={disabled || !!feedback}
               className="px-4 py-2 rounded-lg font-medium bg-purple-700 hover:bg-purple-600 text-white disabled:opacity-50"
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (challenge.type === 'dynamics') {
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <h3 className="text-lg font-bold text-amber-100">Which dynamic level?</h3>
-        <button className="text-xs text-amber-300 underline hover:text-amber-200" onClick={() => playPassageAtDynamic(challenge.dynamicLevel, 1.5)}>
-          Hear again
-        </button>
-        <div className="flex flex-wrap justify-center gap-2">
-          {challenge.options.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => {
-                if (disabled) return;
-                const correct = opt === challenge.dynamicLevel;
-                (correct ? submitAnswer : submitWrong)(opt, getResponseTime());
-              }}
-              disabled={disabled || !!feedback}
-              className="px-4 py-2 rounded-lg font-medium bg-amber-700 hover:bg-amber-600 text-white disabled:opacity-50"
             >
               {opt}
             </button>

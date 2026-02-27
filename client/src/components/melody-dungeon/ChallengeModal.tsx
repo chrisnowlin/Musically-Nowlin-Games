@@ -4,7 +4,6 @@ import { TileType } from '@/lib/gameLogic/dungeonTypes';
 import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
-import DynamicsChallenge from './challenges/DynamicsChallenge';
 
 interface Props {
   challengeType: ChallengeType;
@@ -50,9 +49,9 @@ function pickRandom<T>(arr: T[]): T {
 }
 
 function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
-  if (floorNumber <= 5) return ['noteReading', 'dynamics'];
-  if (floorNumber <= 10) return ['noteReading', 'dynamics', 'rhythmTap'];
-  return ['noteReading', 'dynamics', 'rhythmTap', 'interval'];
+  if (floorNumber <= 5) return ['noteReading'];
+  if (floorNumber <= 10) return ['noteReading', 'rhythmTap'];
+  return ['noteReading', 'rhythmTap', 'interval'];
 }
 
 function ChallengeRenderer({ type, difficulty, onResult }: {
@@ -67,8 +66,6 @@ function ChallengeRenderer({ type, difficulty, onResult }: {
       return <RhythmTapChallenge difficulty={difficulty} onResult={onResult} />;
     case 'interval':
       return <IntervalChallenge difficulty={difficulty} onResult={onResult} />;
-    case 'dynamics':
-      return <DynamicsChallenge difficulty={difficulty} onResult={onResult} />;
   }
 }
 

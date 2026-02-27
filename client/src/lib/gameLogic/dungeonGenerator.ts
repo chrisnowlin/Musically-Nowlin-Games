@@ -291,9 +291,9 @@ function pickValidChestTile(
 
 function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
   // Keep early floors simpler, then gradually introduce harder question types.
-  if (floorNumber <= 5) return ['noteReading', 'dynamics'];
-  if (floorNumber <= 10) return ['noteReading', 'dynamics', 'rhythmTap'];
-  return ['noteReading', 'dynamics', 'rhythmTap', 'interval'];
+  if (floorNumber <= 5) return ['noteReading'];
+  if (floorNumber <= 10) return ['noteReading', 'rhythmTap'];
+  return ['noteReading', 'rhythmTap', 'interval'];
 }
 
 export function generateDungeon(floorNumber: number): DungeonFloor {

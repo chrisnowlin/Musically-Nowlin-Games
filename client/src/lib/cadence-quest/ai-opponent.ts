@@ -23,8 +23,6 @@ function pickCorrectAnswer(challenge: MusicChallenge): string | number[] {
       return challenge.targetNote.replace(/\d+/, '');
     case 'interval':
       return challenge.intervalName;
-    case 'dynamics':
-      return challenge.dynamicLevel;
     case 'chordIdentify':
       return challenge.chordName;
     case 'scaleIdentify':

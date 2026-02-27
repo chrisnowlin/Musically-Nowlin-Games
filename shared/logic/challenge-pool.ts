@@ -10,7 +10,6 @@ import {
   type NoteReadingChallenge,
   type RhythmTapChallenge,
   type IntervalChallenge,
-  type DynamicsChallenge,
   type ChordIdentifyChallenge,
   type ScaleIdentifyChallenge,
   type TempoIdentifyChallenge,
@@ -40,13 +39,6 @@ const SEMITONE_TO_NOTE: Record<number, string> = {
   0: 'C', 1: 'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F',
   6: 'F#', 7: 'G', 8: 'G#', 9: 'A', 10: 'A#', 11: 'B',
 };
-
-const DYNAMICS = [
-  'pianissimo', 'piano', 'mezzo-piano', 'mezzo-forte', 'forte', 'fortissimo',
-];
-const DYNAMICS_EASY = ['piano', 'forte'];
-const DYNAMICS_MEDIUM = ['piano', 'mezzo-piano', 'mezzo-forte', 'forte'];
-const DYNAMICS_HARD = DYNAMICS;
 
 const CHORDS: { name: string; intervals: number[] }[] = [
   { name: 'C major', intervals: [0, 4, 7] },
@@ -203,26 +195,6 @@ export function generateIntervalChallenge(
   };
 }
 
-// ---- Dynamics ----
-
-export function generateDynamicsChallenge(
-  difficulty: Difficulty,
-  discipline: MusicDiscipline = 'dynamics'
-): DynamicsChallenge {
-  const pool =
-    difficulty === 'easy' ? DYNAMICS_EASY : difficulty === 'medium' ? DYNAMICS_MEDIUM : DYNAMICS_HARD;
-  const target = pick(pool);
-  const options = pickOptions(target, pool, 4);
-  return {
-    id: generateId(),
-    type: 'dynamics',
-    discipline,
-    difficulty,
-    dynamicLevel: target,
-    options,
-  };
-}
-
 // ---- Chord Identify ----
 
 export function generateChordIdentifyChallenge(
@@ -322,7 +294,6 @@ const CHALLENGE_GENERATORS: Array<
   generateNoteReadingChallenge,
   generateRhythmTapChallenge,
   generateIntervalChallenge,
-  generateDynamicsChallenge,
   generateChordIdentifyChallenge,
   generateScaleIdentifyChallenge,
   generateTempoIdentifyChallenge,
@@ -384,8 +355,6 @@ export function validateAnswer(challenge: MusicChallenge, answer: ChallengeAnswe
     }
     case 'interval':
       return String(answer.value).trim() === challenge.intervalName;
-    case 'dynamics':
-      return String(answer.value).trim() === challenge.dynamicLevel;
     case 'chordIdentify':
       return String(answer.value).trim() === challenge.chordName;
     case 'scaleIdentify':

@@ -10,7 +10,7 @@ export enum TileType {
   Boss = 'boss',
 }
 
-export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics';
+export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
 
 export interface Tile {
   type: TileType;

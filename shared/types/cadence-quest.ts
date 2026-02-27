@@ -67,7 +67,6 @@ export type ChallengeType =
   | 'noteReading'
   | 'rhythmTap'
   | 'interval'
-  | 'dynamics'
   | 'chordIdentify'
   | 'scaleIdentify'
   | 'tempoIdentify'
@@ -103,13 +102,6 @@ export interface IntervalChallenge extends BaseChallenge {
   note1: string;
   note2: string;
   intervalName: string;
-  options: string[];
-}
-
-export interface DynamicsChallenge extends BaseChallenge {
-  type: 'dynamics';
-  discipline: 'dynamics';
-  dynamicLevel: string;
   options: string[];
 }
 
@@ -149,7 +141,6 @@ export type MusicChallenge =
   | NoteReadingChallenge
   | RhythmTapChallenge
   | IntervalChallenge
-  | DynamicsChallenge
   | ChordIdentifyChallenge
   | ScaleIdentifyChallenge
   | TempoIdentifyChallenge

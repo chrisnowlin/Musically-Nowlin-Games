@@ -26,7 +26,7 @@ import HUD from './HUD';
 import MobileDPad from './MobileDPad';
 import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
-import { playNote } from './dungeonAudio';
+import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
 function updateVisibility(floor: DungeonFloor, pos: Position): DungeonFloor {
@@ -127,6 +127,19 @@ const MelodyDungeonGame: React.FC = () => {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   });
+
+  // Best-effort audio unlock for browsers with autoplay restrictions.
+  useEffect(() => {
+    const unlock = () => {
+      void resumeAudioContext();
+    };
+    window.addEventListener('pointerdown', unlock, { passive: true });
+    window.addEventListener('keydown', unlock);
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, []);
 
   const usePotion = useCallback(() => {
     setPlayer((prev) => {
