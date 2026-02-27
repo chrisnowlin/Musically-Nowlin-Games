@@ -392,17 +392,6 @@ export const games: GameConfig[] = [
     ageRange: "7-12 years",
   },
   {
-    id: "cadence-quest",
-    title: "Cadence Quest",
-    description: "Music RPG with character classes, turn-based battles, and PvP!",
-    route: "/games/cadence-quest",
-    status: "available",
-    icon: Swords,
-    color: "bg-violet-600",
-    difficulty: "medium",
-    ageRange: "8-12 years",
-  },
-  {
     id: "beat-and-pulse-trainer",
     title: "Beat & Pulse Trainer",
     description: "Keep a steady beat, tap along, internalize pulse, and practice subdivisions.",

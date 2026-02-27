@@ -209,13 +209,17 @@ const MelodyDungeonGame: React.FC = () => {
         let updated = { ...prev };
 
         if (correct) {
+          const isBoss = activeTileType === TileType.Boss;
           const streakBonus = Math.floor(prev.streak / 3) * 25;
-          updated.score += 100 + streakBonus;
+          updated.score += (isBoss ? 500 : 100) + streakBonus;
           updated.streak += 1;
 
-          // Rewards based on tile type
-          if (activeTileType === TileType.Enemy || activeTileType === TileType.Boss) {
+          if (activeTileType === TileType.Enemy) {
             updated.keys += 1;
+          }
+          if (isBoss) {
+            updated.keys += 2;
+            updated.potions += 1;
           }
           if (activeTileType === TileType.Treasure) {
             updated.potions += 1;

@@ -70,7 +70,6 @@ const AnimalOrchestraConductorGamePage = lazy(() => import("@/pages/games/Animal
 const PitchPerfectPathGamePage = lazy(() => import("@/pages/games/PitchPerfectPathGamePage"));
 const WorldMusicExplorerGamePage = lazy(() => import("@/pages/games/WorldMusicExplorerGamePage"));
 const StaffInvadersGamePage = lazy(() => import("@/pages/games/StaffInvadersGamePage"));
-const CadenceQuestPage = lazy(() => import("@/pages/games/CadenceQuestPage"));
 const Rhythm006Page = lazy(() => import("@/pages/games/Rhythm006Page"));
 const Rhythm007Page = lazy(() => import("@/pages/games/Rhythm007Page"));
 const Rhythm002Page = lazy(() => import("@/pages/games/Rhythm002Page"));
@@ -200,7 +199,6 @@ function Router() {
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-invaders" component={StaffInvadersGamePage} />
-      <Route path="/games/cadence-quest" component={CadenceQuestPage} />
       <Route path="/games/melody-dungeon" component={MelodyDungeonPage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
       {/* Tools */}
