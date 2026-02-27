@@ -8,6 +8,8 @@ export enum TileType {
   Stairs = 'stairs',
   PlayerStart = 'playerStart',
   Dragon = 'dragon',
+  Merchant = 'merchant',
+  MerchantStall = 'merchantStall',
 }
 
 export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
@@ -42,6 +44,7 @@ export interface PlayerState {
   keys: number;
   potions: number;
   streak: number;
+  shieldCharm: number;
 }
 
 export interface DungeonFloor {
@@ -54,7 +57,7 @@ export interface DungeonFloor {
   stairsPosition: Position;
 }
 
-export type GamePhase = 'menu' | 'playing' | 'challenge' | 'gameOver' | 'floorComplete' | 'victory';
+export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'gameOver' | 'floorComplete' | 'victory';
 
 export interface ActiveChallenge {
   type: ChallengeType;
