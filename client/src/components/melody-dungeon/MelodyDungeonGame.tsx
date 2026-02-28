@@ -1015,6 +1015,8 @@ const MelodyDungeonGame: React.FC = () => {
           }}
         />
       )}
+
+      <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
     </div>
   );
 };
