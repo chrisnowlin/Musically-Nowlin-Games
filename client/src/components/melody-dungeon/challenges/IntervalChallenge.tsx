@@ -6,11 +6,20 @@ import { playTwoNotes, getFrequency, ALL_NOTE_KEYS } from '../dungeonAudio';
 interface Props {
   difficulty: DifficultyLevel;
   onResult: (correct: boolean) => void;
+  showHint?: boolean;
 }
 
-const IntervalChallenge: React.FC<Props> = ({ difficulty, onResult }) => {
+const IntervalChallenge: React.FC<Props> = ({ difficulty, onResult, showHint }) => {
   const params = useMemo(() => getIntervalParams(difficulty), [difficulty]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [hintShown, setHintShown] = useState(false);
+
+  useEffect(() => {
+    if (!showHint) return;
+    setHintShown(true);
+    const timer = setTimeout(() => setHintShown(false), 1500);
+    return () => clearTimeout(timer);
+  }, [showHint]);
 
   const challenge = useMemo(() => {
     const interval = params.intervals[Math.floor(Math.random() * params.intervals.length)];
@@ -64,24 +73,28 @@ const IntervalChallenge: React.FC<Props> = ({ difficulty, onResult }) => {
       </button>
 
       <div className="flex flex-wrap justify-center gap-2">
-        {params.intervals.map((iv) => (
-          <button
-            key={iv.name}
-            onClick={() => handleAnswer(iv.name)}
-            disabled={!!feedback}
-            className={`
-              px-4 py-2 rounded-lg font-semibold text-sm transition-all
-              ${feedback && challenge.interval.name === iv.name
-                ? 'bg-green-600 text-white scale-110'
-                : feedback
-                  ? 'bg-gray-700 text-gray-400'
-                  : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
-              disabled:cursor-default
-            `}
-          >
-            {iv.name}
-          </button>
-        ))}
+        {params.intervals.map((iv) => {
+          const isHinted = hintShown && challenge.interval.name === iv.name;
+          return (
+            <button
+              key={iv.name}
+              onClick={() => handleAnswer(iv.name)}
+              disabled={!!feedback}
+              className={`
+                px-4 py-2 rounded-lg font-semibold text-sm transition-all
+                ${feedback && challenge.interval.name === iv.name
+                  ? 'bg-green-600 text-white scale-110'
+                  : feedback
+                    ? 'bg-gray-700 text-gray-400'
+                    : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
+                ${isHinted ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-transparent' : ''}
+                disabled:cursor-default
+              `}
+            >
+              {iv.name}
+            </button>
+          );
+        })}
       </div>
 
       {feedback && (

@@ -108,6 +108,8 @@ const MelodyDungeonGame: React.FC = () => {
   playerRef.current = player;
   const getVisRadius = () => playerRef.current.buffs.floor.torch ? VISIBILITY_RADIUS + 2 : VISIBILITY_RADIUS;
   const dragonCaughtRef = useRef<ChallengeType | false>(false);
+  const [challengeKey, setChallengeKey] = useState(0);
+  const activeChallengeBuffsRef = useRef({ metronome: false, tuningFork: false });
   const [facingLeft, setFacingLeft] = useState(false);
 
   const difficulty: DifficultyLevel = diffState.level;
@@ -192,6 +194,7 @@ const MelodyDungeonGame: React.FC = () => {
       moveLockedRef.current = true;
       setActiveChallenge({ type: challengeType, tilePosition: prev.position });
       setActiveTileType(TileType.Dragon);
+      activeChallengeBuffsRef.current = { metronome: prev.buffs.persistent.metronome > 0, tuningFork: prev.buffs.persistent.tuningFork > 0 };
       setPhase('challenge');
 
       return { ...prev, health: newHealth };
@@ -234,6 +237,7 @@ const MelodyDungeonGame: React.FC = () => {
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(TileType.Door);
+          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.persistent.metronome > 0, tuningFork: playerRef.current.buffs.persistent.tuningFork > 0 };
           setPhase('challenge');
           return prev;
         }
@@ -277,6 +281,7 @@ const MelodyDungeonGame: React.FC = () => {
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(tile.type);
+          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.persistent.metronome > 0, tuningFork: playerRef.current.buffs.persistent.tuningFork > 0 };
           setPhase('challenge');
           return { ...prev, position: newPos };
         }
@@ -309,6 +314,25 @@ const MelodyDungeonGame: React.FC = () => {
       setDiffState(newDiffState);
 
       if (!activeChallenge) return;
+
+      // Second Chance: retry on wrong answer (not for doors or dragon battles)
+      if (!correct && !meta && activeTileType !== TileType.Door) {
+        const hasSecondChance = playerRef.current.buffs.persistent.secondChance > 0;
+        if (hasSecondChance) {
+          setPlayer((prev) => ({
+            ...prev,
+            buffs: {
+              ...prev.buffs,
+              persistent: {
+                ...prev.buffs.persistent,
+                secondChance: prev.buffs.persistent.secondChance - 1,
+              },
+            },
+          }));
+          setChallengeKey((k) => k + 1);
+          return; // Don't process damage, don't close challenge — just retry
+        }
+      }
 
       const isBoss =
         activeTileType === TileType.Dragon ||
@@ -352,29 +376,99 @@ const MelodyDungeonGame: React.FC = () => {
           } else {
             // Boss defeated the player — battle only calls onResult(false) when player HP=0
             updated.health = 0;
-            updated.streak = 0;
+            if (prev.buffs.persistent.streakSaver > 0) {
+              updated = {
+                ...updated,
+                buffs: {
+                  ...updated.buffs,
+                  persistent: {
+                    ...updated.buffs.persistent,
+                    streakSaver: updated.buffs.persistent.streakSaver - 1,
+                  },
+                },
+              };
+            } else {
+              updated.streak = 0;
+            }
+          }
+
+          // Dragon Bane: consume one charge after dragon battle
+          if (activeTileType === TileType.Dragon && prev.buffs.persistent.dragonBane > 0) {
+            updated = {
+              ...updated,
+              buffs: {
+                ...updated.buffs,
+                persistent: {
+                  ...updated.buffs.persistent,
+                  dragonBane: updated.buffs.persistent.dragonBane - 1,
+                },
+              },
+            };
           }
         } else if (correct) {
-          // Non-boss correct answer (unchanged)
+          // Non-boss correct answer
+          const baseScore = (activeTileType === TileType.Enemy && prev.buffs.persistent.luckyCoin > 0) ? 200 : 100;
           const streakBonus = Math.floor(prev.streak / 3) * 25;
-          updated.score += 100 + streakBonus;
+          updated.score += baseScore + streakBonus;
           updated.streak += 1;
 
           if (activeTileType === TileType.Enemy) {
             updated.keys += 1;
+            // Lucky Coin: double base score, consume one charge
+            if (prev.buffs.persistent.luckyCoin > 0) {
+              updated = {
+                ...updated,
+                buffs: {
+                  ...updated.buffs,
+                  persistent: {
+                    ...updated.buffs.persistent,
+                    luckyCoin: updated.buffs.persistent.luckyCoin - 1,
+                  },
+                },
+              };
+            }
           }
           if (activeTileType === TileType.Treasure) {
-            updated.potions += 1;
+            // Treasure Magnet: double potion reward, consume one charge
+            if (prev.buffs.persistent.treasureMagnet > 0) {
+              updated.potions += 2;
+              updated = {
+                ...updated,
+                buffs: {
+                  ...updated.buffs,
+                  persistent: {
+                    ...updated.buffs.persistent,
+                    treasureMagnet: updated.buffs.persistent.treasureMagnet - 1,
+                  },
+                },
+              };
+            } else {
+              updated.potions += 1;
+            }
           }
         } else {
-          // Non-boss wrong answer (unchanged)
+          // Non-boss wrong answer
           if (activeTileType !== TileType.Door) {
             if (prev.shieldCharm > 0) {
               updated.shieldCharm = 0;
             } else {
               updated.health = Math.max(0, prev.health - 1);
             }
-            updated.streak = 0;
+            // Streak Saver: preserve streak, consume one charge
+            if (prev.buffs.persistent.streakSaver > 0) {
+              updated = {
+                ...updated,
+                buffs: {
+                  ...updated.buffs,
+                  persistent: {
+                    ...updated.buffs.persistent,
+                    streakSaver: updated.buffs.persistent.streakSaver - 1,
+                  },
+                },
+              };
+            } else {
+              updated.streak = 0;
+            }
           }
         }
 
@@ -415,6 +509,33 @@ const MelodyDungeonGame: React.FC = () => {
         }
         return prev;
       });
+
+      // Consume challenge buffs that were active
+      if (activeChallengeBuffsRef.current.metronome) {
+        setPlayer((prev) => ({
+          ...prev,
+          buffs: {
+            ...prev.buffs,
+            persistent: {
+              ...prev.buffs.persistent,
+              metronome: Math.max(0, prev.buffs.persistent.metronome - 1),
+            },
+          },
+        }));
+      }
+      if (activeChallengeBuffsRef.current.tuningFork) {
+        setPlayer((prev) => ({
+          ...prev,
+          buffs: {
+            ...prev.buffs,
+            persistent: {
+              ...prev.buffs.persistent,
+              tuningFork: Math.max(0, prev.buffs.persistent.tuningFork - 1),
+            },
+          },
+        }));
+      }
+      activeChallengeBuffsRef.current = { metronome: false, tuningFork: false };
     },
     [diffState, activeChallenge, activeTileType]
   );
@@ -717,6 +838,7 @@ const MelodyDungeonGame: React.FC = () => {
 
       {phase === 'challenge' && activeChallenge && (
         <ChallengeModal
+          key={challengeKey}
           challengeType={activeChallenge.type}
           tileType={activeTileType}
           difficulty={difficulty}
@@ -726,6 +848,9 @@ const MelodyDungeonGame: React.FC = () => {
           maxHealth={player.maxHealth}
           shieldCharm={player.shieldCharm}
           potions={player.potions}
+          dragonBane={player.buffs.persistent.dragonBane > 0}
+          slowRhythm={player.buffs.persistent.metronome > 0}
+          showIntervalHint={player.buffs.persistent.tuningFork > 0}
         />
       )}
 

@@ -22,6 +22,9 @@ interface Props {
   maxHealth?: number;
   shieldCharm?: number;
   potions?: number;
+  dragonBane?: boolean;
+  slowRhythm?: boolean;
+  showIntervalHint?: boolean;
 }
 
 const BOSS_HP = 3;
@@ -79,19 +82,21 @@ const DEFAULT_THEME = {
   bgColor: 'from-indigo-950/90 to-gray-900/95',
 };
 
-function ChallengeRenderer({ type, difficulty, floorNumber, onResult }: {
+function ChallengeRenderer({ type, difficulty, floorNumber, onResult, slowRhythm, showIntervalHint }: {
   type: ChallengeType;
   difficulty: DifficultyLevel;
   floorNumber: number;
   onResult: (correct: boolean) => void;
+  slowRhythm?: boolean;
+  showIntervalHint?: boolean;
 }) {
   switch (type) {
     case 'noteReading':
       return <NoteReadingChallenge floorNumber={floorNumber} onResult={onResult} />;
     case 'rhythmTap':
-      return <RhythmTapChallenge difficulty={difficulty} onResult={onResult} />;
+      return <RhythmTapChallenge difficulty={difficulty} onResult={onResult} slowMode={slowRhythm} />;
     case 'interval':
-      return <IntervalChallenge difficulty={difficulty} onResult={onResult} />;
+      return <IntervalChallenge difficulty={difficulty} onResult={onResult} showHint={showIntervalHint} />;
   }
 }
 
@@ -104,7 +109,10 @@ const BossBattle: React.FC<{
   maxHealth: number;
   shieldCharm: number;
   potions: number;
-}> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions }) => {
+  dragonBane?: boolean;
+  slowRhythm?: boolean;
+  showIntervalHint?: boolean;
+}> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint }) => {
   const maxBossHp = useMemo(() => getBossHp(tileType), [tileType]);
   const bossLabel = useMemo(() => getBossLabel(tileType), [tileType]);
 
@@ -118,7 +126,12 @@ const BossBattle: React.FC<{
   );
 
   const [currentRound, setCurrentRound] = useState(0);
-  const [bossHp, setBossHp] = useState(maxBossHp);
+  const [bossHp, setBossHp] = useState(() => {
+    if (dragonBane && tileType === TileType.Dragon) {
+      return Math.max(1, maxBossHp - 1);
+    }
+    return maxBossHp;
+  });
   const [effectiveHealth, setEffectiveHealth] = useState(playerHealth);
   const [shieldActive, setShieldActive] = useState(shieldCharm > 0);
   const [damageDealt, setDamageDealt] = useState(0);
@@ -259,6 +272,8 @@ const BossBattle: React.FC<{
           difficulty={currentChallenge.difficulty}
           floorNumber={floorNumber}
           onResult={handleRoundResult}
+          slowRhythm={slowRhythm}
+          showIntervalHint={showIntervalHint}
         />
       ) : (
         <div className="py-8 text-center">
@@ -272,7 +287,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0 }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint }) => {
   const theme = TILE_THEME[tileType] || DEFAULT_THEME;
   const isBoss = tileType === TileType.Dragon || tileType === TileType.MiniBoss || tileType === TileType.BigBoss;
 
@@ -299,9 +314,12 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
             maxHealth={maxHealth}
             shieldCharm={shieldCharm}
             potions={potions}
+            dragonBane={dragonBane}
+            slowRhythm={slowRhythm}
+            showIntervalHint={showIntervalHint}
           />
         ) : (
-          <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
+          <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
         )}
       </div>
     </div>

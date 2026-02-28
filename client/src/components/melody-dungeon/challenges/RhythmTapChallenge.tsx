@@ -6,6 +6,7 @@ import { playClick } from '../dungeonAudio';
 interface Props {
   difficulty: DifficultyLevel;
   onResult: (correct: boolean) => void;
+  slowMode?: boolean;
 }
 
 type Beat = { time: number; duration: number };
@@ -30,8 +31,11 @@ function generatePattern(params: ReturnType<typeof getRhythmParams>): Beat[] {
   return beats;
 }
 
-const RhythmTapChallenge: React.FC<Props> = ({ difficulty, onResult }) => {
-  const params = useMemo(() => getRhythmParams(difficulty), [difficulty]);
+const RhythmTapChallenge: React.FC<Props> = ({ difficulty, onResult, slowMode }) => {
+  const params = useMemo(() => {
+    const p = getRhythmParams(difficulty);
+    return slowMode ? { ...p, bpm: Math.round(p.bpm / 2) } : p;
+  }, [difficulty, slowMode]);
   const [phase, setPhase] = useState<'listen' | 'tap' | 'done'>('listen');
   const [pattern] = useState<Beat[]>(() => generatePattern(params));
   const [taps, setTaps] = useState<number[]>([]);
