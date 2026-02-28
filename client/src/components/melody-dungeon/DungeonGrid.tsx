@@ -36,15 +36,20 @@ function getFogOverlayOpacity(vis: Visibility, dist: number): number {
 
 const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.Door]: '/images/melody-dungeon-door.png',
-  [TileType.Enemy]: '/images/melody-dungeon-enemy.png',
   [TileType.Treasure]: '/images/melody-dungeon-treasure.png',
   [TileType.Chest]: '/images/melody-dungeon-chest.png',
   [TileType.Stairs]: '/images/melody-dungeon-stairs.png',
-  [TileType.Dragon]: '/images/melody-dungeon-boss.png',
   [TileType.MiniBoss]: '/images/melody-dungeon-miniboss.png',
   [TileType.BigBoss]: '/images/melody-dungeon-bigboss.png',
   [TileType.Merchant]: '/images/melody-dungeon-merchant.png',
   [TileType.MerchantStall]: '/images/melody-dungeon-stall.png',
+};
+
+const ENEMY_SPRITE: Record<string, string> = {
+  ghost: '/images/melody-dungeon-ghost.png',
+  skeleton: '/images/melody-dungeon-skeleton.png',
+  dragon: '/images/melody-dungeon-dragon.png',
+  goblin: '/images/melody-dungeon-goblin.png',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft }) => {
@@ -107,12 +112,13 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             showContent &&
             !isPlayer &&
             !cleared &&
-            TILE_SPRITE[tile.type];
+            (tile.type === TileType.Enemy
+              ? ENEMY_SPRITE[tile.enemySubtype ?? 'ghost']
+              : TILE_SPRITE[tile.type]);
           const fullTileSprite =
             tile.type === TileType.Door || tile.type === TileType.Stairs || tile.type === TileType.MerchantStall;
           const isEnemy =
             tile.type === TileType.Enemy ||
-            tile.type === TileType.Dragon ||
             tile.type === TileType.MiniBoss ||
             tile.type === TileType.BigBoss;
           const isAnimated = isEnemy || tile.type === TileType.Merchant;
