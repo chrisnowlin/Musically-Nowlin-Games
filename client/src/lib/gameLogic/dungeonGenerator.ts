@@ -3,11 +3,11 @@ import {
   type Tile,
   type Position,
   type Rect,
-  type ChallengeType,
   TileType,
   getDungeonSize,
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
+import { getChallengeTypesForFloor } from '@/components/melody-dungeon/challengeHelpers';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';
@@ -293,13 +293,6 @@ function pickValidChestTile(
   }
 
   return null;
-}
-
-function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
-  // Keep early floors simpler, then gradually introduce harder question types.
-  if (floorNumber <= 5) return ['noteReading'];
-  if (floorNumber <= 10) return ['noteReading', 'rhythmTap'];
-  return ['noteReading', 'rhythmTap', 'interval'];
 }
 
 export function generateDungeon(floorNumber: number): DungeonFloor {

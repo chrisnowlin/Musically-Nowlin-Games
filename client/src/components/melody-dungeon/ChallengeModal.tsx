@@ -19,6 +19,7 @@ interface Props {
   floorNumber: number;
   onResult: (correct: boolean, meta?: BossBattleMeta) => void;
   playerHealth?: number;
+  maxHealth?: number;
   shieldCharm?: number;
   potions?: number;
 }
@@ -100,9 +101,10 @@ const BossBattle: React.FC<{
   floorNumber: number;
   onResult: (correct: boolean, meta?: BossBattleMeta) => void;
   playerHealth: number;
+  maxHealth: number;
   shieldCharm: number;
   potions: number;
-}> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, shieldCharm, potions }) => {
+}> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions }) => {
   const maxBossHp = useMemo(() => getBossHp(tileType), [tileType]);
   const bossLabel = useMemo(() => getBossLabel(tileType), [tileType]);
 
@@ -138,12 +140,12 @@ const BossBattle: React.FC<{
   }, [bigBossSequence, challengeTypes, difficulty, currentRound]);
 
   const handleUsePotion = useCallback(() => {
-    if (potionsRemaining > 0 && effectiveHealth < playerHealth) {
+    if (potionsRemaining > 0 && effectiveHealth < maxHealth) {
       setPotionsRemaining((p) => p - 1);
       setPotionsUsed((p) => p + 1);
-      setEffectiveHealth((h) => Math.min(h + 1, playerHealth));
+      setEffectiveHealth((h) => Math.min(h + 1, maxHealth));
     }
-  }, [potionsRemaining, effectiveHealth, playerHealth]);
+  }, [potionsRemaining, effectiveHealth, maxHealth]);
 
   const proceedToNextRound = useCallback(() => {
     setCurrentRound((r) => r + 1);
@@ -216,12 +218,12 @@ const BossBattle: React.FC<{
         <div>
           <div className="flex justify-between text-xs text-gray-400 mb-1">
             <span>Your HP{shieldActive ? ' (shielded)' : ''}</span>
-            <span>{effectiveHealth}/{playerHealth}</span>
+            <span>{effectiveHealth}/{maxHealth}</span>
           </div>
           <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-green-600 to-emerald-400 transition-all duration-500"
-              style={{ width: `${(effectiveHealth / playerHealth) * 100}%` }}
+              style={{ width: `${(effectiveHealth / maxHealth) * 100}%` }}
             />
           </div>
         </div>
@@ -270,7 +272,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, shieldCharm = 0, potions = 0 }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0 }) => {
   const theme = TILE_THEME[tileType] || DEFAULT_THEME;
   const isBoss = tileType === TileType.Dragon || tileType === TileType.MiniBoss || tileType === TileType.BigBoss;
 
@@ -294,6 +296,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
             floorNumber={floorNumber}
             onResult={onResult}
             playerHealth={playerHealth}
+            maxHealth={maxHealth}
             shieldCharm={shieldCharm}
             potions={potions}
           />

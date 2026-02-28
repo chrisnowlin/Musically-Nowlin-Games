@@ -714,6 +714,7 @@ const MelodyDungeonGame: React.FC = () => {
           floorNumber={floorNumber}
           onResult={handleChallengeResult}
           playerHealth={player.health}
+          maxHealth={player.maxHealth}
           shieldCharm={player.shieldCharm}
           potions={player.potions}
         />
