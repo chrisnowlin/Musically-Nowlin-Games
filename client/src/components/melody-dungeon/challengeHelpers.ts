@@ -1,4 +1,4 @@
-import type { ChallengeType, DifficultyLevel } from '@/lib/gameLogic/dungeonTypes';
+import type { ChallengeType, DifficultyLevel, EnemySubtype } from '@/lib/gameLogic/dungeonTypes';
 
 export function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
   if (floorNumber <= 5) return ['noteReading'];
@@ -74,4 +74,15 @@ export function generateBigBossSequence(
   }
 
   return shuffle(sequence);
+}
+
+/** Returns the challenge type pool for a given enemy subtype. */
+export function getSubtypeChallengePool(subtype: EnemySubtype | undefined, allFloorTypes: ChallengeType[]): ChallengeType[] {
+  switch (subtype) {
+    case 'ghost': return ['noteReading'];
+    case 'skeleton': return ['rhythmTap'];
+    case 'goblin': return ['interval'];
+    case 'dragon': return allFloorTypes;
+    default: return allFloorTypes;
+  }
 }

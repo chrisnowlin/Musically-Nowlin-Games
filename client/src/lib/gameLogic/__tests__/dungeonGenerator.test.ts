@@ -40,20 +40,59 @@ describe('getBossType', () => {
 });
 
 describe('generateDungeon', () => {
-  it('should set enemyState to guarding on Dragons', () => {
-    // Floor 3+ guarantees a dragon spawn attempt; use non-boss floor
+  it('should set enemyState to guarding on dragons', () => {
     const floor = generateDungeon(4);
-    const dragons = findTiles(floor, TileType.Dragon);
+    const dragons = floor.tiles.flat().filter(
+      (t) => t.type === TileType.Enemy && t.enemySubtype === 'dragon'
+    );
     for (const d of dragons) {
-      expect(d.tile.enemyState).toBe('guarding');
+      expect(d.enemyState).toBe('guarding');
     }
   });
 
-  it('should set enemyState to patrolling on regular enemies', () => {
+  it('should set enemyState to patrolling on non-dragon enemies', () => {
     const floor = generateDungeon(4);
-    const enemies = findTiles(floor, TileType.Enemy);
+    const enemies = floor.tiles.flat().filter(
+      (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
+    );
     for (const e of enemies) {
-      expect(e.tile.enemyState).toBe('patrolling');
+      expect(e.enemyState).toBe('patrolling');
+    }
+  });
+
+  it('assigns ghost subtype with level 1 on floor 1', () => {
+    const floor = generateDungeon(1);
+    const enemies = floor.tiles.flat().filter(
+      (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
+    );
+    expect(enemies.length).toBeGreaterThan(0);
+    for (const e of enemies) {
+      expect(e.enemySubtype).toBe('ghost');
+      expect(e.enemyLevel).toBe(1);
+    }
+  });
+
+  it('assigns dragon subtype with enemyLevel 3 on floor 4', () => {
+    const floor = generateDungeon(4);
+    const dragons = floor.tiles.flat().filter(
+      (t) => t.type === TileType.Enemy && t.enemySubtype === 'dragon'
+    );
+    for (const d of dragons) {
+      expect(d.enemyState).toBe('guarding');
+      expect(d.enemyLevel).toBe(3);
+    }
+  });
+
+  it('assigns level 1 or 2 on floor 8', () => {
+    for (let run = 0; run < 5; run++) {
+      const floor = generateDungeon(8);
+      const enemies = floor.tiles.flat().filter(
+        (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
+      );
+      for (const e of enemies) {
+        expect(e.enemyLevel).toBeGreaterThanOrEqual(1);
+        expect(e.enemyLevel).toBeLessThanOrEqual(2);
+      }
     }
   });
 });
@@ -88,7 +127,9 @@ describe('moveEnemies', () => {
     // 5x1 corridor: [player] [floor] [floor] [dragon] [floor]
     const floor = createTestFloor(5, 1, (tiles) => {
       tiles[0][3] = {
-        type: TileType.Dragon,
+        type: TileType.Enemy,
+        enemySubtype: 'dragon' as const,
+        enemyLevel: 3,
         visible: false,
         visited: false,
         challengeType: 'noteReading',
@@ -101,7 +142,8 @@ describe('moveEnemies', () => {
     const result = moveEnemies(floor, playerPos);
 
     // Dragon should have moved from x=3 toward player at x=0, so now at x=2
-    expect(result.tiles[0][2].type).toBe(TileType.Dragon);
+    expect(result.tiles[0][2].type).toBe(TileType.Enemy);
+    expect(result.tiles[0][2].enemySubtype).toBe('dragon');
     expect(result.tiles[0][3].type).toBe(TileType.Floor);
   });
 
@@ -115,7 +157,9 @@ describe('moveEnemies', () => {
         cleared: false,
       };
       tiles[0][4] = {
-        type: TileType.Dragon,
+        type: TileType.Enemy,
+        enemySubtype: 'dragon' as const,
+        enemyLevel: 3,
         visible: false,
         visited: false,
         challengeType: 'noteReading',
@@ -131,7 +175,7 @@ describe('moveEnemies', () => {
       // Find where dragon ended up
       let dragonX = -1;
       for (let x = 0; x < 7; x++) {
-        if (result.tiles[0][x].type === TileType.Dragon) dragonX = x;
+        if (result.tiles[0][x].type === TileType.Enemy && result.tiles[0][x].enemySubtype === 'dragon') dragonX = x;
       }
       // Chebyshev distance from chest at x=3 should be <= 2
       expect(Math.abs(dragonX - 3)).toBeLessThanOrEqual(2);
@@ -143,7 +187,9 @@ describe('moveEnemies', () => {
     // Dragon's nearby chest was opened (not present). Distant chest is beyond tether range.
     const floor = createTestFloor(10, 1, (tiles) => {
       tiles[0][3] = {
-        type: TileType.Dragon,
+        type: TileType.Enemy,
+        enemySubtype: 'dragon' as const,
+        enemyLevel: 3,
         visible: false,
         visited: false,
         challengeType: 'noteReading',
@@ -165,7 +211,7 @@ describe('moveEnemies', () => {
     // and move toward the player, NOT freeze in place
     let dragonX = -1;
     for (let x = 0; x < 10; x++) {
-      if (result.tiles[0][x].type === TileType.Dragon) dragonX = x;
+      if (result.tiles[0][x].type === TileType.Enemy && result.tiles[0][x].enemySubtype === 'dragon') dragonX = x;
     }
     expect(dragonX).toBe(2); // Moved toward player from x=3
     expect(result.tiles[0][dragonX].enemyState).toBe('chasing');
@@ -176,7 +222,9 @@ describe('moveEnemies', () => {
     // No chests on the floor at all
     const floor = createTestFloor(5, 1, (tiles) => {
       tiles[0][3] = {
-        type: TileType.Dragon,
+        type: TileType.Enemy,
+        enemySubtype: 'dragon' as const,
+        enemyLevel: 3,
         visible: false,
         visited: false,
         challengeType: 'noteReading',
@@ -189,7 +237,8 @@ describe('moveEnemies', () => {
     const result = moveEnemies(floor, playerPos);
 
     // Dragon should have transitioned to chasing and moved toward player
-    expect(result.tiles[0][2].type).toBe(TileType.Dragon);
+    expect(result.tiles[0][2].type).toBe(TileType.Enemy);
+    expect(result.tiles[0][2].enemySubtype).toBe('dragon');
     expect(result.tiles[0][2].enemyState).toBe('chasing');
   });
 });
@@ -209,13 +258,11 @@ describe('boss floor generation', () => {
     expect(bigBosses[0].pos).toEqual(floor.stairsPosition);
   });
 
-  it('has no enemies or dragons on boss floors', () => {
+  it('has no enemies on boss floors', () => {
     const floor5 = generateDungeon(5);
     const floor10 = generateDungeon(10);
     expect(findTiles(floor5, TileType.Enemy).length).toBe(0);
-    expect(findTiles(floor5, TileType.Dragon).length).toBe(0);
     expect(findTiles(floor10, TileType.Enemy).length).toBe(0);
-    expect(findTiles(floor10, TileType.Dragon).length).toBe(0);
   });
 
   it('has no Stairs tile visible on boss floors (boss replaces it)', () => {

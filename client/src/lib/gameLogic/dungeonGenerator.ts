@@ -3,11 +3,13 @@ import {
   type Tile,
   type Position,
   type Rect,
+  type ChallengeType,
+  type EnemySubtype,
   TileType,
   getDungeonSize,
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
-import { getChallengeTypesForFloor } from '@/components/melody-dungeon/challengeHelpers';
+import { getChallengeTypesForFloor, getSubtypeChallengePool } from '@/components/melody-dungeon/challengeHelpers';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';
@@ -17,6 +19,20 @@ export function getBossType(floorNumber: number): 'big' | 'mini' | null {
 
 function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/** Returns which enemy subtypes can spawn on a given floor. */
+function getEnemySubtypesForFloor(floorNumber: number): EnemySubtype[] {
+  if (floorNumber <= 5) return ['ghost'];
+  if (floorNumber <= 10) return ['ghost', 'skeleton'];
+  return ['ghost', 'skeleton', 'goblin'];
+}
+
+/** Returns enemy level for a given floor (blends two adjacent levels for variety). */
+function pickEnemyLevel(floorNumber: number): number {
+  const maxLevel = Math.min(3, Math.floor((floorNumber - 1) / 5) + 1);
+  const minLevel = Math.max(1, maxLevel - 1);
+  return rand(minLevel, maxLevel);
 }
 
 function createEmptyGrid(width: number, height: number): Tile[][] {
@@ -409,9 +425,12 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
           ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
           : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
       if (dragonPos) {
-        grid[dragonPos.y][dragonPos.x].type = TileType.Dragon;
+        const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
+        grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
+        grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
+        grid[dragonPos.y][dragonPos.x].enemyLevel = 3;
         grid[dragonPos.y][dragonPos.x].challengeType =
-          challengeTypes[rand(0, challengeTypes.length - 1)];
+          dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
         grid[dragonPos.y][dragonPos.x].cleared = false;
         grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
         placedPositions.push(dragonPos);
@@ -421,12 +440,17 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     // Place regular enemies.
     const totalEnemies = Math.min(2 + floorNumber, 6);
     const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
+    const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
     for (let i = 0; i < regularCount; i++) {
       const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
       if (pos) {
+        const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
+        const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
         grid[pos.y][pos.x].type = TileType.Enemy;
+        grid[pos.y][pos.x].enemySubtype = subtype;
+        grid[pos.y][pos.x].enemyLevel = pickEnemyLevel(floorNumber);
         grid[pos.y][pos.x].challengeType =
-          challengeTypes[rand(0, challengeTypes.length - 1)];
+          subtypePool[rand(0, subtypePool.length - 1)];
         grid[pos.y][pos.x].cleared = false;
         grid[pos.y][pos.x].enemyState = 'patrolling';
         placedPositions.push(pos);
@@ -534,7 +558,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
   for (let y = 0; y < floor.height; y++) {
     for (let x = 0; x < floor.width; x++) {
       const t = tiles[y][x];
-      if (!t.cleared && (t.type === TileType.Enemy || t.type === TileType.Dragon)) {
+      if (!t.cleared && t.type === TileType.Enemy) {
         enemies.push({ pos: { x, y }, tile: t });
       }
       if (t.type === TileType.Chest && !t.cleared) {
@@ -576,7 +600,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
     const { pos, tile } = enemy;
 
     // Dragon state transition: guarding → chasing when no uncleared chests are nearby.
-    if (tile.type === TileType.Dragon && tile.enemyState === 'guarding') {
+    if (tile.enemySubtype === 'dragon' && tile.enemyState === 'guarding') {
       const hasNearbyChest = chests.some(
         (c) => Math.max(Math.abs(pos.x - c.x), Math.abs(pos.y - c.y)) <= 2
       );
@@ -609,6 +633,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         tiles[ny][nx] = {
           ...target,
           type: tile.type,
+          enemySubtype: tile.enemySubtype,
+          enemyLevel: tile.enemyLevel,
           challengeType: tile.challengeType,
           cleared: false,
           enemyState: tile.enemyState,
@@ -616,6 +642,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         tiles[pos.y][pos.x] = {
           ...tiles[pos.y][pos.x],
           type: TileType.Floor,
+          enemySubtype: undefined,
+          enemyLevel: undefined,
           challengeType: undefined,
           cleared: undefined,
           enemyState: undefined,
@@ -650,7 +678,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       if (occupied.has(key)) continue;
 
       // Dragon tether: stay within Chebyshev distance 2 of nearest uncleared chest.
-      if (tile.type === TileType.Dragon && chests.length > 0) {
+      if (tile.enemySubtype === 'dragon' && chests.length > 0) {
         const nearestDist = Math.min(
           ...chests.map((c) => Math.max(Math.abs(nx - c.x), Math.abs(ny - c.y)))
         );
@@ -661,6 +689,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       tiles[ny][nx] = {
         ...target,
         type: tile.type,
+        enemySubtype: tile.enemySubtype,
+        enemyLevel: tile.enemyLevel,
         challengeType: tile.challengeType,
         cleared: false,
         enemyState: tile.enemyState,
@@ -668,6 +698,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       tiles[pos.y][pos.x] = {
         ...tiles[pos.y][pos.x],
         type: TileType.Floor,
+        enemySubtype: undefined,
+        enemyLevel: undefined,
         challengeType: undefined,
         cleared: undefined,
         enemyState: undefined,
