@@ -94,7 +94,7 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
     case 'goblin':
       return { title: 'Goblin Encounter!', borderColor: 'border-green-500', bgColor: 'from-green-950/90 to-gray-900/95' };
     default:
-      return TILE_THEME[TileType.Enemy]!; // Ghost uses the red enemy theme
+      return TILE_THEME[TileType.Enemy] ?? DEFAULT_THEME; // Ghost uses the red enemy theme
   }
 }
 
