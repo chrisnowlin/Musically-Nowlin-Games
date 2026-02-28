@@ -5,6 +5,8 @@ import {
   TileType,
   MAX_HEALTH,
   VISIBILITY_RADIUS,
+  DEFAULT_BUFFS,
+  DEFAULT_FLOOR_BUFFS,
 } from '@/lib/gameLogic/dungeonTypes';
 import type {
   GamePhase,
@@ -32,11 +34,11 @@ import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
 import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
-function updateVisibility(floor: DungeonFloor, pos: Position): DungeonFloor {
+function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
     row.map((tile, x) => {
       const dist = Math.max(Math.abs(x - pos.x), Math.abs(y - pos.y));
-      const visible = dist <= VISIBILITY_RADIUS;
+      const visible = dist <= radius;
       return {
         ...tile,
         visible,
@@ -63,6 +65,10 @@ function createPlayer(start: Position): PlayerState {
     potions: 0,
     streak: 0,
     shieldCharm: 0,
+    buffs: {
+      floor: { ...DEFAULT_FLOOR_BUFFS },
+      persistent: { ...DEFAULT_BUFFS.persistent },
+    },
   };
 }
 
@@ -98,6 +104,9 @@ const MelodyDungeonGame: React.FC = () => {
     }
   });
   const moveLockedRef = useRef(false);
+  const playerRef = useRef(player);
+  playerRef.current = player;
+  const getVisRadius = () => playerRef.current.buffs.floor.torch ? VISIBILITY_RADIUS + 2 : VISIBILITY_RADIUS;
   const dragonCaughtRef = useRef<ChallengeType | false>(false);
   const [facingLeft, setFacingLeft] = useState(false);
 
@@ -242,7 +251,7 @@ const MelodyDungeonGame: React.FC = () => {
                 rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Floor } : t
               )
             );
-            return moveEnemiesAndDetectCatch(updateVisibility({ ...f, tiles }, newPos), newPos);
+            return moveEnemiesAndDetectCatch(updateVisibility({ ...f, tiles }, newPos, getVisRadius()), newPos);
           });
           return {
             ...prev,
@@ -263,7 +272,7 @@ const MelodyDungeonGame: React.FC = () => {
             tile.type === TileType.MiniBoss ||
             tile.type === TileType.BigBoss)
         ) {
-          setFloor((f) => updateVisibility(f, newPos));
+          setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
           moveLockedRef.current = true;
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
@@ -274,7 +283,7 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Merchant: open the shop (no challenge, not cleared)
         if (tile.type === TileType.Merchant) {
-          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos), newPos));
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
           moveLockedRef.current = true;
           setPhase('shopping');
           return { ...prev, position: newPos };
@@ -282,12 +291,12 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Stairs
         if (tile.type === TileType.Stairs) {
-          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos), newPos));
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
           setPhase('floorComplete');
           return { ...prev, position: newPos };
         }
 
-        setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos), newPos));
+        setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
         return { ...prev, position: newPos };
       });
     },
@@ -320,27 +329,29 @@ const MelodyDungeonGame: React.FC = () => {
           if (correct) {
             const streakBonus = Math.floor(prev.streak / 3) * 25;
             updated.streak += 1;
+            // Net health after battle: damage taken minus potions healed (min 1 since player won)
+            const battleHealth = Math.max(1, Math.min(prev.maxHealth, prev.health - meta.damageDealt + (meta.potionsUsed || 0)));
 
             if (activeTileType === TileType.BigBoss) {
               updated.health = prev.maxHealth; // Full health restore
               updated.score += 1500 + streakBonus;
               updated.keys += 3;
-              updated.potions += 2;
+              updated.potions += 2; // reward (after battle consumption deducted above)
             } else if (activeTileType === TileType.MiniBoss) {
-              updated.health = Math.max(1, Math.min(prev.maxHealth, prev.health - meta.damageDealt + (meta.potionsUsed || 0)));
+              updated.health = battleHealth;
               updated.score += 750 + streakBonus;
               updated.keys += 2;
-              updated.potions += 2;
+              updated.potions += 2; // reward (after battle consumption deducted above)
             } else {
               // Dragon
-              updated.health = Math.max(1, Math.min(prev.maxHealth, prev.health - meta.damageDealt + (meta.potionsUsed || 0)));
+              updated.health = battleHealth;
               updated.score += 500 + streakBonus;
               updated.keys += 2;
-              updated.potions += 1;
+              updated.potions += 1; // reward (after battle consumption deducted above)
             }
           } else {
-            // Boss defeated the player
-            updated.health = Math.max(0, prev.health - meta.damageDealt + (meta.potionsUsed || 0));
+            // Boss defeated the player — battle only calls onResult(false) when player HP=0
+            updated.health = 0;
             updated.streak = 0;
           }
         } else if (correct) {
@@ -397,7 +408,7 @@ const MelodyDungeonGame: React.FC = () => {
       setPlayer((prev) => {
         if (prev.health <= 0) {
           setPhase('gameOver');
-        } else if (isBoss && correct && (activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss)) {
+        } else if (correct && (activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss)) {
           setPhase('floorComplete');
         } else {
           setPhase('playing');
