@@ -64,7 +64,7 @@ function findCatchingEnemyAtPosition(floor: DungeonFloor, pos: Position): Tile |
   return null;
 }
 
-/** Finds the uncleared boss anchor tile (MiniBoss or BigBoss) in the floor grid. */
+/** Finds the boss anchor tile (MiniBoss or BigBoss) in the floor grid, if one exists. */
 function findBossAnchor(
   tiles: Tile[][],
 ): { pos: Position; type: TileType.MiniBoss | TileType.BigBoss } | null {
@@ -343,7 +343,9 @@ const MelodyDungeonGame: React.FC = () => {
           return afterItem;
         }
 
-        // Boss body: find anchor and trigger encounter; player stays outside footprint
+        // Boss body: find anchor and trigger encounter; player stays outside footprint.
+        // Note: after boss defeat, Task 5 converts all BossBody tiles to Floor.
+        // Until then (during boss battle), BossBody tiles without a resolvable anchor return prev.
         if (tile.type === TileType.BossBody) {
           const bossAnchor = findBossAnchor(floor.tiles);
           if (!bossAnchor) return prev;
@@ -366,6 +368,7 @@ const MelodyDungeonGame: React.FC = () => {
           setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
           moveLockedRef.current = true;
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
+          // newPos is the anchor tile's position in this branch (player walked into the anchor directly)
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(tile.type);
           setActiveTileSubtype(tile.enemySubtype);
