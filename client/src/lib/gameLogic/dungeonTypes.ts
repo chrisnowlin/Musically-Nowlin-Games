@@ -61,11 +61,24 @@ export interface PersistentBuffs {
   torch: number;
   mapScroll: number;
   compass: number;
+  shieldCharm: number;
+}
+
+/** Passive buffs manually armed by the player from the bag — will auto-trigger on the relevant event. */
+export interface ArmedBuffs {
+  streakSaver: number;
+  secondChance: number;
+  dragonBane: number;
+  luckyCoin: number;
+  treasureMagnet: number;
+  metronome: number;
+  tuningFork: number;
 }
 
 export interface PlayerBuffs {
   floor: FloorBuffs;
   persistent: PersistentBuffs;
+  armed: ArmedBuffs;
 }
 
 export interface PlayerState {
@@ -97,11 +110,23 @@ export const DEFAULT_PERSISTENT_BUFFS: PersistentBuffs = {
   torch: 0,
   mapScroll: 0,
   compass: 0,
+  shieldCharm: 0,
+};
+
+export const DEFAULT_ARMED_BUFFS: ArmedBuffs = {
+  streakSaver: 0,
+  secondChance: 0,
+  dragonBane: 0,
+  luckyCoin: 0,
+  treasureMagnet: 0,
+  metronome: 0,
+  tuningFork: 0,
 };
 
 export const DEFAULT_BUFFS: PlayerBuffs = {
   floor: { ...DEFAULT_FLOOR_BUFFS },
   persistent: { ...DEFAULT_PERSISTENT_BUFFS },
+  armed: { ...DEFAULT_ARMED_BUFFS },
 };
 
 export interface DungeonFloor {

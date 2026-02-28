@@ -49,8 +49,14 @@ export const CORE_ITEMS: MerchantItem[] = [
     emoji: '🛡️',
     category: 'core',
     getPrice: (floor) => 300 + floor * 20,
-    canBuy: (player) => player.shieldCharm < 1,
-    apply: (player) => ({ ...player, shieldCharm: 1 }),
+    canBuy: () => true,
+    apply: (player) => ({
+      ...player,
+      buffs: {
+        ...player.buffs,
+        persistent: { ...player.buffs.persistent, shieldCharm: player.buffs.persistent.shieldCharm + 1 },
+      },
+    }),
   },
 ];
 

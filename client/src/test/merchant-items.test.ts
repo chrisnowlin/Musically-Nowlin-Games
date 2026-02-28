@@ -16,6 +16,7 @@ function makePlayer(overrides: Partial<PlayerState> = {}): PlayerState {
     buffs: {
       floor: { ...DEFAULT_BUFFS.floor },
       persistent: { ...DEFAULT_BUFFS.persistent },
+      armed: { ...DEFAULT_BUFFS.armed },
     },
     ...overrides,
   };
@@ -66,17 +67,12 @@ describe('Merchant items', () => {
     expect(result.potions).toBe(4);
   });
 
-  it('shield charm sets shieldCharm to 1', () => {
+  it('shield charm adds to held inventory (persistent)', () => {
     const charm = MERCHANT_ITEMS.find((i) => i.id === 'shield-charm')!;
-    const player = makePlayer({ shieldCharm: 0 });
+    const player = makePlayer();
     const result = charm.apply(player);
-    expect(result.shieldCharm).toBe(1);
-  });
-
-  it('shield charm cannot be bought if already held', () => {
-    const charm = MERCHANT_ITEMS.find((i) => i.id === 'shield-charm')!;
-    const player = makePlayer({ shieldCharm: 1 });
-    expect(charm.canBuy(player)).toBe(false);
+    expect(result.buffs.persistent.shieldCharm).toBe(1);
+    expect(result.shieldCharm).toBe(0); // not armed yet — must be armed from bag
   });
 
   it('all items can be bought with sufficient score', () => {
@@ -86,10 +82,14 @@ describe('Merchant items', () => {
     }
   });
 
-  it('shield charm cannot be stacked', () => {
+  it('shield charm is stackable in the bag', () => {
     const charm = CORE_ITEMS.find((i) => i.id === 'shield-charm')!;
-    const player = makePlayer({ shieldCharm: 1 });
-    expect(charm.canBuy(player)).toBe(false);
+    const player = makePlayer();
+    const r1 = charm.apply(player);
+    expect(r1.buffs.persistent.shieldCharm).toBe(1);
+    const r2 = charm.apply(r1);
+    expect(r2.buffs.persistent.shieldCharm).toBe(2);
+    expect(charm.canBuy(r1)).toBe(true);
   });
 
   it('getMerchantPrice deducts score and applies item', () => {
