@@ -4,6 +4,7 @@ import { TileType } from '@/lib/gameLogic/dungeonTypes';
 import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
+import { getChallengeTypesForFloor, pickRandom } from './challengeHelpers';
 
 export interface BossBattleMeta {
   damageDealt: number;
@@ -50,16 +51,6 @@ const DEFAULT_THEME = {
   borderColor: 'border-indigo-500',
   bgColor: 'from-indigo-950/90 to-gray-900/95',
 };
-
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
-  if (floorNumber <= 5) return ['noteReading'];
-  if (floorNumber <= 10) return ['noteReading', 'rhythmTap'];
-  return ['noteReading', 'rhythmTap', 'interval'];
-}
 
 function ChallengeRenderer({ type, difficulty, floorNumber, onResult }: {
   type: ChallengeType;
