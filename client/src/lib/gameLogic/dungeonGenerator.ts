@@ -21,7 +21,7 @@ function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/** Returns which enemy subtypes can spawn on a given floor. */
+/** Returns patrol-spawnable enemy subtypes for a given floor. Dragon is placed separately via chest-guardian logic and is not included here. */
 function getEnemySubtypesForFloor(floorNumber: number): EnemySubtype[] {
   if (floorNumber <= 5) return ['ghost'];
   if (floorNumber <= 10) return ['ghost', 'skeleton'];
@@ -618,11 +618,11 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         return distA - distB;
       });
 
-      let moved = false;
       for (const d of sorted) {
         const nx = pos.x + d.x;
         const ny = pos.y + d.y;
         if (nx < 0 || nx >= floor.width || ny < 0 || ny >= floor.height) continue;
+        if (nx === playerPos.x && ny === playerPos.y) continue;
 
         const target = tiles[ny][nx];
         if (target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
@@ -651,7 +651,6 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
 
         occupied.delete(`${pos.x},${pos.y}`);
         occupied.add(key);
-        moved = true;
         break;
       }
       continue; // Skip the default random movement

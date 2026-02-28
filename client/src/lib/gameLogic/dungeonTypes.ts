@@ -7,6 +7,7 @@ export enum TileType {
   Chest = 'chest',
   Stairs = 'stairs',
   PlayerStart = 'playerStart',
+  /** @deprecated Dragon is now TileType.Enemy with enemySubtype 'dragon'. Will be removed in a future cleanup. */
   Dragon = 'dragon',
   Merchant = 'merchant',
   MerchantStall = 'merchantStall',
