@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { PlayerState } from '@/lib/gameLogic/dungeonTypes';
-import { MERCHANT_ITEMS } from '@/lib/gameLogic/merchantItems';
+import { getShopInventory } from '@/lib/gameLogic/merchantItems';
 import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
 
 interface Props {
@@ -11,6 +11,10 @@ interface Props {
 }
 
 const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose }) => {
+  const shopItems = useMemo(() => getShopInventory(floorNumber), [floorNumber]);
+  const coreItems = shopItems.filter((i) => i.category === 'core');
+  const specialItems = shopItems.filter((i) => i.category !== 'core');
+
   const handleBuy = (item: MerchantItem) => {
     const price = item.getPrice(floorNumber);
     if (player.score < price || !item.canBuy(player)) return;
@@ -34,7 +38,47 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
         </div>
 
         <div className="grid gap-2 mb-4">
-          {MERCHANT_ITEMS.map((item) => {
+          {coreItems.map((item) => {
+            const price = item.getPrice(floorNumber);
+            const canAfford = player.score >= price;
+            const canBuy = canAfford && item.canBuy(player);
+
+            return (
+              <div
+                key={item.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border ${
+                  canBuy
+                    ? 'border-emerald-700 bg-emerald-950/50'
+                    : 'border-gray-700 bg-gray-900/50 opacity-60'
+                }`}
+              >
+                <span className="text-2xl shrink-0">{item.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm text-white">{item.name}</div>
+                  <div className="text-xs text-gray-400">{item.description}</div>
+                </div>
+                <button
+                  onClick={() => handleBuy(item)}
+                  disabled={!canBuy}
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                    canBuy
+                      ? 'bg-emerald-700 hover:bg-emerald-600 text-white'
+                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  {price} pts
+                </button>
+              </div>
+            );
+          })}
+
+          {specialItems.length > 0 && (
+            <div className="text-center text-xs text-gray-500 uppercase tracking-wider py-1 border-t border-gray-700/50 mt-1">
+              Special Items
+            </div>
+          )}
+
+          {specialItems.map((item) => {
             const price = item.getPrice(floorNumber);
             const canAfford = player.score >= price;
             const canBuy = canAfford && item.canBuy(player);

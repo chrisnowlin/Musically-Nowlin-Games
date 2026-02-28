@@ -44,6 +44,36 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName })
             {'\uD83D\uDEE1\uFE0F'} 1
           </span>
         )}
+        {player.buffs.floor.torch && (
+          <span className="text-xs" title="Torch active">{'\uD83D\uDD26'}</span>
+        )}
+        {player.buffs.floor.compass && (
+          <span className="text-xs" title="Compass active">{'\uD83E\uDDED'}</span>
+        )}
+        {player.buffs.floor.mapRevealed && (
+          <span className="text-xs" title="Map revealed">{'\uD83D\uDDFA\uFE0F'}</span>
+        )}
+        {player.buffs.persistent.streakSaver > 0 && (
+          <span className="text-xs" title="Streak Saver">{'\uD83D\uDD25'}&times;{player.buffs.persistent.streakSaver}</span>
+        )}
+        {player.buffs.persistent.secondChance > 0 && (
+          <span className="text-xs" title="Second Chance">{'\uD83D\uDD04'}&times;{player.buffs.persistent.secondChance}</span>
+        )}
+        {player.buffs.persistent.dragonBane > 0 && (
+          <span className="text-xs" title="Dragon Bane">{'\u2694\uFE0F'}&times;{player.buffs.persistent.dragonBane}</span>
+        )}
+        {player.buffs.persistent.luckyCoin > 0 && (
+          <span className="text-xs" title="Lucky Coin">{'\uD83E\uDE99'}&times;{player.buffs.persistent.luckyCoin}</span>
+        )}
+        {player.buffs.persistent.treasureMagnet > 0 && (
+          <span className="text-xs" title="Treasure Magnet">{'\uD83E\uDDF2'}&times;{player.buffs.persistent.treasureMagnet}</span>
+        )}
+        {player.buffs.persistent.metronome > 0 && (
+          <span className="text-xs" title="Metronome">{'\u23F1\uFE0F'}&times;{player.buffs.persistent.metronome}</span>
+        )}
+        {player.buffs.persistent.tuningFork > 0 && (
+          <span className="text-xs" title="Tuning Fork">{'\uD83C\uDFB5'}&times;{player.buffs.persistent.tuningFork}</span>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
