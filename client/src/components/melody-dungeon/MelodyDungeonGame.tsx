@@ -16,6 +16,7 @@ import type {
   Position,
   DifficultyLevel,
   ChallengeType,
+  EnemySubtype,
 } from '@/lib/gameLogic/dungeonTypes';
 import { generateDungeon, moveEnemies } from '@/lib/gameLogic/dungeonGenerator';
 import {
@@ -50,10 +51,10 @@ function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = V
   return { ...floor, tiles };
 }
 
-/** Check if an uncleared Dragon occupies the given position. */
+/** Check if an uncleared Dragon (enemy with subtype 'dragon') occupies the given position. */
 function findDragonAtPosition(floor: DungeonFloor, pos: Position): boolean {
   const tile = floor.tiles[pos.y]?.[pos.x];
-  return tile?.type === TileType.Dragon && !tile.cleared;
+  return tile?.type === TileType.Enemy && tile.enemySubtype === 'dragon' && !tile.cleared;
 }
 
 function createPlayer(start: Position): PlayerState {
@@ -87,6 +88,8 @@ const MelodyDungeonGame: React.FC = () => {
   );
   const [activeChallenge, setActiveChallenge] = useState<ActiveChallenge | null>(null);
   const [activeTileType, setActiveTileType] = useState<TileType>(TileType.Enemy);
+  const [activeTileSubtype, setActiveTileSubtype] = useState<EnemySubtype | undefined>(undefined);
+  const [activeTileLevel, setActiveTileLevel] = useState<number>(1);
   const [diffState, setDiffState] = useState<DifficultyState>(createDifficultyState);
   const [floorsCleared, setFloorsCleared] = useState(0);
   const [selectedStartFloor, setSelectedStartFloor] = useState(1);
@@ -161,10 +164,14 @@ const MelodyDungeonGame: React.FC = () => {
       }
 
       if (e.key === 'u' || e.key === 'U') {
-        const p = playerRef.current.buffs.persistent;
-        if (p.torch > 0 || p.mapScroll > 0 || p.compass > 0) {
-          openBag();
-        }
+        const cur = playerRef.current;
+        const p = cur.buffs.persistent;
+        const hasItems =
+          cur.shieldCharm > 0 ||
+          p.torch > 0 || p.mapScroll > 0 || p.compass > 0 ||
+          p.streakSaver > 0 || p.secondChance > 0 || p.dragonBane > 0 ||
+          p.luckyCoin > 0 || p.treasureMagnet > 0 || p.metronome > 0 || p.tuningFork > 0;
+        if (hasItems) openBag();
       }
     };
 
@@ -201,7 +208,9 @@ const MelodyDungeonGame: React.FC = () => {
 
       moveLockedRef.current = true;
       setActiveChallenge({ type: challengeType, tilePosition: prev.position });
-      setActiveTileType(TileType.Dragon);
+      setActiveTileType(TileType.Enemy);
+      setActiveTileSubtype('dragon');
+      setActiveTileLevel(3);
       activeChallengeBuffsRef.current = { metronome: prev.buffs.persistent.metronome > 0, tuningFork: prev.buffs.persistent.tuningFork > 0 };
       setPhase('challenge');
 
@@ -275,11 +284,10 @@ const MelodyDungeonGame: React.FC = () => {
           };
         }
 
-        // Encounter uncleared interactive tile (enemy, dragon, treasure, bosses)
+        // Encounter uncleared interactive tile (enemy, treasure, bosses)
         if (
           !tile.cleared &&
           (tile.type === TileType.Enemy ||
-            tile.type === TileType.Dragon ||
             tile.type === TileType.Treasure ||
             tile.type === TileType.MiniBoss ||
             tile.type === TileType.BigBoss)
@@ -289,6 +297,8 @@ const MelodyDungeonGame: React.FC = () => {
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(tile.type);
+          setActiveTileSubtype(tile.enemySubtype);
+          setActiveTileLevel(tile.enemyLevel ?? 1);
           activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.persistent.metronome > 0, tuningFork: playerRef.current.buffs.persistent.tuningFork > 0 };
           setPhase('challenge');
           return { ...prev, position: newPos };
@@ -343,7 +353,7 @@ const MelodyDungeonGame: React.FC = () => {
       }
 
       const isBoss =
-        activeTileType === TileType.Dragon ||
+        (activeTileType === TileType.Enemy && activeTileLevel > 1) ||
         activeTileType === TileType.MiniBoss ||
         activeTileType === TileType.BigBoss;
 
@@ -374,12 +384,18 @@ const MelodyDungeonGame: React.FC = () => {
               updated.score += 750 + streakBonus;
               updated.keys += 2;
               updated.potions += 2; // reward (after battle consumption deducted above)
-            } else {
+            } else if (activeTileSubtype === 'dragon') {
               // Dragon
               updated.health = battleHealth;
               updated.score += 500 + streakBonus;
               updated.keys += 2;
               updated.potions += 1; // reward (after battle consumption deducted above)
+            } else {
+              // Regular level 2–3 enemy (ghost/skeleton/goblin)
+              updated.health = battleHealth;
+              const levelScore = activeTileLevel === 3 ? 250 : 175;
+              updated.score += levelScore + streakBonus;
+              updated.keys += activeTileLevel === 3 ? 2 : 1;
             }
           } else {
             // Boss defeated the player — battle only calls onResult(false) when player HP=0
@@ -401,7 +417,7 @@ const MelodyDungeonGame: React.FC = () => {
           }
 
           // Dragon Bane: consume one charge after dragon battle
-          if (activeTileType === TileType.Dragon && prev.buffs.persistent.dragonBane > 0) {
+          if (activeTileSubtype === 'dragon' && prev.buffs.persistent.dragonBane > 0) {
             updated = {
               ...updated,
               buffs: {
@@ -545,7 +561,7 @@ const MelodyDungeonGame: React.FC = () => {
       }
       activeChallengeBuffsRef.current = { metronome: false, tuningFork: false };
     },
-    [diffState, activeChallenge, activeTileType]
+    [diffState, activeChallenge, activeTileType, activeTileSubtype, activeTileLevel]
   );
 
   const handleMerchantBuy = useCallback((item: MerchantItem) => {
@@ -880,8 +896,16 @@ const MelodyDungeonGame: React.FC = () => {
           <MobileDPad
             onMove={handleMove}
             onPotion={usePotion}
+            onOpenBag={openBag}
             disabled={phase !== 'playing'}
             hasPotions={player.potions > 0}
+            hasBagItems={(() => {
+              const p = player.buffs.persistent;
+              return player.shieldCharm > 0 ||
+                p.torch > 0 || p.mapScroll > 0 || p.compass > 0 ||
+                p.streakSaver > 0 || p.secondChance > 0 || p.dragonBane > 0 ||
+                p.luckyCoin > 0 || p.treasureMagnet > 0 || p.metronome > 0 || p.tuningFork > 0;
+            })()}
           />
         </div>
       </div>
@@ -901,6 +925,8 @@ const MelodyDungeonGame: React.FC = () => {
           dragonBane={player.buffs.persistent.dragonBane > 0}
           slowRhythm={player.buffs.persistent.metronome > 0}
           showIntervalHint={player.buffs.persistent.tuningFork > 0}
+          enemySubtype={activeTileSubtype}
+          enemyLevel={activeTileLevel}
         />
       )}
 
@@ -915,9 +941,7 @@ const MelodyDungeonGame: React.FC = () => {
 
       {phase === 'inventory' && (
         <UseItemsModal
-          torch={player.buffs.persistent.torch}
-          mapScroll={player.buffs.persistent.mapScroll}
-          compass={player.buffs.persistent.compass}
+          player={player}
           onUse={handleUseItem}
           onClose={handleBagClose}
         />
