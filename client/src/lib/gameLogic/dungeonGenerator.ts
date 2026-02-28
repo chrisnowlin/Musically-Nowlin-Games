@@ -622,10 +622,10 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         const nx = pos.x + d.x;
         const ny = pos.y + d.y;
         if (nx < 0 || nx >= floor.width || ny < 0 || ny >= floor.height) continue;
-        if (nx === playerPos.x && ny === playerPos.y) continue;
 
+        const isPlayerTile = nx === playerPos.x && ny === playerPos.y;
         const target = tiles[ny][nx];
-        if (target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+        if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
 
         const key = `${nx},${ny}`;
         if (occupied.has(key)) continue;
@@ -663,15 +663,27 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
+    // Non-ghost enemies prioritize bumping the player: move the player direction to the front.
+    if (tile.enemySubtype !== 'ghost') {
+      const playerDirIdx = shuffled.findIndex(
+        (d) => pos.x + d.x === playerPos.x && pos.y + d.y === playerPos.y
+      );
+      if (playerDirIdx > 0) {
+        const [playerDir] = shuffled.splice(playerDirIdx, 1);
+        shuffled.unshift(playerDir);
+      }
+    }
+
     let moved = false;
     for (const d of shuffled) {
       const nx = pos.x + d.x;
       const ny = pos.y + d.y;
       if (nx < 0 || nx >= floor.width || ny < 0 || ny >= floor.height) continue;
 
+      const isPlayerTile = nx === playerPos.x && ny === playerPos.y;
       const target = tiles[ny][nx];
-      if (target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
-      if (nx === playerPos.x && ny === playerPos.y) continue;
+      if (isPlayerTile && tile.enemySubtype === 'ghost') continue;
+      if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
 
       const key = `${nx},${ny}`;
       if (occupied.has(key)) continue;
