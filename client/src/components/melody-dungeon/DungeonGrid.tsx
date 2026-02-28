@@ -112,13 +112,14 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             showContent &&
             !isPlayer &&
             !cleared &&
-            (tile.type === TileType.Enemy
-              ? ENEMY_SPRITE[tile.enemySubtype ?? 'ghost']
+            (tile.type === TileType.Enemy || tile.type === TileType.Dragon
+              ? ENEMY_SPRITE[tile.enemySubtype ?? 'dragon']
               : TILE_SPRITE[tile.type]);
           const fullTileSprite =
             tile.type === TileType.Door || tile.type === TileType.Stairs || tile.type === TileType.MerchantStall;
           const isEnemy =
             tile.type === TileType.Enemy ||
+            tile.type === TileType.Dragon ||
             tile.type === TileType.MiniBoss ||
             tile.type === TileType.BigBoss;
           const isAnimated = isEnemy || tile.type === TileType.Merchant;
