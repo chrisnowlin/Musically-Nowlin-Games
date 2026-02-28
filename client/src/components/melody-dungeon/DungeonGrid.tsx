@@ -67,12 +67,13 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
       style={{
         gridTemplateColumns: `repeat(${viewWidth}, 1fr)`,
         width: '100%',
-        maxWidth: 'min(90vw, 70vh, 720px)',
+        maxWidth: 'min(90vw, calc(100vh - 60px))',
         aspectRatio: '1 / 1',
         backgroundColor: theme.containerBg,
         borderWidth: '1px',
         borderColor: theme.border,
         borderStyle: 'solid',
+        position: 'relative',
       }}
     >
       {floor.tiles.slice(startY, endY).map((row, rowIndex) => {
@@ -91,7 +92,8 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             !isWall &&
             (cleared ||
               tile.type === TileType.Floor ||
-              tile.type === TileType.PlayerStart);
+              tile.type === TileType.PlayerStart ||
+              tile.type === TileType.BossBody);
 
           let bgColor: string;
           let bgImage: string | undefined;
@@ -108,10 +110,13 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             bgImage = theme.floorImg;
           }
 
+          const isBossAnchor =
+            tile.type === TileType.MiniBoss || tile.type === TileType.BigBoss;
           const spriteSrc =
             showContent &&
             !isPlayer &&
             !cleared &&
+            !isBossAnchor &&
             (tile.type === TileType.Enemy
               ? ENEMY_SPRITE[tile.enemySubtype ?? 'dragon']
               : TILE_SPRITE[tile.type]);
@@ -148,7 +153,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               {spriteSrc && (
                 <div
                   className={`absolute inset-0 flex items-center justify-center z-10 overflow-hidden ${
-                    fullTileSprite ? 'p-0' : 'p-[8%]'
+                    fullTileSprite ? 'p-0' : tile.enemySubtype === 'skeleton' ? 'p-0' : 'p-[8%]'
                   }`}
                 >
                   <img
@@ -176,6 +181,54 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               )}
             </div>
           );
+        });
+      })}
+
+      {/* Multi-tile boss sprite overlays — rendered on top of the tile grid */}
+      {floor.tiles.slice(startY, endY).flatMap((row, rowIndex) => {
+        const y = startY + rowIndex;
+        return row.slice(startX, endX).flatMap((tile, colIndex) => {
+          const x = startX + colIndex;
+          if (tile.type !== TileType.MiniBoss && tile.type !== TileType.BigBoss) return [];
+          if (tile.cleared) return [];
+
+          const vis = getTileVisibility(x, y, playerPosition.x, playerPosition.y, tile.visited);
+          if (vis === 'dark') return [];
+
+          const vx = x - startX; // viewport-relative x
+          const vy = y - startY; // viewport-relative y
+          const bossSize = tile.type === TileType.BigBoss ? 3 : 2;
+          const spriteSrc = TILE_SPRITE[tile.type];
+          if (!spriteSrc) return [];
+
+          const dist = Math.max(Math.abs(x - playerPosition.x), Math.abs(y - playerPosition.y));
+          const fogOpacity = getFogOverlayOpacity(vis, dist);
+
+          return [
+            <div
+              key={`boss-overlay-${x}-${y}`}
+              className="absolute pointer-events-none"
+              style={{
+                left: `${(vx / viewWidth) * 100}%`,
+                top: `${(vy / viewWidth) * 100}%`,
+                width: `${(bossSize / viewWidth) * 100}%`,
+                height: `${(bossSize / viewWidth) * 100}%`,
+                zIndex: 15,
+              }}
+            >
+              <img
+                src={spriteSrc}
+                alt={tile.type}
+                className="w-full h-full object-contain animate-sprite-float"
+                style={{ animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` }}
+                draggable={false}
+              />
+              <div
+                className="absolute inset-0"
+                style={{ opacity: fogOpacity, backgroundColor: theme.fog }}
+              />
+            </div>,
+          ];
         });
       })}
     </div>
