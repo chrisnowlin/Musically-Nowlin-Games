@@ -63,11 +63,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
 
   return (
     <div
-      className="grid gap-0 mx-auto select-none rounded-lg overflow-hidden"
+      className="grid gap-0 mx-auto select-none rounded-lg"
       style={{
         gridTemplateColumns: `repeat(${viewWidth}, 1fr)`,
         width: '100%',
-        maxWidth: 'min(90vw, calc(100vh - 60px))',
+        maxWidth: 'min(90vw, 70vh, 720px)',
         aspectRatio: '1 / 1',
         backgroundColor: theme.containerBg,
         borderWidth: '1px',
@@ -131,7 +131,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
           return (
             <div
               key={`${x}-${y}`}
-              className="relative flex items-center justify-center"
+              className="relative flex items-center justify-center overflow-hidden"
               style={{
                 aspectRatio: '1 / 1',
                 backgroundColor: bgColor,
@@ -184,7 +184,10 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
         });
       })}
 
-      {/* Multi-tile boss sprite overlays — rendered on top of the tile grid */}
+      {/* Multi-tile boss sprite overlays — rendered on top of the tile grid.
+          Note: viewWidth is used for both horizontal and vertical sizing of each overlay
+          (left, top, width, height). This is correct because the container has
+          aspectRatio: 1/1, meaning the container is always square and width === height. */}
       {floor.tiles.slice(startY, endY).flatMap((row, rowIndex) => {
         const y = startY + rowIndex;
         return row.slice(startX, endX).flatMap((tile, colIndex) => {
