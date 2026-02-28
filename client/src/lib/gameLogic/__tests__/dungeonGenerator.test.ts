@@ -270,6 +270,7 @@ describe('moveEnemies', () => {
     ['goblin' as const],
     ['skeleton' as const],
   ])('patrolling %s lands on player tile when adjacent', (subtype) => {
+    // 2x1 corridor so the only valid move is onto the player tile — eliminates direction randomness
     const floor = createTestFloor(2, 1, (tiles) => {
       tiles[0][1] = {
         type: TileType.Enemy,

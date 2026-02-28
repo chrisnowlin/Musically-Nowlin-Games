@@ -250,6 +250,14 @@ export default function ComposeYourSongGame() {
         <div key={orb.key} className={orb.className} />
       ))}
 
+      <button
+        onClick={() => setLocation("/games")}
+        className="absolute top-4 left-4 z-50 flex items-center gap-2 text-purple-700 hover:text-purple-900 font-semibold bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
+      >
+        <ChevronLeft size={24} />
+        Main Menu
+      </button>
+
       <div className="flex-1 flex flex-col items-center justify-center z-10 max-w-6xl mx-auto w-full space-y-6 py-8">
         <ScoreDisplay score={gameState.score} total={gameState.totalCompositions} />
 

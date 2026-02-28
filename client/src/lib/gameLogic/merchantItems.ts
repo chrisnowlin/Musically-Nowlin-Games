@@ -247,6 +247,33 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
 export const ALL_ITEMS: MerchantItem[] = [...CORE_ITEMS, ...SPECIAL_ITEMS];
 export const MERCHANT_ITEMS = ALL_ITEMS;
 
+/** Items eligible for chest drops: SPECIAL_ITEMS + core items except key and potion-bundle. */
+export const CHEST_LOOT_ITEMS = [
+  ...SPECIAL_ITEMS,
+  ...CORE_ITEMS.filter((i) => i.id !== 'key' && i.id !== 'potion-bundle'),
+];
+
+export type ChestReward =
+  | { kind: 'potion' }
+  | { kind: 'item'; item: MerchantItem };
+
+/**
+ * Roll a weighted chest reward:
+ * 65% → potion, 20% → random SPECIAL_ITEM, 15% → random core item (potion or shield charm).
+ */
+export function rollChestReward(_floorNumber: number): ChestReward {
+  const roll = Math.random();
+  if (roll < 0.65) {
+    return { kind: 'potion' };
+  }
+  const pool =
+    roll < 0.85
+      ? SPECIAL_ITEMS
+      : CHEST_LOOT_ITEMS.filter((i) => i.category === 'core');
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  return { kind: 'item', item };
+}
+
 function mulberry32(seed: number): () => number {
   return () => {
     seed |= 0;

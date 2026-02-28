@@ -3,11 +3,16 @@ import { AnimalCharacter as CharacterType } from "@/lib/schema";
 import { Volume2, Check, X, Sparkles, Music } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playfulShapes } from "@/theme/playful";
-import birdPng from "/images/bella-bird.jpeg";
-import elephantPng from "/images/ellie-elephant.jpeg";
-import giraffePng from "/images/gary-giraffe.jpeg";
-import lionPng from "/images/leo-lion.jpeg";
-import monkeyPng from "/images/milo-monkey.jpeg";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+
+// Image paths for animal characters (JPEG with WebP fallback)
+const characterImages: Record<string, string> = {
+  elephant: "/images/ellie-elephant.jpeg",
+  giraffe: "/images/gary-giraffe.jpeg",
+  monkey: "/images/milo-monkey.jpeg",
+  bird: "/images/bella-bird.jpeg",
+  lion: "/images/leo-lion.jpeg",
+};
 
 interface AnimalCharacterProps {
   character: CharacterType;
@@ -32,17 +37,8 @@ function AnimalCharacter({
   disabled,
   onClick,
 }: AnimalCharacterProps) {
-  // Get sprite/image based on character ID - use SVGs for all characters
-  const getCharacterImage = () => {
-    const imageMap: Record<string, string> = {
-      elephant: elephantPng,
-      giraffe: giraffePng,
-      monkey: monkeyPng,
-      bird: birdPng,
-      lion: lionPng,
-    };
-    return imageMap[character.id] || monkeyPng;
-  };
+  // Get image path based on character ID
+  const imageSrc = characterImages[character.id] || characterImages.monkey;
 
   return (
     <button
@@ -67,12 +63,13 @@ function AnimalCharacter({
         !isPlaying && !isSelected && isCorrect === null && "border-4 border-purple-300 dark:border-purple-600"
       )}
     >
-      {/* Character image */}
+      {/* Character image with WebP optimization */}
       <div className="relative w-full h-full">
-        <img
-          src={getCharacterImage()}
+        <OptimizedImage
+          src={imageSrc}
           alt={character.name}
           className="w-full h-full object-cover"
+          loading="eager"
         />
       </div>
 

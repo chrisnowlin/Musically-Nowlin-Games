@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { audioService } from "@/lib/audioService";
 import ScoreDisplay from "@/components/ScoreDisplay";
 import { Button } from "@/components/ui/button";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { getOptimizedBackgroundImage } from "@/lib/imageUtils";
 import { Play, Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
 import { useGameCleanup } from "@/hooks/useGameCleanup";
 import { motion, AnimatePresence } from "framer-motion";
@@ -503,8 +505,8 @@ export default function FastOrSlowRaceGame() {
         {/* Race Track Area */}
         <div 
           className="relative flex flex-col justify-center gap-12 py-8 bg-cover bg-center rounded-xl overflow-hidden shadow-2xl border-4 border-black mx-auto"
-          style={{ 
-            backgroundImage: 'url(/images/race-track-bg-v2.jpeg)',
+          style={{
+            backgroundImage: getOptimizedBackgroundImage('/images/race-track-bg-v2.jpeg'),
             width: '100%',
             maxWidth: '1024px',
             height: '500px', // Fixed height
@@ -554,10 +556,11 @@ export default function FastOrSlowRaceGame() {
                                 className={`relative w-36 h-36 rounded-full border-4 border-white shadow-xl overflow-hidden ${gameState.currentRound.character1.color} cursor-pointer hover:scale-105 transition-transform`}
                                 onClick={() => !gameState.feedback && handleAnswer(1)}
                             >
-                                <img 
-                                    src={gameState.currentRound.character1.image} 
+                                <OptimizedImage
+                                    src={gameState.currentRound.character1.image}
                                     alt={gameState.currentRound.character1.name}
                                     className="w-full h-full object-cover"
+                                    loading="eager"
                                 />
                              {/* Speed/Dust Effect */}
                              {playingCharacter === 1 && (
@@ -611,10 +614,11 @@ export default function FastOrSlowRaceGame() {
                                 className={`relative w-36 h-36 rounded-full border-4 border-white shadow-xl overflow-hidden ${gameState.currentRound.character2.color} cursor-pointer hover:scale-105 transition-transform`}
                                 onClick={() => !gameState.feedback && handleAnswer(2)}
                             >
-                                <img 
-                                    src={gameState.currentRound.character2.image} 
+                                <OptimizedImage
+                                    src={gameState.currentRound.character2.image}
                                     alt={gameState.currentRound.character2.name}
                                     className="w-full h-full object-cover"
+                                    loading="eager"
                                 />
                                 {/* Speed/Dust Effect */}
                                 {playingCharacter === 2 && (

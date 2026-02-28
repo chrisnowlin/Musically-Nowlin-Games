@@ -212,15 +212,15 @@ const MelodyDungeonGame: React.FC = () => {
         if (prev.shieldCharm > 0) {
           // Shield charm absorbs the catch penalty
           updated.shieldCharm = 0;
-        } else if (prev.buffs.persistent.dragonBane > 0) {
+        } else if (prev.buffs.armed.dragonBane > 0) {
           // Dragon Bane negates the catch penalty and consumes one charge
           updated = {
             ...updated,
             buffs: {
               ...updated.buffs,
-              persistent: {
-                ...updated.buffs.persistent,
-                dragonBane: updated.buffs.persistent.dragonBane - 1,
+              armed: {
+                ...updated.buffs.armed,
+                dragonBane: updated.buffs.armed.dragonBane - 1,
               },
             },
           };
