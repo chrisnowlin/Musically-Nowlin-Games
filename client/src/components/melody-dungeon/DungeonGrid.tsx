@@ -41,6 +41,8 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.Chest]: '/images/melody-dungeon-chest.png',
   [TileType.Stairs]: '/images/melody-dungeon-stairs.png',
   [TileType.Dragon]: '/images/melody-dungeon-boss.png',
+  [TileType.MiniBoss]: '/images/melody-dungeon-miniboss.png',
+  [TileType.BigBoss]: '/images/melody-dungeon-bigboss.png',
   [TileType.Merchant]: '/images/melody-dungeon-merchant.png',
   [TileType.MerchantStall]: '/images/melody-dungeon-stall.png',
 };
@@ -109,7 +111,10 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
           const fullTileSprite =
             tile.type === TileType.Door || tile.type === TileType.Stairs || tile.type === TileType.MerchantStall;
           const isEnemy =
-            tile.type === TileType.Enemy || tile.type === TileType.Dragon;
+            tile.type === TileType.Enemy ||
+            tile.type === TileType.Dragon ||
+            tile.type === TileType.MiniBoss ||
+            tile.type === TileType.BigBoss;
           const isAnimated = isEnemy || tile.type === TileType.Merchant;
 
           return (

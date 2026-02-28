@@ -44,6 +44,16 @@ const TILE_THEME: Record<string, { title: string; borderColor: string; bgColor: 
     borderColor: 'border-yellow-500',
     bgColor: 'from-yellow-950/90 to-gray-900/95',
   },
+  [TileType.MiniBoss]: {
+    title: 'Mini Boss!',
+    borderColor: 'border-orange-500',
+    bgColor: 'from-orange-950/90 to-gray-900/95',
+  },
+  [TileType.BigBoss]: {
+    title: 'BOSS BATTLE!',
+    borderColor: 'border-rose-500',
+    bgColor: 'from-rose-950/90 to-gray-900/95',
+  },
 };
 
 const DEFAULT_THEME = {
