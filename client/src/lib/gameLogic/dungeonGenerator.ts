@@ -238,10 +238,18 @@ function noKeyTraversalIsValid(grid: Tile[][], playerStart: Position): boolean {
 
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[0].length; x++) {
-      const pos = { x, y };
       const tile = grid[y][x];
-      if (tile.type === TileType.Door && !reachable.has(keyOf(pos))) return false;
-      if (isStraightHallwayNonWallTile(grid, pos) && !reachable.has(keyOf(pos))) return false;
+      // Solid obstacles are intentionally impassable; skip them.
+      if (
+        tile.type === TileType.Wall ||
+        tile.type === TileType.Chest ||
+        tile.type === TileType.MerchantStall
+      )
+        continue;
+      // Every other tile (floor, door, enemy, treasure, staircase, etc.) must
+      // remain reachable from the player start without passing through any
+      // solid obstacle, so that no chest can wall off part of the dungeon.
+      if (!reachable.has(`${x},${y}`)) return false;
     }
   }
 
@@ -376,13 +384,40 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
   const stairsPosition = roomCenter(rooms[rooms.length - 1]);
   if (bossType) {
     const bossTileType = bossType === 'big' ? TileType.BigBoss : TileType.MiniBoss;
-    grid[stairsPosition.y][stairsPosition.x].type = bossTileType;
-    grid[stairsPosition.y][stairsPosition.x].cleared = false;
+    const bossSize = bossType === 'big' ? 3 : 2;
+    // Center the footprint on stairsPosition: BigBoss offsets anchor by (-1,-1), MiniBoss uses stairsPosition as anchor
+    const anchorOffset = bossType === 'big' ? 1 : 0;
+    const ax = stairsPosition.x - anchorOffset;
+    const ay = stairsPosition.y - anchorOffset;
+    for (let dy = 0; dy < bossSize; dy++) {
+      for (let dx = 0; dx < bossSize; dx++) {
+        const tx = ax + dx;
+        const ty = ay + dy;
+        if (ty >= 0 && ty < height && tx >= 0 && tx < width) {
+          const isAnchor = dx === 0 && dy === 0;
+          grid[ty][tx].type = isAnchor ? bossTileType : TileType.BossBody;
+          if (isAnchor) grid[ty][tx].cleared = false;
+        }
+      }
+    }
   } else {
     grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
   }
 
-  const placedPositions = [playerStart, stairsPosition];
+  const placedPositions: Position[] = [playerStart, stairsPosition];
+  if (bossType) {
+    const bossSize = bossType === 'big' ? 3 : 2;
+    const anchorOffset = bossType === 'big' ? 1 : 0;
+    for (let dy = 0; dy < bossSize; dy++) {
+      for (let dx = 0; dx < bossSize; dx++) {
+        const tx = stairsPosition.x - anchorOffset + dx;
+        const ty = stairsPosition.y - anchorOffset + dy;
+        if (tx !== stairsPosition.x || ty !== stairsPosition.y) {
+          placedPositions.push({ x: tx, y: ty });
+        }
+      }
+    }
+  }
   const challengeTypes = getChallengeTypesForFloor(floorNumber);
 
   // Chests, dragons, and enemies do NOT spawn on boss floors.
