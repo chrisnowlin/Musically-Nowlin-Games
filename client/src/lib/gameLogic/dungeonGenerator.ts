@@ -522,7 +522,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
   }
 
   // Place treasure (free pickup)
-  const treasureCount = rand(1, 2);
+  const treasureCount = rand(0, 1);
   for (let i = 0; i < treasureCount; i++) {
     const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
     if (pos) {
