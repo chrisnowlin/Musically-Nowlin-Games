@@ -185,18 +185,6 @@ function isStraightHallwayTile(grid: Tile[][], pos: Position): boolean {
   return sameX || sameY;
 }
 
-function isStraightHallwayNonWallTile(grid: Tile[][], pos: Position): boolean {
-  if (grid[pos.y][pos.x].type === TileType.Wall) return false;
-
-  const neighbors = getCardinalWalkableNeighbors(grid, pos);
-  if (neighbors.length !== 2) return false;
-
-  const [a, b] = neighbors;
-  const sameX = a.x === pos.x && b.x === pos.x;
-  const sameY = a.y === pos.y && b.y === pos.y;
-  return sameX || sameY;
-}
-
 function keyOf(pos: Position): string {
   return `${pos.x},${pos.y}`;
 }
@@ -399,6 +387,9 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
   }
 
+  // stairsPosition is the boss room center (a BossBody or anchor tile on boss floors).
+  // The loop below adds the remaining footprint tiles; stairsPosition is excluded from
+  // the push since it is already present from initialization.
   const placedPositions: Position[] = [playerStart, stairsPosition];
   if (bossType) {
     const bossSize = bossType === 'big' ? 3 : 2;

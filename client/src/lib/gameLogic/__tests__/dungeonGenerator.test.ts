@@ -412,6 +412,12 @@ describe('boss floor generation', () => {
       const floor = generateDungeon(10);
       expect(findTiles(floor, TileType.BigBoss).length).toBe(1);
       expect(findTiles(floor, TileType.BossBody).length).toBe(8);
+      // Anchor is centered: offset (-1,-1) from stairsPosition
+      const anchor = findTiles(floor, TileType.BigBoss)[0];
+      expect(anchor.pos).toEqual({
+        x: floor.stairsPosition.x - 1,
+        y: floor.stairsPosition.y - 1,
+      });
     }
   });
 
