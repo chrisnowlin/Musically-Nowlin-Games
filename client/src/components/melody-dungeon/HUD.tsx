@@ -6,9 +6,10 @@ interface HUDProps {
   floorNumber: number;
   difficulty: DifficultyLevel;
   themeName?: string;
+  onOpenBag?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName }) => {
+const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName, onOpenBag }) => {
   const hearts = Array.from({ length: player.maxHealth }, (_, i) =>
     i < player.health ? '\u2764\uFE0F' : '\uD83E\uDD0D'
   );
@@ -44,14 +45,28 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName })
             {'\uD83D\uDEE1\uFE0F'} 1
           </span>
         )}
+        {(player.buffs.persistent.torch > 0 ||
+          player.buffs.persistent.mapScroll > 0 ||
+          player.buffs.persistent.compass > 0) && (
+          <button
+            onClick={onOpenBag}
+            className="flex items-center gap-1 text-xs text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/50 px-1.5 py-0.5 rounded transition-colors"
+            title="Open item bag (U)"
+          >
+            {'\uD83C\uDF92'}
+            {player.buffs.persistent.torch > 0 && <span>{'\uD83D\uDD26'}&times;{player.buffs.persistent.torch}</span>}
+            {player.buffs.persistent.mapScroll > 0 && <span>{'\uD83D\uDDFA\uFE0F'}&times;{player.buffs.persistent.mapScroll}</span>}
+            {player.buffs.persistent.compass > 0 && <span>{'\uD83E\uDDED'}&times;{player.buffs.persistent.compass}</span>}
+          </button>
+        )}
         {player.buffs.floor.torch && (
-          <span className="text-xs" title="Torch active">{'\uD83D\uDD26'}</span>
+          <span className="text-xs text-yellow-300" title="Torch active">{'\uD83D\uDD26'}{'\u2713'}</span>
         )}
         {player.buffs.floor.compass && (
-          <span className="text-xs" title="Compass active">{'\uD83E\uDDED'}</span>
+          <span className="text-xs text-yellow-300" title="Compass active">{'\uD83E\uDDED'}{'\u2713'}</span>
         )}
         {player.buffs.floor.mapRevealed && (
-          <span className="text-xs" title="Map revealed">{'\uD83D\uDDFA\uFE0F'}</span>
+          <span className="text-xs text-yellow-300" title="Map revealed">{'\uD83D\uDDFA\uFE0F'}{'\u2713'}</span>
         )}
         {player.buffs.persistent.streakSaver > 0 && (
           <span className="text-xs" title="Streak Saver">{'\uD83D\uDD25'}&times;{player.buffs.persistent.streakSaver}</span>
