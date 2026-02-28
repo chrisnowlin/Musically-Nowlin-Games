@@ -95,6 +95,15 @@ describe('generateDungeon', () => {
       }
     }
   });
+
+  it('places 0 or 1 treasure tiles on non-boss floors', () => {
+    for (let run = 0; run < 20; run++) {
+      const floor = generateDungeon(3);
+      const treasures = findTiles(floor, TileType.Treasure);
+      expect(treasures.length).toBeGreaterThanOrEqual(0);
+      expect(treasures.length).toBeLessThanOrEqual(1);
+    }
+  });
 });
 
 /** Create a minimal floor grid for testing movement. */

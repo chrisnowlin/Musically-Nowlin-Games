@@ -317,7 +317,6 @@ const MelodyDungeonGame: React.FC = () => {
               keys: prev.keys - 1,
               potions: prev.potions + 1,
               score: prev.score + 200,
-              health: Math.min(prev.maxHealth, prev.health + 1),
             };
           }
           // item reward: apply item effect + base bonus (no extra potion)
@@ -326,7 +325,6 @@ const MelodyDungeonGame: React.FC = () => {
             position: newPos,
             keys: prev.keys - 1,
             score: prev.score + 200,
-            health: Math.min(prev.maxHealth, prev.health + 1),
           });
           return afterItem;
         }
