@@ -41,6 +41,27 @@ export interface Rect {
 
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
+export interface FloorBuffs {
+  torch: boolean;
+  mapRevealed: boolean;
+  compass: boolean;
+}
+
+export interface PersistentBuffs {
+  streakSaver: number;
+  secondChance: number;
+  dragonBane: number;
+  luckyCoin: number;
+  treasureMagnet: number;
+  metronome: number;
+  tuningFork: number;
+}
+
+export interface PlayerBuffs {
+  floor: FloorBuffs;
+  persistent: PersistentBuffs;
+}
+
 export interface PlayerState {
   position: Position;
   health: number;
@@ -50,7 +71,29 @@ export interface PlayerState {
   potions: number;
   streak: number;
   shieldCharm: number;
+  buffs: PlayerBuffs;
 }
+
+export const DEFAULT_FLOOR_BUFFS: FloorBuffs = {
+  torch: false,
+  mapRevealed: false,
+  compass: false,
+};
+
+export const DEFAULT_PERSISTENT_BUFFS: PersistentBuffs = {
+  streakSaver: 0,
+  secondChance: 0,
+  dragonBane: 0,
+  luckyCoin: 0,
+  treasureMagnet: 0,
+  metronome: 0,
+  tuningFork: 0,
+};
+
+export const DEFAULT_BUFFS: PlayerBuffs = {
+  floor: { ...DEFAULT_FLOOR_BUFFS },
+  persistent: { ...DEFAULT_PERSISTENT_BUFFS },
+};
 
 export interface DungeonFloor {
   tiles: Tile[][];
