@@ -114,8 +114,10 @@ def draw_skeleton():
         for x in range(rx0, rx1):
             p(x, row, ED)
         # red glow center pixel
-        p(23, row, RG) if lx0 <= 23 < lx1 else None
-        p(40, row, RG) if rx0 <= 40 < rx1 else None
+        if lx0 <= 23 < lx1:
+            p(23, row, RG)
+        if rx0 <= 40 < rx1:
+            p(40, row, RG)
 
     p(23, 12, RG); p(23, 13, RG)
     p(40, 12, RG); p(40, 13, RG)
@@ -376,7 +378,7 @@ def draw_goblin():
     p(21, 33, PD); p(42, 33, PD)
 
     # ── Short stubby arms ────────────────────────────────────────────────────
-    # Left arm
+    # Left arm: slopes 1px outward per 3 rows from attachment at x=19
     for row in range(35, 48):
         offset = (row - 35) // 3
         x = 19 - offset
@@ -386,7 +388,7 @@ def draw_goblin():
     p(12, 49, GO); p(14, 49, GO)
     p(13, 49, GG)
 
-    # Right arm
+    # Right arm: slopes 1px outward per 3 rows from attachment at x=44
     for row in range(35, 48):
         offset = (row - 35) // 3
         x = 44 + offset
