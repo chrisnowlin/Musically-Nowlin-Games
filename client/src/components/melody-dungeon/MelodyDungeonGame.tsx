@@ -467,6 +467,10 @@ const MelodyDungeonGame: React.FC = () => {
     setPlayer((prev) => ({
       ...prev,
       position: { ...newFloor.playerStart },
+      buffs: {
+        ...prev.buffs,
+        floor: { ...DEFAULT_FLOOR_BUFFS },
+      },
     }));
     moveLockedRef.current = false;
     setPhase('playing');
