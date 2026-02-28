@@ -6,6 +6,7 @@ import { getTheme } from './dungeonThemes';
 interface MiniMapProps {
   floor: DungeonFloor;
   playerPosition: Position;
+  showStairs?: boolean;
 }
 
 function getMiniMapTileColor(tile: Tile, themeWall: string, themeFloor: string): string {
@@ -13,7 +14,7 @@ function getMiniMapTileColor(tile: Tile, themeWall: string, themeFloor: string):
   return themeFloor;
 }
 
-const MiniMap: React.FC<MiniMapProps> = ({ floor, playerPosition }) => {
+const MiniMap: React.FC<MiniMapProps> = ({ floor, playerPosition, showStairs }) => {
   const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
 
   return (
@@ -43,6 +44,9 @@ const MiniMap: React.FC<MiniMapProps> = ({ floor, playerPosition }) => {
               >
                 {isPlayer && (
                   <div className="absolute inset-[22%] rounded-full bg-fuchsia-400 shadow-[0_0_4px_rgba(217,70,239,0.9)]" />
+                )}
+                {showStairs && tile.type === TileType.Stairs && !isPlayer && (
+                  <div className="absolute inset-[22%] rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.9)]" />
                 )}
               </div>
             );

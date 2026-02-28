@@ -423,7 +423,16 @@ const MelodyDungeonGame: React.FC = () => {
     setPlayer((prev) => {
       const price = item.getPrice(floorNumber);
       if (prev.score < price || !item.canBuy(prev)) return prev;
-      return item.apply({ ...prev, score: prev.score - price });
+      const updated = item.apply({ ...prev, score: prev.score - price });
+
+      if (item.id === 'map-scroll') {
+        setFloor((f) => ({
+          ...f,
+          tiles: f.tiles.map((row) => row.map((tile) => ({ ...tile, visited: true }))),
+        }));
+      }
+
+      return updated;
     });
   }, [floorNumber]);
 
@@ -696,7 +705,7 @@ const MelodyDungeonGame: React.FC = () => {
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-4 px-2 py-2">
         <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} />
         <div className="shrink-0 flex flex-col items-center gap-3">
-          <MiniMap floor={floor} playerPosition={player.position} />
+          <MiniMap floor={floor} playerPosition={player.position} showStairs={player.buffs.floor.compass} />
           <MobileDPad
             onMove={handleMove}
             onPotion={usePotion}
