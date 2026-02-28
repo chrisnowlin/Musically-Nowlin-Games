@@ -235,24 +235,14 @@ function getReachableWithoutKey(grid: Tile[][], start: Position): Set<string> {
 
 function noKeyTraversalIsValid(grid: Tile[][], playerStart: Position): boolean {
   const reachable = getReachableWithoutKey(grid, playerStart);
-
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[0].length; x++) {
+      const pos = { x, y };
       const tile = grid[y][x];
-      // Solid obstacles are intentionally impassable; skip them.
-      if (
-        tile.type === TileType.Wall ||
-        tile.type === TileType.Chest ||
-        tile.type === TileType.MerchantStall
-      )
-        continue;
-      // Every other tile (floor, door, enemy, treasure, staircase, etc.) must
-      // remain reachable from the player start without passing through any
-      // solid obstacle, so that no chest can wall off part of the dungeon.
-      if (!reachable.has(`${x},${y}`)) return false;
+      if (tile.type === TileType.Door && !reachable.has(keyOf(pos))) return false;
+      if (isStraightHallwayNonWallTile(grid, pos) && !reachable.has(keyOf(pos))) return false;
     }
   }
-
   return true;
 }
 
@@ -412,12 +402,18 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       for (let dx = 0; dx < bossSize; dx++) {
         const tx = stairsPosition.x - anchorOffset + dx;
         const ty = stairsPosition.y - anchorOffset + dy;
-        if (tx !== stairsPosition.x || ty !== stairsPosition.y) {
+        if (
+          ty >= 0 && ty < height &&
+          tx >= 0 && tx < width &&
+          (tx !== stairsPosition.x || ty !== stairsPosition.y)
+        ) {
           placedPositions.push({ x: tx, y: ty });
         }
       }
     }
   }
+
+
   const challengeTypes = getChallengeTypesForFloor(floorNumber);
 
   // Chests, dragons, and enemies do NOT spawn on boss floors.
