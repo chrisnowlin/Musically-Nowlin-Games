@@ -30,6 +30,7 @@ import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
 import type { BossBattleMeta } from './ChallengeModal';
 import MerchantModal from './MerchantModal';
+import UseItemsModal from './UseItemsModal';
 import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
 import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
@@ -157,6 +158,13 @@ const MelodyDungeonGame: React.FC = () => {
       // Use potion with P key
       if (e.key === 'p' || e.key === 'P') {
         usePotion();
+      }
+
+      if (e.key === 'u' || e.key === 'U') {
+        const p = playerRef.current.buffs.persistent;
+        if (p.torch > 0 || p.mapScroll > 0 || p.compass > 0) {
+          openBag();
+        }
       }
     };
 
@@ -544,22 +552,64 @@ const MelodyDungeonGame: React.FC = () => {
     setPlayer((prev) => {
       const price = item.getPrice(floorNumber);
       if (prev.score < price || !item.canBuy(prev)) return prev;
-      const updated = item.apply({ ...prev, score: prev.score - price });
-
-      if (item.id === 'map-scroll') {
-        setFloor((f) => ({
-          ...f,
-          tiles: f.tiles.map((row) => row.map((tile) => ({ ...tile, visited: true }))),
-        }));
-      }
-
-      return updated;
+      return item.apply({ ...prev, score: prev.score - price });
     });
   }, [floorNumber]);
 
   const handleMerchantClose = useCallback(() => {
     moveLockedRef.current = false;
     setPhase('playing');
+  }, []);
+
+  const openBag = useCallback(() => {
+    moveLockedRef.current = true;
+    setPhase('inventory');
+  }, []);
+
+  const handleBagClose = useCallback(() => {
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, []);
+
+  const handleUseItem = useCallback((itemId: 'torch' | 'map-scroll' | 'compass') => {
+    setPlayer((prev) => {
+      const p = prev.buffs.persistent;
+      if (itemId === 'torch' && p.torch > 0) {
+        return {
+          ...prev,
+          buffs: {
+            ...prev.buffs,
+            floor: { ...prev.buffs.floor, torch: true },
+            persistent: { ...p, torch: p.torch - 1 },
+          },
+        };
+      }
+      if (itemId === 'compass' && p.compass > 0) {
+        return {
+          ...prev,
+          buffs: {
+            ...prev.buffs,
+            floor: { ...prev.buffs.floor, compass: true },
+            persistent: { ...p, compass: p.compass - 1 },
+          },
+        };
+      }
+      if (itemId === 'map-scroll' && p.mapScroll > 0) {
+        setFloor((f) => ({
+          ...f,
+          tiles: f.tiles.map((row) => row.map((tile) => ({ ...tile, visited: true }))),
+        }));
+        return {
+          ...prev,
+          buffs: {
+            ...prev.buffs,
+            floor: { ...prev.buffs.floor, mapRevealed: true },
+            persistent: { ...p, mapScroll: p.mapScroll - 1 },
+          },
+        };
+      }
+      return prev;
+    });
   }, []);
 
   const startNewGame = useCallback(() => {
@@ -819,7 +869,7 @@ const MelodyDungeonGame: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} difficulty={difficulty} themeName={themeName} />
+          <HUD player={player} floorNumber={floorNumber} difficulty={difficulty} themeName={themeName} onOpenBag={openBag} />
         </div>
       </div>
 
@@ -860,6 +910,16 @@ const MelodyDungeonGame: React.FC = () => {
           floorNumber={floorNumber}
           onBuy={handleMerchantBuy}
           onClose={handleMerchantClose}
+        />
+      )}
+
+      {phase === 'inventory' && (
+        <UseItemsModal
+          torch={player.buffs.persistent.torch}
+          mapScroll={player.buffs.persistent.mapScroll}
+          compass={player.buffs.persistent.compass}
+          onUse={handleUseItem}
+          onClose={handleBagClose}
         />
       )}
     </div>
