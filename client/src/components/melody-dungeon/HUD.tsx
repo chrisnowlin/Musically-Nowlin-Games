@@ -33,32 +33,31 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName, o
           {'\u2B50'} {player.score}
         </span>
         <span className="flex items-center gap-0.5 text-yellow-300" title="Keys">
-          <img src="/images/melody-dungeon-key.png" alt="Key" className="w-5 h-5 object-contain" /> {player.keys}
+          <img src="/images/melody-dungeon/key.png" alt="Key" className="w-5 h-5 object-contain" /> {player.keys}
         </span>
         {player.potions > 0 && (
           <span className="flex items-center gap-0.5 text-pink-400" title="Potions">
-            <img src="/images/melody-dungeon-potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
+            <img src="/images/melody-dungeon/potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
           </span>
         )}
-        {player.shieldCharm > 0 && (
-          <span className="flex items-center gap-0.5 text-cyan-400" title="Shield Charm">
-            {'\uD83D\uDEE1\uFE0F'} 1
-          </span>
-        )}
-        {(player.buffs.persistent.torch > 0 ||
-          player.buffs.persistent.mapScroll > 0 ||
-          player.buffs.persistent.compass > 0) && (
-          <button
-            onClick={onOpenBag}
-            className="flex items-center gap-1 text-xs text-amber-300 hover:text-amber-200 bg-amber-950/50 hover:bg-amber-900/50 px-1.5 py-0.5 rounded transition-colors"
-            title="Open item bag (U)"
-          >
-            {'\uD83C\uDF92'}
-            {player.buffs.persistent.torch > 0 && <span>{'\uD83D\uDD26'}&times;{player.buffs.persistent.torch}</span>}
-            {player.buffs.persistent.mapScroll > 0 && <span>{'\uD83D\uDDFA\uFE0F'}&times;{player.buffs.persistent.mapScroll}</span>}
-            {player.buffs.persistent.compass > 0 && <span>{'\uD83E\uDDED'}&times;{player.buffs.persistent.compass}</span>}
-          </button>
-        )}
+        {(() => {
+          const p = player.buffs.persistent;
+          const bagTotal =
+            p.shieldCharm +
+            p.torch + p.mapScroll + p.compass +
+            p.streakSaver + p.secondChance + p.dragonBane +
+            p.luckyCoin + p.treasureMagnet + p.metronome + p.tuningFork;
+          return bagTotal > 0 ? (
+            <button
+              onClick={onOpenBag}
+              className="flex items-center gap-1 text-amber-200 hover:text-white bg-amber-900/60 hover:bg-amber-800 border border-amber-600/60 hover:border-amber-500 px-2 py-1 rounded-lg transition-colors"
+              title="Open item bag (U)"
+            >
+              <span className="text-base leading-none">{'\uD83C\uDF92'}</span>
+              <span className="font-semibold text-sm">{bagTotal}</span>
+            </button>
+          ) : null;
+        })()}
         {player.buffs.floor.torch && (
           <span className="text-xs text-yellow-300" title="Torch active">{'\uD83D\uDD26'}{'\u2713'}</span>
         )}
@@ -68,26 +67,29 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName, o
         {player.buffs.floor.mapRevealed && (
           <span className="text-xs text-yellow-300" title="Map revealed">{'\uD83D\uDDFA\uFE0F'}{'\u2713'}</span>
         )}
-        {player.buffs.persistent.streakSaver > 0 && (
-          <span className="text-xs" title="Streak Saver">{'\uD83D\uDD25'}&times;{player.buffs.persistent.streakSaver}</span>
+        {player.shieldCharm > 0 && (
+          <span className="text-xs text-blue-300" title="Shield Charm armed">{'\uD83D\uDEE1\uFE0F'}&times;{player.shieldCharm}</span>
         )}
-        {player.buffs.persistent.secondChance > 0 && (
-          <span className="text-xs" title="Second Chance">{'\uD83D\uDD04'}&times;{player.buffs.persistent.secondChance}</span>
+        {player.buffs.armed.streakSaver > 0 && (
+          <span className="text-xs text-blue-300" title="Streak Saver armed">{'\uD83D\uDD25'}&times;{player.buffs.armed.streakSaver}</span>
         )}
-        {player.buffs.persistent.dragonBane > 0 && (
-          <span className="text-xs" title="Dragon Bane">{'\u2694\uFE0F'}&times;{player.buffs.persistent.dragonBane}</span>
+        {player.buffs.armed.secondChance > 0 && (
+          <span className="text-xs text-blue-300" title="Second Chance armed">{'\uD83D\uDD04'}&times;{player.buffs.armed.secondChance}</span>
         )}
-        {player.buffs.persistent.luckyCoin > 0 && (
-          <span className="text-xs" title="Lucky Coin">{'\uD83E\uDE99'}&times;{player.buffs.persistent.luckyCoin}</span>
+        {player.buffs.armed.dragonBane > 0 && (
+          <span className="text-xs text-blue-300" title="Dragon Bane armed">{'\u2694\uFE0F'}&times;{player.buffs.armed.dragonBane}</span>
         )}
-        {player.buffs.persistent.treasureMagnet > 0 && (
-          <span className="text-xs" title="Treasure Magnet">{'\uD83E\uDDF2'}&times;{player.buffs.persistent.treasureMagnet}</span>
+        {player.buffs.armed.luckyCoin > 0 && (
+          <span className="text-xs text-blue-300" title="Lucky Coin armed">{'\uD83E\uDE99'}&times;{player.buffs.armed.luckyCoin}</span>
         )}
-        {player.buffs.persistent.metronome > 0 && (
-          <span className="text-xs" title="Metronome">{'\u23F1\uFE0F'}&times;{player.buffs.persistent.metronome}</span>
+        {player.buffs.armed.treasureMagnet > 0 && (
+          <span className="text-xs text-blue-300" title="Treasure Magnet armed">{'\uD83E\uDDF2'}&times;{player.buffs.armed.treasureMagnet}</span>
         )}
-        {player.buffs.persistent.tuningFork > 0 && (
-          <span className="text-xs" title="Tuning Fork">{'\uD83C\uDFB5'}&times;{player.buffs.persistent.tuningFork}</span>
+        {player.buffs.armed.metronome > 0 && (
+          <span className="text-xs text-blue-300" title="Metronome armed">{'\u23F1\uFE0F'}&times;{player.buffs.armed.metronome}</span>
+        )}
+        {player.buffs.armed.tuningFork > 0 && (
+          <span className="text-xs text-blue-300" title="Tuning Fork armed">{'\uD83C\uDFB5'}&times;{player.buffs.armed.tuningFork}</span>
         )}
       </div>
 

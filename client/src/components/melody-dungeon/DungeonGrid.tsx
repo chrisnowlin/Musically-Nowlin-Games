@@ -35,21 +35,21 @@ function getFogOverlayOpacity(vis: Visibility, dist: number): number {
 }
 
 const TILE_SPRITE: Partial<Record<TileType, string>> = {
-  [TileType.Door]: '/images/melody-dungeon-door.png',
-  [TileType.Treasure]: '/images/melody-dungeon-treasure.png',
-  [TileType.Chest]: '/images/melody-dungeon-chest.png',
-  [TileType.Stairs]: '/images/melody-dungeon-stairs.png',
-  [TileType.MiniBoss]: '/images/melody-dungeon-miniboss.png',
-  [TileType.BigBoss]: '/images/melody-dungeon-bigboss.png',
-  [TileType.Merchant]: '/images/melody-dungeon-merchant.png',
-  [TileType.MerchantStall]: '/images/melody-dungeon-stall.png',
+  [TileType.Door]: '/images/melody-dungeon/door.png',
+  [TileType.Treasure]: '/images/melody-dungeon/treasure.png',
+  [TileType.Chest]: '/images/melody-dungeon/chest.png',
+  [TileType.Stairs]: '/images/melody-dungeon/stairs.png',
+  [TileType.MiniBoss]: '/images/melody-dungeon/miniboss.png',
+  [TileType.BigBoss]: '/images/melody-dungeon/bigboss.png',
+  [TileType.Merchant]: '/images/melody-dungeon/merchant.png',
+  [TileType.MerchantStall]: '/images/melody-dungeon/stall.png',
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
-  ghost: '/images/melody-dungeon-ghost.png',
-  skeleton: '/images/melody-dungeon-skeleton.png',
-  dragon: '/images/melody-dungeon-dragon.png',
-  goblin: '/images/melody-dungeon-goblin.png',
+  ghost: '/images/melody-dungeon/ghost.png',
+  skeleton: '/images/melody-dungeon/skeleton.png',
+  dragon: '/images/melody-dungeon/dragon.png',
+  goblin: '/images/melody-dungeon/goblin.png',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft }) => {
@@ -137,7 +137,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               {isPlayer && showContent && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[4%]">
                   <img
-                    src="/images/melody-dungeon-character.png"
+                    src="/images/melody-dungeon/character.png"
                     alt="Player"
                     className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)] transition-transform duration-150"
                     style={facingLeft ? { transform: 'scaleX(-1)' } : undefined}

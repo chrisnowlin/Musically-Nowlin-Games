@@ -3,14 +3,16 @@ import React from 'react';
 interface MobileDPadProps {
   onMove: (dx: number, dy: number) => void;
   onPotion?: () => void;
+  onOpenBag?: () => void;
   disabled?: boolean;
   hasPotions?: boolean;
+  hasBagItems?: boolean;
 }
 
 const dirBtnClass =
   'w-14 h-14 flex items-center justify-center rounded-xl bg-gray-700/80 active:bg-purple-700 active:scale-95 border border-gray-600 text-white font-bold text-lg transition-all touch-manipulation select-none disabled:opacity-30 disabled:active:scale-100 disabled:active:bg-gray-700/80';
 
-const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, disabled, hasPotions }) => {
+const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, onOpenBag, disabled, hasPotions, hasBagItems }) => {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="grid grid-cols-3 gap-1.5 w-fit" role="group" aria-label="Movement controls">
@@ -55,16 +57,31 @@ const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, disabled, has
         <div />
       </div>
 
-      {onPotion && (
-        <button
-          className="w-14 h-14 flex items-center justify-center rounded-xl bg-pink-900/70 active:bg-pink-700 active:scale-95 border border-pink-700 text-xl transition-all touch-manipulation select-none disabled:opacity-30 disabled:active:scale-100 disabled:active:bg-pink-900/70"
-          onPointerDown={() => !disabled && hasPotions && onPotion()}
-          disabled={disabled || !hasPotions}
-          aria-label="Use potion"
-          title="Use potion"
-        >
-          <img src="/images/melody-dungeon-potion.png" alt="Potion" className="w-8 h-8 object-contain" />
-        </button>
+      {(onPotion || onOpenBag) && (
+        <div className="flex items-center gap-2">
+          {onPotion && (
+            <button
+              className="w-14 h-14 flex items-center justify-center rounded-xl bg-pink-900/70 active:bg-pink-700 active:scale-95 border border-pink-700 text-xl transition-all touch-manipulation select-none disabled:opacity-30 disabled:active:scale-100 disabled:active:bg-pink-900/70"
+              onPointerDown={() => !disabled && hasPotions && onPotion()}
+              disabled={disabled || !hasPotions}
+              aria-label="Use potion"
+              title="Use potion"
+            >
+              <img src="/images/melody-dungeon/potion.png" alt="Potion" className="w-8 h-8 object-contain" />
+            </button>
+          )}
+          {onOpenBag && (
+            <button
+              className="w-14 h-14 flex items-center justify-center rounded-xl bg-amber-900/70 active:bg-amber-700 active:scale-95 border border-amber-700 text-2xl transition-all touch-manipulation select-none disabled:opacity-30 disabled:active:scale-100 disabled:active:bg-amber-900/70"
+              onPointerDown={() => !disabled && hasBagItems && onOpenBag()}
+              disabled={disabled || !hasBagItems}
+              aria-label="Open item bag"
+              title="Open item bag (U)"
+            >
+              {'\uD83C\uDF92'}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

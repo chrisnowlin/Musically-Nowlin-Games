@@ -9,7 +9,7 @@ GRID  = 64          # logical canvas size
 SIZE  = GRID * SCALE  # 2048
 
 OUT_DIR = os.path.join(os.path.dirname(__file__),
-                       "../client/public/images")
+                       "../client/public/images/melody-dungeon")
 
 # ── Palette ──────────────────────────────────────────────────────────────────
 T  = (  0,   0,   0,   0)   # transparent
@@ -430,12 +430,12 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     skeleton = draw_skeleton()
-    path_s = os.path.join(OUT_DIR, "melody-dungeon-skeleton.png")
+    path_s = os.path.join(OUT_DIR, "skeleton.png")
     skeleton.save(path_s, "PNG")
     print(f"Saved: {path_s}")
 
     goblin = draw_goblin()
-    path_g = os.path.join(OUT_DIR, "melody-dungeon-goblin.png")
+    path_g = os.path.join(OUT_DIR, "goblin.png")
     goblin.save(path_g, "PNG")
     print(f"Saved: {path_g}")
 
