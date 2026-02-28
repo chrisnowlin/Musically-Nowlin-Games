@@ -593,6 +593,9 @@ const MelodyDungeonGame: React.FC = () => {
       // Mark tile as cleared — bosses become Stairs on victory
       setFloor((prev) => {
         const { x, y } = activeChallenge.tilePosition;
+        const isBossVictory =
+          correct &&
+          (activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss);
         const tiles = prev.tiles.map((row, ry) =>
           row.map((tile, rx) => {
             if (rx === x && ry === y) {
@@ -603,6 +606,10 @@ const MelodyDungeonGame: React.FC = () => {
                 return { ...tile, cleared: true, type: correct ? TileType.Stairs : tile.type };
               }
               return { ...tile, cleared: true, type: correct ? TileType.Floor : tile.type };
+            }
+            // On boss victory, clear all BossBody tiles (there is only one boss per floor)
+            if (isBossVictory && tile.type === TileType.BossBody) {
+              return { ...tile, type: TileType.Floor };
             }
             return tile;
           })
