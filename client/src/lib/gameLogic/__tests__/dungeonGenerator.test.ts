@@ -41,8 +41,8 @@ describe('getBossType', () => {
 
 describe('generateDungeon', () => {
   it('should set enemyState to guarding on Dragons', () => {
-    // Floor 3+ guarantees a dragon spawn attempt
-    const floor = generateDungeon(5);
+    // Floor 3+ guarantees a dragon spawn attempt; use non-boss floor
+    const floor = generateDungeon(4);
     const dragons = findTiles(floor, TileType.Dragon);
     for (const d of dragons) {
       expect(d.tile.enemyState).toBe('guarding');
@@ -50,7 +50,7 @@ describe('generateDungeon', () => {
   });
 
   it('should set enemyState to patrolling on regular enemies', () => {
-    const floor = generateDungeon(5);
+    const floor = generateDungeon(4);
     const enemies = findTiles(floor, TileType.Enemy);
     for (const e of enemies) {
       expect(e.tile.enemyState).toBe('patrolling');
@@ -191,5 +191,49 @@ describe('moveEnemies', () => {
     // Dragon should have transitioned to chasing and moved toward player
     expect(result.tiles[0][2].type).toBe(TileType.Dragon);
     expect(result.tiles[0][2].enemyState).toBe('chasing');
+  });
+});
+
+describe('boss floor generation', () => {
+  it('places a MiniBoss tile on floor 5', () => {
+    const floor = generateDungeon(5);
+    const miniBosses = findTiles(floor, TileType.MiniBoss);
+    expect(miniBosses.length).toBe(1);
+    expect(miniBosses[0].pos).toEqual(floor.stairsPosition);
+  });
+
+  it('places a BigBoss tile on floor 10', () => {
+    const floor = generateDungeon(10);
+    const bigBosses = findTiles(floor, TileType.BigBoss);
+    expect(bigBosses.length).toBe(1);
+    expect(bigBosses[0].pos).toEqual(floor.stairsPosition);
+  });
+
+  it('has no enemies or dragons on boss floors', () => {
+    const floor5 = generateDungeon(5);
+    const floor10 = generateDungeon(10);
+    expect(findTiles(floor5, TileType.Enemy).length).toBe(0);
+    expect(findTiles(floor5, TileType.Dragon).length).toBe(0);
+    expect(findTiles(floor10, TileType.Enemy).length).toBe(0);
+    expect(findTiles(floor10, TileType.Dragon).length).toBe(0);
+  });
+
+  it('has no Stairs tile visible on boss floors (boss replaces it)', () => {
+    const floor = generateDungeon(5);
+    expect(findTiles(floor, TileType.Stairs).length).toBe(0);
+  });
+
+  it('has no chests on boss floors', () => {
+    const floor5 = generateDungeon(5);
+    const floor10 = generateDungeon(10);
+    expect(findTiles(floor5, TileType.Chest).length).toBe(0);
+    expect(findTiles(floor10, TileType.Chest).length).toBe(0);
+  });
+
+  it('does not generate boss tiles on non-boss floors', () => {
+    const floor = generateDungeon(3);
+    expect(findTiles(floor, TileType.MiniBoss).length).toBe(0);
+    expect(findTiles(floor, TileType.BigBoss).length).toBe(0);
+    expect(findTiles(floor, TileType.Stairs).length).toBe(1);
   });
 });

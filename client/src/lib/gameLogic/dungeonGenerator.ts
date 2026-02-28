@@ -305,6 +305,7 @@ function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
 export function generateDungeon(floorNumber: number): DungeonFloor {
   const { width, height } = getDungeonSize(floorNumber);
   const grid = createEmptyGrid(width, height);
+  const bossType = getBossType(floorNumber);
 
   // Scale room count and max room size with dungeon size
   const growth = width - DUNGEON_BASE_SIZE;
@@ -340,6 +341,19 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
+  // On boss floors, expand the last room to make space for the boss arena.
+  if (bossType && rooms.length > 0) {
+    const lastRoom = rooms[rooms.length - 1];
+    const targetSize = Math.min(7, Math.max(lastRoom.w, 5));
+    if (lastRoom.w < targetSize || lastRoom.h < targetSize) {
+      const newW = Math.min(targetSize, width - lastRoom.x - 1);
+      const newH = Math.min(targetSize, height - lastRoom.y - 1);
+      lastRoom.w = Math.max(lastRoom.w, newW);
+      lastRoom.h = Math.max(lastRoom.h, newH);
+      carveRoom(grid, lastRoom);
+    }
+  }
+
   // Connect rooms with corridors
   for (let i = 1; i < rooms.length; i++) {
     carveCorridor(grid, roomCenter(rooms[i - 1]), roomCenter(rooms[i]));
@@ -349,72 +363,81 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
   const playerStart = roomCenter(rooms[0]);
   grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
 
-  // Place stairs in last room, far from player
+  // Place stairs (or boss) in last room, far from player
   const stairsPosition = roomCenter(rooms[rooms.length - 1]);
-  grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
+  if (bossType) {
+    const bossTileType = bossType === 'big' ? TileType.BigBoss : TileType.MiniBoss;
+    grid[stairsPosition.y][stairsPosition.x].type = bossTileType;
+    grid[stairsPosition.y][stairsPosition.x].cleared = false;
+  } else {
+    grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
+  }
 
   const placedPositions = [playerStart, stairsPosition];
   const challengeTypes = getChallengeTypesForFloor(floorNumber);
 
-  // Place locked chests first so dragons can spawn adjacent to them.
-  const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
-  const chestPositions: Position[] = [];
-  for (let i = 0; i < chestCount; i++) {
-    const pos = pickValidChestTile(grid, placedPositions, playerStart);
-    if (pos) {
-      placedPositions.push(pos);
-      chestPositions.push(pos);
+  // Chests, dragons, and enemies do NOT spawn on boss floors.
+  if (!bossType) {
+    // Place locked chests first so dragons can spawn adjacent to them.
+    const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
+    const chestPositions: Position[] = [];
+    for (let i = 0; i < chestCount; i++) {
+      const pos = pickValidChestTile(grid, placedPositions, playerStart);
+      if (pos) {
+        placedPositions.push(pos);
+        chestPositions.push(pos);
+      }
     }
-  }
 
-  // Place dragon adjacent to a chest (floor >= 3).
-  const hasDragon = floorNumber >= 3;
-  if (hasDragon && chestPositions.length > 0) {
-    const chest = chestPositions[rand(0, chestPositions.length - 1)];
-    const dirs = [
-      { x: 0, y: -1 },
-      { x: 0, y: 1 },
-      { x: -1, y: 0 },
-      { x: 1, y: 0 },
-    ];
-    const adjacentCandidates = dirs
-      .map((d) => ({ x: chest.x + d.x, y: chest.y + d.y }))
-      .filter(
-        (p) =>
-          p.y >= 0 &&
-          p.y < height &&
-          p.x >= 0 &&
-          p.x < width &&
-          grid[p.y][p.x].type === TileType.Floor &&
-          !placedPositions.some((e) => e.x === p.x && e.y === p.y) &&
-          isOpenEnough(grid, p)
-      );
-    const dragonPos =
-      adjacentCandidates.length > 0
-        ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
-        : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
-    if (dragonPos) {
-      grid[dragonPos.y][dragonPos.x].type = TileType.Dragon;
-      grid[dragonPos.y][dragonPos.x].challengeType =
-        challengeTypes[rand(0, challengeTypes.length - 1)];
-      grid[dragonPos.y][dragonPos.x].cleared = false;
-      grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
-      placedPositions.push(dragonPos);
+    // Place dragon adjacent to a chest (floor >= 3).
+    const hasDragon = floorNumber >= 3;
+    if (hasDragon && chestPositions.length > 0) {
+      const chest = chestPositions[rand(0, chestPositions.length - 1)];
+      const dirs = [
+        { x: 0, y: -1 },
+        { x: 0, y: 1 },
+        { x: -1, y: 0 },
+        { x: 1, y: 0 },
+      ];
+      const adjacentCandidates = dirs
+        .map((d) => ({ x: chest.x + d.x, y: chest.y + d.y }))
+        .filter(
+          (p) =>
+            p.y >= 0 &&
+            p.y < height &&
+            p.x >= 0 &&
+            p.x < width &&
+            grid[p.y][p.x].type === TileType.Floor &&
+            !placedPositions.some((e) => e.x === p.x && e.y === p.y) &&
+            isOpenEnough(grid, p)
+        );
+      const dragonPos =
+        adjacentCandidates.length > 0
+          ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
+          : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+      if (dragonPos) {
+        grid[dragonPos.y][dragonPos.x].type = TileType.Dragon;
+        grid[dragonPos.y][dragonPos.x].challengeType =
+          challengeTypes[rand(0, challengeTypes.length - 1)];
+        grid[dragonPos.y][dragonPos.x].cleared = false;
+        grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
+        placedPositions.push(dragonPos);
+      }
     }
-  }
 
-  // Place regular enemies.
-  const totalEnemies = Math.min(2 + floorNumber, 6);
-  const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
-  for (let i = 0; i < regularCount; i++) {
-    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
-    if (pos) {
-      grid[pos.y][pos.x].type = TileType.Enemy;
-      grid[pos.y][pos.x].challengeType =
-        challengeTypes[rand(0, challengeTypes.length - 1)];
-      grid[pos.y][pos.x].cleared = false;
-      grid[pos.y][pos.x].enemyState = 'patrolling';
-      placedPositions.push(pos);
+    // Place regular enemies.
+    const totalEnemies = Math.min(2 + floorNumber, 6);
+    const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
+    for (let i = 0; i < regularCount; i++) {
+      const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+      if (pos) {
+        grid[pos.y][pos.x].type = TileType.Enemy;
+        grid[pos.y][pos.x].challengeType =
+          challengeTypes[rand(0, challengeTypes.length - 1)];
+        grid[pos.y][pos.x].cleared = false;
+        grid[pos.y][pos.x].enemyState = 'patrolling';
+        placedPositions.push(pos);
+      }
     }
   }
 
