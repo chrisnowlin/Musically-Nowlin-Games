@@ -4,11 +4,12 @@ import { TileType } from '@/lib/gameLogic/dungeonTypes';
 import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
-import { getChallengeTypesForFloor, pickRandom } from './challengeHelpers';
+import { getChallengeTypesForFloor, pickRandom, generateBigBossSequence } from './challengeHelpers';
 
 export interface BossBattleMeta {
   damageDealt: number;
   shieldUsed: boolean;
+  potionsUsed: number;
 }
 
 interface Props {
@@ -19,9 +20,24 @@ interface Props {
   onResult: (correct: boolean, meta?: BossBattleMeta) => void;
   playerHealth?: number;
   shieldCharm?: number;
+  potions?: number;
 }
 
 const BOSS_HP = 3;
+const MINI_BOSS_HP = 5;
+const BIG_BOSS_HP = 8;
+
+function getBossHp(tileType: TileType): number {
+  if (tileType === TileType.BigBoss) return BIG_BOSS_HP;
+  if (tileType === TileType.MiniBoss) return MINI_BOSS_HP;
+  return BOSS_HP;
+}
+
+function getBossLabel(tileType: TileType): string {
+  if (tileType === TileType.BigBoss) return 'Boss';
+  if (tileType === TileType.MiniBoss) return 'Mini Boss';
+  return 'Dragon';
+}
 
 const TILE_THEME: Record<string, { title: string; borderColor: string; bgColor: string }> = {
   [TileType.Enemy]: {
@@ -79,42 +95,78 @@ function ChallengeRenderer({ type, difficulty, floorNumber, onResult }: {
 }
 
 const BossBattle: React.FC<{
+  tileType: TileType;
   difficulty: DifficultyLevel;
   floorNumber: number;
   onResult: (correct: boolean, meta?: BossBattleMeta) => void;
   playerHealth: number;
   shieldCharm: number;
-}> = ({ difficulty, floorNumber, onResult, playerHealth, shieldCharm }) => {
+  potions: number;
+}> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, shieldCharm, potions }) => {
+  const maxBossHp = useMemo(() => getBossHp(tileType), [tileType]);
+  const bossLabel = useMemo(() => getBossLabel(tileType), [tileType]);
+
+  // For Dragon/MiniBoss: random challenge each round
   const challengeTypes = useMemo(() => getChallengeTypesForFloor(floorNumber), [floorNumber]);
+
+  // For BigBoss: pre-generated 8-question sequence
+  const bigBossSequence = useMemo(
+    () => tileType === TileType.BigBoss ? generateBigBossSequence(floorNumber, difficulty) : null,
+    [tileType, floorNumber, difficulty]
+  );
+
   const [currentRound, setCurrentRound] = useState(0);
-  const [dragonHp, setDragonHp] = useState(BOSS_HP);
+  const [bossHp, setBossHp] = useState(maxBossHp);
   const [effectiveHealth, setEffectiveHealth] = useState(playerHealth);
   const [shieldActive, setShieldActive] = useState(shieldCharm > 0);
   const [damageDealt, setDamageDealt] = useState(0);
   const [shieldUsed, setShieldUsed] = useState(false);
+  const [potionsRemaining, setPotionsRemaining] = useState(potions);
+  const [potionsUsed, setPotionsUsed] = useState(0);
   const [roundTransition, setRoundTransition] = useState(false);
+  const [showItemPhase, setShowItemPhase] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
 
-  const currentChallengeType = useMemo(
-    () => pickRandom(challengeTypes),
-    [challengeTypes, currentRound]
-  );
+  // Determine current challenge based on boss type
+  const currentChallenge = useMemo(() => {
+    if (bigBossSequence) {
+      // BigBoss uses pre-generated sequence
+      return bigBossSequence[currentRound % bigBossSequence.length];
+    }
+    // Dragon/MiniBoss: random type, player's difficulty
+    return { type: pickRandom(challengeTypes), difficulty };
+  }, [bigBossSequence, challengeTypes, difficulty, currentRound]);
+
+  const handleUsePotion = useCallback(() => {
+    if (potionsRemaining > 0 && effectiveHealth < playerHealth) {
+      setPotionsRemaining((p) => p - 1);
+      setPotionsUsed((p) => p + 1);
+      setEffectiveHealth((h) => Math.min(h + 1, playerHealth));
+    }
+  }, [potionsRemaining, effectiveHealth, playerHealth]);
+
+  const proceedToNextRound = useCallback(() => {
+    setCurrentRound((r) => r + 1);
+    setLastResult(null);
+    setShowItemPhase(false);
+    setRoundTransition(false);
+  }, []);
 
   const handleRoundResult = useCallback((correct: boolean) => {
     setLastResult(correct);
 
     if (correct) {
-      const newDragonHp = dragonHp - 1;
-      setDragonHp(newDragonHp);
-      if (newDragonHp <= 0) {
-        // Dragon defeated
-        setTimeout(() => onResult(true, { damageDealt, shieldUsed }), 1200);
+      const newBossHp = bossHp - 1;
+      setBossHp(newBossHp);
+      if (newBossHp <= 0) {
+        // Boss defeated — skip item phase
+        setRoundTransition(true);
+        setTimeout(() => onResult(true, { damageDealt, shieldUsed, potionsUsed }), 1200);
       } else {
+        // Boss still alive — show result then item phase
         setRoundTransition(true);
         setTimeout(() => {
-          setCurrentRound((r) => r + 1);
-          setLastResult(null);
-          setRoundTransition(false);
+          setShowItemPhase(true);
         }, 1200);
       }
     } else {
@@ -132,18 +184,18 @@ const BossBattle: React.FC<{
       }
 
       if (newHealth <= 0) {
-        // Player defeated
-        setTimeout(() => onResult(false, { damageDealt: damageDealt + 1, shieldUsed: newShieldUsed }), 1200);
+        // Player defeated — skip item phase
+        setRoundTransition(true);
+        setTimeout(() => onResult(false, { damageDealt: damageDealt + 1, shieldUsed: newShieldUsed, potionsUsed }), 1200);
       } else {
+        // Player still alive — show result then item phase
         setRoundTransition(true);
         setTimeout(() => {
-          setCurrentRound((r) => r + 1);
-          setLastResult(null);
-          setRoundTransition(false);
+          setShowItemPhase(true);
         }, 1200);
       }
     }
-  }, [dragonHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, onResult]);
+  }, [bossHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, potionsUsed, onResult]);
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -151,13 +203,13 @@ const BossBattle: React.FC<{
       <div className="w-full max-w-[200px] space-y-2">
         <div>
           <div className="flex justify-between text-xs text-gray-400 mb-1">
-            <span>Dragon HP</span>
-            <span>{dragonHp}/{BOSS_HP}</span>
+            <span>{bossLabel} HP</span>
+            <span>{bossHp}/{maxBossHp}</span>
           </div>
           <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-purple-600 to-red-500 transition-all duration-500"
-              style={{ width: `${(dragonHp / BOSS_HP) * 100}%` }}
+              style={{ width: `${(bossHp / maxBossHp) * 100}%` }}
             />
           </div>
         </div>
@@ -176,11 +228,33 @@ const BossBattle: React.FC<{
       </div>
 
       {/* Challenge for current round */}
-      {!roundTransition ? (
+      {showItemPhase ? (
+        <div className="py-6 text-center space-y-3">
+          <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : 'text-red-400'}`}>
+            {lastResult ? 'Hit!' : 'Miss! -1 HP'}
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            {potionsRemaining > 0 && effectiveHealth < playerHealth && (
+              <button
+                onClick={handleUsePotion}
+                className="px-3 py-1.5 bg-pink-700 hover:bg-pink-600 rounded-lg text-sm font-medium transition-colors"
+              >
+                Use Potion ({potionsRemaining})
+              </button>
+            )}
+            <button
+              onClick={proceedToNextRound}
+              className="px-4 py-1.5 bg-indigo-700 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      ) : !roundTransition ? (
         <ChallengeRenderer
           key={currentRound}
-          type={currentChallengeType}
-          difficulty={difficulty}
+          type={currentChallenge.type}
+          difficulty={currentChallenge.difficulty}
           floorNumber={floorNumber}
           onResult={handleRoundResult}
         />
@@ -189,16 +263,16 @@ const BossBattle: React.FC<{
           <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : 'text-red-400'}`}>
             {lastResult ? 'Hit!' : 'Miss! -1 HP'}
           </p>
-          <p className="text-sm text-gray-400 mt-1">Next round...</p>
+          <p className="text-sm text-gray-400 mt-1">Preparing...</p>
         </div>
       )}
     </div>
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, shieldCharm = 0 }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, shieldCharm = 0, potions = 0 }) => {
   const theme = TILE_THEME[tileType] || DEFAULT_THEME;
-  const isDragon = tileType === TileType.Dragon;
+  const isBoss = tileType === TileType.Dragon || tileType === TileType.MiniBoss || tileType === TileType.BigBoss;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -213,8 +287,16 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
           {theme.title}
         </h2>
 
-        {isDragon ? (
-          <BossBattle difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} playerHealth={playerHealth} shieldCharm={shieldCharm} />
+        {isBoss ? (
+          <BossBattle
+            tileType={tileType}
+            difficulty={difficulty}
+            floorNumber={floorNumber}
+            onResult={onResult}
+            playerHealth={playerHealth}
+            shieldCharm={shieldCharm}
+            potions={potions}
+          />
         ) : (
           <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} />
         )}
