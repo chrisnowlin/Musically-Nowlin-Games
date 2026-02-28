@@ -18,6 +18,7 @@ import type {
   DifficultyLevel,
   ChallengeType,
   EnemySubtype,
+  Tile,
 } from '@/lib/gameLogic/dungeonTypes';
 import { generateDungeon, moveEnemies } from '@/lib/gameLogic/dungeonGenerator';
 import {
@@ -52,10 +53,11 @@ function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = V
   return { ...floor, tiles };
 }
 
-/** Check if an uncleared Dragon (enemy with subtype 'dragon') occupies the given position. */
-function findDragonAtPosition(floor: DungeonFloor, pos: Position): boolean {
+/** Return the tile if any uncleared enemy occupies the player's position (i.e. it bumped into them), otherwise null. */
+function findCatchingEnemyAtPosition(floor: DungeonFloor, pos: Position): Tile | null {
   const tile = floor.tiles[pos.y]?.[pos.x];
-  return tile?.type === TileType.Enemy && tile.enemySubtype === 'dragon' && !tile.cleared;
+  if (tile?.type === TileType.Enemy && !tile.cleared) return tile;
+  return null;
 }
 
 function createPlayer(start: Position): PlayerState {
@@ -113,7 +115,7 @@ const MelodyDungeonGame: React.FC = () => {
   const playerRef = useRef(player);
   playerRef.current = player;
   const getVisRadius = () => playerRef.current.buffs.floor.torch ? VISIBILITY_RADIUS + 2 : VISIBILITY_RADIUS;
-  const dragonCaughtRef = useRef<ChallengeType | false>(false);
+  const enemyCaughtRef = useRef<{ challengeType: ChallengeType; subtype: EnemySubtype; level: number } | false>(false);
   const [challengeKey, setChallengeKey] = useState(0);
   const activeChallengeBuffsRef = useRef({ metronome: false, tuningFork: false });
   const [facingLeft, setFacingLeft] = useState(false);
@@ -122,15 +124,19 @@ const MelodyDungeonGame: React.FC = () => {
   const floorNumber = floor.floorNumber;
   const themeName = getTheme(floor.themeIndex).name;
 
-  /** Run moveEnemies and flag if a chasing Dragon lands on the player. */
+  /** Run moveEnemies and flag if any enemy lands on the player tile. */
   function moveEnemiesAndDetectCatch(
     f: DungeonFloor,
     pos: Position
   ): DungeonFloor {
     const result = moveEnemies(f, pos);
-    if (findDragonAtPosition(result, pos)) {
-      const tile = result.tiles[pos.y][pos.x];
-      dragonCaughtRef.current = tile.challengeType || 'noteReading';
+    const caught = findCatchingEnemyAtPosition(result, pos);
+    if (caught) {
+      enemyCaughtRef.current = {
+        challengeType: caught.challengeType || 'noteReading',
+        subtype: caught.enemySubtype || 'ghost',
+        level: caught.enemyLevel || 1,
+      };
     }
     return result;
   }
@@ -193,15 +199,15 @@ const MelodyDungeonGame: React.FC = () => {
     };
   }, []);
 
-  // Detect Dragon catch after state settles
+  // Detect enemy catch after state settles
   useEffect(() => {
-    if (!dragonCaughtRef.current || phase !== 'playing') return;
-    const challengeType = dragonCaughtRef.current;
-    dragonCaughtRef.current = false;
+    if (!enemyCaughtRef.current || phase !== 'playing') return;
+    const { challengeType, subtype, level } = enemyCaughtRef.current;
+    enemyCaughtRef.current = false;
 
-    // Apply 1 heart penalty
     setPlayer((prev) => {
-      const newHealth = Math.max(0, prev.health - 1);
+      // Dragons deal 1 HP on catch; other enemies go straight to challenge
+      const newHealth = subtype === 'dragon' ? Math.max(0, prev.health - 1) : prev.health;
       if (newHealth <= 0) {
         setPhase('gameOver');
         return { ...prev, health: 0 };
@@ -210,8 +216,8 @@ const MelodyDungeonGame: React.FC = () => {
       moveLockedRef.current = true;
       setActiveChallenge({ type: challengeType, tilePosition: prev.position });
       setActiveTileType(TileType.Enemy);
-      setActiveTileSubtype('dragon');
-      setActiveTileLevel(3);
+      setActiveTileSubtype(subtype);
+      setActiveTileLevel(level);
       activeChallengeBuffsRef.current = { metronome: prev.buffs.armed.metronome > 0, tuningFork: prev.buffs.armed.tuningFork > 0 };
       setPhase('challenge');
 
@@ -479,15 +485,15 @@ const MelodyDungeonGame: React.FC = () => {
             } else {
               updated.health = Math.max(0, prev.health - 1);
             }
-            // Streak Saver: preserve streak, consume one charge
-            if (prev.buffs.persistent.streakSaver > 0) {
+            // Streak Saver: preserve streak, consume one armed charge
+            if (prev.buffs.armed.streakSaver > 0) {
               updated = {
                 ...updated,
                 buffs: {
                   ...updated.buffs,
-                  persistent: {
-                    ...updated.buffs.persistent,
-                    streakSaver: updated.buffs.persistent.streakSaver - 1,
+                  armed: {
+                    ...updated.buffs.armed,
+                    streakSaver: updated.buffs.armed.streakSaver - 1,
                   },
                 },
               };
@@ -541,9 +547,9 @@ const MelodyDungeonGame: React.FC = () => {
           ...prev,
           buffs: {
             ...prev.buffs,
-            persistent: {
-              ...prev.buffs.persistent,
-              metronome: Math.max(0, prev.buffs.persistent.metronome - 1),
+            armed: {
+              ...prev.buffs.armed,
+              metronome: Math.max(0, prev.buffs.armed.metronome - 1),
             },
           },
         }));
@@ -553,9 +559,9 @@ const MelodyDungeonGame: React.FC = () => {
           ...prev,
           buffs: {
             ...prev.buffs,
-            persistent: {
-              ...prev.buffs.persistent,
-              tuningFork: Math.max(0, prev.buffs.persistent.tuningFork - 1),
+            armed: {
+              ...prev.buffs.armed,
+              tuningFork: Math.max(0, prev.buffs.armed.tuningFork - 1),
             },
           },
         }));
@@ -588,42 +594,45 @@ const MelodyDungeonGame: React.FC = () => {
     setPhase('playing');
   }, []);
 
-  const handleUseItem = useCallback((itemId: 'torch' | 'map-scroll' | 'compass') => {
+  const handleUseItem = useCallback((itemId: string) => {
     setPlayer((prev) => {
       const p = prev.buffs.persistent;
+      const a = prev.buffs.armed;
+      // Active items: immediate floor effect
       if (itemId === 'torch' && p.torch > 0) {
-        return {
-          ...prev,
-          buffs: {
-            ...prev.buffs,
-            floor: { ...prev.buffs.floor, torch: true },
-            persistent: { ...p, torch: p.torch - 1 },
-          },
-        };
+        return { ...prev, buffs: { ...prev.buffs, floor: { ...prev.buffs.floor, torch: true }, persistent: { ...p, torch: p.torch - 1 } } };
       }
       if (itemId === 'compass' && p.compass > 0) {
-        return {
-          ...prev,
-          buffs: {
-            ...prev.buffs,
-            floor: { ...prev.buffs.floor, compass: true },
-            persistent: { ...p, compass: p.compass - 1 },
-          },
-        };
+        return { ...prev, buffs: { ...prev.buffs, floor: { ...prev.buffs.floor, compass: true }, persistent: { ...p, compass: p.compass - 1 } } };
       }
       if (itemId === 'map-scroll' && p.mapScroll > 0) {
-        setFloor((f) => ({
-          ...f,
-          tiles: f.tiles.map((row) => row.map((tile) => ({ ...tile, visited: true }))),
-        }));
-        return {
-          ...prev,
-          buffs: {
-            ...prev.buffs,
-            floor: { ...prev.buffs.floor, mapRevealed: true },
-            persistent: { ...p, mapScroll: p.mapScroll - 1 },
-          },
-        };
+        setFloor((f) => ({ ...f, tiles: f.tiles.map((row) => row.map((tile) => ({ ...tile, visited: true }))) }));
+        return { ...prev, buffs: { ...prev.buffs, floor: { ...prev.buffs.floor, mapRevealed: true }, persistent: { ...p, mapScroll: p.mapScroll - 1 } } };
+      }
+      // Passive items: arm for auto-trigger
+      if (itemId === 'shield-charm' && p.shieldCharm > 0) {
+        return { ...prev, shieldCharm: prev.shieldCharm + 1, buffs: { ...prev.buffs, persistent: { ...p, shieldCharm: p.shieldCharm - 1 } } };
+      }
+      if (itemId === 'streak-saver' && p.streakSaver > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, streakSaver: a.streakSaver + 1 }, persistent: { ...p, streakSaver: p.streakSaver - 1 } } };
+      }
+      if (itemId === 'second-chance' && p.secondChance > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, secondChance: a.secondChance + 1 }, persistent: { ...p, secondChance: p.secondChance - 1 } } };
+      }
+      if (itemId === 'dragon-bane' && p.dragonBane > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, dragonBane: a.dragonBane + 1 }, persistent: { ...p, dragonBane: p.dragonBane - 1 } } };
+      }
+      if (itemId === 'lucky-coin' && p.luckyCoin > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, luckyCoin: a.luckyCoin + 1 }, persistent: { ...p, luckyCoin: p.luckyCoin - 1 } } };
+      }
+      if (itemId === 'treasure-magnet' && p.treasureMagnet > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, treasureMagnet: a.treasureMagnet + 1 }, persistent: { ...p, treasureMagnet: p.treasureMagnet - 1 } } };
+      }
+      if (itemId === 'metronome' && p.metronome > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, metronome: a.metronome + 1 }, persistent: { ...p, metronome: p.metronome - 1 } } };
+      }
+      if (itemId === 'tuning-fork' && p.tuningFork > 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, tuningFork: a.tuningFork + 1 }, persistent: { ...p, tuningFork: p.tuningFork - 1 } } };
       }
       return prev;
     });
@@ -902,7 +911,7 @@ const MelodyDungeonGame: React.FC = () => {
             hasPotions={player.potions > 0}
             hasBagItems={(() => {
               const p = player.buffs.persistent;
-              return player.shieldCharm > 0 ||
+              return p.shieldCharm > 0 ||
                 p.torch > 0 || p.mapScroll > 0 || p.compass > 0 ||
                 p.streakSaver > 0 || p.secondChance > 0 || p.dragonBane > 0 ||
                 p.luckyCoin > 0 || p.treasureMagnet > 0 || p.metronome > 0 || p.tuningFork > 0;
@@ -923,9 +932,9 @@ const MelodyDungeonGame: React.FC = () => {
           maxHealth={player.maxHealth}
           shieldCharm={player.shieldCharm}
           potions={player.potions}
-          dragonBane={player.buffs.persistent.dragonBane > 0}
-          slowRhythm={player.buffs.persistent.metronome > 0}
-          showIntervalHint={player.buffs.persistent.tuningFork > 0}
+          dragonBane={player.buffs.armed.dragonBane > 0}
+          slowRhythm={player.buffs.armed.metronome > 0}
+          showIntervalHint={player.buffs.armed.tuningFork > 0}
           enemySubtype={activeTileSubtype}
           enemyLevel={activeTileLevel}
         />
