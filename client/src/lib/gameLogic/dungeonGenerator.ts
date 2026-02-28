@@ -237,10 +237,15 @@ function noKeyTraversalIsValid(grid: Tile[][], playerStart: Position): boolean {
   const reachable = getReachableWithoutKey(grid, playerStart);
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[0].length; x++) {
-      const pos = { x, y };
       const tile = grid[y][x];
-      if (tile.type === TileType.Door && !reachable.has(keyOf(pos))) return false;
-      if (isStraightHallwayNonWallTile(grid, pos) && !reachable.has(keyOf(pos))) return false;
+      if (
+        tile.type !== TileType.Wall &&
+        tile.type !== TileType.Chest &&
+        tile.type !== TileType.MerchantStall &&
+        !reachable.has(`${x},${y}`)
+      ) {
+        return false;
+      }
     }
   }
   return true;
@@ -412,7 +417,6 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
       }
     }
   }
-
 
   const challengeTypes = getChallengeTypesForFloor(floorNumber);
 

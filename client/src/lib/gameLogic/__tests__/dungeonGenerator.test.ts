@@ -105,6 +105,56 @@ describe('generateDungeon', () => {
     }
   });
 
+  it('chests never block hallways or room entrances (all floor tiles reachable from player start)', () => {
+    // BFS treating chests and merchant stalls as solid — mirrors getReachableWithoutKey.
+    function reachableWithoutChests(floor: ReturnType<typeof generateDungeon>): Set<string> {
+      const visited = new Set<string>();
+      const queue: Array<{ x: number; y: number }> = [floor.playerStart];
+      visited.add(`${floor.playerStart.x},${floor.playerStart.y}`);
+      const dirs = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+      while (queue.length > 0) {
+        const cur = queue.shift()!;
+        for (const d of dirs) {
+          const nx = cur.x + d.x;
+          const ny = cur.y + d.y;
+          if (ny < 0 || ny >= floor.height || nx < 0 || nx >= floor.width) continue;
+          const t = floor.tiles[ny][nx];
+          if (
+            t.type === TileType.Wall ||
+            t.type === TileType.Chest ||
+            t.type === TileType.MerchantStall
+          )
+            continue;
+          const key = `${nx},${ny}`;
+          if (visited.has(key)) continue;
+          visited.add(key);
+          queue.push({ x: nx, y: ny });
+        }
+      }
+      return visited;
+    }
+
+    // Run across several floor numbers to exercise different dungeon layouts.
+    for (const floorNum of [1, 2, 3, 4, 6, 8]) {
+      for (let run = 0; run < 5; run++) {
+        const floor = generateDungeon(floorNum);
+        const reachable = reachableWithoutChests(floor);
+        for (let y = 0; y < floor.height; y++) {
+          for (let x = 0; x < floor.width; x++) {
+            const t = floor.tiles[y][x];
+            if (
+              t.type === TileType.Wall ||
+              t.type === TileType.Chest ||
+              t.type === TileType.MerchantStall
+            )
+              continue;
+            expect(reachable.has(`${x},${y}`)).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
 });
 
 /** Create a minimal floor grid for testing movement. */
