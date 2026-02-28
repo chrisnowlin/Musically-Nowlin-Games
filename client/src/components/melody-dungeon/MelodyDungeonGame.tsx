@@ -7,6 +7,7 @@ import {
   VISIBILITY_RADIUS,
   DEFAULT_BUFFS,
   DEFAULT_FLOOR_BUFFS,
+  DEFAULT_ARMED_BUFFS,
 } from '@/lib/gameLogic/dungeonTypes';
 import type {
   GamePhase,
@@ -70,6 +71,7 @@ function createPlayer(start: Position): PlayerState {
     buffs: {
       floor: { ...DEFAULT_FLOOR_BUFFS },
       persistent: { ...DEFAULT_BUFFS.persistent },
+      armed: { ...DEFAULT_ARMED_BUFFS },
     },
   };
 }
@@ -164,10 +166,9 @@ const MelodyDungeonGame: React.FC = () => {
       }
 
       if (e.key === 'u' || e.key === 'U') {
-        const cur = playerRef.current;
-        const p = cur.buffs.persistent;
+        const p = playerRef.current.buffs.persistent;
         const hasItems =
-          cur.shieldCharm > 0 ||
+          p.shieldCharm > 0 ||
           p.torch > 0 || p.mapScroll > 0 || p.compass > 0 ||
           p.streakSaver > 0 || p.secondChance > 0 || p.dragonBane > 0 ||
           p.luckyCoin > 0 || p.treasureMagnet > 0 || p.metronome > 0 || p.tuningFork > 0;
@@ -211,7 +212,7 @@ const MelodyDungeonGame: React.FC = () => {
       setActiveTileType(TileType.Enemy);
       setActiveTileSubtype('dragon');
       setActiveTileLevel(3);
-      activeChallengeBuffsRef.current = { metronome: prev.buffs.persistent.metronome > 0, tuningFork: prev.buffs.persistent.tuningFork > 0 };
+      activeChallengeBuffsRef.current = { metronome: prev.buffs.armed.metronome > 0, tuningFork: prev.buffs.armed.tuningFork > 0 };
       setPhase('challenge');
 
       return { ...prev, health: newHealth };
@@ -254,7 +255,7 @@ const MelodyDungeonGame: React.FC = () => {
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(TileType.Door);
-          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.persistent.metronome > 0, tuningFork: playerRef.current.buffs.persistent.tuningFork > 0 };
+          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.armed.metronome > 0, tuningFork: playerRef.current.buffs.armed.tuningFork > 0 };
           setPhase('challenge');
           return prev;
         }
@@ -299,7 +300,7 @@ const MelodyDungeonGame: React.FC = () => {
           setActiveTileType(tile.type);
           setActiveTileSubtype(tile.enemySubtype);
           setActiveTileLevel(tile.enemyLevel ?? 1);
-          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.persistent.metronome > 0, tuningFork: playerRef.current.buffs.persistent.tuningFork > 0 };
+          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.armed.metronome > 0, tuningFork: playerRef.current.buffs.armed.tuningFork > 0 };
           setPhase('challenge');
           return { ...prev, position: newPos };
         }
@@ -335,15 +336,15 @@ const MelodyDungeonGame: React.FC = () => {
 
       // Second Chance: retry on wrong answer (not for doors or dragon battles)
       if (!correct && !meta && activeTileType !== TileType.Door) {
-        const hasSecondChance = playerRef.current.buffs.persistent.secondChance > 0;
+        const hasSecondChance = playerRef.current.buffs.armed.secondChance > 0;
         if (hasSecondChance) {
           setPlayer((prev) => ({
             ...prev,
             buffs: {
               ...prev.buffs,
-              persistent: {
-                ...prev.buffs.persistent,
-                secondChance: prev.buffs.persistent.secondChance - 1,
+              armed: {
+                ...prev.buffs.armed,
+                secondChance: prev.buffs.armed.secondChance - 1,
               },
             },
           }));
@@ -431,7 +432,7 @@ const MelodyDungeonGame: React.FC = () => {
           }
         } else if (correct) {
           // Non-boss correct answer
-          const baseScore = (activeTileType === TileType.Enemy && prev.buffs.persistent.luckyCoin > 0) ? 200 : 100;
+          const baseScore = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 200 : 100;
           const streakBonus = Math.floor(prev.streak / 3) * 25;
           updated.score += baseScore + streakBonus;
           updated.streak += 1;
@@ -439,14 +440,14 @@ const MelodyDungeonGame: React.FC = () => {
           if (activeTileType === TileType.Enemy) {
             updated.keys += 1;
             // Lucky Coin: double base score, consume one charge
-            if (prev.buffs.persistent.luckyCoin > 0) {
+            if (prev.buffs.armed.luckyCoin > 0) {
               updated = {
                 ...updated,
                 buffs: {
                   ...updated.buffs,
-                  persistent: {
-                    ...updated.buffs.persistent,
-                    luckyCoin: updated.buffs.persistent.luckyCoin - 1,
+                  armed: {
+                    ...updated.buffs.armed,
+                    luckyCoin: updated.buffs.armed.luckyCoin - 1,
                   },
                 },
               };
@@ -454,15 +455,15 @@ const MelodyDungeonGame: React.FC = () => {
           }
           if (activeTileType === TileType.Treasure) {
             // Treasure Magnet: double potion reward, consume one charge
-            if (prev.buffs.persistent.treasureMagnet > 0) {
+            if (prev.buffs.armed.treasureMagnet > 0) {
               updated.potions += 2;
               updated = {
                 ...updated,
                 buffs: {
                   ...updated.buffs,
-                  persistent: {
-                    ...updated.buffs.persistent,
-                    treasureMagnet: updated.buffs.persistent.treasureMagnet - 1,
+                  armed: {
+                    ...updated.buffs.armed,
+                    treasureMagnet: updated.buffs.armed.treasureMagnet - 1,
                   },
                 },
               };
