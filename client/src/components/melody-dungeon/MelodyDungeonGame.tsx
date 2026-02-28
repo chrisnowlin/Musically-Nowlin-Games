@@ -125,21 +125,21 @@ const MelodyDungeonGame: React.FC = () => {
   const themeName = getTheme(floor.themeIndex).name;
 
   /** Run moveEnemies and flag if any enemy lands on the player tile. */
-  function moveEnemiesAndDetectCatch(
-    f: DungeonFloor,
-    pos: Position
-  ): DungeonFloor {
-    const result = moveEnemies(f, pos);
-    const caught = findCatchingEnemyAtPosition(result, pos);
-    if (caught) {
-      enemyCaughtRef.current = {
-        challengeType: caught.challengeType || 'noteReading',
-        subtype: caught.enemySubtype || 'ghost',
-        level: caught.enemyLevel || 1,
-      };
-    }
-    return result;
-  }
+  const moveEnemiesAndDetectCatch = useCallback(
+    (f: DungeonFloor, pos: Position): DungeonFloor => {
+      const result = moveEnemies(f, pos);
+      const caught = findCatchingEnemyAtPosition(result, pos);
+      if (caught) {
+        enemyCaughtRef.current = {
+          challengeType: caught.challengeType || 'noteReading',
+          subtype: caught.enemySubtype || 'ghost',
+          level: caught.enemyLevel || 1,
+        };
+      }
+      return result;
+    },
+    []
+  );
 
   // Keyboard input
   useEffect(() => {
@@ -207,10 +207,30 @@ const MelodyDungeonGame: React.FC = () => {
 
     setPlayer((prev) => {
       // Dragons deal 1 HP on catch; other enemies go straight to challenge
-      const newHealth = subtype === 'dragon' ? Math.max(0, prev.health - 1) : prev.health;
-      if (newHealth <= 0) {
+      let updated = { ...prev };
+      if (subtype === 'dragon') {
+        if (prev.shieldCharm > 0) {
+          // Shield charm absorbs the catch penalty
+          updated.shieldCharm = 0;
+        } else if (prev.buffs.persistent.dragonBane > 0) {
+          // Dragon Bane negates the catch penalty and consumes one charge
+          updated = {
+            ...updated,
+            buffs: {
+              ...updated.buffs,
+              persistent: {
+                ...updated.buffs.persistent,
+                dragonBane: updated.buffs.persistent.dragonBane - 1,
+              },
+            },
+          };
+        } else {
+          updated.health = Math.max(0, prev.health - 1);
+        }
+      }
+      if (updated.health <= 0) {
         setPhase('gameOver');
-        return { ...prev, health: 0 };
+        return { ...updated, health: 0 };
       }
 
       moveLockedRef.current = true;
@@ -221,7 +241,7 @@ const MelodyDungeonGame: React.FC = () => {
       activeChallengeBuffsRef.current = { metronome: prev.buffs.armed.metronome > 0, tuningFork: prev.buffs.armed.tuningFork > 0 };
       setPhase('challenge');
 
-      return { ...prev, health: newHealth };
+      return updated;
     });
   }, [floor, phase]);
 
