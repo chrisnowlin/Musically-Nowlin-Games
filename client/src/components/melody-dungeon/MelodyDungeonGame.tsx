@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from 'lucide-react';
 import {
   TileType,
   MAX_HEALTH,
@@ -33,8 +33,12 @@ import MiniMap from './MiniMap';
 import ChallengeModal from './ChallengeModal';
 import type { BossBattleMeta } from './ChallengeModal';
 import MerchantModal from './MerchantModal';
+import DirectionsModal from './DirectionsModal';
 import UseItemsModal from './UseItemsModal';
 import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
+import { rollChestReward } from '@/lib/gameLogic/merchantItems';
+import type { ChestReward } from '@/lib/gameLogic/merchantItems';
+import ChestRewardModal from './ChestRewardModal';
 import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
@@ -119,6 +123,8 @@ const MelodyDungeonGame: React.FC = () => {
   const [challengeKey, setChallengeKey] = useState(0);
   const activeChallengeBuffsRef = useRef({ metronome: false, tuningFork: false });
   const [facingLeft, setFacingLeft] = useState(false);
+  const [pendingChestReward, setPendingChestReward] = useState<ChestReward | null>(null);
+  const [showDirections, setShowDirections] = useState(false);
 
   const difficulty: DifficultyLevel = diffState.level;
   const floorNumber = floor.floorNumber;
@@ -301,14 +307,28 @@ const MelodyDungeonGame: React.FC = () => {
             );
             return moveEnemiesAndDetectCatch(updateVisibility({ ...f, tiles }, newPos, getVisRadius()), newPos);
           });
-          return {
+          const reward = rollChestReward(floorNumber);
+          moveLockedRef.current = true;   // lock movement while chest reward modal is visible
+          setPendingChestReward(reward);
+          if (reward.kind === 'potion') {
+            return {
+              ...prev,
+              position: newPos,
+              keys: prev.keys - 1,
+              potions: prev.potions + 1,
+              score: prev.score + 200,
+              health: Math.min(prev.maxHealth, prev.health + 1),
+            };
+          }
+          // item reward: apply item effect + base bonus (no extra potion)
+          const afterItem = reward.item.apply({
             ...prev,
             position: newPos,
             keys: prev.keys - 1,
-            potions: prev.potions + 1,
             score: prev.score + 200,
             health: Math.min(prev.maxHealth, prev.health + 1),
-          };
+          });
+          return afterItem;
         }
 
         // Encounter uncleared interactive tile (enemy, treasure, bosses)
@@ -766,6 +786,15 @@ const MelodyDungeonGame: React.FC = () => {
             Enter the Dungeon
           </button>
 
+          <button
+            onClick={() => setShowDirections(true)}
+            className="py-2 px-4 text-purple-600 dark:text-purple-300 hover:text-purple-700 font-semibold transition-colors flex items-center justify-center gap-2 mx-auto"
+            data-testid="button-directions"
+          >
+            <HelpCircle size={20} />
+            How to Play
+          </button>
+
           {highScore > 0 && (
             <p className="text-center text-sm text-gray-500">
               Best Score: {highScore}
@@ -974,6 +1003,16 @@ const MelodyDungeonGame: React.FC = () => {
           player={player}
           onUse={handleUseItem}
           onClose={handleBagClose}
+        />
+      )}
+
+      {pendingChestReward && (
+        <ChestRewardModal
+          reward={pendingChestReward}
+          onClose={() => {
+            setPendingChestReward(null);
+            moveLockedRef.current = false;
+          }}
         />
       )}
     </div>
