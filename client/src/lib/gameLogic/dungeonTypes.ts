@@ -55,6 +55,9 @@ export interface PersistentBuffs {
   treasureMagnet: number;
   metronome: number;
   tuningFork: number;
+  torch: number;
+  mapScroll: number;
+  compass: number;
 }
 
 export interface PlayerBuffs {
@@ -88,6 +91,9 @@ export const DEFAULT_PERSISTENT_BUFFS: PersistentBuffs = {
   treasureMagnet: 0,
   metronome: 0,
   tuningFork: 0,
+  torch: 0,
+  mapScroll: 0,
+  compass: 0,
 };
 
 export const DEFAULT_BUFFS: PlayerBuffs = {
@@ -105,7 +111,7 @@ export interface DungeonFloor {
   stairsPosition: Position;
 }
 
-export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'gameOver' | 'floorComplete' | 'victory';
+export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory';
 
 export interface ActiveChallenge {
   type: ChallengeType;
