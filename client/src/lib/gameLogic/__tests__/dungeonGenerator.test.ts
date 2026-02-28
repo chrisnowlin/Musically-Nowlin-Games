@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateDungeon, moveEnemies } from '../dungeonGenerator';
+import { generateDungeon, moveEnemies, getBossType } from '../dungeonGenerator';
 import { TileType } from '../dungeonTypes';
 import type { DungeonFloor, Position, Tile } from '../dungeonTypes';
 
@@ -15,6 +15,29 @@ function findTiles(floor: ReturnType<typeof generateDungeon>, type: TileType) {
   }
   return results;
 }
+
+describe('getBossType', () => {
+  it('returns null for non-boss floors', () => {
+    expect(getBossType(1)).toBeNull();
+    expect(getBossType(3)).toBeNull();
+    expect(getBossType(7)).toBeNull();
+    expect(getBossType(99)).toBeNull();
+  });
+
+  it('returns mini for floors divisible by 5 but not 10', () => {
+    expect(getBossType(5)).toBe('mini');
+    expect(getBossType(15)).toBe('mini');
+    expect(getBossType(25)).toBe('mini');
+    expect(getBossType(95)).toBe('mini');
+  });
+
+  it('returns big for floors divisible by 10', () => {
+    expect(getBossType(10)).toBe('big');
+    expect(getBossType(20)).toBe('big');
+    expect(getBossType(50)).toBe('big');
+    expect(getBossType(100)).toBe('big');
+  });
+});
 
 describe('generateDungeon', () => {
   it('should set enemyState to guarding on Dragons', () => {

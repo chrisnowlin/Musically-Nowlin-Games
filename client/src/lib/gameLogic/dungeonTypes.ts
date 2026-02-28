@@ -10,6 +10,8 @@ export enum TileType {
   Dragon = 'dragon',
   Merchant = 'merchant',
   MerchantStall = 'merchantStall',
+  MiniBoss = 'miniBoss',
+  BigBoss = 'bigBoss',
 }
 
 export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
