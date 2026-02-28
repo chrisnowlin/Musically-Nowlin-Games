@@ -19,7 +19,7 @@ export const CORE_ITEMS: MerchantItem[] = [
     emoji: '🧪',
     category: 'core',
     getPrice: (floor) => 150 + floor * 10,
-    canBuy: (player) => player.score >= 150,
+    canBuy: () => true,
     apply: (player) => ({ ...player, potions: player.potions + 1 }),
   },
   {
@@ -29,7 +29,7 @@ export const CORE_ITEMS: MerchantItem[] = [
     emoji: '🔑',
     category: 'core',
     getPrice: (floor) => 200 + floor * 15,
-    canBuy: (player) => player.score >= 200,
+    canBuy: () => true,
     apply: (player) => ({ ...player, keys: player.keys + 1 }),
   },
   {
@@ -39,7 +39,7 @@ export const CORE_ITEMS: MerchantItem[] = [
     emoji: '🎁',
     category: 'core',
     getPrice: (floor) => 400 + floor * 25,
-    canBuy: (player) => player.score >= 400,
+    canBuy: () => true,
     apply: (player) => ({ ...player, potions: player.potions + 3 }),
   },
   {
@@ -49,7 +49,7 @@ export const CORE_ITEMS: MerchantItem[] = [
     emoji: '🛡️',
     category: 'core',
     getPrice: (floor) => 300 + floor * 20,
-    canBuy: (player) => player.score >= 300 && player.shieldCharm < 1,
+    canBuy: (player) => player.shieldCharm < 1,
     apply: (player) => ({ ...player, shieldCharm: 1 }),
   },
 ];
@@ -101,7 +101,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🔥',
     category: 'combat',
     getPrice: (floor) => 300 + floor * 20,
-    canBuy: (player) => player.score >= 300,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {
@@ -120,7 +120,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🔄',
     category: 'combat',
     getPrice: (floor) => 350 + floor * 25,
-    canBuy: (player) => player.score >= 350,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {
@@ -139,7 +139,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '⚔️',
     category: 'combat',
     getPrice: (floor) => 400 + floor * 30,
-    canBuy: (player) => player.score >= 400,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {
@@ -158,7 +158,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🪙',
     category: 'economy',
     getPrice: (floor) => 250 + floor * 15,
-    canBuy: (player) => player.score >= 250,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {
@@ -177,7 +177,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🧲',
     category: 'economy',
     getPrice: (floor) => 200 + floor * 12,
-    canBuy: (player) => player.score >= 200,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {
@@ -196,7 +196,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '⏱️',
     category: 'difficulty',
     getPrice: (floor) => 300 + floor * 20,
-    canBuy: (player) => player.score >= 300,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {
@@ -215,7 +215,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🎵',
     category: 'difficulty',
     getPrice: (floor) => 300 + floor * 20,
-    canBuy: (player) => player.score >= 300,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
       buffs: {

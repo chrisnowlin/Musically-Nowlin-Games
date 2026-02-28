@@ -86,11 +86,10 @@ describe('Merchant items', () => {
     }
   });
 
-  it('core items cannot be bought with insufficient score', () => {
-    const player = makePlayer({ score: 0 });
-    for (const item of CORE_ITEMS) {
-      expect(item.canBuy(player)).toBe(false);
-    }
+  it('shield charm cannot be stacked', () => {
+    const charm = CORE_ITEMS.find((i) => i.id === 'shield-charm')!;
+    const player = makePlayer({ shieldCharm: 1 });
+    expect(charm.canBuy(player)).toBe(false);
   });
 
   it('getMerchantPrice deducts score and applies item', () => {
