@@ -735,7 +735,8 @@ const MelodyDungeonGame: React.FC = () => {
   // --- MENU ---
   if (phase === 'menu') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-indigo-950 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
+      <>
+        <div className="min-h-screen bg-gradient-to-b from-gray-950 via-indigo-950 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
         <button
           onClick={() => setLocation('/games')}
           className="absolute top-4 left-4 flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-sm"
@@ -806,6 +807,8 @@ const MelodyDungeonGame: React.FC = () => {
           <p>Press P to use a potion. {MAX_FLOOR} floors to conquer!</p>
         </div>
       </div>
+      <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+    </>
     );
   }
 
@@ -813,7 +816,8 @@ const MelodyDungeonGame: React.FC = () => {
   if (phase === 'gameOver') {
     const isNewHigh = player.score >= highScore && player.score > 0;
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-red-950/30 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
+      <>
+        <div className="min-h-screen bg-gradient-to-b from-gray-950 via-red-950/30 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
         <button
           onClick={() => setLocation('/games')}
           className="absolute top-4 left-4 flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-sm"
@@ -855,6 +859,8 @@ const MelodyDungeonGame: React.FC = () => {
           </div>
         </div>
       </div>
+      <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+    </>
     );
   }
 
