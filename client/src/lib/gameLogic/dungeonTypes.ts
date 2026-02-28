@@ -18,6 +18,8 @@ export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
 
 export type EnemyState = 'guarding' | 'chasing' | 'patrolling';
 
+export type EnemySubtype = 'ghost' | 'skeleton' | 'dragon' | 'goblin';
+
 export interface Tile {
   type: TileType;
   visible: boolean;
@@ -25,6 +27,8 @@ export interface Tile {
   challengeType?: ChallengeType;
   cleared?: boolean;
   enemyState?: EnemyState;
+  enemySubtype?: EnemySubtype;
+  enemyLevel?: number;
 }
 
 export interface Position {
