@@ -125,22 +125,11 @@ describe('Merchant items', () => {
     expect(specials3).not.toEqual(specials7);
   });
 
-  it('torch sets floor buff', () => {
+  it('torch adds to held inventory', () => {
     const torch = ALL_ITEMS.find((i) => i.id === 'torch')!;
     const player = makePlayer();
     const result = torch.apply(player);
-    expect(result.buffs.floor.torch).toBe(true);
-  });
-
-  it('torch cannot be re-bought when active', () => {
-    const torch = ALL_ITEMS.find((i) => i.id === 'torch')!;
-    const player = makePlayer({
-      buffs: {
-        floor: { torch: true, mapRevealed: false, compass: false },
-        persistent: { ...DEFAULT_BUFFS.persistent },
-      },
-    });
-    expect(torch.canBuy(player)).toBe(false);
+    expect(result.buffs.persistent.torch).toBe(1);
   });
 
   it('streak saver increments persistent buff', () => {
@@ -173,18 +162,27 @@ describe('Merchant items', () => {
     expect(result.buffs.persistent.luckyCoin).toBe(1);
   });
 
-  it('compass sets floor buff', () => {
+  it('compass adds to held inventory', () => {
     const item = ALL_ITEMS.find((i) => i.id === 'compass')!;
     const player = makePlayer();
     const result = item.apply(player);
-    expect(result.buffs.floor.compass).toBe(true);
+    expect(result.buffs.persistent.compass).toBe(1);
   });
 
-  it('map scroll sets floor buff', () => {
+  it('map scroll adds to held inventory', () => {
     const item = ALL_ITEMS.find((i) => i.id === 'map-scroll')!;
     const player = makePlayer();
     const result = item.apply(player);
-    expect(result.buffs.floor.mapRevealed).toBe(true);
+    expect(result.buffs.persistent.mapScroll).toBe(1);
+  });
+
+  it('exploration items are stackable', () => {
+    const torch = ALL_ITEMS.find((i) => i.id === 'torch')!;
+    const player = makePlayer();
+    const r1 = torch.apply(player);
+    expect(r1.buffs.persistent.torch).toBe(1);
+    const r2 = torch.apply(r1);
+    expect(r2.buffs.persistent.torch).toBe(2);
   });
 
   it('new items prices scale with floor depth', () => {
