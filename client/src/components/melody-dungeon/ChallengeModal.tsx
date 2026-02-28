@@ -131,7 +131,10 @@ const BossBattle: React.FC<{
   enemySubtype?: EnemySubtype;
   enemyLevel?: number;
 }> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel }) => {
-  const maxBossHp = useMemo(() => getBossHp(tileType, enemyLevel), [tileType, enemyLevel]);
+  const maxBossHp = useMemo(
+    () => Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0)),
+    [tileType, enemyLevel, dragonBane]
+  );
   const bossLabel = useMemo(() => getBossLabel(tileType, enemySubtype), [tileType, enemySubtype]);
 
   // Floor challenge types (used by MiniBoss/BigBoss)
@@ -151,7 +154,9 @@ const BossBattle: React.FC<{
   );
 
   const [currentRound, setCurrentRound] = useState(0);
-  const [bossHp, setBossHp] = useState(maxBossHp);
+  const [bossHp, setBossHp] = useState(() =>
+    Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0))
+  );
   const [effectiveHealth, setEffectiveHealth] = useState(playerHealth);
   const [shieldActive, setShieldActive] = useState(shieldCharm > 0);
   const [damageDealt, setDamageDealt] = useState(0);

@@ -417,7 +417,7 @@ const MelodyDungeonGame: React.FC = () => {
           }
 
           // Dragon Bane: consume one charge after dragon battle
-          if (activeTileSubtype === 'dragon' && prev.buffs.persistent.dragonBane > 0) {
+          if (activeTileType === TileType.Enemy && activeTileSubtype === 'dragon' && prev.buffs.persistent.dragonBane > 0) {
             updated = {
               ...updated,
               buffs: {
