@@ -62,10 +62,13 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🔦',
     category: 'exploration',
     getPrice: (floor) => 200 + floor * 15,
-    canBuy: (player) => !player.buffs.floor.torch,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
-      buffs: { ...player.buffs, floor: { ...player.buffs.floor, torch: true } },
+      buffs: {
+        ...player.buffs,
+        persistent: { ...player.buffs.persistent, torch: player.buffs.persistent.torch + 1 },
+      },
     }),
   },
   {
@@ -75,10 +78,13 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🗺️',
     category: 'exploration',
     getPrice: (floor) => 250 + floor * 20,
-    canBuy: (player) => !player.buffs.floor.mapRevealed,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
-      buffs: { ...player.buffs, floor: { ...player.buffs.floor, mapRevealed: true } },
+      buffs: {
+        ...player.buffs,
+        persistent: { ...player.buffs.persistent, mapScroll: player.buffs.persistent.mapScroll + 1 },
+      },
     }),
   },
   {
@@ -88,10 +94,13 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
     emoji: '🧭',
     category: 'exploration',
     getPrice: (floor) => 175 + floor * 12,
-    canBuy: (player) => !player.buffs.floor.compass,
+    canBuy: () => true,
     apply: (player) => ({
       ...player,
-      buffs: { ...player.buffs, floor: { ...player.buffs.floor, compass: true } },
+      buffs: {
+        ...player.buffs,
+        persistent: { ...player.buffs.persistent, compass: player.buffs.persistent.compass + 1 },
+      },
     }),
   },
   {
