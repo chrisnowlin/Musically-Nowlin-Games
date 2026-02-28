@@ -266,12 +266,14 @@ describe('moveEnemies', () => {
     expect(result.tiles[0][2].enemyState).toBe('chasing');
   });
 
-  it('patrolling Goblin lands on player tile when adjacent', () => {
-    // 3x1 corridor: [player] [goblin] [floor]
+  it.each([
+    ['goblin' as const],
+    ['skeleton' as const],
+  ])('patrolling %s lands on player tile when adjacent', (subtype) => {
     const floor = createTestFloor(3, 1, (tiles) => {
       tiles[0][1] = {
         type: TileType.Enemy,
-        enemySubtype: 'goblin' as const,
+        enemySubtype: subtype,
         enemyLevel: 1,
         visible: false,
         visited: false,
@@ -285,30 +287,7 @@ describe('moveEnemies', () => {
     const result = moveEnemies(floor, playerPos);
 
     expect(result.tiles[0][0].type).toBe(TileType.Enemy);
-    expect(result.tiles[0][0].enemySubtype).toBe('goblin');
-    expect(result.tiles[0][1].type).toBe(TileType.Floor);
-  });
-
-  it('patrolling Skeleton lands on player tile when adjacent', () => {
-    // 3x1 corridor: [player] [skeleton] [floor]
-    const floor = createTestFloor(3, 1, (tiles) => {
-      tiles[0][1] = {
-        type: TileType.Enemy,
-        enemySubtype: 'skeleton' as const,
-        enemyLevel: 1,
-        visible: false,
-        visited: false,
-        challengeType: 'noteReading',
-        cleared: false,
-        enemyState: 'patrolling',
-      };
-    });
-
-    const playerPos: Position = { x: 0, y: 0 };
-    const result = moveEnemies(floor, playerPos);
-
-    expect(result.tiles[0][0].type).toBe(TileType.Enemy);
-    expect(result.tiles[0][0].enemySubtype).toBe('skeleton');
+    expect(result.tiles[0][0].enemySubtype).toBe(subtype);
     expect(result.tiles[0][1].type).toBe(TileType.Floor);
   });
 
@@ -333,6 +312,11 @@ describe('moveEnemies', () => {
 
     // Ghost must never occupy the player tile
     expect(result.tiles[0][0].type).toBe(TileType.Floor);
+    // Ghost must still exist somewhere on the board (stayed at x=1 or moved to x=2)
+    const ghostExists =
+      result.tiles[0][1].type === TileType.Enemy ||
+      result.tiles[0][2].type === TileType.Enemy;
+    expect(ghostExists).toBe(true);
   });
 });
 
