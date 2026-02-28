@@ -254,12 +254,14 @@ const MelodyDungeonGame: React.FC = () => {
           };
         }
 
-        // Encounter uncleared interactive tile (enemy, dragon, treasure)
+        // Encounter uncleared interactive tile (enemy, dragon, treasure, bosses)
         if (
           !tile.cleared &&
           (tile.type === TileType.Enemy ||
             tile.type === TileType.Dragon ||
-            tile.type === TileType.Treasure)
+            tile.type === TileType.Treasure ||
+            tile.type === TileType.MiniBoss ||
+            tile.type === TileType.BigBoss)
         ) {
           setFloor((f) => updateVisibility(f, newPos));
           moveLockedRef.current = true;
@@ -299,27 +301,50 @@ const MelodyDungeonGame: React.FC = () => {
 
       if (!activeChallenge) return;
 
-      const isDragon = activeTileType === TileType.Dragon;
+      const isBoss =
+        activeTileType === TileType.Dragon ||
+        activeTileType === TileType.MiniBoss ||
+        activeTileType === TileType.BigBoss;
 
       setPlayer((prev) => {
         let updated = { ...prev };
 
-        if (isDragon && meta) {
-          // Dragon battle: damage was tracked inside the battle
+        if (isBoss && meta) {
+          // Boss battle: damage and potions tracked inside the battle
           if (meta.shieldUsed) {
             updated.shieldCharm = 0;
           }
-          updated.health = Math.max(0, prev.health - meta.damageDealt);
+          // Deduct potions used during battle
+          updated.potions = Math.max(0, prev.potions - (meta.potionsUsed || 0));
+
           if (correct) {
             const streakBonus = Math.floor(prev.streak / 3) * 25;
-            updated.score += 500 + streakBonus;
             updated.streak += 1;
-            updated.keys += 2;
-            updated.potions += 1;
+
+            if (activeTileType === TileType.BigBoss) {
+              updated.health = prev.maxHealth; // Full health restore
+              updated.score += 1500 + streakBonus;
+              updated.keys += 3;
+              updated.potions += 2;
+            } else if (activeTileType === TileType.MiniBoss) {
+              updated.health = Math.max(1, Math.min(prev.maxHealth, prev.health - meta.damageDealt + (meta.potionsUsed || 0)));
+              updated.score += 750 + streakBonus;
+              updated.keys += 2;
+              updated.potions += 2;
+            } else {
+              // Dragon
+              updated.health = Math.max(1, Math.min(prev.maxHealth, prev.health - meta.damageDealt + (meta.potionsUsed || 0)));
+              updated.score += 500 + streakBonus;
+              updated.keys += 2;
+              updated.potions += 1;
+            }
           } else {
+            // Boss defeated the player
+            updated.health = Math.max(0, prev.health - meta.damageDealt + (meta.potionsUsed || 0));
             updated.streak = 0;
           }
         } else if (correct) {
+          // Non-boss correct answer (unchanged)
           const streakBonus = Math.floor(prev.streak / 3) * 25;
           updated.score += 100 + streakBonus;
           updated.streak += 1;
@@ -331,7 +356,7 @@ const MelodyDungeonGame: React.FC = () => {
             updated.potions += 1;
           }
         } else {
-          // Doors allow unlimited attempts: wrong answers do not punish health.
+          // Non-boss wrong answer (unchanged)
           if (activeTileType !== TileType.Door) {
             if (prev.shieldCharm > 0) {
               updated.shieldCharm = 0;
@@ -345,24 +370,19 @@ const MelodyDungeonGame: React.FC = () => {
         return updated;
       });
 
-      // Mark tile as cleared
+      // Mark tile as cleared — bosses become Stairs on victory
       setFloor((prev) => {
         const { x, y } = activeChallenge.tilePosition;
         const tiles = prev.tiles.map((row, ry) =>
           row.map((tile, rx) => {
             if (rx === x && ry === y) {
               if (tile.type === TileType.Door) {
-                return {
-                  ...tile,
-                  cleared: correct,
-                  type: correct ? TileType.Floor : TileType.Door,
-                };
+                return { ...tile, cleared: correct, type: correct ? TileType.Floor : TileType.Door };
               }
-              return {
-                ...tile,
-                cleared: true,
-                type: correct ? TileType.Floor : tile.type,
-              };
+              if (tile.type === TileType.MiniBoss || tile.type === TileType.BigBoss) {
+                return { ...tile, cleared: true, type: correct ? TileType.Stairs : tile.type };
+              }
+              return { ...tile, cleared: true, type: correct ? TileType.Floor : tile.type };
             }
             return tile;
           })
@@ -373,10 +393,12 @@ const MelodyDungeonGame: React.FC = () => {
       setActiveChallenge(null);
       moveLockedRef.current = false;
 
-      // Check game over
+      // Check game over or floor complete
       setPlayer((prev) => {
         if (prev.health <= 0) {
           setPhase('gameOver');
+        } else if (isBoss && correct && (activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss)) {
+          setPhase('floorComplete');
         } else {
           setPhase('playing');
         }
@@ -678,6 +700,7 @@ const MelodyDungeonGame: React.FC = () => {
           onResult={handleChallengeResult}
           playerHealth={player.health}
           shieldCharm={player.shieldCharm}
+          potions={player.potions}
         />
       )}
 
