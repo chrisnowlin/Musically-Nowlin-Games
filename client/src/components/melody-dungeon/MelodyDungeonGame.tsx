@@ -64,6 +64,20 @@ function findCatchingEnemyAtPosition(floor: DungeonFloor, pos: Position): Tile |
   return null;
 }
 
+/** Finds the uncleared boss anchor tile (MiniBoss or BigBoss) in the floor grid. */
+function findBossAnchor(
+  tiles: Tile[][],
+): { pos: Position; type: TileType.MiniBoss | TileType.BigBoss } | null {
+  for (let y = 0; y < tiles.length; y++) {
+    for (let x = 0; x < tiles[y].length; x++) {
+      const t = tiles[y][x];
+      if (t.type === TileType.MiniBoss) return { pos: { x, y }, type: TileType.MiniBoss };
+      if (t.type === TileType.BigBoss) return { pos: { x, y }, type: TileType.BigBoss };
+    }
+  }
+  return null;
+}
+
 function createPlayer(start: Position): PlayerState {
   return {
     position: { ...start },
@@ -329,13 +343,42 @@ const MelodyDungeonGame: React.FC = () => {
           return afterItem;
         }
 
-        // Encounter uncleared interactive tile (enemy, treasure, bosses)
+        // Boss body: find anchor and trigger encounter; player stays outside footprint
+        if (tile.type === TileType.BossBody) {
+          const bossAnchor = findBossAnchor(floor.tiles);
+          if (!bossAnchor) return prev;
+          const anchorTile = floor.tiles[bossAnchor.pos.y][bossAnchor.pos.x];
+          if (anchorTile.cleared) return prev;
+          setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
+          moveLockedRef.current = true;
+          const challengeType: ChallengeType = anchorTile.challengeType || 'noteReading';
+          setActiveChallenge({ type: challengeType, tilePosition: bossAnchor.pos });
+          setActiveTileType(bossAnchor.type);
+          setActiveTileSubtype(anchorTile.enemySubtype);
+          setActiveTileLevel(anchorTile.enemyLevel ?? 1);
+          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.armed.metronome > 0, tuningFork: playerRef.current.buffs.armed.tuningFork > 0 };
+          setPhase('challenge');
+          return prev; // player stays outside the footprint
+        }
+
+        // Boss anchor: trigger encounter; player stays outside footprint
+        if (!tile.cleared && (tile.type === TileType.MiniBoss || tile.type === TileType.BigBoss)) {
+          setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
+          moveLockedRef.current = true;
+          const challengeType: ChallengeType = tile.challengeType || 'noteReading';
+          setActiveChallenge({ type: challengeType, tilePosition: newPos });
+          setActiveTileType(tile.type);
+          setActiveTileSubtype(tile.enemySubtype);
+          setActiveTileLevel(tile.enemyLevel ?? 1);
+          activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.armed.metronome > 0, tuningFork: playerRef.current.buffs.armed.tuningFork > 0 };
+          setPhase('challenge');
+          return prev; // player stays outside the footprint
+        }
+
+        // Encounter uncleared interactive tile (enemy, treasure)
         if (
           !tile.cleared &&
-          (tile.type === TileType.Enemy ||
-            tile.type === TileType.Treasure ||
-            tile.type === TileType.MiniBoss ||
-            tile.type === TileType.BigBoss)
+          (tile.type === TileType.Enemy || tile.type === TileType.Treasure)
         ) {
           setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
           moveLockedRef.current = true;
