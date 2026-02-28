@@ -217,6 +217,30 @@ describe('moveEnemies', () => {
     expect(result.tiles[0][dragonX].enemyState).toBe('chasing');
   });
 
+  it('chasing Dragon lands on player tile when adjacent (catch)', () => {
+    // 3x1 corridor: [player] [dragon] [floor]
+    const floor = createTestFloor(3, 1, (tiles) => {
+      tiles[0][1] = {
+        type: TileType.Enemy,
+        enemySubtype: 'dragon' as const,
+        enemyLevel: 3,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'chasing',
+      };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    const result = moveEnemies(floor, playerPos);
+
+    // Dragon should occupy the player tile (catch triggered)
+    expect(result.tiles[0][0].type).toBe(TileType.Enemy);
+    expect(result.tiles[0][0].enemySubtype).toBe('dragon');
+    expect(result.tiles[0][1].type).toBe(TileType.Floor);
+  });
+
   it('Dragon transitions from guarding to chasing when no uncleared chests remain', () => {
     // 5x1 corridor: [player] [floor] [floor] [dragon] [floor]
     // No chests on the floor at all
@@ -240,6 +264,75 @@ describe('moveEnemies', () => {
     expect(result.tiles[0][2].type).toBe(TileType.Enemy);
     expect(result.tiles[0][2].enemySubtype).toBe('dragon');
     expect(result.tiles[0][2].enemyState).toBe('chasing');
+  });
+
+  it('patrolling Goblin lands on player tile when adjacent', () => {
+    // 3x1 corridor: [player] [goblin] [floor]
+    const floor = createTestFloor(3, 1, (tiles) => {
+      tiles[0][1] = {
+        type: TileType.Enemy,
+        enemySubtype: 'goblin' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+      };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    const result = moveEnemies(floor, playerPos);
+
+    expect(result.tiles[0][0].type).toBe(TileType.Enemy);
+    expect(result.tiles[0][0].enemySubtype).toBe('goblin');
+    expect(result.tiles[0][1].type).toBe(TileType.Floor);
+  });
+
+  it('patrolling Skeleton lands on player tile when adjacent', () => {
+    // 3x1 corridor: [player] [skeleton] [floor]
+    const floor = createTestFloor(3, 1, (tiles) => {
+      tiles[0][1] = {
+        type: TileType.Enemy,
+        enemySubtype: 'skeleton' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+      };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    const result = moveEnemies(floor, playerPos);
+
+    expect(result.tiles[0][0].type).toBe(TileType.Enemy);
+    expect(result.tiles[0][0].enemySubtype).toBe('skeleton');
+    expect(result.tiles[0][1].type).toBe(TileType.Floor);
+  });
+
+  it('patrolling Ghost does NOT land on player tile when adjacent', () => {
+    // 3x1 corridor: [player] [ghost] [floor]
+    // Ghost's only non-wall option other than player tile is x=2.
+    const floor = createTestFloor(3, 1, (tiles) => {
+      tiles[0][1] = {
+        type: TileType.Enemy,
+        enemySubtype: 'ghost' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+      };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    const result = moveEnemies(floor, playerPos);
+
+    // Ghost must never occupy the player tile
+    expect(result.tiles[0][0].type).toBe(TileType.Floor);
   });
 });
 
