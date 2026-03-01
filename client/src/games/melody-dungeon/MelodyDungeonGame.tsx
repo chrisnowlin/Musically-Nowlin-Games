@@ -15,17 +15,11 @@ import type {
   DungeonFloor,
   ActiveChallenge,
   Position,
-  DifficultyLevel,
   ChallengeType,
   EnemySubtype,
   Tile,
 } from './logic/dungeonTypes';
 import { generateDungeon, moveEnemies } from './logic/dungeonGenerator';
-import {
-  createDifficultyState,
-  recordResult,
-  type DifficultyState,
-} from './logic/difficultyAdapter';
 import DungeonGrid from './DungeonGrid';
 import HUD from './HUD';
 import MobileDPad from './MobileDPad';
@@ -112,7 +106,6 @@ const MelodyDungeonGame: React.FC = () => {
   const [activeTileType, setActiveTileType] = useState<TileType>(TileType.Enemy);
   const [activeTileSubtype, setActiveTileSubtype] = useState<EnemySubtype | undefined>(undefined);
   const [activeTileLevel, setActiveTileLevel] = useState<number>(1);
-  const [diffState, setDiffState] = useState<DifficultyState>(createDifficultyState);
   const [floorsCleared, setFloorsCleared] = useState(0);
   const [selectedStartFloor, setSelectedStartFloor] = useState(1);
   const [deepestUnlocked, setDeepestUnlocked] = useState<number>(() => {
@@ -140,7 +133,6 @@ const MelodyDungeonGame: React.FC = () => {
   const [pendingChestReward, setPendingChestReward] = useState<ChestReward | null>(null);
   const [showDirections, setShowDirections] = useState(false);
 
-  const difficulty: DifficultyLevel = diffState.level;
   const floorNumber = floor.floorNumber;
   const themeName = getTheme(floor.themeIndex).name;
 
@@ -419,9 +411,6 @@ const MelodyDungeonGame: React.FC = () => {
 
   const handleChallengeResult = useCallback(
     (correct: boolean, meta?: BossBattleMeta) => {
-      const newDiffState = recordResult(diffState, correct);
-      setDiffState(newDiffState);
-
       if (!activeChallenge) return;
 
       // Second Chance: retry on wrong answer (not for doors or dragon battles)
@@ -659,7 +648,7 @@ const MelodyDungeonGame: React.FC = () => {
       }
       activeChallengeBuffsRef.current = { metronome: false, tuningFork: false };
     },
-    [diffState, activeChallenge, activeTileType, activeTileSubtype, activeTileLevel]
+    [activeChallenge, activeTileType, activeTileSubtype, activeTileLevel]
   );
 
   const handleMerchantBuy = useCallback((item: MerchantItem) => {
@@ -734,7 +723,6 @@ const MelodyDungeonGame: React.FC = () => {
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
     setPlayer(createPlayer(newFloor.playerStart));
-    setDiffState(createDifficultyState());
     setFloorsCleared(0);
     setActiveChallenge(null);
     moveLockedRef.current = false;
@@ -1001,7 +989,7 @@ const MelodyDungeonGame: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} difficulty={difficulty} themeName={themeName} onOpenBag={openBag} />
+          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} />
         </div>
       </div>
 
@@ -1031,7 +1019,6 @@ const MelodyDungeonGame: React.FC = () => {
           key={challengeKey}
           challengeType={activeChallenge.type}
           tileType={activeTileType}
-          difficulty={difficulty}
           floorNumber={floorNumber}
           onResult={handleChallengeResult}
           playerHealth={player.health}
