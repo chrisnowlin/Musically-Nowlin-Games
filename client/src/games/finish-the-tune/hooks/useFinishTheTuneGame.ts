@@ -6,15 +6,15 @@ import type {
   NoteEvent,
   Difficulty,
   PersistedState,
-} from '@/components/finish-the-tune/types';
+} from '../types';
 import {
   generateWrongEndings,
   shuffleOptions,
   getRandomPattern,
   DIFFICULTY_CONFIG,
   areEndingsEqual,
-} from '@/components/finish-the-tune/finish-the-tune-Logic';
-import { checkAchievements } from '@/components/finish-the-tune/finish-the-tune-Achievements';
+} from '../finish-the-tune-Logic';
+import { checkAchievements } from '../finish-the-tune-Achievements';
 
 const TIMED_MODE_DURATION = 60; // 60 seconds
 

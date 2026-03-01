@@ -1,4 +1,4 @@
-import FinishTheTuneGame from "@/components/finish-the-tune";
+import FinishTheTuneGame from ".";
 
 export default function FinishTheTuneGamePage() {
   return <FinishTheTuneGame />;

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import type { FinishTheTuneState, PersistedState } from '@/components/finish-the-tune/types';
+import type { FinishTheTuneState, PersistedState } from '../types';
 
 const STORAGE_KEY = 'finish-the-tune-progress';
 const SAVE_DEBOUNCE_MS = 1000;

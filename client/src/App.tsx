@@ -48,7 +48,7 @@ const HappyOrSadMelodiesGamePage = lazy(() => import("@/games/harmony/happy-or-s
 const PitchLadderJumpGamePage = lazy(() => import("@/games/pitch/pitch-ladder-jump/page"));
 const ScaleClimberGamePage = lazy(() => import("@/games/pitch/scale-climber/page"));
 const MusicalOppositesGamePage = lazy(() => import("@/games/listen/musical-opposites/page"));
-const FinishTheTuneGamePage = lazy(() => import("@/pages/games/FinishTheTuneGamePage"));
+const FinishTheTuneGamePage = lazy(() => import("@/games/finish-the-tune/page"));
 const InstrumentCraneGamePage = lazy(() => import("@/games/instruments/crane-game/page"));
 const InstrumentFamilySorterGamePage = lazy(() => import("@/games/instruments/family-sorter/page"));
 const InstrumentDetectiveGamePage = lazy(() => import("@/games/instruments/detective/page"));

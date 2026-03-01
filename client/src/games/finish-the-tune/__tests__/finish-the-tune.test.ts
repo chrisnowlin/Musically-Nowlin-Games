@@ -9,13 +9,13 @@ import {
   MELODY_PATTERNS,
   DIFFICULTY_CONFIG,
   TOTAL_MELODIES,
-} from '../components/finish-the-tune/finish-the-tune-Logic';
+} from '../finish-the-tune-Logic';
 import {
   checkAchievements,
   getAchievement,
   ACHIEVEMENTS,
-} from '../components/finish-the-tune/finish-the-tune-Achievements';
-import type { FinishTheTuneState, NoteEvent } from '../components/finish-the-tune/types';
+} from '../finish-the-tune-Achievements';
+import type { FinishTheTuneState, NoteEvent } from '../types';
 
 // Helper to create a test state
 function createTestState(overrides: Partial<FinishTheTuneState> = {}): FinishTheTuneState {

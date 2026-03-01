@@ -24,8 +24,8 @@ import { useGameCleanup } from '@/common/hooks/useGameCleanup';
 import AudioErrorFallback from '@/common/game-shell/AudioErrorFallback';
 import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
-import { useFinishTheTuneGame } from '@/hooks/useFinishTheTuneGame';
-import { useFinishTheTunePersistence } from '@/hooks/useFinishTheTunePersistence';
+import { useFinishTheTuneGame } from './hooks/useFinishTheTuneGame';
+import { useFinishTheTunePersistence } from './hooks/useFinishTheTunePersistence';
 import { useKeyboardShortcuts } from '@/common/hooks/useKeyboardShortcuts';
 
 import { StartScreen } from './StartScreen';
