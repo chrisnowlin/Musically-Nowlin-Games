@@ -111,20 +111,46 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
             </div>
           </div>
 
-          {/* Section 5: Enemy Types */}
+          {/* Section 5: Challenge Types */}
+          <div>
+            <h3 className="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2">
+              🎵 Challenge Types
+            </h3>
+            <ul className="space-y-2 text-gray-300">
+              <li><strong>Note Reading:</strong> Identify notes on the treble clef staff</li>
+              <li><strong>Dynamics Vocab:</strong> Match dynamic markings (p, f, mf) to their meanings</li>
+              <li><strong>Tempo Markings:</strong> Learn Italian tempo terms like Allegro and Adagio</li>
+              <li><strong>Musical Symbols:</strong> Recognize symbols like fermata, sharps, and repeat signs</li>
+              <li><strong>Rhythm Tap:</strong> Listen to a rhythm pattern and tap it back</li>
+              <li><strong>Music Terms:</strong> General vocabulary like staccato, legato, and arpeggio</li>
+              <li><strong>Interval Recognition:</strong> Identify the distance between two notes by ear</li>
+            </ul>
+            <p className="text-gray-400 text-xs mt-2">
+              New challenge types unlock as you descend deeper. Each type starts easy and gets harder the longer it's been available.
+            </p>
+          </div>
+
+          {/* Section 6: Enemy Types */}
           <div>
             <h3 className="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2">
               👹 Enemy Types
             </h3>
             <ul className="space-y-2 text-gray-300">
-              <li><strong>Regular Enemies 👻🪦🧌:</strong> Ghosts, Skeletons, and Goblins in levels 1-3. Defeat for keys and gold</li>
-              <li><strong>Dragons 🐉:</strong> Special enemies with unique mechanics. Harder to defeat but worth more rewards</li>
-              <li><strong>Mini-Boss 🏆:</strong> Stronger than regular enemies. Defeating them opens locked areas and grants bonus rewards</li>
-              <li><strong>Big-Boss 👑:</strong> The floor's main challenge. Defeat to access the stairs and advance to the next floor</li>
+              <li><strong>Slime:</strong> Note Reading challenges</li>
+              <li><strong>Bat:</strong> Dynamics vocabulary challenges</li>
+              <li><strong>Wraith:</strong> Tempo vocabulary challenges</li>
+              <li><strong>Spider:</strong> Musical Symbols challenges</li>
+              <li><strong>Skeleton:</strong> Rhythm Tap challenges</li>
+              <li><strong>Shade:</strong> Music Terms challenges</li>
+              <li><strong>Goblin:</strong> Interval challenges</li>
+              <li><strong>Ghost:</strong> Wildcard — any challenge type!</li>
+              <li><strong>Dragon 🐉:</strong> All challenge types. Harder to defeat but worth more rewards</li>
+              <li><strong>Mini-Boss 🏆:</strong> Multi-round battle. Defeating them grants bonus rewards</li>
+              <li><strong>Big-Boss 👑:</strong> The floor's main challenge. Defeat to advance to the next floor</li>
             </ul>
           </div>
 
-          {/* Section 6: Tips & Strategy */}
+          {/* Section 7: Tips & Strategy */}
           <div>
             <h3 className="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2">
               💡 Tips & Strategy
@@ -134,7 +160,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
               <li>🔑 <strong>Key Management:</strong> Prioritize opening chests that give potions and more keys</li>
               <li>⚔️ <strong>Buff Strategy:</strong> Save powerful buffs for tough encounters (bosses, dragons)</li>
               <li>🔥 <strong>Streak Bonuses:</strong> Every 3 correct answers grants +25 bonus gold. Build your streak!</li>
-              <li>🎯 <strong>Focus on Music:</strong> The better you answer musical questions, the easier the dungeon becomes</li>
+              <li>🎯 <strong>Learn Your Music:</strong> New challenge types unlock as you go deeper — study up!</li>
               <li>🔍 <strong>Explore Carefully:</strong> Take your time exploring—every key and potion helps</li>
             </ul>
           </div>
