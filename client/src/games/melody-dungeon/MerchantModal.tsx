@@ -10,6 +10,42 @@ interface Props {
   onClose: () => void;
 }
 
+function getOwnedCount(player: PlayerState, itemId: string): number {
+  const p = player.buffs.persistent;
+  const a = player.buffs.armed;
+  switch (itemId) {
+    case 'potion':
+    case 'potion-bundle':
+      return player.potions;
+    case 'key':
+      return player.keys;
+    case 'shield-charm':
+      return player.shieldCharm + p.shieldCharm;
+    case 'torch':
+      return p.torch;
+    case 'map-scroll':
+      return p.mapScroll;
+    case 'compass':
+      return p.compass;
+    case 'streak-saver':
+      return p.streakSaver + a.streakSaver;
+    case 'second-chance':
+      return p.secondChance + a.secondChance;
+    case 'dragon-bane':
+      return p.dragonBane + a.dragonBane;
+    case 'lucky-coin':
+      return p.luckyCoin + a.luckyCoin;
+    case 'treasure-magnet':
+      return p.treasureMagnet + a.treasureMagnet;
+    case 'metronome':
+      return p.metronome + a.metronome;
+    case 'tuning-fork':
+      return p.tuningFork + a.tuningFork;
+    default:
+      return 0;
+  }
+}
+
 const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose }) => {
   const shopItems = useMemo(() => getShopInventory(floorNumber), [floorNumber]);
   const coreItems = shopItems.filter((i) => i.category === 'core');
@@ -42,6 +78,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
             const price = item.getPrice(floorNumber);
             const canAfford = player.gold >= price;
             const canBuy = canAfford && item.canBuy(player);
+            const owned = getOwnedCount(player, item.id);
 
             return (
               <div
@@ -54,7 +91,14 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
               >
                 <span className="text-2xl shrink-0">{item.emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-white">{item.name}</div>
+                  <div className="font-medium text-sm text-white">
+                    {item.name}
+                    {owned > 0 && (
+                      <span className="ml-2 text-xs font-normal text-amber-400/80">
+                        Own: {owned}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-400">{item.description}</div>
                 </div>
                 <button
@@ -82,6 +126,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
             const price = item.getPrice(floorNumber);
             const canAfford = player.gold >= price;
             const canBuy = canAfford && item.canBuy(player);
+            const owned = getOwnedCount(player, item.id);
 
             return (
               <div
@@ -94,7 +139,14 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
               >
                 <span className="text-2xl shrink-0">{item.emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-white">{item.name}</div>
+                  <div className="font-medium text-sm text-white">
+                    {item.name}
+                    {owned > 0 && (
+                      <span className="ml-2 text-xs font-normal text-amber-400/80">
+                        Own: {owned}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-400">{item.description}</div>
                 </div>
                 <button
