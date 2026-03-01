@@ -1,10 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import type { ChallengeType, DifficultyLevel, EnemySubtype } from './logic/dungeonTypes';
+import type { ChallengeType, EnemySubtype, Tier } from './logic/dungeonTypes';
 import { TileType } from './logic/dungeonTypes';
 import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
-import { getChallengeTypesForFloor, pickRandom, generateBigBossSequence, getSubtypeChallengePool } from './challengeHelpers';
+import VocabularyChallenge from './challenges/VocabularyChallenge';
+import type { VocabCategory } from './logic/vocabData';
+import { getChallengeTypesForFloor, getTierForChallenge, pickRandom, generateBigBossSequence, getSubtypeChallengePool } from './challengeHelpers';
 
 export interface BossBattleMeta {
   damageDealt: number;
@@ -15,7 +17,6 @@ export interface BossBattleMeta {
 interface Props {
   challengeType: ChallengeType;
   tileType: TileType;
-  difficulty: DifficultyLevel;
   floorNumber: number;
   onResult: (correct: boolean, meta?: BossBattleMeta) => void;
   playerHealth?: number;
@@ -32,10 +33,16 @@ interface Props {
 const MINI_BOSS_HP = 5;
 const BIG_BOSS_HP = 8;
 
+const VOCAB_CATEGORIES: Record<string, VocabCategory> = {
+  dynamics: 'dynamics',
+  tempo: 'tempo',
+  symbols: 'symbols',
+  terms: 'terms',
+};
+
 function getBossHp(tileType: TileType, enemyLevel?: number): number {
   if (tileType === TileType.BigBoss) return BIG_BOSS_HP;
   if (tileType === TileType.MiniBoss) return MINI_BOSS_HP;
-  // TileType.Enemy: level IS the HP (dragon=3, ghost/skeleton/goblin=1–3)
   return enemyLevel ?? 1;
 }
 
@@ -47,6 +54,11 @@ function getBossLabel(tileType: TileType, enemySubtype?: EnemySubtype): string {
     case 'skeleton': return 'Skeleton';
     case 'dragon': return 'Dragon';
     case 'goblin': return 'Goblin';
+    case 'slime': return 'Slime';
+    case 'bat': return 'Bat';
+    case 'wraith': return 'Wraith';
+    case 'spider': return 'Spider';
+    case 'shade': return 'Shade';
     default: return 'Enemy';
   }
 }
@@ -93,32 +105,48 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
       return { title: 'Skeleton Encounter!', borderColor: 'border-gray-400', bgColor: 'from-gray-950/90 to-gray-900/95' };
     case 'goblin':
       return { title: 'Goblin Encounter!', borderColor: 'border-green-500', bgColor: 'from-green-950/90 to-gray-900/95' };
+    case 'slime':
+      return { title: 'Slime Encounter!', borderColor: 'border-lime-500', bgColor: 'from-lime-950/90 to-gray-900/95' };
+    case 'bat':
+      return { title: 'Bat Encounter!', borderColor: 'border-rose-400', bgColor: 'from-rose-950/90 to-gray-900/95' };
+    case 'wraith':
+      return { title: 'Wraith Encounter!', borderColor: 'border-cyan-400', bgColor: 'from-cyan-950/90 to-gray-900/95' };
+    case 'spider':
+      return { title: 'Spider Encounter!', borderColor: 'border-indigo-400', bgColor: 'from-indigo-950/90 to-gray-900/95' };
+    case 'shade':
+      return { title: 'Shade Encounter!', borderColor: 'border-amber-400', bgColor: 'from-amber-950/90 to-gray-900/95' };
     default:
-      return TILE_THEME[TileType.Enemy] ?? DEFAULT_THEME; // Ghost uses the red enemy theme
+      return TILE_THEME[TileType.Enemy] ?? DEFAULT_THEME;
   }
 }
 
-function ChallengeRenderer({ type, difficulty, floorNumber, onResult, slowRhythm, showIntervalHint }: {
+function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint }: {
   type: ChallengeType;
-  difficulty: DifficultyLevel;
+  tier: Tier;
   floorNumber: number;
   onResult: (correct: boolean) => void;
   slowRhythm?: boolean;
   showIntervalHint?: boolean;
 }) {
+  const vocabCategory = VOCAB_CATEGORIES[type];
+  if (vocabCategory) {
+    return <VocabularyChallenge category={vocabCategory} tier={tier} onResult={onResult} />;
+  }
+
   switch (type) {
     case 'noteReading':
-      return <NoteReadingChallenge floorNumber={floorNumber} onResult={onResult} />;
+      return <NoteReadingChallenge tier={tier} onResult={onResult} />;
     case 'rhythmTap':
-      return <RhythmTapChallenge difficulty={difficulty} onResult={onResult} slowMode={slowRhythm} />;
+      return <RhythmTapChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} />;
     case 'interval':
-      return <IntervalChallenge difficulty={difficulty} onResult={onResult} showHint={showIntervalHint} />;
+      return <IntervalChallenge tier={tier} onResult={onResult} showHint={showIntervalHint} />;
+    default:
+      return <NoteReadingChallenge tier={tier} onResult={onResult} />;
   }
 }
 
 const BossBattle: React.FC<{
   tileType: TileType;
-  difficulty: DifficultyLevel;
   floorNumber: number;
   onResult: (correct: boolean, meta?: BossBattleMeta) => void;
   playerHealth: number;
@@ -130,16 +158,14 @@ const BossBattle: React.FC<{
   showIntervalHint?: boolean;
   enemySubtype?: EnemySubtype;
   enemyLevel?: number;
-}> = ({ tileType, difficulty, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel }) => {
+}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel }) => {
   const maxBossHp = useMemo(
     () => Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0)),
     [tileType, enemyLevel, dragonBane]
   );
   const bossLabel = useMemo(() => getBossLabel(tileType, enemySubtype), [tileType, enemySubtype]);
 
-  // Floor challenge types (used by MiniBoss/BigBoss)
   const floorChallengeTypes = useMemo(() => getChallengeTypesForFloor(floorNumber), [floorNumber]);
-  // For TileType.Enemy: use subtype-specific pool; for bosses: use floor pool
   const challengeTypes = useMemo(
     () => tileType === TileType.Enemy
       ? getSubtypeChallengePool(enemySubtype, floorChallengeTypes)
@@ -147,10 +173,9 @@ const BossBattle: React.FC<{
     [tileType, enemySubtype, floorChallengeTypes]
   );
 
-  // For BigBoss: pre-generated 8-question sequence
   const bigBossSequence = useMemo(
-    () => tileType === TileType.BigBoss ? generateBigBossSequence(floorNumber, difficulty) : null,
-    [tileType, floorNumber, difficulty]
+    () => tileType === TileType.BigBoss ? generateBigBossSequence(floorNumber) : null,
+    [tileType, floorNumber]
   );
 
   const [currentRound, setCurrentRound] = useState(0);
@@ -166,20 +191,17 @@ const BossBattle: React.FC<{
   const [roundTransition, setRoundTransition] = useState(false);
   const [showItemPhase, setShowItemPhase] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
-  // Pre-fight prep: let player potion up before round 1 if HP is below max
   const [showPrefight, setShowPrefight] = useState(
     playerHealth < maxHealth && potions > 0
   );
 
-  // Determine current challenge based on boss type
   const currentChallenge = useMemo(() => {
     if (bigBossSequence) {
-      // BigBoss uses pre-generated sequence
       return bigBossSequence[currentRound % bigBossSequence.length];
     }
-    // Enemy/MiniBoss: random type from pool, player's difficulty
-    return { type: pickRandom(challengeTypes), difficulty };
-  }, [bigBossSequence, challengeTypes, difficulty, currentRound]);
+    const type = pickRandom(challengeTypes);
+    return { type, tier: getTierForChallenge(floorNumber, type) };
+  }, [bigBossSequence, challengeTypes, floorNumber, currentRound]);
 
   const handleUsePotion = useCallback(() => {
     if (potionsRemaining > 0 && effectiveHealth < maxHealth) {
@@ -203,18 +225,13 @@ const BossBattle: React.FC<{
       const newBossHp = bossHp - 1;
       setBossHp(newBossHp);
       if (newBossHp <= 0) {
-        // Boss defeated — skip item phase
         setRoundTransition(true);
         setTimeout(() => onResult(true, { damageDealt, shieldUsed, potionsUsed }), 1200);
       } else {
-        // Boss still alive — show result then item phase
         setRoundTransition(true);
-        setTimeout(() => {
-          setShowItemPhase(true);
-        }, 1200);
+        setTimeout(() => setShowItemPhase(true), 1200);
       }
     } else {
-      // Wrong answer — player takes damage
       let newHealth = effectiveHealth;
       let newShieldUsed = shieldUsed;
       if (shieldActive) {
@@ -228,22 +245,17 @@ const BossBattle: React.FC<{
       }
 
       if (newHealth <= 0) {
-        // Player defeated — skip item phase
         setRoundTransition(true);
         setTimeout(() => onResult(false, { damageDealt: damageDealt + 1, shieldUsed: newShieldUsed, potionsUsed }), 1200);
       } else {
-        // Player still alive — show result then item phase
         setRoundTransition(true);
-        setTimeout(() => {
-          setShowItemPhase(true);
-        }, 1200);
+        setTimeout(() => setShowItemPhase(true), 1200);
       }
     }
   }, [bossHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, potionsUsed, onResult]);
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Health bars */}
       <div className="w-full max-w-[200px] space-y-2">
         <div>
           <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -271,7 +283,6 @@ const BossBattle: React.FC<{
         </div>
       </div>
 
-      {/* Challenge for current round */}
       {showPrefight ? (
         <div className="py-6 text-center space-y-3">
           <p className="text-lg font-bold text-amber-400">Prepare for Battle!</p>
@@ -319,7 +330,7 @@ const BossBattle: React.FC<{
         <ChallengeRenderer
           key={currentRound}
           type={currentChallenge.type}
-          difficulty={currentChallenge.difficulty}
+          tier={currentChallenge.tier}
           floorNumber={floorNumber}
           onResult={handleRoundResult}
           slowRhythm={slowRhythm}
@@ -337,7 +348,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1 }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1 }) => {
   const theme = tileType === TileType.Enemy
     ? getEnemyTheme(enemySubtype)
     : (TILE_THEME[tileType] || DEFAULT_THEME);
@@ -345,6 +356,8 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
     (tileType === TileType.Enemy && enemyLevel > 1) ||
     tileType === TileType.MiniBoss ||
     tileType === TileType.BigBoss;
+
+  const tier = getTierForChallenge(floorNumber, challengeType);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -362,7 +375,6 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
         {isMultiRound ? (
           <BossBattle
             tileType={tileType}
-            difficulty={difficulty}
             floorNumber={floorNumber}
             onResult={onResult}
             playerHealth={playerHealth}
@@ -376,7 +388,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, difficulty, 
             enemyLevel={enemyLevel}
           />
         ) : (
-          <ChallengeRenderer type={challengeType} difficulty={difficulty} floorNumber={floorNumber} onResult={onResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
+          <ChallengeRenderer type={challengeType} tier={tier} floorNumber={floorNumber} onResult={onResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
         )}
       </div>
     </div>
