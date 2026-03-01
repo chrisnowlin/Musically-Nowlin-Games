@@ -69,7 +69,7 @@ const RestFinderGamePage = lazy(() => import("@/games/rhythm/rest-finder/page"))
 const AnimalOrchestraConductorGamePage = lazy(() => import("@/pages/games/AnimalOrchestraConductorGamePage"));
 const PitchPerfectPathGamePage = lazy(() => import("@/games/pitch/pitch-perfect-path/page"));
 const WorldMusicExplorerGamePage = lazy(() => import("@/games/cross-curricular/world-music-explorer/page"));
-const StaffInvadersGamePage = lazy(() => import("@/pages/games/StaffInvadersGamePage"));
+const StaffInvadersGamePage = lazy(() => import("@/games/staff-invaders/page"));
 const Rhythm006Page = lazy(() => import("@/games/rhythm/rhythm-006/page"));
 const Rhythm007Page = lazy(() => import("@/games/rhythm/rhythm-007/page"));
 const Rhythm002Page = lazy(() => import("@/games/rhythm/rhythm-002/page"));

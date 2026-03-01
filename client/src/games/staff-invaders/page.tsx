@@ -1,6 +1,5 @@
-import StaffInvadersGame from "@/components/StaffInvadersGame";
+import StaffInvadersGame from "./StaffInvadersGame";
 
 export default function StaffInvadersGamePage() {
   return <StaffInvadersGame />;
 }
-

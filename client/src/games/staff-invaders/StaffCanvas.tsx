@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Clef, GameConfig } from '../StaffInvadersGame';
+import { Clef, GameConfig } from './StaffInvadersGame';
 import { NoteState } from './GameplayScreen';
 import { initializeStaff, renderNote, getNotePosition, StaffData } from '@/common/notation/vexflowUtils';
 

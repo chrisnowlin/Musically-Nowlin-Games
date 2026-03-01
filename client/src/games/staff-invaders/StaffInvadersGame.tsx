@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect, useReducer } from 'react';
 import { useLocation } from "wouter";
 import { ChevronLeft } from "lucide-react";
 import { audioService } from '@/common/audio/audioService';
-import SetupScreen from './staff-invaders/SetupScreen';
-import GameplayScreen from './staff-invaders/GameplayScreen';
-import GameOverScreen from './staff-invaders/GameOverScreen';
-import PauseOverlay from './staff-invaders/PauseOverlay';
+import SetupScreen from './SetupScreen';
+import GameplayScreen from './GameplayScreen';
+import GameOverScreen from './GameOverScreen';
+import PauseOverlay from './PauseOverlay';
 import { ResponsiveGameLayout } from '@/common/game-shell/ResponsiveGameLayout';
 import { useResponsiveLayout } from '@/common/hooks/useViewport';
 

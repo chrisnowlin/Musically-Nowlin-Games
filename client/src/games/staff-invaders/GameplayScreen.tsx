@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/common/ui/button';
 import { Volume2, VolumeX, Pause, Star, Heart, Trophy, Gauge } from 'lucide-react';
-import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE, BACKGROUND_MUSIC_UNLOCK_SCORE } from '../StaffInvadersGame';
+import { Clef, GameConfig, MAX_LIVES, CORRECT_ANSWERS_FOR_EXTRA_LIFE, BACKGROUND_MUSIC_UNLOCK_SCORE } from './StaffInvadersGame';
 import StaffCanvas from './StaffCanvas';
 import { audioService } from '@/common/audio/audioService';
 import { useResponsiveLayout } from '@/common/hooks/useViewport';

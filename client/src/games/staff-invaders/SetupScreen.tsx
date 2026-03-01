@@ -3,7 +3,7 @@ import { Button } from '@/common/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/common/ui/card';
 import { Label } from '@/common/ui/label';
 import { Switch } from '@/common/ui/switch';
-import { Clef, GameConfig } from '../StaffInvadersGame';
+import { Clef, GameConfig } from './StaffInvadersGame';
 import { useResponsiveLayout } from '@/common/hooks/useViewport';
 import { Music, Trophy, Info, Play, Check, Eye } from 'lucide-react';
 
