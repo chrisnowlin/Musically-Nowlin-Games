@@ -1,5 +1,5 @@
 import React from "react";
-import ScaleBuilderGame from "@/components/ScaleBuilderGame";
+import ScaleBuilderGame from "@/games/pitch/scale-builder/ScaleBuilderGame";
 import { useLocation } from "wouter";
 import { ChevronLeft } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";

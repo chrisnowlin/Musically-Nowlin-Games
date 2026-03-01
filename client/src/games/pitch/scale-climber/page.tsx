@@ -1,4 +1,4 @@
-import ScaleClimberGame from "@/components/ScaleClimberGame";
+import ScaleClimberGame from "./ScaleClimberGame";
 
 export default function ScaleClimberGamePage() {
   return <ScaleClimberGame />;

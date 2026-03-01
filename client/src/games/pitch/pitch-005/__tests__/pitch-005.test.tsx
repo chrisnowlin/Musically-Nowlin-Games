@@ -9,12 +9,12 @@ import {
   getModeById,
   getAllModes,
   getMaxDifficultyForMode
-} from '@/lib/gameLogic/pitch-005Modes';
-import { 
-  generateRound, 
-  validateAnswer, 
-  calculateScore 
-} from '@/lib/gameLogic/pitch-005Logic';
+} from '../modes';
+import {
+  generateRound,
+  validateAnswer,
+  calculateScore
+} from '../logic';
 
 // Mock AudioContext
 global.AudioContext = vi.fn().mockImplementation(() => ({

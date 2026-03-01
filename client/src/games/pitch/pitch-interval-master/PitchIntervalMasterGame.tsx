@@ -10,8 +10,8 @@ import {
   Pitch001GameState,
   createPitch001Game,
   getPitch001ModeConfig
-} from '@/lib/gameLogic/pitch-001Logic';
-import { pitch001Modes } from '@/lib/gameLogic/pitch-001Modes';
+} from '@/games/pitch/pitch-001/logic';
+import { pitch001Modes } from '@/games/pitch/pitch-001/modes';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
 import { useAudioService } from '@/common/hooks/useAudioService';
 import { useGameCleanup } from '@/common/hooks/useGameCleanup';

@@ -8,8 +8,8 @@ import {
   Pitch001GameState,
   createPitch001Game,
   getPitch001ModeConfig 
-} from '@/lib/gameLogic/pitch-001Logic';
-import { pitch001Modes } from '@/lib/gameLogic/pitch-001Modes';
+} from '../logic';
+import { pitch001Modes } from '../modes';
 
 // Mock AudioContext
 global.AudioContext = vi.fn().mockImplementation(() => ({

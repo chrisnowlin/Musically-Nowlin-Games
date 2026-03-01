@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { PitchIntervalMasterGame } from "./PitchIntervalMasterGame";
+import { PitchIntervalMasterGame } from "@/games/pitch/pitch-interval-master/PitchIntervalMasterGame";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/common/ui/card";
 import { Button } from "@/common/ui/button";
-import { pitch001Modes } from "@/lib/gameLogic/pitch-001Modes";
+import { pitch001Modes } from "./modes";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import { ChevronLeft, Play, HelpCircle, Volume2, VolumeX } from "lucide-react";
 

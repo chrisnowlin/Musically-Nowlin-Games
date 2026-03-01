@@ -6,16 +6,16 @@ import {
   generateRound, 
   validateAnswer, 
   calculateScore 
-} from '@/lib/gameLogic/pitch-004Logic';
-import { 
-  SCALE_MODES, 
-  getModeById, 
-  getAllModes, 
+} from '../logic';
+import {
+  SCALE_MODES,
+  getModeById,
+  getAllModes,
   getMaxDifficultyForMode,
   SCALE_DEFINITIONS,
   SCALE_NAMES,
   SCALE_DEGREE_FUNCTIONS
-} from '@/lib/gameLogic/pitch-004Modes';
+} from '../modes';
 
 // Mock AudioContext
 global.AudioContext = vi.fn().mockImplementation(() => ({

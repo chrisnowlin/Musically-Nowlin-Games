@@ -3,7 +3,7 @@
  * Pitch & Interval Master - Multi-mode pitch training game
  */
 
-import { pitch001Modes, Pitch001ModeConfig } from './pitch-001Modes';
+import { pitch001Modes, Pitch001ModeConfig } from './modes';
 
 export interface Pitch001Round {
   id: string;

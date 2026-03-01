@@ -1,5 +1,5 @@
 import React from "react";
-import { Pitch001Game } from "@/components/Pitch001Game";
+import { Pitch001Game } from "./Pitch001Game";
 
 export const Pitch001Page: React.FC = () => {
   return <Pitch001Game />;
