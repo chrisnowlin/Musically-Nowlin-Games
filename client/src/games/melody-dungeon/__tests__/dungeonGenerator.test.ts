@@ -60,14 +60,16 @@ describe('generateDungeon', () => {
     }
   });
 
-  it('assigns ghost subtype with level 1 on floor 1', () => {
+  it('assigns valid subtypes with level 1 on floor 1', () => {
     const floor = generateDungeon(1);
     const enemies = floor.tiles.flat().filter(
       (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
     );
     expect(enemies.length).toBeGreaterThan(0);
+    // Floor 1 unlocks noteReading + dynamics, so ghost, slime, and bat are valid subtypes
+    const validSubtypes = ['ghost', 'slime', 'bat'];
     for (const e of enemies) {
-      expect(e.enemySubtype).toBe('ghost');
+      expect(validSubtypes).toContain(e.enemySubtype);
       expect(e.enemyLevel).toBe(1);
     }
   });
