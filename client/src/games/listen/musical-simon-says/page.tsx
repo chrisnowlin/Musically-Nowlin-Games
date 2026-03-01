@@ -1,4 +1,4 @@
-import MusicalSimonSaysGame from "@/components/MusicalSimonSaysGame";
+import MusicalSimonSaysGame from "./MusicalSimonSaysGame";
 
 export default function MusicalSimonSaysGamePage() {
   return <MusicalSimonSaysGame />;

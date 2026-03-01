@@ -4,15 +4,15 @@ import {
   generateRound, 
   validateAnswer, 
   calculateScore 
-} from '@/lib/gameLogic/listen-002Logic';
-import { 
-  ANALYSIS_MODES, 
-  getModeById, 
-  getAllModes, 
+} from '../logic';
+import {
+  ANALYSIS_MODES,
+  getModeById,
+  getAllModes,
   getMaxDifficultyForMode,
   MUSICAL_EXAMPLES,
-  MUSICAL_ELEMENT_NAMES 
-} from '@/lib/gameLogic/listen-002Modes';
+  MUSICAL_ELEMENT_NAMES
+} from '../modes';
 
 // Mock AudioContext
 global.AudioContext = vi.fn().mockImplementation(() => ({

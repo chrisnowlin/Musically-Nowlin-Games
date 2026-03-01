@@ -1,4 +1,4 @@
-import EchoLocationChallengeGame from "@/components/EchoLocationChallengeGame";
+import EchoLocationChallengeGame from "./EchoLocationChallengeGame";
 
 export default function EchoLocationChallengeGamePage() {
   return <EchoLocationChallengeGame />;

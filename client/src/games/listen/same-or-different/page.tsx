@@ -1,4 +1,4 @@
-import SameOrDifferentGame from "@/components/SameOrDifferentGame";
+import SameOrDifferentGame from "./SameOrDifferentGame";
 
 export default function SameOrDifferentGamePage() {
   return <SameOrDifferentGame />;

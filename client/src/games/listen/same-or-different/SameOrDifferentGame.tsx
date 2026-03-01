@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
-import { SameOrDifferentRound, generateSameOrDifferentRound, validateSameOrDifferentAnswer, calculateSameOrDifferentScore } from "@/lib/sameOrDifferentLogic";
+import { SameOrDifferentRound, generateSameOrDifferentRound, validateSameOrDifferentAnswer, calculateSameOrDifferentScore } from "./logic";
 import { audioService } from "@/common/audio/audioService";
 import AnimalCharacter from "@/common/game-shell/AnimalCharacter";
 import ScoreDisplay from "@/common/game-shell/ScoreDisplay";

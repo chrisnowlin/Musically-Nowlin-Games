@@ -4,7 +4,7 @@ import {
   validateSameOrDifferentAnswer,
   calculateSameOrDifferentScore,
   type SameOrDifferentRound,
-} from '../lib/sameOrDifferentLogic';
+} from '../logic';
 import { ANIMAL_CHARACTERS, MUSICAL_NOTES } from '@/common/utils/schema';
 
 describe('Same or Different Logic - generateSameOrDifferentRound', () => {

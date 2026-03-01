@@ -1,4 +1,4 @@
-import MusicalPatternDetectiveGame from "@/components/MusicalPatternDetectiveGame";
+import MusicalPatternDetectiveGame from "./MusicalPatternDetectiveGame";
 
 export default function MusicalPatternDetectiveGamePage() {
   return <MusicalPatternDetectiveGame />;

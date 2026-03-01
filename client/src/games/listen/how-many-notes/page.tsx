@@ -1,4 +1,4 @@
-import HowManyNotesGame from "@/components/HowManyNotesGame";
+import HowManyNotesGame from "./HowManyNotesGame";
 
 export default function HowManyNotesGamePage() {
   return <HowManyNotesGame />;
