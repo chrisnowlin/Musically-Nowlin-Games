@@ -132,6 +132,7 @@ const MelodyDungeonGame: React.FC = () => {
   const [facingLeft, setFacingLeft] = useState(false);
   const [pendingChestReward, setPendingChestReward] = useState<ChestReward | null>(null);
   const [showDirections, setShowDirections] = useState(false);
+  const [dragonFireActive, setDragonFireActive] = useState(false);
 
   const floorNumber = floor.floorNumber;
   const themeName = getTheme(floor.themeIndex).name;
@@ -217,15 +218,14 @@ const MelodyDungeonGame: React.FC = () => {
     const { challengeType, subtype, level } = enemyCaughtRef.current;
     enemyCaughtRef.current = false;
 
-    setPlayer((prev) => {
-      // Dragons deal 1 HP on catch; other enemies go straight to challenge
-      let updated = { ...prev };
-      if (subtype === 'dragon') {
+    if (subtype === 'dragon') {
+      // Dragon catch: deal damage, show fire effect, then start challenge after delay
+      moveLockedRef.current = true;
+      setPlayer((prev) => {
+        let updated = { ...prev };
         if (prev.shieldCharm > 0) {
-          // Shield charm absorbs the catch penalty
           updated.shieldCharm = 0;
         } else if (prev.buffs.armed.dragonBane > 0) {
-          // Dragon Bane negates the catch penalty and consumes one charge
           updated = {
             ...updated,
             buffs: {
@@ -239,22 +239,40 @@ const MelodyDungeonGame: React.FC = () => {
         } else {
           updated.health = Math.max(0, prev.health - 1);
         }
-      }
-      if (updated.health <= 0) {
-        setPhase('gameOver');
-        return { ...updated, health: 0 };
-      }
-
-      moveLockedRef.current = true;
-      setActiveChallenge({ type: challengeType, tilePosition: prev.position });
-      setActiveTileType(TileType.Enemy);
-      setActiveTileSubtype(subtype);
-      setActiveTileLevel(level);
-      activeChallengeBuffsRef.current = { metronome: prev.buffs.armed.metronome > 0, tuningFork: prev.buffs.armed.tuningFork > 0 };
-      setPhase('challenge');
-
-      return updated;
-    });
+        if (updated.health <= 0) {
+          setPhase('gameOver');
+          return { ...updated, health: 0 };
+        }
+        return updated;
+      });
+      setDragonFireActive(true);
+      setTimeout(() => {
+        setDragonFireActive(false);
+        // Start challenge if player survived the catch damage
+        setPlayer((prev) => {
+          if (prev.health <= 0) return prev;
+          setActiveChallenge({ type: challengeType, tilePosition: prev.position });
+          setActiveTileType(TileType.Enemy);
+          setActiveTileSubtype(subtype);
+          setActiveTileLevel(level);
+          activeChallengeBuffsRef.current = { metronome: prev.buffs.armed.metronome > 0, tuningFork: prev.buffs.armed.tuningFork > 0 };
+          setPhase('challenge');
+          return prev;
+        });
+      }, 800);
+    } else {
+      // Non-dragon enemies: go straight to challenge
+      setPlayer((prev) => {
+        moveLockedRef.current = true;
+        setActiveChallenge({ type: challengeType, tilePosition: prev.position });
+        setActiveTileType(TileType.Enemy);
+        setActiveTileSubtype(subtype);
+        setActiveTileLevel(level);
+        activeChallengeBuffsRef.current = { metronome: prev.buffs.armed.metronome > 0, tuningFork: prev.buffs.armed.tuningFork > 0 };
+        setPhase('challenge');
+        return prev;
+      });
+    }
   }, [floor, phase]);
 
   const usePotion = useCallback(() => {
@@ -1013,6 +1031,19 @@ const MelodyDungeonGame: React.FC = () => {
           />
         </div>
       </div>
+
+      {dragonFireActive && (
+        <div className="fixed inset-0 z-40 pointer-events-none animate-dragon-fire">
+          <div className="absolute inset-0 bg-gradient-to-t from-red-900/80 via-orange-600/50 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 flex justify-around px-4 text-4xl">
+            {Array.from({ length: 7 }, (_, i) => (
+              <span key={i} className="animate-fire-rise" style={{ animationDelay: `${i * 0.06}s` }}>
+                {'\uD83D\uDD25'}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {phase === 'challenge' && activeChallenge && (
         <ChallengeModal

@@ -473,6 +473,25 @@
     animation: sprite-float 2.4s ease-in-out infinite;
   }
 
+  /* Dragon fire catch effect */
+  @keyframes dragon-fire {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes fire-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(-60vh) scale(1.4); opacity: 0; }
+  }
+  .animate-dragon-fire {
+    animation: dragon-fire 800ms ease-out forwards;
+  }
+  .animate-fire-rise {
+    animation: fire-rise 800ms ease-out forwards;
+  }
+
   /* Subtle side-to-side tilt for "playing" characters (used by AOC) */
   @keyframes tilt-subtle {
     0%, 100% { transform: rotate(-3deg); }
