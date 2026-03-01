@@ -166,6 +166,10 @@ const BossBattle: React.FC<{
   const [roundTransition, setRoundTransition] = useState(false);
   const [showItemPhase, setShowItemPhase] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
+  // Pre-fight prep: let player potion up before round 1 if HP is below max
+  const [showPrefight, setShowPrefight] = useState(
+    playerHealth < maxHealth && potions > 0
+  );
 
   // Determine current challenge based on boss type
   const currentChallenge = useMemo(() => {
@@ -268,13 +272,34 @@ const BossBattle: React.FC<{
       </div>
 
       {/* Challenge for current round */}
-      {showItemPhase ? (
+      {showPrefight ? (
+        <div className="py-6 text-center space-y-3">
+          <p className="text-lg font-bold text-amber-400">Prepare for Battle!</p>
+          <p className="text-sm text-gray-400">You can use potions before the fight begins.</p>
+          <div className="flex items-center justify-center gap-2">
+            {potionsRemaining > 0 && effectiveHealth < maxHealth && (
+              <button
+                onClick={handleUsePotion}
+                className="px-3 py-1.5 bg-pink-700 hover:bg-pink-600 rounded-lg text-sm font-medium transition-colors"
+              >
+                Use Potion ({potionsRemaining})
+              </button>
+            )}
+            <button
+              onClick={() => setShowPrefight(false)}
+              className="px-4 py-1.5 bg-indigo-700 hover:bg-indigo-600 rounded-lg text-sm font-medium transition-colors"
+            >
+              {effectiveHealth < maxHealth && potionsRemaining > 0 ? 'Fight!' : 'Begin!'}
+            </button>
+          </div>
+        </div>
+      ) : showItemPhase ? (
         <div className="py-6 text-center space-y-3">
           <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : 'text-red-400'}`}>
             {lastResult ? 'Hit!' : 'Miss! -1 HP'}
           </p>
           <div className="flex items-center justify-center gap-2">
-            {potionsRemaining > 0 && effectiveHealth < playerHealth && (
+            {potionsRemaining > 0 && effectiveHealth < maxHealth && (
               <button
                 onClick={handleUsePotion}
                 className="px-3 py-1.5 bg-pink-700 hover:bg-pink-600 rounded-lg text-sm font-medium transition-colors"

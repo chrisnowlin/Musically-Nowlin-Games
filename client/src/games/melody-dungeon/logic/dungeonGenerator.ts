@@ -31,7 +31,9 @@ const THEME_COUNT = 8;
  */
 function getThemeIndexForFloor(floorNumber: number): number {
   const group = Math.floor((floorNumber - 1) / 10);
-  // Simple hash: multiply by a prime, take modulo to pick a theme.
+  // Floors 1-10 always start with Stone Crypt (index 0).
+  if (group === 0) return 0;
+  // Remaining groups use a simple hash for variety.
   return (group * 7 + 3) % THEME_COUNT;
 }
 
