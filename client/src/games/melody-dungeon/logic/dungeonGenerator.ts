@@ -9,7 +9,7 @@ import {
   getDungeonSize,
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
-import { getChallengeTypesForFloor, getSubtypeChallengePool } from '../challengeHelpers';
+import { getChallengeTypesForFloor, getSubtypeChallengePool, getEnemySubtypesForFloor } from '../challengeHelpers';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';
@@ -35,13 +35,6 @@ function getThemeIndexForFloor(floorNumber: number): number {
   if (group === 0) return 0;
   // Remaining groups use a simple hash for variety.
   return (group * 7 + 3) % THEME_COUNT;
-}
-
-/** Returns patrol-spawnable enemy subtypes for a given floor. Dragon is placed separately via chest-guardian logic and is not included here. */
-function getEnemySubtypesForFloor(floorNumber: number): EnemySubtype[] {
-  if (floorNumber <= 5) return ['ghost'];
-  if (floorNumber <= 10) return ['ghost', 'skeleton'];
-  return ['ghost', 'skeleton', 'goblin'];
 }
 
 /** Returns enemy level for a given floor (blends two adjacent levels for variety). */
