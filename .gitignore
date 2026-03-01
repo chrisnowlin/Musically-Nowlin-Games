@@ -82,5 +82,16 @@ QUICK_START.md
 *_POC.md
 *_COMPLETE.md
 *_PROGRESS.md
-*_COMPARISON.mdclient/public/audio/philharmonia-backup/
+*_COMPARISON.md
+client/public/audio/philharmonia-backup/
 scripts/trim-sample-*.py
+
+# IDE/AI tool configs
+.cursor/
+.kilocode/
+.opencode/
+.windsurf/
+.serena/
+
+# Untracked build artifacts
+sliced_assets/
