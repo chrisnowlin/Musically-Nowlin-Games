@@ -17,7 +17,7 @@ import {
   getNextDifficulty,
   getIntervalFrequencies,
   getNonChordTonePattern
-} from '../lib/gameLogic/harmony-004Logic';
+} from '../logic';
 import {
   CONSONANCE_MODES,
   getModeById,
@@ -27,7 +27,7 @@ import {
   NON_CHORD_TONE_DEFINITIONS,
   getIntervalsByType,
   getAllNonChordTones
-} from '../lib/gameLogic/harmony-004Modes';
+} from '../modes';
 
 describe('harmony-004Modes', () => {
   it('should have all required modes', () => {

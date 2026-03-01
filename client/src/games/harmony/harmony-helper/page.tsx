@@ -1,4 +1,4 @@
-import HarmonyHelperGame from "@/components/HarmonyHelperGame";
+import HarmonyHelperGame from "./HarmonyHelperGame";
 
 export default function HarmonyHelperGamePage() {
   return <HarmonyHelperGame />;

@@ -7,8 +7,8 @@ import {
   getProgressionAudioData,
   getFeatureAudioData,
   getRhythmAudioData
-} from '@/lib/gameLogic/harmony-003Logic';
-import { HARMONY_MODES, CHORD_PROGRESSIONS, HARMONIC_FEATURES, HARMONIC_RHYTHMS } from '@/lib/gameLogic/harmony-003Modes';
+} from '../logic';
+import { HARMONY_MODES, CHORD_PROGRESSIONS, HARMONIC_FEATURES, HARMONIC_RHYTHMS } from '../modes';
 
 describe('harmony-003Logic', () => {
   describe('Game Initialization', () => {

@@ -15,13 +15,13 @@ import {
   calculateAccuracy,
   getPerformanceFeedback,
   getNextDifficulty
-} from '../lib/gameLogic/harmony-002Logic';
+} from '../logic';
 import {
   CHORD_MODES,
   getModeById,
   getAllModes,
   getMaxDifficultyForMode
-} from '../lib/gameLogic/harmony-002Modes';
+} from '../modes';
 
 describe('harmony-002Modes', () => {
   it('should have all required modes', () => {

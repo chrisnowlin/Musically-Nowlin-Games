@@ -1,4 +1,4 @@
-import HappyOrSadMelodiesGame from "@/components/HappyOrSadMelodiesGame";
+import HappyOrSadMelodiesGame from "./HappyOrSadMelodiesGame";
 
 export default function HappyOrSadMelodiesGamePage() {
   return <HappyOrSadMelodiesGame />;

@@ -18,7 +18,7 @@ import {
   getChordBySymbol,
   type GameMode,
   type DifficultySettings
-} from './harmony-003Modes';
+} from './modes';
 
 export interface GameRound {
   id: string;

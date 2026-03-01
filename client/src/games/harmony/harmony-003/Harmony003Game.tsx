@@ -13,8 +13,8 @@ import {
   type GameState,
   type GameRound,
   type GameResult
-} from "@/lib/gameLogic/harmony-003Logic";
-import { HARMONY_MODES, CHORD_PROGRESSIONS, HARMONIC_FEATURES, HARMONIC_RHYTHMS } from "@/lib/gameLogic/harmony-003Modes";
+} from "./logic";
+import { HARMONY_MODES, CHORD_PROGRESSIONS, HARMONIC_FEATURES, HARMONIC_RHYTHMS } from "./modes";
 import { useAudioService } from "@/common/hooks/useAudioService";
 import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";
