@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rollChestReward, CHEST_LOOT_ITEMS } from '../merchantItems';
+import { rollChestReward, CHEST_LOOT_ITEMS } from '../logic/merchantItems';
 
 describe('CHEST_LOOT_ITEMS', () => {
   it('excludes the key item', () => {

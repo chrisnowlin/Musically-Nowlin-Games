@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { TileType } from '@/lib/gameLogic/dungeonTypes';
-import type { DungeonFloor, Position, Tile } from '@/lib/gameLogic/dungeonTypes';
+import { TileType } from './logic/dungeonTypes';
+import type { DungeonFloor, Position, Tile } from './logic/dungeonTypes';
 import { getTheme } from './dungeonThemes';
 
 interface MiniMapProps {

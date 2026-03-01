@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generateDungeon } from '@/lib/gameLogic/dungeonGenerator';
-import { TileType, type DungeonFloor, type Position, type Tile } from '@/lib/gameLogic/dungeonTypes';
+import { generateDungeon } from '../logic/dungeonGenerator';
+import { TileType, type DungeonFloor, type Position, type Tile } from '../logic/dungeonTypes';
 
 function inBounds(floor: DungeonFloor, x: number, y: number): boolean {
   return y >= 0 && y < floor.height && x >= 0 && x < floor.width;

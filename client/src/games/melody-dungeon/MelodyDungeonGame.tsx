@@ -8,7 +8,7 @@ import {
   DEFAULT_BUFFS,
   DEFAULT_FLOOR_BUFFS,
   DEFAULT_ARMED_BUFFS,
-} from '@/lib/gameLogic/dungeonTypes';
+} from './logic/dungeonTypes';
 import type {
   GamePhase,
   PlayerState,
@@ -19,13 +19,13 @@ import type {
   ChallengeType,
   EnemySubtype,
   Tile,
-} from '@/lib/gameLogic/dungeonTypes';
-import { generateDungeon, moveEnemies } from '@/lib/gameLogic/dungeonGenerator';
+} from './logic/dungeonTypes';
+import { generateDungeon, moveEnemies } from './logic/dungeonGenerator';
 import {
   createDifficultyState,
   recordResult,
   type DifficultyState,
-} from '@/lib/gameLogic/difficultyAdapter';
+} from './logic/difficultyAdapter';
 import DungeonGrid from './DungeonGrid';
 import HUD from './HUD';
 import MobileDPad from './MobileDPad';
@@ -35,9 +35,9 @@ import type { BossBattleMeta } from './ChallengeModal';
 import MerchantModal from './MerchantModal';
 import DirectionsModal from './DirectionsModal';
 import UseItemsModal from './UseItemsModal';
-import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
-import { rollChestReward } from '@/lib/gameLogic/merchantItems';
-import type { ChestReward } from '@/lib/gameLogic/merchantItems';
+import type { MerchantItem } from './logic/merchantItems';
+import { rollChestReward } from './logic/merchantItems';
+import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
 import { playNote, resumeAudioContext } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';

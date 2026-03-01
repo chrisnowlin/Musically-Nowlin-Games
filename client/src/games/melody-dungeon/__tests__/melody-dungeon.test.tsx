@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { describe, it, expect } from 'vitest';
-import MelodyDungeonGame from '@/components/melody-dungeon/MelodyDungeonGame';
+import MelodyDungeonGame from '../MelodyDungeonGame';
 
 describe('Melody Dungeon', () => {
   it('shows 100 floors to conquer in menu copy', () => {

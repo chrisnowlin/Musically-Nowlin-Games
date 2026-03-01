@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { generateDungeon, moveEnemies, getBossType } from '../dungeonGenerator';
-import { TileType } from '../dungeonTypes';
-import type { DungeonFloor, Position, Tile } from '../dungeonTypes';
+import { generateDungeon, moveEnemies, getBossType } from '../logic/dungeonGenerator';
+import { TileType } from '../logic/dungeonTypes';
+import type { DungeonFloor, Position, Tile } from '../logic/dungeonTypes';
 
 /** Scan the grid and return all tiles matching the given type. */
 function findTiles(floor: ReturnType<typeof generateDungeon>, type: TileType) {

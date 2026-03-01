@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import type { PlayerState } from '@/lib/gameLogic/dungeonTypes';
-import { getShopInventory } from '@/lib/gameLogic/merchantItems';
-import type { MerchantItem } from '@/lib/gameLogic/merchantItems';
+import type { PlayerState } from './logic/dungeonTypes';
+import { getShopInventory } from './logic/merchantItems';
+import type { MerchantItem } from './logic/merchantItems';
 
 interface Props {
   player: PlayerState;

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerState, DifficultyLevel } from '@/lib/gameLogic/dungeonTypes';
+import type { PlayerState, DifficultyLevel } from './logic/dungeonTypes';
 
 interface HUDProps {
   player: PlayerState;

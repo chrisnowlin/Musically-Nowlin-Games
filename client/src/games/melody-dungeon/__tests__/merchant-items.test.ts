@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { MERCHANT_ITEMS, ALL_ITEMS, CORE_ITEMS, SPECIAL_ITEMS, getMerchantPrice, getShopInventory } from '@/lib/gameLogic/merchantItems';
-import type { PlayerState } from '@/lib/gameLogic/dungeonTypes';
-import { DEFAULT_BUFFS } from '@/lib/gameLogic/dungeonTypes';
+import { MERCHANT_ITEMS, ALL_ITEMS, CORE_ITEMS, SPECIAL_ITEMS, getMerchantPrice, getShopInventory } from '../logic/merchantItems';
+import type { PlayerState } from '../logic/dungeonTypes';
+import { DEFAULT_BUFFS } from '../logic/dungeonTypes';
 
 function makePlayer(overrides: Partial<PlayerState> = {}): PlayerState {
   return {

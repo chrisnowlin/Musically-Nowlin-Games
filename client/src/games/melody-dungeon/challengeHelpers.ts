@@ -1,4 +1,4 @@
-import type { ChallengeType, DifficultyLevel, EnemySubtype } from '@/lib/gameLogic/dungeonTypes';
+import type { ChallengeType, DifficultyLevel, EnemySubtype } from './logic/dungeonTypes';
 
 export function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
   if (floorNumber <= 5) return ['noteReading'];

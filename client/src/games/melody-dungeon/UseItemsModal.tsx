@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerState } from '@/lib/gameLogic/dungeonTypes';
+import type { PlayerState } from './logic/dungeonTypes';
 
 type ActiveItemId = 'torch' | 'map-scroll' | 'compass';
 type PassiveItemId =

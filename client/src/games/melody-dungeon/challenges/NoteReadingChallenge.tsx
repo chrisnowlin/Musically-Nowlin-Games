@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getNoteReadingParamsForFloor } from '@/lib/gameLogic/difficultyAdapter';
+import { getNoteReadingParamsForFloor } from '../logic/difficultyAdapter';
 import { playNote, noteKeyToName } from '../dungeonAudio';
 
 interface Props {

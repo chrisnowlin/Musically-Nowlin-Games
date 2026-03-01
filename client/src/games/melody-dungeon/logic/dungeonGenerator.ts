@@ -9,7 +9,7 @@ import {
   getDungeonSize,
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
-import { getChallengeTypesForFloor, getSubtypeChallengePool } from '@/components/melody-dungeon/challengeHelpers';
+import { getChallengeTypesForFloor, getSubtypeChallengePool } from '../challengeHelpers';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';

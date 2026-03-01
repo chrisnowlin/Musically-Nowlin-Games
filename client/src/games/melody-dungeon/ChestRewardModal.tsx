@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ChestReward } from '@/lib/gameLogic/merchantItems';
+import type { ChestReward } from './logic/merchantItems';
 
 interface Props {
   reward: ChestReward;

@@ -1,4 +1,4 @@
-import MelodyDungeonGame from "@/components/melody-dungeon/MelodyDungeonGame";
+import MelodyDungeonGame from "./MelodyDungeonGame";
 
 export default function MelodyDungeonPage() {
   return <MelodyDungeonGame />;

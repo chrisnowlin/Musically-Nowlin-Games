@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { RhythmTapChallenge, ChallengeAnswer } from '@shared/types/cadence-quest';
-import { playClick } from '@/components/melody-dungeon/dungeonAudio';
+import { playClick } from '@/games/melody-dungeon/dungeonAudio';
 
 interface Props {
   challenge: RhythmTapChallenge;

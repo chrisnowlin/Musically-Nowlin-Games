@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import type { ChallengeType, DifficultyLevel, EnemySubtype } from '@/lib/gameLogic/dungeonTypes';
-import { TileType } from '@/lib/gameLogic/dungeonTypes';
+import type { ChallengeType, DifficultyLevel, EnemySubtype } from './logic/dungeonTypes';
+import { TileType } from './logic/dungeonTypes';
 import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';

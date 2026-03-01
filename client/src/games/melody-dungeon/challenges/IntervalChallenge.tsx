@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { DifficultyLevel } from '@/lib/gameLogic/dungeonTypes';
-import { getIntervalParams } from '@/lib/gameLogic/difficultyAdapter';
+import type { DifficultyLevel } from '../logic/dungeonTypes';
+import { getIntervalParams } from '../logic/difficultyAdapter';
 import { playTwoNotes, getFrequency, ALL_NOTE_KEYS } from '../dungeonAudio';
 
 interface Props {

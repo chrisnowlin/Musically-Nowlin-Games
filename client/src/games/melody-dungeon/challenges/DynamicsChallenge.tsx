@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { DifficultyLevel } from '@/lib/gameLogic/dungeonTypes';
-import { getDynamicsParams } from '@/lib/gameLogic/difficultyAdapter';
+import type { DifficultyLevel } from '../logic/dungeonTypes';
+import { getDynamicsParams } from '../logic/difficultyAdapter';
 import { playPassageAtDynamic } from '../dungeonAudio';
 
 interface Props {

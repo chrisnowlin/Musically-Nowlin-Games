@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { TileType, VISIBILITY_RADIUS } from '@/lib/gameLogic/dungeonTypes';
-import type { DungeonFloor, Position } from '@/lib/gameLogic/dungeonTypes';
+import { TileType, VISIBILITY_RADIUS } from './logic/dungeonTypes';
+import type { DungeonFloor, Position } from './logic/dungeonTypes';
 import { getTheme } from './dungeonThemes';
 
 interface DungeonGridProps {
