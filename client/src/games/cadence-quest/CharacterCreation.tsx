@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/common/ui/button';
 import { Input } from '@/common/ui/input';
 import { cn } from '@/common/utils/utils';
-import { CLASS_INFO } from '@/lib/cadence-quest/classes';
+import { CLASS_INFO } from './logic/classes';
 import type { CharacterClass } from '@shared/types/cadence-quest';
 
 interface CharacterCreationProps {

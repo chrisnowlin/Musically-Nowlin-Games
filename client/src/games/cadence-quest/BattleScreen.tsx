@@ -7,9 +7,9 @@ import type { Character } from '@shared/types/cadence-quest';
 import type { RegionEncounter } from '@shared/types/cadence-quest';
 import BattleHUD from './BattleHUD';
 import ChallengePanel from './ChallengePanel';
-import { getEncounter } from '@/lib/cadence-quest/region-encounters';
-import { simulateAIAnswer } from '@/lib/cadence-quest/ai-opponent';
-import { useWebSocket } from '@/lib/cadence-quest/useWebSocket';
+import { getEncounter } from './logic/region-encounters';
+import { simulateAIAnswer } from './logic/ai-opponent';
+import { useWebSocket } from './logic/useWebSocket';
 
 interface BattleScreenProps {
   battleId: string;

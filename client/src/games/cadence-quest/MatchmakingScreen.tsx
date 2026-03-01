@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Loader2 } from 'lucide-react';
-import { useWebSocket } from '@/lib/cadence-quest/useWebSocket';
+import { useWebSocket } from './logic/useWebSocket';
 import type { Character, MusicChallenge } from '@shared/types/cadence-quest';
 
 function isServerCharacter(id: string): boolean {

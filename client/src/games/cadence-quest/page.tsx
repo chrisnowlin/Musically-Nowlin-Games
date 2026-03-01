@@ -1,4 +1,4 @@
-import CadenceQuestGame from '@/components/cadence-quest/CadenceQuestGame';
+import CadenceQuestGame from './CadenceQuestGame';
 
 export default function CadenceQuestPage() {
   return <CadenceQuestGame />;
