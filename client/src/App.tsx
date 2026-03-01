@@ -66,7 +66,7 @@ const MusicalStoryTimeGamePage = lazy(() => import("@/games/cross-curricular/mus
 const ToneColorMatchGamePage = lazy(() => import("@/games/timbre/tone-color-match/page"));
 const MusicalMathGamePage = lazy(() => import("@/games/cross-curricular/musical-math/page"));
 const RestFinderGamePage = lazy(() => import("@/games/rhythm/rest-finder/page"));
-const AnimalOrchestraConductorGamePage = lazy(() => import("@/pages/games/AnimalOrchestraConductorGamePage"));
+const AnimalOrchestraConductorGamePage = lazy(() => import("@/games/animal-orchestra/page"));
 const PitchPerfectPathGamePage = lazy(() => import("@/games/pitch/pitch-perfect-path/page"));
 const WorldMusicExplorerGamePage = lazy(() => import("@/games/cross-curricular/world-music-explorer/page"));
 const StaffInvadersGamePage = lazy(() => import("@/games/staff-invaders/page"));

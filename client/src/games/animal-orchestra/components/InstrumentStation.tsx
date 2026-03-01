@@ -6,7 +6,7 @@
  */
 
 import { PatternSelector } from './PatternSelector';
-import type { Pattern } from '@/lib/aoc-v2/InstrumentPatterns';
+import type { Pattern } from '../logic/InstrumentPatterns';
 
 interface InstrumentStationProps {
   patterns: Pattern[];

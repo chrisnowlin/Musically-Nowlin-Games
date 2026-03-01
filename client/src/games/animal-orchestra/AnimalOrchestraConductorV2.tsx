@@ -4,9 +4,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { InstrumentStation } from './InstrumentStation';
-import { ConductorPanel } from './ConductorPanel';
-import { orchestraAudioService, type InstrumentType } from '@/lib/aoc-v2/OrchestraAudioService';
+import { InstrumentStation } from './components/InstrumentStation';
+import { ConductorPanel } from './components/ConductorPanel';
+import { orchestraAudioService, type InstrumentType } from './logic/OrchestraAudioService';
 import {
   VIOLIN_PATTERNS,
   FLUTE_PATTERNS,
@@ -15,7 +15,7 @@ import {
   TUBA_PATTERNS,
   BASS_DRUM_PATTERNS,
   type Pattern,
-} from '@/lib/aoc-v2/InstrumentPatterns';
+} from './logic/InstrumentPatterns';
 import { Button } from '@/common/ui/button';
 import { Play, HelpCircle, Music2, ChevronLeft, Sparkles, Headphones } from 'lucide-react';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';

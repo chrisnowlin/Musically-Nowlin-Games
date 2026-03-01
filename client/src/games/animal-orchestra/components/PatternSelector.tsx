@@ -2,7 +2,7 @@
  * PatternSelector - Simple dot-based pattern selection
  */
 
-import type { Pattern } from '@/lib/aoc-v2/InstrumentPatterns';
+import type { Pattern } from '../logic/InstrumentPatterns';
 
 interface PatternSelectorProps {
   patterns: Pattern[];
