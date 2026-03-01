@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Clock, Trophy, Zap, Target } from "lucide-react";
 import { useLocation } from "wouter";
 import { audioService } from "@/common/audio/audioService";
-import { 
-  Challenge001ModeId, 
-  challenge001Modes, 
-  getChallenge001Mode 
-} from "@/lib/gameLogic/challenge-001Modes";
+import {
+  Challenge001ModeId,
+  challenge001Modes,
+  getChallenge001Mode
+} from "./modes";
 import {
   GameState,
   Question,
@@ -15,7 +15,7 @@ import {
   calculateScore,
   calculateMasteryProgress,
   getAccuracy,
-} from "@/lib/gameLogic/challenge-001Logic";
+} from "./logic";
 
 const Challenge001GameComponent: React.FC = () => {
   const [, setLocation] = useLocation();

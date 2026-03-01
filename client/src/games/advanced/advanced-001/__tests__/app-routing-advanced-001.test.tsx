@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import Advanced001Page from '@/pages/games/Advanced001Page';
+import Advanced001Page from '../page';
 
 vi.mock('@/common/audio/sampleAudioService', () => ({
   sampleAudioService: {

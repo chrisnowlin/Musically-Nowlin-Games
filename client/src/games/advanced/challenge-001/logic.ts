@@ -4,7 +4,7 @@
  * Unified Skill: Demonstrating comprehensive musical mastery
  */
 
-import { Challenge001ModeId, getChallenge001Mode } from './challenge-001Modes';
+import { Challenge001ModeId, getChallenge001Mode } from './modes';
 
 export interface Question {
   id: string;

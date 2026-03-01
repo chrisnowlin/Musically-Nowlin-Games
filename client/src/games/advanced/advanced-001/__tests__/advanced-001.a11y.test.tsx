@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Advanced001Game } from '@/components/Advanced001Game';
+import { Advanced001Game } from '../Advanced001Game';
 
 describe('Advanced001Game accessibility basics', () => {
   it('allows keyboard navigation to mode buttons and Start', async () => {

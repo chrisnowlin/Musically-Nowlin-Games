@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Advanced001Game } from '@/components/Advanced001Game';
+import { Advanced001Game } from '../Advanced001Game';
 
 vi.mock('@/common/audio/sampleAudioService', () => ({
   sampleAudioService: {

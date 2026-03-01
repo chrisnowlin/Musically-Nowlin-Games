@@ -7,13 +7,13 @@ import {
   getAccuracy,
   shouldIncreaseDifficulty,
   shouldDecreaseDifficulty
-} from '../lib/gameLogic/challenge-001Logic';
-import { 
+} from '../logic';
+import {
   challenge001Modes,
   getChallenge001Mode,
   getModeTimeLimit,
-  getModeScoringMultiplier 
-} from '../lib/gameLogic/challenge-001Modes';
+  getModeScoringMultiplier
+} from '../modes';
 
 describe('challenge-001 modes', () => {
   it('has all required modes', () => {

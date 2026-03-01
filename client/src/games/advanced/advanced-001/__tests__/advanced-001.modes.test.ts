@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { advanced001Modes, getAdvanced001Mode } from '@/lib/gameLogic/advanced-001Modes';
+import { advanced001Modes, getAdvanced001Mode } from '../modes';
 
 describe('advanced-001 modes difficulty curves', () => {
   it('all modes return difficulty within bounds 1..5', () => {

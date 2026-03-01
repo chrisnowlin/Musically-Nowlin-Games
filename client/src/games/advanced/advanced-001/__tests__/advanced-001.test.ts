@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateRound, validateAnswer, calculateScore } from '@/lib/gameLogic/advanced-001Logic';
+import { generateRound, validateAnswer, calculateScore } from '../logic';
 
 describe('advanced-001 logic', () => {
   it('generateRound returns a valid round for harmony mode', () => {
