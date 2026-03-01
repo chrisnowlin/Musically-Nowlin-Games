@@ -1,50 +1,39 @@
-import type { DifficultyLevel } from './dungeonTypes';
+import type { ChallengeType, Tier } from './dungeonTypes';
 
-const HISTORY_SIZE = 10;
+/** Floor at which each challenge type first appears. */
+export const UNLOCK_FLOORS: Record<ChallengeType, number> = {
+  noteReading: 1,
+  dynamics: 1,
+  tempo: 6,
+  symbols: 11,
+  rhythmTap: 16,
+  terms: 21,
+  interval: 26,
+};
 
-export interface DifficultyState {
-  history: boolean[];
-  level: DifficultyLevel;
+/** Get all challenge types available on a given floor. */
+export function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
+  return (Object.entries(UNLOCK_FLOORS) as [ChallengeType, number][])
+    .filter(([, unlockFloor]) => floorNumber >= unlockFloor)
+    .map(([type]) => type);
 }
 
-export function createDifficultyState(): DifficultyState {
-  return { history: [], level: 'easy' };
+/** Get the tier for a challenge type on a given floor. */
+export function getTierForChallenge(floorNumber: number, type: ChallengeType): Tier {
+  const floorsActive = floorNumber - UNLOCK_FLOORS[type];
+  if (floorsActive >= 25) return 3;
+  if (floorsActive >= 10) return 2;
+  return 1;
 }
 
-export function recordResult(state: DifficultyState, correct: boolean): DifficultyState {
-  const history = [...state.history, correct].slice(-HISTORY_SIZE);
-  const accuracy = history.length > 0
-    ? history.filter(Boolean).length / history.length
-    : 0;
+// ── Note Reading ──────────────────────────────────────────
 
-  let level: DifficultyLevel;
-  if (accuracy >= 0.75) {
-    level = 'hard';
-  } else if (accuracy >= 0.5) {
-    level = 'medium';
-  } else {
-    level = 'easy';
-  }
-
-  return { history, level };
-}
-
-export function getAccuracy(state: DifficultyState): number {
-  if (state.history.length === 0) return 0;
-  return state.history.filter(Boolean).length / state.history.length;
-}
-
-/** Note-reading difficulty by staff position (treble clef) */
 export type NoteReadingMode = 'space' | 'line' | 'both' | 'ledger';
 
-/** Space notes only: F4, A4, C5, E5 */
 const SPACE_NOTES = ['F4', 'A4', 'C5', 'E5'];
-/** Line notes only: E4, G4, B4, D5, F5 */
 const LINE_NOTES = ['E4', 'G4', 'B4', 'D5', 'F5'];
-/** Both space and line notes within the staff */
 const BOTH_STAFF_NOTES = ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'];
-/** Ledger-line notes outside the staff: C4, D4, G5, A5 */
-const LEDGER_NOTES = ['C4', 'D4', 'G5', 'A5'];
+const LEDGER_NOTES = [...BOTH_STAFF_NOTES, 'C4', 'D4', 'G5', 'A5'];
 
 export interface NoteReadingParams {
   notes: string[];
@@ -52,36 +41,16 @@ export interface NoteReadingParams {
   mode: NoteReadingMode;
 }
 
-/** Get note-reading params from floor number (1–100). Mode advances every 25 floors. */
-export function getNoteReadingParamsForFloor(floorNumber: number): NoteReadingParams {
-  let mode: NoteReadingMode;
-  if (floorNumber <= 25) mode = 'space';
-  else if (floorNumber <= 50) mode = 'line';
-  else if (floorNumber <= 75) mode = 'both';
-  else mode = 'ledger';
-
+/** Note reading params based on tier. */
+export function getNoteReadingParams(tier: Tier): NoteReadingParams {
+  const mode: NoteReadingMode = tier === 1 ? 'space' : tier === 2 ? 'both' : 'ledger';
   const notes = mode === 'space' ? SPACE_NOTES
-    : mode === 'line' ? LINE_NOTES
     : mode === 'both' ? BOTH_STAFF_NOTES
     : LEDGER_NOTES;
-
-  return {
-    notes: [...notes],
-    useBassClef: false,
-    mode,
-  };
+  return { notes: [...notes], useBassClef: false, mode };
 }
 
-/** @deprecated Use getNoteReadingParamsForFloor for floor-based progression. */
-export function getNoteReadingParams(level: DifficultyLevel): NoteReadingParams {
-  const mode: NoteReadingMode = level === 'easy' ? 'space' : level === 'medium' ? 'line' : 'both';
-  const notes = mode === 'space' ? SPACE_NOTES : mode === 'line' ? LINE_NOTES : BOTH_STAFF_NOTES;
-  return {
-    notes: [...notes],
-    useBassClef: false,
-    mode,
-  };
-}
+// ── Rhythm ────────────────────────────────────────────────
 
 export interface RhythmParams {
   patternLength: number;
@@ -90,39 +59,26 @@ export interface RhythmParams {
   toleranceMs: number;
 }
 
-export function getRhythmParams(level: DifficultyLevel): RhythmParams {
-  switch (level) {
-    case 'easy':
-      return {
-        patternLength: 4,
-        subdivisions: ['quarter', 'half'],
-        bpm: 80,
-        toleranceMs: 300,
-      };
-    case 'medium':
-      return {
-        patternLength: 4,
-        subdivisions: ['quarter', 'half', 'eighth'],
-        bpm: 100,
-        toleranceMs: 200,
-      };
-    case 'hard':
-      return {
-        patternLength: 6,
-        subdivisions: ['quarter', 'eighth', 'sixteenth'],
-        bpm: 120,
-        toleranceMs: 150,
-      };
+export function getRhythmParams(tier: Tier): RhythmParams {
+  switch (tier) {
+    case 1:
+      return { patternLength: 4, subdivisions: ['quarter', 'half'], bpm: 80, toleranceMs: 300 };
+    case 2:
+      return { patternLength: 4, subdivisions: ['quarter', 'half', 'eighth'], bpm: 100, toleranceMs: 200 };
+    case 3:
+      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth'], bpm: 120, toleranceMs: 150 };
   }
 }
+
+// ── Interval ──────────────────────────────────────────────
 
 export interface IntervalParams {
   intervals: { name: string; semitones: number }[];
 }
 
-export function getIntervalParams(level: DifficultyLevel): IntervalParams {
-  switch (level) {
-    case 'easy':
+export function getIntervalParams(tier: Tier): IntervalParams {
+  switch (tier) {
+    case 1:
       return {
         intervals: [
           { name: 'Unison', semitones: 0 },
@@ -130,7 +86,7 @@ export function getIntervalParams(level: DifficultyLevel): IntervalParams {
           { name: '3rd', semitones: 4 },
         ],
       };
-    case 'medium':
+    case 2:
       return {
         intervals: [
           { name: '2nd', semitones: 2 },
@@ -139,7 +95,7 @@ export function getIntervalParams(level: DifficultyLevel): IntervalParams {
           { name: '5th', semitones: 7 },
         ],
       };
-    case 'hard':
+    case 3:
       return {
         intervals: [
           { name: '2nd', semitones: 2 },
@@ -149,25 +105,6 @@ export function getIntervalParams(level: DifficultyLevel): IntervalParams {
           { name: '6th', semitones: 9 },
           { name: 'Octave', semitones: 12 },
         ],
-      };
-  }
-}
-
-export interface DynamicsParams {
-  levels: string[];
-  includeChanges: boolean;
-}
-
-export function getDynamicsParams(level: DifficultyLevel): DynamicsParams {
-  switch (level) {
-    case 'easy':
-      return { levels: ['piano', 'forte'], includeChanges: false };
-    case 'medium':
-      return { levels: ['piano', 'mezzo-piano', 'mezzo-forte', 'forte'], includeChanges: false };
-    case 'hard':
-      return {
-        levels: ['pianissimo', 'piano', 'mezzo-piano', 'mezzo-forte', 'forte', 'fortissimo'],
-        includeChanges: true,
       };
   }
 }
