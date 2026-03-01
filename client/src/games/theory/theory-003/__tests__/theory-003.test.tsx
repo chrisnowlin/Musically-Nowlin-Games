@@ -6,8 +6,8 @@ import {
   generateRound,
   validateAnswer,
   calculateScore
-} from '@/lib/gameLogic/theory-003Logic';
-import { 
+} from '../logic';
+import {
   CHORD_BUILDER_MODES,
   BASIC_CHORDS,
   COMPLEX_CHORDS,
@@ -21,7 +21,7 @@ import {
   getDifficultyForMode,
   type GameMode,
   type DifficultySettings
-} from '@/lib/gameLogic/theory-003Modes';
+} from '../modes';
 
 // Mock AudioContext
 global.AudioContext = vi.fn().mockImplementation(() => ({

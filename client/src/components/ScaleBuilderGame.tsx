@@ -10,8 +10,8 @@ import {
   getScaleFrequencies,
   getNoteFrequency,
   type GameMode 
-} from '@/lib/gameLogic/theory-002Modes';
-import { Theory002Logic, type GameRound, type Theory002State } from '@/lib/gameLogic/theory-002Logic';
+} from '@/games/theory/theory-002/modes';
+import { Theory002Logic, type GameRound, type Theory002State } from '@/games/theory/theory-002/logic';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations } from '@/theme/playful';
 
 interface ScaleBuilderGameProps {

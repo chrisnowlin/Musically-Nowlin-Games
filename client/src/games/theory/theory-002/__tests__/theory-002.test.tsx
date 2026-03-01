@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Theory002Logic } from '@/lib/gameLogic/theory-002Logic';
-import { 
-  THEORY_MODES, 
-  COMMON_SCALES, 
+import { Theory002Logic } from '../logic';
+import {
+  THEORY_MODES,
+  COMMON_SCALES,
   EXOTIC_SCALES,
   getScaleById,
-  type GameMode 
-} from '@/lib/gameLogic/theory-002Modes';
+  type GameMode
+} from '../modes';
 
 describe('Theory-002 Scale Builder Game Logic', () => {
   let allScalesMode: GameMode;

@@ -16,7 +16,7 @@ import {
   getScaleFrequencies,
   type GameMode,
   type DifficultySettings
-} from './theory-002Modes';
+} from './modes';
 
 export interface GameRound {
   id: string;
