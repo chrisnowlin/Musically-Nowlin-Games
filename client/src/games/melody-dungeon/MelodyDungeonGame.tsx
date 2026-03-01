@@ -133,6 +133,7 @@ const MelodyDungeonGame: React.FC = () => {
   const [pendingChestReward, setPendingChestReward] = useState<ChestReward | null>(null);
   const [showDirections, setShowDirections] = useState(false);
   const [dragonFireActive, setDragonFireActive] = useState(false);
+  const [shieldEffectActive, setShieldEffectActive] = useState(false);
 
   const floorNumber = floor.floorNumber;
   const themeName = getTheme(floor.themeIndex).name;
@@ -225,6 +226,8 @@ const MelodyDungeonGame: React.FC = () => {
         let updated = { ...prev };
         if (prev.shieldCharm > 0) {
           updated.shieldCharm = 0;
+          setShieldEffectActive(true);
+          setTimeout(() => setShieldEffectActive(false), 600);
         } else if (prev.buffs.armed.dragonBane > 0) {
           updated = {
             ...updated,
@@ -573,6 +576,8 @@ const MelodyDungeonGame: React.FC = () => {
           if (activeTileType !== TileType.Door) {
             if (prev.shieldCharm > 0) {
               updated.shieldCharm = 0;
+              setShieldEffectActive(true);
+              setTimeout(() => setShieldEffectActive(false), 600);
             } else {
               updated.health = Math.max(0, prev.health - 1);
             }
@@ -1041,6 +1046,15 @@ const MelodyDungeonGame: React.FC = () => {
                 {'\uD83D\uDD25'}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {shieldEffectActive && (
+        <div className="fixed inset-0 z-[45] pointer-events-none animate-shield-flash">
+          <div className="absolute inset-0 shield-radial-bg" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-6xl animate-shield-pop">{'\uD83D\uDEE1\uFE0F'}</span>
           </div>
         </div>
       )}

@@ -185,6 +185,7 @@ const BossBattle: React.FC<{
   const [roundTransition, setRoundTransition] = useState(false);
   const [showItemPhase, setShowItemPhase] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
+  const [lastShieldBlocked, setLastShieldBlocked] = useState(false);
   const [showPrefight, setShowPrefight] = useState(
     playerHealth < maxHealth && potions > 0
   );
@@ -208,6 +209,7 @@ const BossBattle: React.FC<{
   const proceedToNextRound = useCallback(() => {
     setCurrentRound((r) => r + 1);
     setLastResult(null);
+    setLastShieldBlocked(false);
     setShowItemPhase(false);
     setRoundTransition(false);
   }, []);
@@ -232,6 +234,7 @@ const BossBattle: React.FC<{
         setShieldActive(false);
         newShieldUsed = true;
         setShieldUsed(true);
+        setLastShieldBlocked(true);
       } else {
         newHealth = effectiveHealth - 1;
         setEffectiveHealth(newHealth);
@@ -300,8 +303,8 @@ const BossBattle: React.FC<{
         </div>
       ) : showItemPhase ? (
         <div className="py-6 text-center space-y-3">
-          <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : 'text-red-400'}`}>
-            {lastResult ? 'Hit!' : 'Miss! -1 HP'}
+          <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : lastShieldBlocked ? 'text-blue-400' : 'text-red-400'}`}>
+            {lastResult ? 'Hit!' : lastShieldBlocked ? '\uD83D\uDEE1\uFE0F Blocked!' : 'Miss! -1 HP'}
           </p>
           <div className="flex items-center justify-center gap-2">
             {potionsRemaining > 0 && effectiveHealth < maxHealth && (
@@ -332,8 +335,8 @@ const BossBattle: React.FC<{
         />
       ) : (
         <div className="py-8 text-center">
-          <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : 'text-red-400'}`}>
-            {lastResult ? 'Hit!' : 'Miss! -1 HP'}
+          <p className={`text-2xl font-bold ${lastResult ? 'text-green-400' : lastShieldBlocked ? 'text-blue-400' : 'text-red-400'}`}>
+            {lastResult ? 'Hit!' : lastShieldBlocked ? '\uD83D\uDEE1\uFE0F Blocked!' : 'Miss! -1 HP'}
           </p>
           <p className="text-sm text-gray-400 mt-1">Preparing...</p>
         </div>
