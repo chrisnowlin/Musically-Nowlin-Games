@@ -1,4 +1,4 @@
-import InstrumentFamilySorterGame from "@/components/InstrumentFamilySorterGame";
+import InstrumentFamilySorterGame from "./InstrumentFamilySorterGame";
 
 export default function InstrumentFamilySorterGamePage() {
   return <InstrumentFamilySorterGame />;

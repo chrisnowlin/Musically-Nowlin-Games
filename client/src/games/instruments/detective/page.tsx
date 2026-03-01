@@ -1,4 +1,4 @@
-import InstrumentDetectiveGame from "@/components/InstrumentDetectiveGame";
+import InstrumentDetectiveGame from "./InstrumentDetectiveGame";
 
 export default function InstrumentDetectiveGamePage() {
   return <InstrumentDetectiveGame />;

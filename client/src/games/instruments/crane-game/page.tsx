@@ -1,4 +1,4 @@
-import InstrumentCraneGame from "@/components/InstrumentCraneGame";
+import InstrumentCraneGame from "./InstrumentCraneGame";
 
 export default function InstrumentCraneGamePage() {
   return <InstrumentCraneGame />;

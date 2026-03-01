@@ -49,9 +49,9 @@ const PitchLadderJumpGamePage = lazy(() => import("@/games/pitch/pitch-ladder-ju
 const ScaleClimberGamePage = lazy(() => import("@/games/pitch/scale-climber/page"));
 const MusicalOppositesGamePage = lazy(() => import("@/games/listen/musical-opposites/page"));
 const FinishTheTuneGamePage = lazy(() => import("@/pages/games/FinishTheTuneGamePage"));
-const InstrumentCraneGamePage = lazy(() => import("@/pages/games/InstrumentCraneGamePage"));
-const InstrumentFamilySorterGamePage = lazy(() => import("@/pages/games/InstrumentFamilySorterGamePage"));
-const InstrumentDetectiveGamePage = lazy(() => import("@/pages/games/InstrumentDetectiveGamePage"));
+const InstrumentCraneGamePage = lazy(() => import("@/games/instruments/crane-game/page"));
+const InstrumentFamilySorterGamePage = lazy(() => import("@/games/instruments/family-sorter/page"));
+const InstrumentDetectiveGamePage = lazy(() => import("@/games/instruments/detective/page"));
 const MusicalSimonSaysGamePage = lazy(() => import("@/games/listen/musical-simon-says/page"));
 const BeatKeeperChallengeGamePage = lazy(() => import("@/games/rhythm/beat-keeper-challenge/page"));
 const SteadyOrBouncyBeatGamePage = lazy(() => import("@/games/rhythm/steady-or-bouncy-beat/page"));
