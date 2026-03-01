@@ -45,9 +45,6 @@ export interface Rect {
 
 export type Tier = 1 | 2 | 3;
 
-/** @deprecated Replaced by Tier. Kept temporarily for migration. */
-export type DifficultyLevel = 'easy' | 'medium' | 'hard';
-
 export interface FloorBuffs {
   torch: boolean;
   mapRevealed: boolean;
@@ -155,7 +152,6 @@ export interface GameState {
   floor: DungeonFloor;
   player: PlayerState;
   activeChallenge: ActiveChallenge | null;
-  difficulty: DifficultyLevel;
   floorsCleared: number;
   soundEnabled: boolean;
 }
