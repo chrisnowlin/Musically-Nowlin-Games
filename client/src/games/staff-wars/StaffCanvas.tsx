@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, forwardRef, useState } from 'react';
-import { Clef, GameConfig } from '../StaffWarsGame';
+import { Clef, GameConfig } from '@/games/staff-invaders/StaffInvadersGame';
 import { initializeStaff, renderNote, getNotePosition, StaffData } from '@/common/notation/vexflowUtils';
 
 interface StaffCanvasProps {

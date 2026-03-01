@@ -106,10 +106,10 @@ const Cross002Page = lazy(() => import("@/games/cross-curricular/cross-002/page"
 const Cross003Page = lazy(() => import("@/games/cross-curricular/cross-003/page"));
 const Advanced001Page = lazy(() => import("@/games/advanced/advanced-001/page"));
 const Challenge001Page = lazy(() => import("@/games/advanced/challenge-001/page"));
-const TrebleRunnerGamePage = lazy(() => import("@/pages/games/TrebleRunnerGamePage"));
+const TrebleRunnerGamePage = lazy(() => import("@/games/treble-runner/page"));
 const MelodyDungeonPage = lazy(() => import("@/games/melody-dungeon/page"));
 const CadenceQuestPage = lazy(() => import("@/games/cadence-quest/page"));
-const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
+const PlaceholderGame = lazy(() => import("@/games/PlaceholderGame"));
 const UnderDevelopmentPage = lazy(() => import("@/pages/UnderDevelopmentPage"));
 
 // Tools
