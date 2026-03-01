@@ -1,24 +1,17 @@
 import React from 'react';
-import type { PlayerState, DifficultyLevel } from './logic/dungeonTypes';
+import type { PlayerState } from './logic/dungeonTypes';
 
 interface HUDProps {
   player: PlayerState;
   floorNumber: number;
-  difficulty: DifficultyLevel;
   themeName?: string;
   onOpenBag?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName, onOpenBag }) => {
+const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag }) => {
   const hearts = Array.from({ length: player.maxHealth }, (_, i) =>
     i < player.health ? '\u2764\uFE0F' : '\uD83E\uDD0D'
   );
-
-  const difficultyColors: Record<DifficultyLevel, string> = {
-    easy: 'text-green-400',
-    medium: 'text-yellow-400',
-    hard: 'text-red-400',
-  };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-gray-900/80 backdrop-blur-sm rounded-lg border border-gray-700 text-sm">
@@ -107,9 +100,6 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, difficulty, themeName, o
             {themeName}
           </span>
         )}
-        <span className={`text-xs font-medium uppercase ${difficultyColors[difficulty]}`} title="Difficulty">
-          {difficulty}
-        </span>
       </div>
     </div>
   );
