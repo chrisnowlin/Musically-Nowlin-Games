@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { generateRound, validateComposition, calculateScore } from '@/lib/gameLogic/compose-001Logic';
-import { getAllModes, getModeDefinition } from '@/lib/gameLogic/compose-001Modes';
+import { generateRound, validateComposition, calculateScore } from '../logic';
+import { getAllModes, getModeDefinition } from '../modes';
 
 // Component tests are skipped as they need UI updates
 // Focus on logic tests which are more stable

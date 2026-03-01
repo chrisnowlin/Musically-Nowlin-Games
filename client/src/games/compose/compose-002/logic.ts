@@ -4,7 +4,7 @@
  * Unified Skill: Arranging and styling music
  */
 
-import { Compose002ModeId } from "./compose-002Modes";
+import { Compose002ModeId } from "./modes";
 
 export interface GameRound {
   id: string;

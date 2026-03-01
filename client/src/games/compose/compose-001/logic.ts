@@ -4,7 +4,7 @@
  * Unified Skill: Composing original music
  */
 
-import { getRandomChallenge, getChallengesForMode, Challenge } from "./compose-001Modes";
+import { getRandomChallenge, getChallengesForMode, Challenge } from "./modes";
 
 export interface Note {
   name: string;

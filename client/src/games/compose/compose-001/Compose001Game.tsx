@@ -12,11 +12,11 @@ import {
   type GameRound,
   type Composition,
   type ValidationResult
-} from "@/lib/gameLogic/compose-001Logic";
+} from "./logic";
 import {
   getAllModes,
   getModeDefinition
-} from "@/lib/gameLogic/compose-001Modes";
+} from "./modes";
 import { useAudioService } from "@/common/hooks/useAudioService";
 import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";

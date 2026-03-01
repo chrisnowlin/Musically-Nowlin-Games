@@ -1,4 +1,4 @@
-import ComposeYourSongGame from "@/components/ComposeYourSongGame";
+import ComposeYourSongGame from "./ComposeYourSongGame";
 
 export default function ComposeYourSongGamePage() {
   return <ComposeYourSongGame />;
