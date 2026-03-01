@@ -113,8 +113,8 @@ const PlaceholderGame = lazy(() => import("@/games/PlaceholderGame"));
 const UnderDevelopmentPage = lazy(() => import("@/pages/UnderDevelopmentPage"));
 
 // Tools
-const RhythmRandomizerPage = lazy(() => import("@/pages/tools/RhythmRandomizerPage"));
-const SightReadingRandomizerPage = lazy(() => import("@/pages/tools/SightReadingRandomizerPage"));
+const RhythmRandomizerPage = lazy(() => import("@/games/tools/rhythm-randomizer/page"));
+const SightReadingRandomizerPage = lazy(() => import("@/games/tools/sight-reading-randomizer/page"));
 
 function Router() {
   return (
