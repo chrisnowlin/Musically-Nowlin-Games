@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
 import { type VocabCategory, type VocabEntry, getVocabEntries, getAllVocabEntries } from '../logic/vocabData';
+import { shuffle } from '../challengeHelpers';
 
 interface Props {
   category: VocabCategory;
@@ -15,21 +16,12 @@ const CATEGORY_THEME: Record<VocabCategory, { title: string; color: string; hove
   terms: { title: 'Music Terms!', color: 'bg-amber-700', hoverColor: 'hover:bg-amber-600', activeColor: 'text-amber-200' },
 };
 
-function fisherYatesShuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 function pickDistractors(correct: VocabEntry, pool: VocabEntry[], count: number): VocabEntry[] {
   // Filter out entries with the same term or definition as the correct answer
   const others = pool.filter(
     (e) => e.term !== correct.term && e.definition !== correct.definition
   );
-  return fisherYatesShuffle(others).slice(0, count);
+  return shuffle(others).slice(0, count);
 }
 
 const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult }) => {
@@ -42,7 +34,7 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult }) => {
     // Use full vocab pool for distractors if category pool is small
     const distractorPool = entries.length >= 7 ? entries : getAllVocabEntries();
     const distractors = pickDistractors(target, distractorPool, 3);
-    const options = fisherYatesShuffle([target, ...distractors]);
+    const options = shuffle([target, ...distractors]);
     return { target, showTermAskDef, options };
   }, [entries]);
 

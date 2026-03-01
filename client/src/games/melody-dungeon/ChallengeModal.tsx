@@ -33,12 +33,7 @@ interface Props {
 const MINI_BOSS_HP = 5;
 const BIG_BOSS_HP = 8;
 
-const VOCAB_CATEGORIES: Record<string, VocabCategory> = {
-  dynamics: 'dynamics',
-  tempo: 'tempo',
-  symbols: 'symbols',
-  terms: 'terms',
-};
+const VOCAB_CATEGORIES = new Set<ChallengeType>(['dynamics', 'tempo', 'symbols', 'terms']);
 
 function getBossHp(tileType: TileType, enemyLevel?: number): number {
   if (tileType === TileType.BigBoss) return BIG_BOSS_HP;
@@ -128,9 +123,8 @@ function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, show
   slowRhythm?: boolean;
   showIntervalHint?: boolean;
 }) {
-  const vocabCategory = VOCAB_CATEGORIES[type];
-  if (vocabCategory) {
-    return <VocabularyChallenge category={vocabCategory} tier={tier} onResult={onResult} />;
+  if (VOCAB_CATEGORIES.has(type)) {
+    return <VocabularyChallenge category={type as VocabCategory} tier={tier} onResult={onResult} />;
   }
 
   switch (type) {

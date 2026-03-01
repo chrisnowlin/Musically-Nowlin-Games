@@ -28,10 +28,9 @@ export function getTierForChallenge(floorNumber: number, type: ChallengeType): T
 
 // ── Note Reading ──────────────────────────────────────────
 
-export type NoteReadingMode = 'space' | 'line' | 'both' | 'ledger';
+export type NoteReadingMode = 'space' | 'both' | 'ledger';
 
 const SPACE_NOTES = ['F4', 'A4', 'C5', 'E5'];
-const LINE_NOTES = ['E4', 'G4', 'B4', 'D5', 'F5'];
 const BOTH_STAFF_NOTES = ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'];
 const LEDGER_NOTES = [...BOTH_STAFF_NOTES, 'C4', 'D4', 'G5', 'A5'];
 

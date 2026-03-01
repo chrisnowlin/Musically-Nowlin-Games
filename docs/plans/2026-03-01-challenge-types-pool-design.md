@@ -91,7 +91,7 @@ All vocabulary questions go **both directions**: show term and pick meaning, or 
 | Tier | Content |
 |------|---------|
 | 1    | Staccato, legato, solo, duet, chord, melody, harmony |
-| 2    | Adds da capo, dal segno, fine, ostinato, arpeggio, glissando, pizzicato |
+| 2    | Adds da capo, unison, fine, ostinato, arpeggio, glissando, pizzicato |
 | 3    | Adds con brio, cantabile, dolce, espressivo, maestoso, sotto voce, tutti |
 
 ## Existing Challenge Types — Revised Tiers

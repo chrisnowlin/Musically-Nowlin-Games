@@ -140,22 +140,6 @@ export function playClick(volume = 0.2): void {
   }
 }
 
-export function playPassageAtDynamic(dynamicLevel: string, duration = 1.5): void {
-  const volumeMap: Record<string, number> = {
-    pianissimo: 0.05,
-    piano: 0.1,
-    'mezzo-piano': 0.18,
-    'mezzo-forte': 0.3,
-    forte: 0.45,
-    fortissimo: 0.6,
-  };
-  const vol = volumeMap[dynamicLevel] ?? 0.3;
-  const notes = ['C4', 'E4', 'G4', 'C5'];
-  notes.forEach((n, i) => {
-    setTimeout(() => playNote(n, duration / notes.length, vol), i * (duration / notes.length) * 1000);
-  });
-}
-
 /** Play a chord (all notes simultaneously) */
 export function playChord(noteKeys: string[], duration = 0.8, volume = 0.25): void {
   try {

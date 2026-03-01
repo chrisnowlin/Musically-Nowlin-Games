@@ -37,7 +37,7 @@ export function generateBigBossSequence(floorNumber: number): BossRoundConfig[] 
     sequence.push({ type, tier: getTierForChallenge(floorNumber, type) });
   }
 
-  return shuffle(sequence);
+  return shuffle(sequence.slice(0, 8));
 }
 
 /** Enemy subtype → challenge affinity. Ghost and Dragon draw from the full floor pool. */
