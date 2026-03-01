@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Volume2 } from "lucide-react";
 import { useLocation } from "wouter";
-import { generateRound, validateAnswer, calculateScore, GameRound, AudioParams } from "@/lib/gameLogic/timbre-003Logic";
+import { generateRound, validateAnswer, calculateScore, GameRound, AudioParams } from "./logic";
 
 interface GameState {
   currentMode: string;

@@ -13,8 +13,8 @@ import {
   type GameState,
   type GameRound,
   type GameResult
-} from "@/lib/gameLogic/timbre-001Logic";
-import { TIMBRE_MODES, INSTRUMENT_FAMILIES } from "@/lib/gameLogic/timbre-001Modes";
+} from "./logic";
+import { TIMBRE_MODES, INSTRUMENT_FAMILIES } from "./modes";
 import { useAudioService } from "@/common/hooks/useAudioService";
 import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";

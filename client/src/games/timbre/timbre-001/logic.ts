@@ -14,7 +14,7 @@ import {
   getInstrumentById,
   type GameMode,
   type DifficultySettings
-} from './timbre-001Modes';
+} from './modes';
 
 export interface GameRound {
   id: string;

@@ -1,4 +1,4 @@
-import ToneColorMatchGame from "@/components/ToneColorMatchGame";
+import ToneColorMatchGame from "./ToneColorMatchGame";
 
 export default function ToneColorMatchGamePage() {
   return <ToneColorMatchGame />;

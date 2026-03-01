@@ -16,8 +16,8 @@ import {
   getModeConfig,
   getNextDifficulty,
   isReadyForNextDifficulty
-} from '@/lib/gameLogic/timbre-001Logic';
-import { TIMBRE_MODES, INSTRUMENT_FAMILIES, INSTRUMENTS } from '@/lib/gameLogic/timbre-001Modes';
+} from '../logic';
+import { TIMBRE_MODES, INSTRUMENT_FAMILIES, INSTRUMENTS } from '../modes';
 
 describe('Timbre-001 Game Logic', () => {
   describe('initializeGame', () => {
