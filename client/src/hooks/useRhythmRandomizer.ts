@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useAudioService } from './useAudioService';
+import { useAudioService } from '@/common/hooks/useAudioService';
 import {
   RhythmSettings,
   RhythmPattern,
@@ -25,7 +25,7 @@ import {
   createWebAudioScheduler,
   WebAudioScheduler,
   ScheduledSound,
-} from '@/lib/audio/webAudioScheduler';
+} from '@/common/audio/webAudioScheduler';
 
 // Sound parameters for different instrument options
 // isTonal: if true, sound duration matches note length; if false, uses short percussion hit

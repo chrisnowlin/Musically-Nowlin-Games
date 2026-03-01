@@ -15,9 +15,9 @@ import {
   type GameResult
 } from "@/lib/gameLogic/timbre-001Logic";
 import { TIMBRE_MODES, INSTRUMENT_FAMILIES } from "@/lib/gameLogic/timbre-001Modes";
-import { useAudioService } from "@/hooks/useAudioService";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import AudioErrorFallback from "@/components/AudioErrorFallback";
+import { useAudioService } from "@/common/hooks/useAudioService";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";
 
 export const Timbre001Game: React.FC = () => {
   const [, setLocation] = useLocation();

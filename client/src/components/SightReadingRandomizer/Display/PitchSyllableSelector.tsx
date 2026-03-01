@@ -12,14 +12,14 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Label } from '@/components/ui/label';
+} from '@/common/ui/tooltip';
+import { Label } from '@/common/ui/label';
 import type { PitchSyllableSystem } from '@/lib/sightReadingRandomizer/types';
 import {
   getPitchSyllableSystemName,

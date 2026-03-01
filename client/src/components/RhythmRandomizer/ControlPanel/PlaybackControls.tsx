@@ -4,23 +4,23 @@
  */
 
 import { Play, Square, Pause, Repeat, Volume2, VolumeX, Timer, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/common/ui/button';
+import { Slider } from '@/common/ui/slider';
+import { Switch } from '@/common/ui/switch';
+import { Label } from '@/common/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/common/ui/dropdown-menu';
 import { PlaybackState } from '@/lib/rhythmRandomizer/types';
 
 interface PlaybackControlsProps {

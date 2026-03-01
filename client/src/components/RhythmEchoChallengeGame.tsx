@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Music2, Loader2, Star, Sparkles, Drum, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 interface RhythmPattern {
   beats: number[]; // Timestamps in ms relative to start

@@ -4,10 +4,10 @@ import {
   Sparkles, ArrowRight, HelpCircle, X
 } from "lucide-react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { ResponsiveGameLayout, GameSection } from "@/components/ResponsiveGameLayout";
+import { Button } from "@/common/ui/button";
+import { ResponsiveGameLayout, GameSection } from "@/common/game-shell/ResponsiveGameLayout";
 import { playfulTypography, playfulShapes, playfulColors, generateDecorativeOrbs } from "@/theme/playful";
-import { audioService } from "../lib/audioService";
+import { audioService } from '@/common/audio/audioService';
 
 import {
   EXPRESSION_MODES,

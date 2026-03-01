@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Music, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 
 interface Card {
   id: number;

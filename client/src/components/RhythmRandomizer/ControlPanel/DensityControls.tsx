@@ -3,15 +3,15 @@
  * Sliders for syncopation, density, rest probability
  */
 
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Label } from '@/common/ui/label';
+import { Slider } from '@/common/ui/slider';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import { NoteDensity } from '@/lib/rhythmRandomizer/types';
 
 interface DensityControlsProps {

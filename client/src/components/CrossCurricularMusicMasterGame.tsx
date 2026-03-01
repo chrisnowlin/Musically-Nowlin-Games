@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Play, Volume2, HelpCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { generateRound, validateAnswer, calculateScore, GameRound } from "@/lib/gameLogic/cross-001Logic";
-import { sampleAudioService } from "@/lib/sampleAudioService";
-import { Button } from "@/components/ui/button";
+import { sampleAudioService } from "@/common/audio/sampleAudioService";
+import { Button } from "@/common/ui/button";
 import { getCross001Mode, Cross001ModeId } from "@/lib/gameLogic/cross-001Modes";
 
 const LS_KEYS = {

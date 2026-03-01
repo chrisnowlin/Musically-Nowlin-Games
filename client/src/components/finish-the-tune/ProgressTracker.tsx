@@ -1,4 +1,4 @@
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/common/ui/progress';
 import { Music, CheckCircle2 } from 'lucide-react';
 import { TOTAL_MELODIES } from './finish-the-tune-Logic';
 

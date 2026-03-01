@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { GameState, GameRound } from "@/lib/schema";
-import { audioService } from "@/lib/audioService";
-import { generateNewRound as generateRound, validateAnswer, calculateScore } from "@/lib/gameUtils";
-import AnimalCharacter from "@/components/AnimalCharacter";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { GameState, GameRound } from "@/common/utils/schema";
+import { audioService } from "@/common/audio/audioService";
+import { generateNewRound as generateRound, validateAnswer, calculateScore } from "@/common/utils/gameUtils";
+import AnimalCharacter from "@/common/game-shell/AnimalCharacter";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import { Play, HelpCircle, Music2, Star, Sparkles, ChevronLeft } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes } from "@/theme/playful";
-import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/components/ResponsiveGameLayout";
-import { useResponsiveLayout } from "@/hooks/useViewport";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/common/game-shell/ResponsiveGameLayout";
+import { useResponsiveLayout } from "@/common/hooks/useViewport";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 import { useLocation } from "wouter";
 
 const FEEDBACK_OPTIONS = [

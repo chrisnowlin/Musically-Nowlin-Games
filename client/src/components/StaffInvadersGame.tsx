@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useReducer } from 'react';
 import { useLocation } from "wouter";
 import { ChevronLeft } from "lucide-react";
-import { audioService } from '@/lib/audioService';
+import { audioService } from '@/common/audio/audioService';
 import SetupScreen from './staff-invaders/SetupScreen';
 import GameplayScreen from './staff-invaders/GameplayScreen';
 import GameOverScreen from './staff-invaders/GameOverScreen';
 import PauseOverlay from './staff-invaders/PauseOverlay';
-import { ResponsiveGameLayout } from '@/components/ResponsiveGameLayout';
-import { useResponsiveLayout } from '@/hooks/useViewport';
+import { ResponsiveGameLayout } from '@/common/game-shell/ResponsiveGameLayout';
+import { useResponsiveLayout } from '@/common/hooks/useViewport';
 
 export type Clef = 'treble' | 'bass' | 'alto' | 'grand';
 export type GameStatus = 'setup' | 'playing' | 'paused' | 'gameOver';

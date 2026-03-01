@@ -3,13 +3,13 @@
  * Quick controls bar with presets, regenerate, key signature, and difficulty
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/common/ui/tooltip';
 import { RefreshCw, Settings2, Sparkles } from 'lucide-react';
 import { DifficultyPreset } from '@/lib/rhythmRandomizer/types';
 import { KeySignatureSelector } from './KeySignatureSelector';

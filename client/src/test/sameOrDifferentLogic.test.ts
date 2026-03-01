@@ -5,7 +5,7 @@ import {
   calculateSameOrDifferentScore,
   type SameOrDifferentRound,
 } from '../lib/sameOrDifferentLogic';
-import { ANIMAL_CHARACTERS, MUSICAL_NOTES } from '../lib/schema';
+import { ANIMAL_CHARACTERS, MUSICAL_NOTES } from '@/common/utils/schema';
 
 describe('Same or Different Logic - generateSameOrDifferentRound', () => {
   it('should generate a round with two phrases', () => {

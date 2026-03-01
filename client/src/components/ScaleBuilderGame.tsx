@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/common/ui/card';
+import { Button } from '@/common/ui/button';
+import { Progress } from '@/common/ui/progress';
+import { Badge } from '@/common/ui/badge';
 import { Play, Pause, RotateCcw, Clock, Volume2, HelpCircle, CheckCircle, XCircle } from 'lucide-react';
 import { 
   THEORY_MODES, 

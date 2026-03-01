@@ -3,8 +3,8 @@
  * Adjusts how strongly the melody gravitates toward the tonic note
  */
 
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Label } from '@/common/ui/label';
+import { Slider } from '@/common/ui/slider';
 
 interface TonicGravitySliderProps {
   value: number;

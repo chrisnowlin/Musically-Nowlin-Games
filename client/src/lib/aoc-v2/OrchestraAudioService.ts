@@ -5,7 +5,7 @@
  * 
  * Uses Web Audio API scheduling for precise timing
  */
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 export type NoteName = 'G' | 'Gs' | 'A' | 'As' | 'B' | 'C' | 'Cs' | 'D' | 'Ds' | 'E' | 'F' | 'Fs';
 export type Octave = 1 | 2 | 3 | 4 | 5 | 6;

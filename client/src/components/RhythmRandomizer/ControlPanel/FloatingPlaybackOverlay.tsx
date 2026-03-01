@@ -6,21 +6,21 @@
 
 import { useState } from 'react';
 import { Play, Square, Pause, Volume2, VolumeX, Repeat, Timer, ChevronUp, ChevronDown, RefreshCw, Settings2, Sparkles, Music, ArrowUp, ArrowDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
+import { Button } from '@/common/ui/button';
+import { Slider } from '@/common/ui/slider';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/common/ui/tooltip';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import { CountingSystem, DifficultyPreset, StaffLineMode, StemDirection } from '@/lib/rhythmRandomizer/types';
 import { RHYTHM_PRESETS, PRESET_TOOLTIPS } from './presets';
 

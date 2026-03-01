@@ -5,22 +5,22 @@
 
 import { useState } from 'react';
 import { Play, Square, Pause, Volume2, VolumeX, Repeat, Timer, ChevronUp, ChevronDown, RefreshCw, Settings2, Sparkles, Metronome } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/common/ui/button';
+import { Slider } from '@/common/ui/slider';
+import { Switch } from '@/common/ui/switch';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/common/ui/tooltip';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import { DifficultyPreset } from '@/lib/rhythmRandomizer/types';
 import { SIGHT_READING_PRESETS } from './presets';
 

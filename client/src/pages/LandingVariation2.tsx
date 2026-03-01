@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { games, AVAILABLE_NOW_IDS, UNDER_DEVELOPMENT_PASSCODE, UNDER_DEVELOPMENT_SESSION_KEY } from "@/config/games";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 import { Music, Star, Sparkles, Lock, Play, KeyRound, Shuffle } from "lucide-react";
 import { useState } from "react";
 import {
@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@/common/ui/dialog";
+import { Input } from "@/common/ui/input";
 
 /**
  * Variation 2: Playful Dashboard

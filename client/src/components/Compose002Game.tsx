@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Play, Volume2, RotateCcw, CheckCircle, XCircle, Music, Palette } from "lucide-react";
 import { useLocation } from "wouter";
-import { sampleAudioService } from "@/lib/sampleAudioService";
-import { instrumentLibrary, getAllInstruments, getInstrumentsByFamily } from "@/lib/instrumentLibrary";
-import { ResponsiveGameLayout, GameSection, ResponsiveGrid } from "@/components/ResponsiveGameLayout";
-import { useViewport, useResponsiveLayout } from "@/hooks/useViewport";
+import { sampleAudioService } from "@/common/audio/sampleAudioService";
+import { instrumentLibrary, getAllInstruments, getInstrumentsByFamily } from "@/common/instruments/instrumentLibrary";
+import { ResponsiveGameLayout, GameSection, ResponsiveGrid } from "@/common/game-shell/ResponsiveGameLayout";
+import { useViewport, useResponsiveLayout } from "@/common/hooks/useViewport";
 import { playfulColors, playfulShapes, playfulComponents, playfulTypography } from "@/theme/playful";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 
 interface GameState {
   currentMode: "orchestration" | "style";

@@ -6,8 +6,8 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/common/ui/button';
+import { Card, CardContent, CardHeader } from '@/common/ui/card';
 import { useSightReadingRandomizer } from '@/hooks/useSightReadingRandomizer';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
 import { DifficultyPreset } from '@/lib/rhythmRandomizer/types';

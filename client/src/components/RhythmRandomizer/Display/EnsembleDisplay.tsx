@@ -6,14 +6,14 @@
 import { EnsemblePattern, CountingSystem, StaffLineMode, StemDirection, SoundOption } from '@/lib/rhythmRandomizer/types';
 import { addSyllablesToPattern } from '@/lib/rhythmRandomizer/countingSyllables';
 import { StaffNotation } from './StaffNotation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import { Volume2, VolumeX, Star, RefreshCw, Music } from 'lucide-react';
 
 interface EnsembleDisplayProps {

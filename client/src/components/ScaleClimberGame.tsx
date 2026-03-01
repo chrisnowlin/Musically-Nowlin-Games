@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, TrendingUp, TrendingDown, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 type ScaleType = "complete-ascending" | "complete-descending" | "incomplete-ascending" | "incomplete-descending";
 

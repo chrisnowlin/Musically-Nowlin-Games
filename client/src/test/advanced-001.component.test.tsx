@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Advanced001Game } from '@/components/Advanced001Game';
 
-vi.mock('@/lib/sampleAudioService', () => ({
+vi.mock('@/common/audio/sampleAudioService', () => ({
   sampleAudioService: {
     initialize: vi.fn().mockResolvedValue(undefined),
     playNote: vi.fn().mockResolvedValue(undefined),

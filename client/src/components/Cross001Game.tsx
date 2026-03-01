@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Play, Volume2, CheckCircle, XCircle, Calculator, Triangle, GitBranch } from "lucide-react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { audioService } from "@/common/audio/audioService";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 
 interface GameState {
   currentMode: "ratios-fractions" | "geometry-symmetry" | "sequences-patterns";

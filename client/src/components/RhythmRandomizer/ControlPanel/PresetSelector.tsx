@@ -3,7 +3,7 @@
  * Quick difficulty presets for the rhythm randomizer
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import { DifficultyPreset } from '@/lib/rhythmRandomizer/types';
 
 interface PresetSelectorProps {

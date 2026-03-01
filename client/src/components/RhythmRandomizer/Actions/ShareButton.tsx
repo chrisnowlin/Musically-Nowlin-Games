@@ -4,14 +4,14 @@
  */
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import { Share2, Check, Copy } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
+} from '@/common/ui/popover';
+import { Input } from '@/common/ui/input';
 import { RhythmSettings } from '@/lib/rhythmRandomizer/types';
 import { generateShareUrl, copyShareUrl } from '@/lib/rhythmRandomizer/shareUtils';
 

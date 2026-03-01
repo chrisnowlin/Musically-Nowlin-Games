@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Clock, Trophy, Zap, Target } from "lucide-react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
+import { audioService } from "@/common/audio/audioService";
 import { 
   Challenge001ModeId, 
   challenge001Modes, 

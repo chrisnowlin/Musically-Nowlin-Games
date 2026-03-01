@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { Button } from '@/common/ui/button';
+import { Input } from '@/common/ui/input';
+import { cn } from '@/common/utils/utils';
 import { CLASS_INFO } from '@/lib/cadence-quest/classes';
 import type { CharacterClass } from '@shared/types/cadence-quest';
 

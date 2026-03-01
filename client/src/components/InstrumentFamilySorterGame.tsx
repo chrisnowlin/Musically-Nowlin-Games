@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 import { ChevronLeft, Music, Play, ArrowLeft, ArrowRight, ArrowDown, Timer, Trophy, RotateCcw, BookOpen } from "lucide-react";
 import { playfulColors, playfulTypography, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import { audioService } from "@/lib/audioService";
-import { instrumentLibrary } from "@/lib/instrumentLibrary";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import { audioService } from "@/common/audio/audioService";
+import { instrumentLibrary } from "@/common/instruments/instrumentLibrary";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 // Instrument icon imports
 import { 
@@ -15,7 +15,7 @@ import {
   TromboneIcon, TubaIcon, DoubleBassIcon, SnareDrumIcon, BassDrumIcon,
   TriangleIcon, TambourineIcon, TimpaniIcon, XylophoneIcon, GlockenspielIcon,
   CowbellIcon, WoodblockIcon, CastanetsIcon, SleighBellsIcon, CymbalsIcon
-} from '@/components/icons/InstrumentIcons';
+} from '@/common/icons/InstrumentIcons';
 
 // ============================================
 // INSTRUMENT FAMILY DEFINITIONS

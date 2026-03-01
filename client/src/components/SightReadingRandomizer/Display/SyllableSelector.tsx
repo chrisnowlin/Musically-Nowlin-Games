@@ -9,8 +9,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+} from '@/common/ui/select';
+import { Label } from '@/common/ui/label';
 import { CountingSystem } from '@/lib/rhythmRandomizer/types';
 import {
   getCountingSystemName,

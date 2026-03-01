@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import { Trophy, RotateCcw } from 'lucide-react';
 
 interface VictoryScreenProps {

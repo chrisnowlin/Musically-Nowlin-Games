@@ -17,9 +17,9 @@ import {
   getAllModes,
   getModeDefinition
 } from "@/lib/gameLogic/compose-001Modes";
-import { useAudioService } from "@/hooks/useAudioService";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import AudioErrorFallback from "@/components/AudioErrorFallback";
+import { useAudioService } from "@/common/hooks/useAudioService";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";
 
 type Mode = "melody" | "rhythm" | "harmony";
 

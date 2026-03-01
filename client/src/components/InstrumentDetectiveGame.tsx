@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {
   Play,
   HelpCircle,
@@ -20,9 +20,9 @@ import {
   X
 } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { usePhilharmoniaInstruments } from "@/hooks/usePhilharmoniaInstruments";
-import { instrumentLibrary } from "@/lib/instrumentLibrary";
-import { PatternType, Difficulty } from "@/lib/melodyLibrary";
+import { usePhilharmoniaInstruments } from "@/common/hooks/usePhilharmoniaInstruments";
+import { instrumentLibrary } from "@/common/instruments/instrumentLibrary";
+import { PatternType, Difficulty } from "@/common/music/melodyLibrary";
 import * as Dialog from "@radix-ui/react-dialog";
 
 interface GameState {

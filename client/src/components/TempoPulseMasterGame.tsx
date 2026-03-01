@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/common/ui/card';
+import { Button } from '@/common/ui/button';
+import { Progress } from '@/common/ui/progress';
+import { Badge } from '@/common/ui/badge';
 import {
   Play, Pause, RotateCcw, Clock, Volume2, HelpCircle, CheckCircle, XCircle,
   ChevronLeft, ChevronRight, Heart, Star, Zap
@@ -15,9 +15,9 @@ import {
 } from '@/lib/gameLogic/rhythm-002Modes';
 import { Rhythm002Logic, type GameRound, type Rhythm002State } from '@/lib/gameLogic/rhythm-002Logic';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations } from '@/theme/playful';
-import { useAudioService } from '@/hooks/useAudioService';
-import { useGameCleanup } from '@/hooks/useGameCleanup';
-import AudioErrorFallback from '@/components/AudioErrorFallback';
+import { useAudioService } from '@/common/hooks/useAudioService';
+import { useGameCleanup } from '@/common/hooks/useGameCleanup';
+import AudioErrorFallback from '@/common/game-shell/AudioErrorFallback';
 
 interface TempoPulseMasterGameProps {
   onGameComplete?: (score: number, totalPossible: number) => void;

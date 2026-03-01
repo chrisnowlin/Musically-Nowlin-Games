@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Pause, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { useAudioService } from "@/hooks/useAudioService";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import AudioErrorFallback from "@/components/AudioErrorFallback";
+import { useAudioService } from "@/common/hooks/useAudioService";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";
 
 interface GameState {
   score: number;

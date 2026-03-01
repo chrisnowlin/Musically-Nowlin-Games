@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useRhythmRandomizer } from './useRhythmRandomizer';
-import { useAudioService } from './useAudioService';
+import { useAudioService } from '@/common/hooks/useAudioService';
 import { RhythmSettings, RhythmPattern, SoundOption } from '@/lib/rhythmRandomizer/types';
 import { generateRhythmPattern } from '@/lib/rhythmRandomizer/rhythmGenerator';
 import {

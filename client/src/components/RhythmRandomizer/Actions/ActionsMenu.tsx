@@ -4,13 +4,13 @@
  */
 
 import { Printer } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/common/ui/dropdown-menu';
 import { RhythmSettings } from '@/lib/rhythmRandomizer/types';
 import { WorksheetBuilder } from '../Worksheet/WorksheetBuilder';
 

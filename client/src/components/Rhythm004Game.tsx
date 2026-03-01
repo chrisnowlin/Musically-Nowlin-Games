@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, Play, Volume2, CheckCircle, XCircle, Music, Clock, Zap } from "lucide-react";
 import { useLocation } from "wouter";
-import { sampleAudioService } from "@/lib/sampleAudioService";
-import { instrumentLibrary, getAllInstruments } from "@/lib/instrumentLibrary";
+import { sampleAudioService } from "@/common/audio/sampleAudioService";
+import { instrumentLibrary, getAllInstruments } from "@/common/instruments/instrumentLibrary";
 
 interface GameState {
   currentMode: "values" | "tuplets" | "conversion" | "speed-reading";

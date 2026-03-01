@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { audioService } from '@/lib/audioService';
-import { Button } from '@/components/ui/button';
+import { audioService } from '@/common/audio/audioService';
+import { Button } from '@/common/ui/button';
 import {
   Play,
   HelpCircle,
@@ -19,14 +19,14 @@ import {
   playfulComponents,
   generateDecorativeOrbs,
 } from '@/theme/playful';
-import { useAudioService } from '@/hooks/useAudioService';
-import { useGameCleanup } from '@/hooks/useGameCleanup';
-import AudioErrorFallback from '@/components/AudioErrorFallback';
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { useAudioService } from '@/common/hooks/useAudioService';
+import { useGameCleanup } from '@/common/hooks/useGameCleanup';
+import AudioErrorFallback from '@/common/game-shell/AudioErrorFallback';
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 import { useFinishTheTuneGame } from '@/hooks/useFinishTheTuneGame';
 import { useFinishTheTunePersistence } from '@/hooks/useFinishTheTunePersistence';
-import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '@/common/hooks/useKeyboardShortcuts';
 
 import { StartScreen } from './StartScreen';
 import { MelodyVisualizer } from './MelodyVisualizer';

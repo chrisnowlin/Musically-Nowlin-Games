@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 import { Play, Volume2, Star, Check, X, GitCompare } from "lucide-react";
 import { playfulShapes, playfulComponents } from "@/theme/playful";
 import { MelodyVisualizer } from './MelodyVisualizer';

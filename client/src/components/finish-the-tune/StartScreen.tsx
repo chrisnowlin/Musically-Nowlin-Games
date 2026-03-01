@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 import { Play, HelpCircle, ChevronLeft, Trophy, Zap, Star } from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
 import type { Difficulty, PersistedState } from './types';

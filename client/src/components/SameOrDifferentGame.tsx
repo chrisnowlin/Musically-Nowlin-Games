@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { SameOrDifferentRound, generateSameOrDifferentRound, validateSameOrDifferentAnswer, calculateSameOrDifferentScore } from "@/lib/sameOrDifferentLogic";
-import { audioService } from "@/lib/audioService";
-import AnimalCharacter from "@/components/AnimalCharacter";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import AnimalCharacter from "@/common/game-shell/AnimalCharacter";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Music2, Loader2, Star, Sparkles, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, generateDecorativeOrbs } from "@/theme/playful";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 interface GameState {
   currentRound: SameOrDifferentRound | null;

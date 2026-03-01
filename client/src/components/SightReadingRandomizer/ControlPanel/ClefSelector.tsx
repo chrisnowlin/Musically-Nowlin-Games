@@ -3,13 +3,13 @@
  * Toggle between treble and bass clef
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@/common/ui/tooltip';
 import { ClefType } from '@/lib/rhythmRandomizer/types';
 
 interface ClefSelectorProps {

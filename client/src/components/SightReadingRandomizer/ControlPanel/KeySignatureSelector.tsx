@@ -11,8 +11,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+} from '@/common/ui/select';
+import { Label } from '@/common/ui/label';
 
 interface KeySignatureSelectorProps {
   value: string;

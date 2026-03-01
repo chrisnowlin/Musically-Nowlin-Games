@@ -1,14 +1,14 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { getOptimizedBackgroundImage } from "@/lib/imageUtils";
+import { audioService } from "@/common/audio/audioService";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
+import { OptimizedImage } from "@/common/ui/OptimizedImage";
+import { getOptimizedBackgroundImage } from "@/common/utils/imageUtils";
 import { Play, Loader2, ChevronLeft, Trophy, Flag } from "lucide-react";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
 import { motion, AnimatePresence } from "framer-motion";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
 
 const CHARACTERS = [
   { image: "/images/leo-lion.jpeg", name: "Leo Lion", id: "leo", color: "bg-orange-500" },

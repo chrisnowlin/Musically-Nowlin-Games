@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { ChevronLeft, Volume2, VolumeX, Play, Trophy, Target, Clock, Star, Music2, Sparkles, Lock, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/components/ResponsiveGameLayout";
+import { Button } from "@/common/ui/button";
+import { ResponsiveGameLayout, GameSection, ResponsiveCard } from "@/common/game-shell/ResponsiveGameLayout";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { useResponsiveLayout } from "@/hooks/useViewport";
+import { useResponsiveLayout } from "@/common/hooks/useViewport";
 
 import { 
   DYNAMICS_MODES, 
@@ -12,7 +12,7 @@ import {
   getMaxDifficultyForMode,
   GameMode 
 } from "../lib/gameLogic/dynamics-001Modes";
-import { audioService } from "../lib/audioService";
+import { audioService } from '@/common/audio/audioService';
 import { 
   GameRound, 
   generateRound, 

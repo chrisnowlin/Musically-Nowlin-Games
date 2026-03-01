@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, Volume2, VolumeX, Play, Heart, Frown, Zap, Smile, Moon, Trophy, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
-import { ResponsiveGameLayout, GameSection } from "@/components/ResponsiveGameLayout";
+import { ResponsiveGameLayout, GameSection } from "@/common/game-shell/ResponsiveGameLayout";
 import {
   generateRound,
   validateAnswer,

@@ -4,17 +4,17 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/common/ui/button';
+import { Input } from '@/common/ui/input';
+import { Label } from '@/common/ui/label';
+import { Switch } from '@/common/ui/switch';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/common/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -23,8 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '@/common/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/common/ui/tabs';
 import {
   FileDown,
   Loader2,

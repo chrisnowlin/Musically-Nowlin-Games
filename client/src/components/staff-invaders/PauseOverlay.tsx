@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useResponsiveLayout } from '@/hooks/useViewport';
+import { Button } from '@/common/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/common/ui/card';
+import { useResponsiveLayout } from '@/common/hooks/useViewport';
 import { Play, X } from 'lucide-react';
 
 interface PauseOverlayProps {

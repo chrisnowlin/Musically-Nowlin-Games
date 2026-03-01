@@ -4,10 +4,10 @@ import {
   UNDER_DEVELOPMENT_PASSCODE,
   UNDER_DEVELOPMENT_SESSION_KEY,
 } from "@/config/games";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 import { Sparkles, Lock, Play, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/common/ui/input";
 
 export default function UnderDevelopmentPage() {
   const [hoveredGame, setHoveredGame] = useState<string | null>(null);

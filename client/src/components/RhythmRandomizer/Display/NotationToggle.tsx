@@ -4,7 +4,7 @@
  */
 
 import { Music, Grid3X3 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import { NotationMode } from '@/lib/rhythmRandomizer/types';
 
 interface NotationToggleProps {

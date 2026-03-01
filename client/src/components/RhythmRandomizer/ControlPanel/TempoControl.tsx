@@ -3,10 +3,10 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Label } from '@/common/ui/label';
+import { Slider } from '@/common/ui/slider';
+import { Button } from '@/common/ui/button';
+import { Input } from '@/common/ui/input';
 
 interface TempoControlProps {
   value: number;

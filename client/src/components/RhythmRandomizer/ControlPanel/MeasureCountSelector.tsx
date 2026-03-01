@@ -3,8 +3,8 @@
  * Select number of measures to generate
  */
 
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/common/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/common/ui/radio-group';
 
 type MeasureCount = 1 | 2 | 4 | 8 | 12 | 16;
 

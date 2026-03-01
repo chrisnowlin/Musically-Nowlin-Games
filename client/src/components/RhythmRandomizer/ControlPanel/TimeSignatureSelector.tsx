@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+} from '@/common/ui/select';
+import { Label } from '@/common/ui/label';
 import { TIME_SIGNATURES } from '@/lib/rhythmRandomizer/types';
 
 interface TimeSignatureSelectorProps {

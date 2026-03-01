@@ -3,7 +3,7 @@
  * Opens print-friendly view for current pattern
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import { Printer } from 'lucide-react';
 
 interface PrintButtonProps {

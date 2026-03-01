@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAudioService } from "@/hooks/useAudioService";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/lib/audio/webAudioScheduler';
-import { Button } from "@/components/ui/button";
+import { useAudioService } from "@/common/hooks/useAudioService";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { createWebAudioScheduler, WebAudioScheduler, ScheduledSound } from '@/common/audio/webAudioScheduler';
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, Circle, Music, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import AudioErrorFallback from "@/components/AudioErrorFallback";
+import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";
 
 interface Beat {
   type: "note" | "rest";

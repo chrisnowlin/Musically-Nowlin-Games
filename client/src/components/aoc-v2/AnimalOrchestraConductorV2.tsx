@@ -16,7 +16,7 @@ import {
   BASS_DRUM_PATTERNS,
   type Pattern,
 } from '@/lib/aoc-v2/InstrumentPatterns';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/common/ui/button';
 import { Play, HelpCircle, Music2, ChevronLeft, Sparkles, Headphones } from 'lucide-react';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
 

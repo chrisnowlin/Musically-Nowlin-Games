@@ -3,15 +3,15 @@
  * Select ensemble mode and number of parts
  */
 
-import { Label } from '@/components/ui/label';
+import { Label } from '@/common/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from '@/common/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/common/ui/radio-group';
 import { EnsembleMode } from '@/lib/rhythmRandomizer/types';
 import { getEnsembleModeDisplayName } from '@/lib/rhythmRandomizer/ensembleGenerator';
 import { Users, MessageSquare, Layers, HandMetal } from 'lucide-react';

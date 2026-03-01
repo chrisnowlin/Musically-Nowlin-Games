@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Advanced001Page from '@/pages/games/Advanced001Page';
 
-vi.mock('@/lib/sampleAudioService', () => ({
+vi.mock('@/common/audio/sampleAudioService', () => ({
   sampleAudioService: {
     initialize: vi.fn().mockResolvedValue(undefined),
     playNote: vi.fn().mockResolvedValue(undefined),

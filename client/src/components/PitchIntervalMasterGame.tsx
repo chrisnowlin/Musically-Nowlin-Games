@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/common/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/common/ui/card';
+import { Progress } from '@/common/ui/progress';
+import { Badge } from '@/common/ui/badge';
 import { Volume2, VolumeX, Play, Pause, RotateCcw, Trophy, Target, Zap, ChevronLeft } from 'lucide-react';
 import {
   Pitch001Game,
@@ -13,9 +13,9 @@ import {
 } from '@/lib/gameLogic/pitch-001Logic';
 import { pitch001Modes } from '@/lib/gameLogic/pitch-001Modes';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
-import { useAudioService } from '@/hooks/useAudioService';
-import { useGameCleanup } from '@/hooks/useGameCleanup';
-import AudioErrorFallback from '@/components/AudioErrorFallback';
+import { useAudioService } from '@/common/hooks/useAudioService';
+import { useGameCleanup } from '@/common/hooks/useGameCleanup';
+import AudioErrorFallback from '@/common/game-shell/AudioErrorFallback';
 
 interface PitchIntervalMasterGameProps {
   modeId: string;

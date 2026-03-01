@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { SKILL_TREE } from '@/lib/cadence-quest/skill-tree-data';
 import type { Character } from '@shared/types/cadence-quest';
-import { cn } from '@/lib/utils';
+import { cn } from '@/common/utils/utils';
 
 interface SkillTreeProps {
   character: Character;

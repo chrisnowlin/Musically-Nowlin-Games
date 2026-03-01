@@ -15,9 +15,9 @@ import {
   type GameResult
 } from "@/lib/gameLogic/harmony-003Logic";
 import { HARMONY_MODES, CHORD_PROGRESSIONS, HARMONIC_FEATURES, HARMONIC_RHYTHMS } from "@/lib/gameLogic/harmony-003Modes";
-import { useAudioService } from "@/hooks/useAudioService";
-import { useGameCleanup } from "@/hooks/useGameCleanup";
-import AudioErrorFallback from "@/components/AudioErrorFallback";
+import { useAudioService } from "@/common/hooks/useAudioService";
+import { useGameCleanup } from "@/common/hooks/useGameCleanup";
+import AudioErrorFallback from "@/common/game-shell/AudioErrorFallback";
 
 const Harmony003Game: React.FC = () => {
   const [, setLocation] = useLocation();

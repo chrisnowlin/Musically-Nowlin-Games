@@ -5,8 +5,8 @@
 
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/common/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/common/ui/tabs';
 
 import { TimeSignatureSelector } from './TimeSignatureSelector';
 import { TempoControl } from './TempoControl';

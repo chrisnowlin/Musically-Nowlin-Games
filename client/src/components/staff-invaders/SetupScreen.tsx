@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/common/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/common/ui/card';
+import { Label } from '@/common/ui/label';
+import { Switch } from '@/common/ui/switch';
 import { Clef, GameConfig } from '../StaffInvadersGame';
-import { useResponsiveLayout } from '@/hooks/useViewport';
+import { useResponsiveLayout } from '@/common/hooks/useViewport';
 import { Music, Trophy, Info, Play, Check, Eye } from 'lucide-react';
 
 interface SetupScreenProps {

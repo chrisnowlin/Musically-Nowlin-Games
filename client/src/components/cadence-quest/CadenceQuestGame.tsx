@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { ResponsiveGameLayout } from '@/components/ResponsiveGameLayout';
+import { ResponsiveGameLayout } from '@/common/game-shell/ResponsiveGameLayout';
 import { useGameState } from '@/lib/cadence-quest/useGameState';
 import CharacterCreation from './CharacterCreation';
 import WorldMap from './WorldMap';

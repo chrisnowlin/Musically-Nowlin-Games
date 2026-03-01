@@ -4,9 +4,9 @@
  * Shows notes based on current clef (Treble: C4-A5, Bass: E2-C4)
  */
 
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/common/ui/checkbox';
+import { Button } from '@/common/ui/button';
+import { Label } from '@/common/ui/label';
 import { ClefType } from '@/lib/rhythmRandomizer/types';
 
 export type NotePitch = string; // e.g., 'C4', 'D#4', 'Eb5'

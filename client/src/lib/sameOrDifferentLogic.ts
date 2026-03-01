@@ -1,4 +1,4 @@
-import { ANIMAL_CHARACTERS, MUSICAL_NOTES, AnimalCharacter } from "@/lib/schema";
+import { ANIMAL_CHARACTERS, MUSICAL_NOTES, AnimalCharacter } from "@/common/utils/schema";
 
 export type DifferenceType = "rhythm" | "pitch" | "dynamics" | "tempo";
 

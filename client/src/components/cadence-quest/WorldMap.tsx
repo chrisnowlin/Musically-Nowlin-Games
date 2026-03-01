@@ -3,7 +3,7 @@ import { REGIONS } from '@/lib/cadence-quest/regions';
 import { MAP_NODES, MAP_PATHS, MAP_VIEWBOX, getNodePosition } from '@/lib/cadence-quest/map-layout';
 import type { Character } from '@shared/types/cadence-quest';
 import { MapPin, Swords, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/common/utils/utils';
 
 interface WorldMapProps {
   character: Character;

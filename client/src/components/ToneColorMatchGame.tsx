@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
-import { audioService } from "@/lib/audioService";
-import ScoreDisplay from "@/components/ScoreDisplay";
-import { Button } from "@/components/ui/button";
+import { audioService } from "@/common/audio/audioService";
+import ScoreDisplay from "@/common/game-shell/ScoreDisplay";
+import { Button } from "@/common/ui/button";
 import {Play, HelpCircle, Star, Sparkles, Volume2, VolumeX, ChevronLeft} from "lucide-react";
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from "@/theme/playful";
-import { usePhilharmoniaInstruments } from "@/hooks/usePhilharmoniaInstruments";
+import { usePhilharmoniaInstruments } from "@/common/hooks/usePhilharmoniaInstruments";
 
 type InstrumentType = "flute" | "violin" | "trumpet" | "clarinet" | "cello" | "oboe" | "french-horn";
 

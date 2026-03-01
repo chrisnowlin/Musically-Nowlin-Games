@@ -3,7 +3,7 @@
  * Toggle buttons for Beginner/Intermediate/Advanced difficulty levels
  */
 
-import { Label } from '@/components/ui/label';
+import { Label } from '@/common/ui/label';
 
 export type MelodicDifficulty = 'beginner' | 'intermediate' | 'advanced';
 

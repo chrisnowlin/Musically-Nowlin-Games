@@ -3,9 +3,9 @@ import { ChevronLeft, Play } from "lucide-react";
 import { useLocation } from "wouter";
 import { generateRound, validateAnswer, calculateScore, getNextLevel, GameState } from "@/lib/gameLogic/compose-002Logic";
 import { getCompose002Mode, Compose002ModeId } from "@/lib/gameLogic/compose-002Modes";
-import { audioService } from "@/lib/audioService";
-import { Button } from "@/components/ui/button";
-import { ResponsiveGameLayout, GameSection, ResponsiveGrid } from "@/components/ResponsiveGameLayout";
+import { audioService } from "@/common/audio/audioService";
+import { Button } from "@/common/ui/button";
+import { ResponsiveGameLayout, GameSection, ResponsiveGrid } from "@/common/game-shell/ResponsiveGameLayout";
 import { playfulColors, playfulShapes, playfulComponents } from "@/theme/playful";
 
 const LS_KEYS = {

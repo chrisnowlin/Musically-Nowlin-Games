@@ -1,6 +1,6 @@
 import { Link, useRoute } from "wouter";
 import { games, getGameById } from "@/config/games";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/common/ui/button";
 
 function slugFromRoute(route: string) {
   const parts = route.split("/games");
