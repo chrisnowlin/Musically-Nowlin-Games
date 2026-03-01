@@ -1,5 +1,5 @@
 import React from "react";
-import { Cross003Game } from "@/components/Cross003Game";
+import { Cross003Game } from "./Cross003Game";
 
 export const Cross003Page: React.FC = () => {
   return <Cross003Game />;

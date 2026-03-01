@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateRound, validateAnswer, calculateScore } from '../lib/gameLogic/cross-001Logic';
+import { generateRound, validateAnswer, calculateScore } from '../logic';
 
 describe('cross-001 logic', () => {
   describe('generateRound', () => {

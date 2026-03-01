@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCross001Mode, cross001Modes, type Cross001ModeId } from '../lib/gameLogic/cross-001Modes';
+import { getCross001Mode, cross001Modes, type Cross001ModeId } from '../modes';
 
 describe('CrossCurricularMusicMasterGame Accessibility', () => {
   it('should have accessible mode definitions', () => {

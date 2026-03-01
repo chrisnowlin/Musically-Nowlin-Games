@@ -1,4 +1,4 @@
-import WorldMusicExplorerGame from "@/components/WorldMusicExplorerGame";
+import WorldMusicExplorerGame from "./WorldMusicExplorerGame";
 
 export default function WorldMusicExplorerGamePage() {
   return <WorldMusicExplorerGame />;

@@ -1,4 +1,4 @@
-import MusicalStoryTimeGame from "@/components/MusicalStoryTimeGame";
+import MusicalStoryTimeGame from "./MusicalStoryTimeGame";
 
 export default function MusicalStoryTimeGamePage() {
   return <MusicalStoryTimeGame />;

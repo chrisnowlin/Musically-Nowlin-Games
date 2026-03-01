@@ -1,5 +1,5 @@
 import React from "react";
-import { CrossCurricularMusicMasterGame } from "@/components/CrossCurricularMusicMasterGame";
+import { CrossCurricularMusicMasterGame } from "./CrossCurricularMusicMasterGame";
 
 export const Cross001Page: React.FC = () => {
   return <CrossCurricularMusicMasterGame />;

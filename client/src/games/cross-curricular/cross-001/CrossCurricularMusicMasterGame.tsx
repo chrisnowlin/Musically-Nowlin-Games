@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Play, Volume2, HelpCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import { generateRound, validateAnswer, calculateScore, GameRound } from "@/lib/gameLogic/cross-001Logic";
+import { generateRound, validateAnswer, calculateScore, GameRound } from "./logic";
 import { sampleAudioService } from "@/common/audio/sampleAudioService";
 import { Button } from "@/common/ui/button";
-import { getCross001Mode, Cross001ModeId } from "@/lib/gameLogic/cross-001Modes";
+import { getCross001Mode, Cross001ModeId } from "./modes";
 
 const LS_KEYS = {
   lastMode: "cross-001:lastMode",
