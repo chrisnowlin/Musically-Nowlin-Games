@@ -14,11 +14,11 @@ export enum TileType {
   BossBody = 'bossBody',
 }
 
-export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval';
+export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics' | 'tempo' | 'symbols' | 'terms';
 
 export type EnemyState = 'guarding' | 'chasing' | 'patrolling';
 
-export type EnemySubtype = 'ghost' | 'skeleton' | 'dragon' | 'goblin';
+export type EnemySubtype = 'ghost' | 'skeleton' | 'dragon' | 'goblin' | 'slime' | 'bat' | 'wraith' | 'spider' | 'shade';
 
 export interface Tile {
   type: TileType;
@@ -43,6 +43,9 @@ export interface Rect {
   h: number;
 }
 
+export type Tier = 1 | 2 | 3;
+
+/** @deprecated Replaced by Tier. Kept temporarily for migration. */
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 export interface FloorBuffs {
