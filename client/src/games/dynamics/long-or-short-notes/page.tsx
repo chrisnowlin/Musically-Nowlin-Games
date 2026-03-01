@@ -1,4 +1,4 @@
-import LongOrShortNotesGame from "@/components/LongOrShortNotesGame";
+import LongOrShortNotesGame from "./LongOrShortNotesGame";
 
 export default function LongOrShortNotesGamePage() {
   return <LongOrShortNotesGame />;

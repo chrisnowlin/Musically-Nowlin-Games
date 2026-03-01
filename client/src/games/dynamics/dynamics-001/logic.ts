@@ -4,7 +4,7 @@
  * Multi-mode game covering dynamics & expression concepts
  */
 
-import { DYNAMIC_LEVELS, DIFFICULTY_CURVES, getDifficultyForMode } from './dynamics-001Modes';
+import { DYNAMIC_LEVELS, DIFFICULTY_CURVES, getDifficultyForMode } from './modes';
 
 export interface GameRound {
   id: string;

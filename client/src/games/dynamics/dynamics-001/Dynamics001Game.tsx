@@ -11,20 +11,20 @@ import {
   getModeById, 
   getMaxDifficultyForMode,
   GameMode 
-} from "../lib/gameLogic/dynamics-001Modes";
+} from "./modes";
 import { audioService } from '@/common/audio/audioService';
-import { 
-  GameRound, 
-  generateRound, 
-  validateAnswer, 
-  calculateScore, 
-  updateProgress, 
+import {
+  GameRound,
+  generateRound,
+  validateAnswer,
+  calculateScore,
+  updateProgress,
   getNextDifficulty,
   GameProgress,
   getAudioParameters,
   getScoreBreakdown,
   ScoreBreakdown
-} from "../lib/gameLogic/dynamics-001Logic";
+} from "./logic";
 
 interface GameState {
   currentMode: GameMode | null;

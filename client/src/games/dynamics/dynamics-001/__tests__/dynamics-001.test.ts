@@ -15,8 +15,8 @@ import {
   shouldDecreaseDifficulty,
   getAudioParameters,
   GameProgress
-} from '../lib/gameLogic/dynamics-001Logic';
-import { getDifficultyForMode } from '../lib/gameLogic/dynamics-001Modes';
+} from '../logic';
+import { getDifficultyForMode } from '../modes';
 
 describe('Dynamics Master - Levels Mode', () => {
   it('should generate a valid levels round', () => {

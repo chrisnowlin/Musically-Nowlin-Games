@@ -15,7 +15,7 @@ import {
   getModeById,
   getMaxDifficultyForMode,
   GameMode
-} from "../lib/gameLogic/dynamics-002Modes";
+} from "./modes";
 import {
   GameRound,
   GameProgress,
@@ -27,7 +27,7 @@ import {
   getScoreBreakdown,
   ScoreBreakdown,
   createInitialProgress
-} from "../lib/gameLogic/dynamics-002Logic";
+} from "./logic";
 
 interface GameState {
   currentMode: GameMode | null;

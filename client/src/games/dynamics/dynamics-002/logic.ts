@@ -17,7 +17,7 @@ import {
   DIFFICULTY_CURVES,
   getDifficultyForMode,
   getRandomPhrase
-} from './dynamics-002Modes';
+} from './modes';
 
 /**
  * Represents a single game round

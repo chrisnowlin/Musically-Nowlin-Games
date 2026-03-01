@@ -15,14 +15,14 @@ import {
   GameProgress,
   GameRound,
   ScoreBreakdown
-} from "@/lib/gameLogic/dynamics-003Logic";
+} from "./logic";
 import {
   EMOTION_MODES,
   EMOTIONS,
   getModeById,
   getEmotionConfig,
   getAllModes
-} from "@/lib/gameLogic/dynamics-003Modes";
+} from "./modes";
 
 interface GameState {
   currentMode: string;

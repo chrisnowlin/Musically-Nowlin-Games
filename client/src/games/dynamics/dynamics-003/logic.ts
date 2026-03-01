@@ -15,7 +15,7 @@ import {
   EMOTIONS,
   DIFFICULTY_CURVES,
   EMOTION_MODES
-} from './dynamics-003Modes';
+} from './modes';
 
 export interface GameRound {
   id: string;

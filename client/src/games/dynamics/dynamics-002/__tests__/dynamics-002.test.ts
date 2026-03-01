@@ -22,7 +22,7 @@ import {
   getAchievements,
   GameProgress,
   GameStats
-} from '../lib/gameLogic/dynamics-002Logic';
+} from '../logic';
 import {
   EXPRESSION_MODES,
   ARTICULATION_STYLES,
@@ -30,7 +30,7 @@ import {
   getDifficultyForMode,
   getModeById,
   getMaxDifficultyForMode
-} from '../lib/gameLogic/dynamics-002Modes';
+} from '../modes';
 
 describe('Expression Master - Mode Definitions', () => {
   it('should have exactly 2 modes defined', () => {

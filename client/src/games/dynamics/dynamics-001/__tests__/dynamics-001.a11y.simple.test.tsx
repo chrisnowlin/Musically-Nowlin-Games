@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Dynamics001Game from '../components/Dynamics001Game';
+import Dynamics001Game from '../Dynamics001Game';
 
 // Mock wouter
 vi.mock('wouter', () => ({

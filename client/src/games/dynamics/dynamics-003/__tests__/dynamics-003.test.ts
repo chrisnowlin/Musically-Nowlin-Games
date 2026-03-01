@@ -19,7 +19,7 @@ import {
   calculateAccuracy,
   getPerformanceFeedback,
   GameProgress
-} from '../lib/gameLogic/dynamics-003Logic';
+} from '../logic';
 import {
   EMOTION_MODES,
   EMOTIONS,
@@ -28,7 +28,7 @@ import {
   getDifficultyForMode,
   getEmotionConfig,
   getAnalysisOptionsForEmotion
-} from '../lib/gameLogic/dynamics-003Modes';
+} from '../modes';
 
 describe('dynamics-003Modes', () => {
   describe('EMOTION_MODES', () => {
