@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { DifficultyLevel } from '../logic/dungeonTypes';
+import type { Tier } from '../logic/dungeonTypes';
 import { getIntervalParams } from '../logic/difficultyAdapter';
 import { playTwoNotes, getFrequency, ALL_NOTE_KEYS } from '../dungeonAudio';
 
 interface Props {
-  difficulty: DifficultyLevel;
+  tier: Tier;
   onResult: (correct: boolean) => void;
   showHint?: boolean;
 }
 
-const IntervalChallenge: React.FC<Props> = ({ difficulty, onResult, showHint }) => {
-  const params = useMemo(() => getIntervalParams(difficulty), [difficulty]);
+const IntervalChallenge: React.FC<Props> = ({ tier, onResult, showHint }) => {
+  const params = useMemo(() => getIntervalParams(tier), [tier]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
 

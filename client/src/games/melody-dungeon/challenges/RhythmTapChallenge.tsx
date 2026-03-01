@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import type { DifficultyLevel } from '../logic/dungeonTypes';
+import type { Tier } from '../logic/dungeonTypes';
 import { getRhythmParams } from '../logic/difficultyAdapter';
 import { playClick } from '../dungeonAudio';
 
 interface Props {
-  difficulty: DifficultyLevel;
+  tier: Tier;
   onResult: (correct: boolean) => void;
   slowMode?: boolean;
 }
@@ -31,11 +31,11 @@ function generatePattern(params: ReturnType<typeof getRhythmParams>): Beat[] {
   return beats;
 }
 
-const RhythmTapChallenge: React.FC<Props> = ({ difficulty, onResult, slowMode }) => {
+const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
   const params = useMemo(() => {
-    const p = getRhythmParams(difficulty);
+    const p = getRhythmParams(tier);
     return slowMode ? { ...p, bpm: Math.round(p.bpm / 2) } : p;
-  }, [difficulty, slowMode]);
+  }, [tier, slowMode]);
   const [phase, setPhase] = useState<'listen' | 'tap' | 'done'>('listen');
   const [pattern] = useState<Beat[]>(() => generatePattern(params));
   const [taps, setTaps] = useState<number[]>([]);

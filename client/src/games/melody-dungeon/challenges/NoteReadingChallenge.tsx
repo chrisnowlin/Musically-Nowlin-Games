@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getNoteReadingParamsForFloor } from '../logic/difficultyAdapter';
+import type { Tier } from '../logic/dungeonTypes';
+import { getNoteReadingParams } from '../logic/difficultyAdapter';
 import { playNote, noteKeyToName } from '../dungeonAudio';
 
 interface Props {
-  floorNumber: number;
+  tier: Tier;
   onResult: (correct: boolean) => void;
 }
 
@@ -62,8 +63,8 @@ const StaffSVG: React.FC<{ noteKey: string }> = ({ noteKey }) => {
   );
 };
 
-const NoteReadingChallenge: React.FC<Props> = ({ floorNumber, onResult }) => {
-  const params = useMemo(() => getNoteReadingParamsForFloor(floorNumber), [floorNumber]);
+const NoteReadingChallenge: React.FC<Props> = ({ tier, onResult }) => {
+  const params = useMemo(() => getNoteReadingParams(tier), [tier]);
   const [targetNote, setTargetNote] = useState('');
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
