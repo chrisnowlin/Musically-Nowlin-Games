@@ -21,12 +21,18 @@ export interface BossRoundConfig {
   tier: Tier;
 }
 
-/** Generate the 8-round BigBoss sequence. All rounds use the floor's tier for each type. */
+/** Generate the 8-round BigBoss sequence. Guarantees each available type appears at least once. */
 export function generateBigBossSequence(floorNumber: number): BossRoundConfig[] {
   const types = getChallengeTypesForFloor(floorNumber);
   const sequence: BossRoundConfig[] = [];
 
-  for (let i = 0; i < 8; i++) {
+  // Ensure each available type appears at least once
+  for (const type of types) {
+    sequence.push({ type, tier: getTierForChallenge(floorNumber, type) });
+  }
+
+  // Pad to 8 rounds with random picks
+  while (sequence.length < 8) {
     const type = pickRandom(types);
     sequence.push({ type, tier: getTierForChallenge(floorNumber, type) });
   }

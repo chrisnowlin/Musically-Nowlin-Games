@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
-import { type VocabCategory, type VocabEntry, getVocabEntries } from '../logic/vocabData';
+import { type VocabCategory, type VocabEntry, getVocabEntries, getAllVocabEntries } from '../logic/vocabData';
 
 interface Props {
   category: VocabCategory;
@@ -15,10 +15,21 @@ const CATEGORY_THEME: Record<VocabCategory, { title: string; color: string; hove
   terms: { title: 'Music Terms!', color: 'bg-amber-700', hoverColor: 'hover:bg-amber-600', activeColor: 'text-amber-200' },
 };
 
+function fisherYatesShuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function pickDistractors(correct: VocabEntry, pool: VocabEntry[], count: number): VocabEntry[] {
-  const others = pool.filter((e) => e.term !== correct.term);
-  const shuffled = [...others].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  // Filter out entries with the same term or definition as the correct answer
+  const others = pool.filter(
+    (e) => e.term !== correct.term && e.definition !== correct.definition
+  );
+  return fisherYatesShuffle(others).slice(0, count);
 }
 
 const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult }) => {
@@ -28,8 +39,10 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult }) => {
   const challenge = useMemo(() => {
     const target = entries[Math.floor(Math.random() * entries.length)];
     const showTermAskDef = Math.random() < 0.5;
-    const distractors = pickDistractors(target, entries, 3);
-    const options = [target, ...distractors].sort(() => Math.random() - 0.5);
+    // Use full vocab pool for distractors if category pool is small
+    const distractorPool = entries.length >= 7 ? entries : getAllVocabEntries();
+    const distractors = pickDistractors(target, distractorPool, 3);
+    const options = fisherYatesShuffle([target, ...distractors]);
     return { target, showTermAskDef, options };
   }, [entries]);
 

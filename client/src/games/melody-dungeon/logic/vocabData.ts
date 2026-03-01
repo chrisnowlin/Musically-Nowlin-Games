@@ -88,7 +88,7 @@ const TERMS_ENTRIES: VocabEntry[] = [
   { term: 'Harmony', definition: 'Notes combined to support the melody', tier: 1, category: 'terms' },
   // Tier 2
   { term: 'Da Capo', definition: 'Go back to the beginning', symbol: 'D.C.', tier: 2, category: 'terms' },
-  { term: 'Dal Segno', definition: 'Go back to the sign', symbol: 'D.S.', tier: 2, category: 'terms' },
+  { term: 'Unison', definition: 'Two or more parts at the same pitch', tier: 2, category: 'terms' },
   { term: 'Fine', definition: 'The end of the piece', tier: 2, category: 'terms' },
   { term: 'Ostinato', definition: 'A repeated musical pattern', tier: 2, category: 'terms' },
   { term: 'Arpeggio', definition: 'A broken chord played one note at a time', tier: 2, category: 'terms' },
