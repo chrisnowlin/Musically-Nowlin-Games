@@ -83,7 +83,7 @@ function createPlayer(start: Position): PlayerState {
     position: { ...start },
     health: MAX_HEALTH,
     maxHealth: MAX_HEALTH,
-    score: 0,
+    gold: 0,
     keys: 0,
     potions: 0,
     streak: 0,
@@ -122,9 +122,9 @@ const MelodyDungeonGame: React.FC = () => {
       return 1;
     }
   });
-  const [highScore, setHighScore] = useState<number>(() => {
+  const [highGold, setHighGold] = useState<number>(() => {
     try {
-      return Number(localStorage.getItem('melodyDungeonHighScore')) || 0;
+      return Number(localStorage.getItem('melodyDungeonHighGold')) || 0;
     } catch {
       return 0;
     }
@@ -330,7 +330,7 @@ const MelodyDungeonGame: React.FC = () => {
               position: newPos,
               keys: prev.keys - 1,
               potions: prev.potions + 1,
-              score: prev.score + 200,
+              gold: prev.gold + 200,
             };
           }
           // item reward: apply item effect + base bonus (no extra potion)
@@ -338,7 +338,7 @@ const MelodyDungeonGame: React.FC = () => {
             ...prev,
             position: newPos,
             keys: prev.keys - 1,
-            score: prev.score + 200,
+            gold: prev.gold + 200,
           });
           return afterItem;
         }
@@ -467,25 +467,25 @@ const MelodyDungeonGame: React.FC = () => {
 
             if (activeTileType === TileType.BigBoss) {
               updated.health = prev.maxHealth; // Full health restore
-              updated.score += 1500 + streakBonus;
+              updated.gold += 1500 + streakBonus;
               updated.keys += 3;
               updated.potions += 2; // reward (after battle consumption deducted above)
             } else if (activeTileType === TileType.MiniBoss) {
               updated.health = battleHealth;
-              updated.score += 750 + streakBonus;
+              updated.gold += 750 + streakBonus;
               updated.keys += 2;
               updated.potions += 2; // reward (after battle consumption deducted above)
             } else if (activeTileSubtype === 'dragon') {
               // Dragon
               updated.health = battleHealth;
-              updated.score += 500 + streakBonus;
+              updated.gold += 500 + streakBonus;
               updated.keys += 2;
               updated.potions += 1; // reward (after battle consumption deducted above)
             } else {
               // Regular level 2–3 enemy (ghost/skeleton/goblin)
               updated.health = battleHealth;
-              const levelScore = activeTileLevel === 3 ? 250 : 175;
-              updated.score += levelScore + streakBonus;
+              const levelGold = activeTileLevel === 3 ? 250 : 175;
+              updated.gold += levelGold + streakBonus;
               updated.keys += activeTileLevel === 3 ? 2 : 1;
             }
           } else {
@@ -522,14 +522,14 @@ const MelodyDungeonGame: React.FC = () => {
           }
         } else if (correct) {
           // Non-boss correct answer
-          const baseScore = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 200 : 100;
+          const baseGold = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 200 : 100;
           const streakBonus = Math.floor(prev.streak / 3) * 25;
-          updated.score += baseScore + streakBonus;
+          updated.gold += baseGold + streakBonus;
           updated.streak += 1;
 
           if (activeTileType === TileType.Enemy) {
             updated.keys += 1;
-            // Lucky Coin: double base score, consume one charge
+            // Lucky Coin: double base gold, consume one charge
             if (prev.buffs.armed.luckyCoin > 0) {
               updated = {
                 ...updated,
@@ -665,8 +665,8 @@ const MelodyDungeonGame: React.FC = () => {
   const handleMerchantBuy = useCallback((item: MerchantItem) => {
     setPlayer((prev) => {
       const price = item.getPrice(floorNumber);
-      if (prev.score < price || !item.canBuy(prev)) return prev;
-      return item.apply({ ...prev, score: prev.score - price });
+      if (prev.gold < price || !item.canBuy(prev)) return prev;
+      return item.apply({ ...prev, gold: prev.gold - price });
     });
   }, [floorNumber]);
 
@@ -775,15 +775,15 @@ const MelodyDungeonGame: React.FC = () => {
     setTimeout(() => playNote('C5', 0.3), 150);
   }, [floorNumber, deepestUnlocked]);
 
-  // Save high score
+  // Save high gold
   useEffect(() => {
-    if ((phase === 'gameOver' || phase === 'victory') && player.score > highScore) {
-      setHighScore(player.score);
+    if ((phase === 'gameOver' || phase === 'victory') && player.gold > highGold) {
+      setHighGold(player.gold);
       try {
-        localStorage.setItem('melodyDungeonHighScore', String(player.score));
+        localStorage.setItem('melodyDungeonHighGold', String(player.gold));
       } catch {}
     }
-  }, [phase, player.score, highScore]);
+  }, [phase, player.gold, highGold]);
 
   // --- MENU ---
   if (phase === 'menu') {
@@ -847,9 +847,9 @@ const MelodyDungeonGame: React.FC = () => {
             How to Play
           </button>
 
-          {highScore > 0 && (
+          {highGold > 0 && (
             <p className="text-center text-sm text-gray-500">
-              Best Score: {highScore}
+              Most Gold: {highGold}
             </p>
           )}
         </div>
@@ -867,7 +867,7 @@ const MelodyDungeonGame: React.FC = () => {
 
   // --- GAME OVER ---
   if (phase === 'gameOver') {
-    const isNewHigh = player.score >= highScore && player.score > 0;
+    const isNewHigh = player.gold >= highGold && player.gold > 0;
     return (
       <>
         <div className="min-h-screen bg-gradient-to-b from-gray-950 via-red-950/30 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
@@ -881,9 +881,9 @@ const MelodyDungeonGame: React.FC = () => {
         <div className="bg-gray-900/80 rounded-2xl p-6 max-w-sm w-full text-center border border-gray-800">
           <h2 className="text-3xl font-bold mb-2">Game Over</h2>
           {isNewHigh && (
-            <p className="text-yellow-400 animate-pulse mb-2">New High Score!</p>
+            <p className="text-yellow-400 animate-pulse mb-2">New Gold Record!</p>
           )}
-          <div className="text-5xl font-bold text-purple-400 mb-4">{player.score}</div>
+          <div className="text-5xl font-bold text-amber-400 mb-4">{'\uD83E\uDE99'} {player.gold}</div>
 
           <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
             <div className="bg-gray-800 rounded-lg p-2">
@@ -919,7 +919,7 @@ const MelodyDungeonGame: React.FC = () => {
 
   // --- VICTORY ---
   if (phase === 'victory') {
-    const isNewHigh = player.score >= highScore && player.score > 0;
+    const isNewHigh = player.gold >= highGold && player.gold > 0;
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-950 via-yellow-950/30 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
         <div className="bg-gray-900/80 rounded-2xl p-6 max-w-sm w-full text-center border border-yellow-700">
@@ -931,9 +931,9 @@ const MelodyDungeonGame: React.FC = () => {
             You conquered all {MAX_FLOOR} floors of the Melody Dungeon!
           </p>
           {isNewHigh && (
-            <p className="text-yellow-400 animate-pulse mb-2">New High Score!</p>
+            <p className="text-yellow-400 animate-pulse mb-2">New Gold Record!</p>
           )}
-          <div className="text-5xl font-bold text-purple-400 mb-4">{player.score}</div>
+          <div className="text-5xl font-bold text-amber-400 mb-4">{'\uD83E\uDE99'} {player.gold}</div>
 
           <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
             <div className="bg-gray-800 rounded-lg p-2">
@@ -975,7 +975,7 @@ const MelodyDungeonGame: React.FC = () => {
           <p className="text-gray-400 text-sm mb-4">
             You found the stairs to the next level.
           </p>
-          <div className="text-3xl font-bold text-purple-400 mb-4">{player.score} pts</div>
+          <div className="text-3xl font-bold text-amber-400 mb-4">{'\uD83E\uDE99'} {player.gold} gold</div>
           <button
             onClick={descendFloor}
             className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 rounded-xl font-bold transition-colors"

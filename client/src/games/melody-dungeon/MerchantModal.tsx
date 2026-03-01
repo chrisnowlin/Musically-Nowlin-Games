@@ -17,7 +17,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
 
   const handleBuy = (item: MerchantItem) => {
     const price = item.getPrice(floorNumber);
-    if (player.score < price || !item.canBuy(player)) return;
+    if (player.gold < price || !item.canBuy(player)) return;
     onBuy(item);
   };
 
@@ -33,14 +33,14 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
 
         <div className="flex justify-center mb-4">
           <span className="text-amber-400 font-bold text-lg">
-            {'\u2B50'} {player.score} pts
+            {'\uD83E\uDE99'} {player.gold} gold
           </span>
         </div>
 
         <div className="grid gap-2 mb-4">
           {coreItems.map((item) => {
             const price = item.getPrice(floorNumber);
-            const canAfford = player.score >= price;
+            const canAfford = player.gold >= price;
             const canBuy = canAfford && item.canBuy(player);
 
             return (
@@ -66,7 +66,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
                       : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {price} pts
+                  {price}g
                 </button>
               </div>
             );
@@ -80,7 +80,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
 
           {specialItems.map((item) => {
             const price = item.getPrice(floorNumber);
-            const canAfford = player.score >= price;
+            const canAfford = player.gold >= price;
             const canBuy = canAfford && item.canBuy(player);
 
             return (
@@ -106,7 +106,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose })
                       : 'bg-gray-700 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {price} pts
+                  {price}g
                 </button>
               </div>
             );

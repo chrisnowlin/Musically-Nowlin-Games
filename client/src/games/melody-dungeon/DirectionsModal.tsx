@@ -47,10 +47,10 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
             </h3>
             <ul className="space-y-2 text-gray-300">
               <li><strong>Explore:</strong> Move around each dungeon floor to find items and encounters</li>
-              <li><strong>Enemies:</strong> Encounter enemies that challenge you with musical questions. Defeat them to earn keys and score</li>
+              <li><strong>Enemies:</strong> Encounter enemies that challenge you with musical questions. Defeat them to earn keys and gold</li>
               <li><strong>Doors:</strong> Locked doors block your path. Answer the musical challenge correctly to open them</li>
               <li><strong>Chests:</strong> Use keys to open chests and get potions and rewards</li>
-              <li><strong>Merchants:</strong> Trade your score for helpful items and buffs</li>
+              <li><strong>Merchants:</strong> Spend your gold on helpful items and buffs</li>
               <li><strong>Stairs:</strong> Find the stairs to advance to the next floor</li>
               <li><strong>Health:</strong> You start with 3 HP. Lose all health and it's game over!</li>
             </ul>
@@ -97,7 +97,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
                 <strong className="text-red-300">🐉 Dragon Bane:</strong> Negate the penalty from hitting a dragon. Consumed after use
               </div>
               <div>
-                <strong className="text-purple-300">💰 Lucky Coin:</strong> Double your score on an enemy defeat. Consumed after use
+                <strong className="text-purple-300">💰 Lucky Coin:</strong> Double your gold on an enemy defeat. Consumed after use
               </div>
               <div>
                 <strong className="text-indigo-300">🧲 Treasure Magnet:</strong> Double potion rewards from chests. Consumed after use
@@ -117,7 +117,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
               👹 Enemy Types
             </h3>
             <ul className="space-y-2 text-gray-300">
-              <li><strong>Regular Enemies 👻🪦🧌:</strong> Ghosts, Skeletons, and Goblins in levels 1-3. Defeat for keys and score</li>
+              <li><strong>Regular Enemies 👻🪦🧌:</strong> Ghosts, Skeletons, and Goblins in levels 1-3. Defeat for keys and gold</li>
               <li><strong>Dragons 🐉:</strong> Special enemies with unique mechanics. Harder to defeat but worth more rewards</li>
               <li><strong>Mini-Boss 🏆:</strong> Stronger than regular enemies. Defeating them opens locked areas and grants bonus rewards</li>
               <li><strong>Big-Boss 👑:</strong> The floor's main challenge. Defeat to access the stairs and advance to the next floor</li>
@@ -133,7 +133,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
               <li>💪 <strong>Manage Health:</strong> Use shields and potions wisely. Don't waste them on easy enemies</li>
               <li>🔑 <strong>Key Management:</strong> Prioritize opening chests that give potions and more keys</li>
               <li>⚔️ <strong>Buff Strategy:</strong> Save powerful buffs for tough encounters (bosses, dragons)</li>
-              <li>🔥 <strong>Streak Bonuses:</strong> Every 3 correct answers grants +25 bonus score. Build your streak!</li>
+              <li>🔥 <strong>Streak Bonuses:</strong> Every 3 correct answers grants +25 bonus gold. Build your streak!</li>
               <li>🎯 <strong>Focus on Music:</strong> The better you answer musical questions, the easier the dungeon becomes</li>
               <li>🔍 <strong>Explore Carefully:</strong> Take your time exploring—every key and potion helps</li>
             </ul>

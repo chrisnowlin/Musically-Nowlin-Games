@@ -21,6 +21,20 @@ function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+const THEME_COUNT = 8;
+
+/**
+ * Return a consistent theme index for every floor within the same 10-floor
+ * group (1-10, 11-20, 21-30 …).  The index is derived deterministically from
+ * the group number so the theme feels "random" across groups but stays the
+ * same for all floors within a group.
+ */
+function getThemeIndexForFloor(floorNumber: number): number {
+  const group = Math.floor((floorNumber - 1) / 10);
+  // Simple hash: multiply by a prime, take modulo to pick a theme.
+  return (group * 7 + 3) % THEME_COUNT;
+}
+
 /** Returns patrol-spawnable enemy subtypes for a given floor. Dragon is placed separately via chest-guardian logic and is not included here. */
 function getEnemySubtypesForFloor(floorNumber: number): EnemySubtype[] {
   if (floorNumber <= 5) return ['ghost'];
@@ -565,7 +579,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     width,
     height,
     floorNumber,
-    themeIndex: rand(0, 7),
+    themeIndex: getThemeIndexForFloor(floorNumber),
     playerStart,
     stairsPosition,
   };

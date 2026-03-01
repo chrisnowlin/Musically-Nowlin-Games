@@ -86,7 +86,7 @@ export interface PlayerState {
   position: Position;
   health: number;
   maxHealth: number;
-  score: number;
+  gold: number;
   keys: number;
   potions: number;
   streak: number;

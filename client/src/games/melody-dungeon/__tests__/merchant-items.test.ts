@@ -8,7 +8,7 @@ function makePlayer(overrides: Partial<PlayerState> = {}): PlayerState {
     position: { x: 0, y: 0 },
     health: 3,
     maxHealth: 5,
-    score: 1000,
+    gold: 1000,
     keys: 0,
     potions: 0,
     streak: 0,
@@ -75,8 +75,8 @@ describe('Merchant items', () => {
     expect(result.shieldCharm).toBe(0); // not armed yet — must be armed from bag
   });
 
-  it('all items can be bought with sufficient score', () => {
-    const player = makePlayer({ score: 10000 });
+  it('all items can be bought with sufficient gold', () => {
+    const player = makePlayer({ gold: 10000 });
     for (const item of MERCHANT_ITEMS) {
       expect(item.canBuy(player)).toBe(true);
     }
@@ -92,12 +92,12 @@ describe('Merchant items', () => {
     expect(charm.canBuy(r1)).toBe(true);
   });
 
-  it('getMerchantPrice deducts score and applies item', () => {
+  it('getMerchantPrice deducts gold and applies item', () => {
     const potion = MERCHANT_ITEMS.find((i) => i.id === 'potion')!;
-    const player = makePlayer({ score: 500, potions: 0 });
+    const player = makePlayer({ gold: 500, potions: 0 });
     const result = getMerchantPrice(player, potion, 1);
     expect(result.potions).toBe(1);
-    expect(result.score).toBe(500 - potion.getPrice(1));
+    expect(result.gold).toBe(500 - potion.getPrice(1));
   });
 
   it('getShopInventory returns 7 items (4 core + 3 special)', () => {

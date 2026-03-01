@@ -169,7 +169,7 @@ export const SPECIAL_ITEMS: MerchantItem[] = [
   {
     id: 'lucky-coin',
     name: 'Lucky Coin',
-    description: 'Double score from next kill',
+    description: 'Double gold from next kill',
     emoji: '🪙',
     category: 'economy',
     getPrice: (floor) => 250 + floor * 15,
@@ -297,5 +297,5 @@ export function getMerchantPrice(
   floorNumber: number
 ): PlayerState {
   const price = item.getPrice(floorNumber);
-  return item.apply({ ...player, score: player.score - price });
+  return item.apply({ ...player, gold: player.gold - price });
 }
