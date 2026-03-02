@@ -111,9 +111,9 @@ describe('generateDungeon', () => {
     }
   });
 
-  it('assigns level 3 on floor 50 (T3 pure zone)', () => {
+  it('assigns level 3 on floor 52 (T3 pure zone)', () => {
     for (let run = 0; run < 5; run++) {
-      const floor = generateDungeon(50);
+      const floor = generateDungeon(52);
       const enemies = floor.tiles.flat().filter(
         (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
       );

@@ -452,7 +452,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
         const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
         grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
         grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
-        grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1) as 1 | 2 | 3 | 4 | 5;
+        grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1);
         grid[dragonPos.y][dragonPos.x].challengeType =
           dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
         grid[dragonPos.y][dragonPos.x].cleared = false;
