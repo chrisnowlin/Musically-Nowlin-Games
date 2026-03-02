@@ -107,7 +107,6 @@ const BASS_LEDGER_NOTES = [...BASS_STAFF_NOTES, 'E2', 'F2', 'B3', 'C4'];
 
 export interface NoteReadingParams {
   notes: string[];
-  useBassClef: boolean;
   mode: NoteReadingMode;
 }
 
@@ -115,15 +114,15 @@ export interface NoteReadingParams {
 export function getNoteReadingParams(tier: Tier): NoteReadingParams {
   switch (tier) {
     case 1:
-      return { notes: [...SPACE_NOTES], useBassClef: false, mode: 'space' };
+      return { notes: [...SPACE_NOTES], mode: 'space' };
     case 2:
-      return { notes: [...BOTH_STAFF_NOTES], useBassClef: false, mode: 'both' };
+      return { notes: [...BOTH_STAFF_NOTES], mode: 'both' };
     case 3:
-      return { notes: [...LEDGER_NOTES], useBassClef: false, mode: 'ledger' };
+      return { notes: [...LEDGER_NOTES], mode: 'ledger' };
     case 4:
-      return { notes: [...BASS_STAFF_NOTES], useBassClef: true, mode: 'bass' };
+      return { notes: [...BASS_STAFF_NOTES], mode: 'bass' };
     case 5:
-      return { notes: [...LEDGER_NOTES, ...BASS_LEDGER_NOTES], useBassClef: false, mode: 'mixed' };
+      return { notes: [...new Set([...LEDGER_NOTES, ...BASS_LEDGER_NOTES])], mode: 'mixed' };
   }
 }
 
