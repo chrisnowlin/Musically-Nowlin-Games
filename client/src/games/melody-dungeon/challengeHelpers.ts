@@ -74,19 +74,7 @@ export function getSubtypeChallengePool(
   }
 }
 
-/** Returns enemy subtypes that can patrol on a given floor based on unlocked challenge types. */
-export function getEnemySubtypesForFloor(floorNumber: number): EnemySubtype[] {
-  const types = getChallengeTypesForFloor(floorNumber);
-  const subtypes: EnemySubtype[] = ['ghost']; // Ghost always available
-
-  if (types.includes('noteReading')) subtypes.push('slime');
-  if (types.includes('dynamics')) subtypes.push('bat');
-  if (types.includes('tempo')) subtypes.push('wraith');
-  if (types.includes('symbols')) subtypes.push('spider');
-  if (types.includes('rhythmTap')) subtypes.push('skeleton');
-  if (types.includes('terms')) subtypes.push('shade');
-  if (types.includes('interval')) subtypes.push('goblin');
-  if (types.includes('timbre')) subtypes.push('siren');
-
-  return subtypes;
+/** Returns all enemy subtypes — every subtype is available from floor 1. */
+export function getEnemySubtypesForFloor(_floorNumber: number): EnemySubtype[] {
+  return ['ghost', 'slime', 'bat', 'wraith', 'spider', 'skeleton', 'shade', 'goblin', 'siren'];
 }

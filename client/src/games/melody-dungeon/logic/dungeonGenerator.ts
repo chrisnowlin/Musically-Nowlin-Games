@@ -3,13 +3,11 @@ import {
   type Tile,
   type Position,
   type Rect,
-  type ChallengeType,
-  type EnemySubtype,
   TileType,
   getDungeonSize,
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
-import { getChallengeTypesForFloor, getSubtypeChallengePool, getEnemySubtypesForFloor } from '../challengeHelpers';
+import { getChallengeTypesForFloor, getSubtypeChallengePool, getEnemySubtypesForFloor, getEnemyLevel, rollChallengeType } from '../challengeHelpers';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';
@@ -35,13 +33,6 @@ function getThemeIndexForFloor(floorNumber: number): number {
   if (group === 0) return 0;
   // Remaining groups use a simple hash for variety.
   return (group * 7 + 3) % THEME_COUNT;
-}
-
-/** Returns enemy level for a given floor (blends two adjacent levels for variety). */
-function pickEnemyLevel(floorNumber: number): number {
-  const maxLevel = Math.min(3, Math.floor((floorNumber - 1) / 5) + 1);
-  const minLevel = Math.max(1, maxLevel - 1);
-  return rand(minLevel, maxLevel);
 }
 
 function createEmptyGrid(width: number, height: number): Tile[][] {
@@ -254,7 +245,6 @@ function pickValidDoorTile(
   playerStart: Position,
   floorNumber: number
 ): Position | null {
-  const challengeTypes = getChallengeTypesForFloor(floorNumber);
   const candidates = getFloorTiles(grid).filter((p) => {
     if (exclude.some((e) => e.x === p.x && e.y === p.y)) return false;
     if (distanceSq(p, playerStart) < 4) return false;
@@ -267,8 +257,7 @@ function pickValidDoorTile(
     const previous = { ...grid[candidate.y][candidate.x] };
 
     grid[candidate.y][candidate.x].type = TileType.Door;
-    grid[candidate.y][candidate.x].challengeType =
-      challengeTypes[rand(0, challengeTypes.length - 1)];
+    grid[candidate.y][candidate.x].challengeType = rollChallengeType(floorNumber);
     grid[candidate.y][candidate.x].cleared = false;
 
     if (noKeyTraversalIsValid(grid, playerStart)) {
@@ -463,7 +452,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
         const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
         grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
         grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
-        grid[dragonPos.y][dragonPos.x].enemyLevel = 3;
+        grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1) as 1 | 2 | 3 | 4 | 5;
         grid[dragonPos.y][dragonPos.x].challengeType =
           dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
         grid[dragonPos.y][dragonPos.x].cleared = false;
@@ -483,7 +472,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
         const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
         grid[pos.y][pos.x].type = TileType.Enemy;
         grid[pos.y][pos.x].enemySubtype = subtype;
-        grid[pos.y][pos.x].enemyLevel = pickEnemyLevel(floorNumber);
+        grid[pos.y][pos.x].enemyLevel = getEnemyLevel(floorNumber);
         grid[pos.y][pos.x].challengeType =
           subtypePool[rand(0, subtypePool.length - 1)];
         grid[pos.y][pos.x].cleared = false;
@@ -562,8 +551,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
     if (pos) {
       grid[pos.y][pos.x].type = TileType.Treasure;
-      grid[pos.y][pos.x].challengeType =
-        challengeTypes[rand(0, challengeTypes.length - 1)];
+      grid[pos.y][pos.x].challengeType = rollChallengeType(floorNumber);
       grid[pos.y][pos.x].cleared = false;
       placedPositions.push(pos);
     }
