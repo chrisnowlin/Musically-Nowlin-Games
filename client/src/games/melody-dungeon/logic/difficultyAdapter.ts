@@ -128,9 +128,11 @@ export function getNoteReadingParams(tier: Tier): NoteReadingParams {
 
 // ── Rhythm ────────────────────────────────────────────────
 
+export type RhythmSubdivision = 'quarter' | 'eighth' | 'half' | 'sixteenth' | 'quarter-rest' | 'dotted-quarter' | 'triplet';
+
 export interface RhythmParams {
   patternLength: number;
-  subdivisions: ('quarter' | 'eighth' | 'half' | 'sixteenth')[];
+  subdivisions: RhythmSubdivision[];
   bpm: number;
   toleranceMs: number;
 }
@@ -140,15 +142,13 @@ export function getRhythmParams(tier: Tier): RhythmParams {
     case 1:
       return { patternLength: 4, subdivisions: ['quarter', 'half'], bpm: 72, toleranceMs: 350 };
     case 2:
-      return { patternLength: 4, subdivisions: ['quarter', 'half', 'eighth'], bpm: 80, toleranceMs: 300 };
+      return { patternLength: 4, subdivisions: ['quarter', 'half', 'quarter-rest', 'eighth'], bpm: 80, toleranceMs: 300 };
     case 3:
-      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth'], bpm: 95, toleranceMs: 225 };
+      return { patternLength: 5, subdivisions: ['quarter', 'eighth', 'dotted-quarter', 'sixteenth'], bpm: 95, toleranceMs: 225 };
     case 4:
-      // T4 placeholder
-      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth'], bpm: 110, toleranceMs: 175 };
+      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth', 'triplet'], bpm: 110, toleranceMs: 175 };
     case 5:
-      // T5 placeholder
-      return { patternLength: 8, subdivisions: ['quarter', 'eighth', 'sixteenth', 'half'], bpm: 120, toleranceMs: 150 };
+      return { patternLength: 8, subdivisions: ['quarter', 'eighth', 'sixteenth', 'triplet', 'dotted-quarter'], bpm: 120, toleranceMs: 150 };
   }
 }
 
