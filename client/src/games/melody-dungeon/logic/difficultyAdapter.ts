@@ -1,29 +1,97 @@
 import type { ChallengeType, Tier } from './dungeonTypes';
 
-/** Floor at which each challenge type first appears. */
-export const UNLOCK_FLOORS: Record<ChallengeType, number> = {
-  noteReading: 1,
-  dynamics: 1,
-  tempo: 6,
-  symbols: 11,
-  rhythmTap: 16,
-  terms: 21,
-  interval: 26,
-};
+// ── Floor Zone System ────────────────────────────────────────
+// 9 zones across 100 floors: 5 "pure" tiers + 4 transitions between them.
 
-/** Get all challenge types available on a given floor. */
-export function getChallengeTypesForFloor(floorNumber: number): ChallengeType[] {
-  return (Object.entries(UNLOCK_FLOORS) as [ChallengeType, number][])
-    .filter(([, unlockFloor]) => floorNumber >= unlockFloor)
-    .map(([type]) => type);
+interface FloorZoneEntry {
+  startFloor: number;
+  endFloor: number;
+  lowTier: Tier;
+  highTier: Tier;
 }
 
-/** Get the tier for a challenge type on a given floor. */
-export function getTierForChallenge(floorNumber: number, type: ChallengeType): Tier {
-  const floorsActive = floorNumber - UNLOCK_FLOORS[type];
-  if (floorsActive >= 25) return 3;
-  if (floorsActive >= 10) return 2;
-  return 1;
+const FLOOR_ZONES: FloorZoneEntry[] = [
+  { startFloor: 1,  endFloor: 12, lowTier: 1, highTier: 1 },  // T1 pure
+  { startFloor: 13, endFloor: 18, lowTier: 1, highTier: 2 },  // T1→T2 transition
+  { startFloor: 19, endFloor: 35, lowTier: 2, highTier: 2 },  // T2 pure
+  { startFloor: 36, endFloor: 42, lowTier: 2, highTier: 3 },  // T2→T3 transition
+  { startFloor: 43, endFloor: 68, lowTier: 3, highTier: 3 },  // T3 pure
+  { startFloor: 69, endFloor: 75, lowTier: 3, highTier: 4 },  // T3→T4 transition
+  { startFloor: 76, endFloor: 88, lowTier: 4, highTier: 4 },  // T4 pure
+  { startFloor: 89, endFloor: 94, lowTier: 4, highTier: 5 },  // T4→T5 transition
+  { startFloor: 95, endFloor: 100, lowTier: 5, highTier: 5 }, // T5 pure
+];
+
+export interface FloorZone {
+  lowTier: Tier;
+  highTier: Tier;
+  /** 0-1 progress through this zone (0 = start, 1 = end) */
+  progress: number;
+}
+
+/** Returns the zone info for a floor (1-100). Floors above 100 use the T5 pure zone. */
+export function getFloorZone(floor: number): FloorZone {
+  const clamped = Math.max(1, floor);
+  for (const zone of FLOOR_ZONES) {
+    if (clamped >= zone.startFloor && clamped <= zone.endFloor) {
+      const span = zone.endFloor - zone.startFloor;
+      const progress = span === 0 ? 1 : (clamped - zone.startFloor) / span;
+      return { lowTier: zone.lowTier, highTier: zone.highTier, progress };
+    }
+  }
+  // Above 100 — T5 pure
+  return { lowTier: 5, highTier: 5, progress: 1 };
+}
+
+/** Weighted random tier for a floor. In transition zones, progress determines highTier probability. */
+export function rollTier(floor: number): Tier {
+  const zone = getFloorZone(floor);
+  if (zone.lowTier === zone.highTier) return zone.lowTier;
+  // In transition zones, progress is the probability of rolling the higher tier
+  return Math.random() < zone.progress ? zone.highTier : zone.lowTier;
+}
+
+/** Enemy difficulty level 1-5 based on zone. Pure zones use their tier; transitions use the higher tier. */
+export function getEnemyLevel(floor: number): number {
+  const zone = getFloorZone(floor);
+  return zone.highTier;
+}
+
+// ── Challenge Type Weights ───────────────────────────────────
+
+const ALL_CHALLENGE_TYPES: ChallengeType[] = [
+  'noteReading', 'rhythmTap', 'interval', 'dynamics', 'tempo', 'symbols', 'terms', 'timbre',
+];
+
+/** Late-bloomer types ramp up in weight over the first 25 floors. */
+const LATE_BLOOMER_TYPES: ChallengeType[] = ['interval', 'terms'];
+
+/** Get the frequency weight (0.15-1.0) for a challenge type on a given floor. */
+export function getChallengeTypeWeight(type: ChallengeType, floor: number): number {
+  if (!LATE_BLOOMER_TYPES.includes(type)) return 1.0;
+  if (floor <= 12) return 0.15;
+  if (floor <= 24) return 0.5;
+  return 1.0;
+}
+
+/** Weighted random challenge type selection for a floor. */
+export function rollChallengeType(floor: number): ChallengeType {
+  const weights = ALL_CHALLENGE_TYPES.map(type => ({
+    type,
+    weight: getChallengeTypeWeight(type, floor),
+  }));
+  const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const { type, weight } of weights) {
+    roll -= weight;
+    if (roll <= 0) return type;
+  }
+  return weights[weights.length - 1].type;
+}
+
+/** Returns all 8 challenge types — every type is available from floor 1. */
+export function getChallengeTypesForFloor(_floorNumber: number): ChallengeType[] {
+  return [...ALL_CHALLENGE_TYPES];
 }
 
 // ── Note Reading ──────────────────────────────────────────
@@ -42,11 +110,20 @@ export interface NoteReadingParams {
 
 /** Note reading params based on tier. */
 export function getNoteReadingParams(tier: Tier): NoteReadingParams {
-  const mode: NoteReadingMode = tier === 1 ? 'space' : tier === 2 ? 'both' : 'ledger';
-  const notes = mode === 'space' ? SPACE_NOTES
-    : mode === 'both' ? BOTH_STAFF_NOTES
-    : LEDGER_NOTES;
-  return { notes: [...notes], useBassClef: false, mode };
+  switch (tier) {
+    case 1:
+      return { notes: [...SPACE_NOTES], useBassClef: false, mode: 'space' };
+    case 2:
+      return { notes: [...BOTH_STAFF_NOTES], useBassClef: false, mode: 'both' };
+    case 3:
+      return { notes: [...LEDGER_NOTES], useBassClef: false, mode: 'ledger' };
+    case 4:
+      // T4 placeholder: ledger lines + bass clef introduction
+      return { notes: [...LEDGER_NOTES], useBassClef: true, mode: 'ledger' };
+    case 5:
+      // T5 placeholder: full range with bass clef
+      return { notes: [...LEDGER_NOTES], useBassClef: true, mode: 'ledger' };
+  }
 }
 
 // ── Rhythm ────────────────────────────────────────────────
@@ -61,11 +138,17 @@ export interface RhythmParams {
 export function getRhythmParams(tier: Tier): RhythmParams {
   switch (tier) {
     case 1:
-      return { patternLength: 4, subdivisions: ['quarter', 'half'], bpm: 80, toleranceMs: 300 };
+      return { patternLength: 4, subdivisions: ['quarter', 'half'], bpm: 72, toleranceMs: 350 };
     case 2:
-      return { patternLength: 4, subdivisions: ['quarter', 'half', 'eighth'], bpm: 100, toleranceMs: 200 };
+      return { patternLength: 4, subdivisions: ['quarter', 'half', 'eighth'], bpm: 80, toleranceMs: 300 };
     case 3:
-      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth'], bpm: 120, toleranceMs: 150 };
+      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth'], bpm: 95, toleranceMs: 225 };
+    case 4:
+      // T4 placeholder
+      return { patternLength: 6, subdivisions: ['quarter', 'eighth', 'sixteenth'], bpm: 110, toleranceMs: 175 };
+    case 5:
+      // T5 placeholder
+      return { patternLength: 8, subdivisions: ['quarter', 'eighth', 'sixteenth', 'half'], bpm: 120, toleranceMs: 150 };
   }
 }
 
@@ -102,6 +185,32 @@ export function getIntervalParams(tier: Tier): IntervalParams {
           { name: '4th', semitones: 5 },
           { name: '5th', semitones: 7 },
           { name: '6th', semitones: 9 },
+          { name: 'Octave', semitones: 12 },
+        ],
+      };
+    case 4:
+      // T4 placeholder: add 7th
+      return {
+        intervals: [
+          { name: '2nd', semitones: 2 },
+          { name: '3rd', semitones: 4 },
+          { name: '4th', semitones: 5 },
+          { name: '5th', semitones: 7 },
+          { name: '6th', semitones: 9 },
+          { name: '7th', semitones: 11 },
+          { name: 'Octave', semitones: 12 },
+        ],
+      };
+    case 5:
+      // T5 placeholder: add minor/major distinction
+      return {
+        intervals: [
+          { name: '2nd', semitones: 2 },
+          { name: '3rd', semitones: 4 },
+          { name: '4th', semitones: 5 },
+          { name: '5th', semitones: 7 },
+          { name: '6th', semitones: 9 },
+          { name: '7th', semitones: 11 },
           { name: 'Octave', semitones: 12 },
         ],
       };

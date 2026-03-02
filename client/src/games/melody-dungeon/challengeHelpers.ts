@@ -1,7 +1,21 @@
 import type { ChallengeType, EnemySubtype, Tier } from './logic/dungeonTypes';
-import { getChallengeTypesForFloor, getTierForChallenge } from './logic/difficultyAdapter';
+import {
+  getChallengeTypesForFloor,
+  rollTier,
+  getFloorZone,
+  getEnemyLevel,
+  getChallengeTypeWeight,
+  rollChallengeType,
+} from './logic/difficultyAdapter';
 
-export { getChallengeTypesForFloor, getTierForChallenge };
+export {
+  getChallengeTypesForFloor,
+  rollTier,
+  getFloorZone,
+  getEnemyLevel,
+  getChallengeTypeWeight,
+  rollChallengeType,
+};
 
 export function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -28,13 +42,13 @@ export function generateBigBossSequence(floorNumber: number): BossRoundConfig[] 
 
   // Ensure each available type appears at least once
   for (const type of types) {
-    sequence.push({ type, tier: getTierForChallenge(floorNumber, type) });
+    sequence.push({ type, tier: rollTier(floorNumber) });
   }
 
   // Pad to 8 rounds with random picks
   while (sequence.length < 8) {
     const type = pickRandom(types);
-    sequence.push({ type, tier: getTierForChallenge(floorNumber, type) });
+    sequence.push({ type, tier: rollTier(floorNumber) });
   }
 
   return shuffle(sequence.slice(0, 8));
@@ -53,6 +67,7 @@ export function getSubtypeChallengePool(
     case 'wraith': return allFloorTypes.includes('tempo') ? ['tempo'] : allFloorTypes;
     case 'spider': return allFloorTypes.includes('symbols') ? ['symbols'] : allFloorTypes;
     case 'shade': return allFloorTypes.includes('terms') ? ['terms'] : allFloorTypes;
+    case 'siren': return allFloorTypes.includes('timbre') ? ['timbre'] : allFloorTypes;
     case 'ghost': return allFloorTypes; // Wildcard — any type on the floor
     case 'dragon': return allFloorTypes;
     default: return allFloorTypes;
@@ -71,6 +86,7 @@ export function getEnemySubtypesForFloor(floorNumber: number): EnemySubtype[] {
   if (types.includes('rhythmTap')) subtypes.push('skeleton');
   if (types.includes('terms')) subtypes.push('shade');
   if (types.includes('interval')) subtypes.push('goblin');
+  if (types.includes('timbre')) subtypes.push('siren');
 
   return subtypes;
 }

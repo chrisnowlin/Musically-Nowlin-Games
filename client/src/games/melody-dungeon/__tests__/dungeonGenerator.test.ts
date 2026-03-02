@@ -66,8 +66,8 @@ describe('generateDungeon', () => {
       (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
     );
     expect(enemies.length).toBeGreaterThan(0);
-    // Floor 1 unlocks noteReading + dynamics, so ghost, slime, and bat are valid subtypes
-    const validSubtypes = ['ghost', 'slime', 'bat'];
+    // All 8 challenge types are unlocked from floor 1, so all subtypes are valid
+    const validSubtypes = ['ghost', 'slime', 'bat', 'wraith', 'spider', 'skeleton', 'shade', 'goblin', 'siren'];
     for (const e of enemies) {
       expect(validSubtypes).toContain(e.enemySubtype);
       expect(e.enemyLevel).toBe(1);
