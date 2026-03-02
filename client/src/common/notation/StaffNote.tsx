@@ -13,7 +13,12 @@ interface StaffNoteProps {
 /** Convert "C4" → "c/4", "F#4" → "f#/4" for VexFlow. */
 function toVexFlowKey(noteKey: string): string {
   const match = noteKey.match(/^([A-Ga-g][#b]?)(\d)$/);
-  if (!match) return 'b/4';
+  if (!match) {
+    if (import.meta.env.DEV) {
+      console.warn(`StaffNote: invalid noteKey "${noteKey}", falling back to b/4`);
+    }
+    return 'b/4';
+  }
   return `${match[1].toLowerCase()}/${match[2]}`;
 }
 

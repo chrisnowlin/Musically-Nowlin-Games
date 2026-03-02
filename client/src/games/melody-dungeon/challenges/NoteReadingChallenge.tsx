@@ -36,12 +36,14 @@ const NoteReadingChallenge: React.FC<Props> = ({ tier, onResult }) => {
       // Filter note pool to only notes valid for the chosen clef
       const validNotes = clef === 'bass' ? BASS_CLEF_NOTES : TREBLE_CLEF_NOTES;
       notePool = params.notes.filter(n => validNotes.has(n));
+      if (notePool.length === 0) notePool = params.notes;
     }
 
     setActiveClef(clef);
     const note = notePool[Math.floor(Math.random() * notePool.length)];
     setTargetNote(note);
-    setTimeout(() => playNote(note), 300);
+    const timer = setTimeout(() => playNote(note), 300);
+    return () => clearTimeout(timer);
   }, [params.notes, params.mode]);
 
   const handleAnswer = (noteName: string) => {

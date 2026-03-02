@@ -1,42 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { describe, it, expect, vi } from 'vitest';
-
-vi.mock('vexflow', () => {
-  const mockContext = {
-    setStrokeStyle: vi.fn(),
-    setFillStyle: vi.fn(),
-  };
-  return {
-    Renderer: class {
-      static Backends = { SVG: 'svg' };
-      constructor(el: HTMLElement) {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        el.appendChild(svg);
-      }
-      resize() {}
-      getContext() { return mockContext; }
-    },
-    Stave: class {
-      addClef() { return this; }
-      setStyle() {}
-      draw() {}
-    },
-    StaveNote: class {
-      setStyle() {}
-    },
-    Voice: class {
-      setStrict() {}
-      addTickables() {}
-      draw() {}
-    },
-    Formatter: class {
-      joinVoices() { return this; }
-      format() { return this; }
-    },
-  };
-});
+import { describe, it, expect } from 'vitest';
+import { mockVexFlow } from '@/test/vexflowMock';
+mockVexFlow();
 
 import StaffNote from '../StaffNote';
 
