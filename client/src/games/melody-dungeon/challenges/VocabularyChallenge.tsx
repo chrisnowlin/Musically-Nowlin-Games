@@ -185,7 +185,7 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
               disabled={!!feedback}
               className={`
                 px-4 py-2.5 rounded-lg font-medium text-sm transition-all
-                flex flex-col items-center gap-1
+                flex flex-col items-center justify-center gap-1 text-center
                 ${feedback && isCorrect
                   ? 'bg-green-600 text-white scale-[1.02]'
                   : feedback
