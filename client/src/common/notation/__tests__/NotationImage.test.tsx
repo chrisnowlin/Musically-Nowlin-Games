@@ -23,28 +23,28 @@ describe('NotationImage', () => {
     expect(img?.classList.contains('invert')).toBe(true);
   });
 
-  it('uses h-14 (md) size by default', () => {
+  it('uses h-20 (md) size by default', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" />
     );
     const img = container.querySelector('img');
-    expect(img?.classList.contains('h-14')).toBe(true);
+    expect(img?.classList.contains('h-20')).toBe(true);
   });
 
-  it('uses h-12 for size="sm"', () => {
+  it('uses h-16 for size="sm"', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" size="sm" />
     );
     const img = container.querySelector('img');
-    expect(img?.classList.contains('h-12')).toBe(true);
+    expect(img?.classList.contains('h-16')).toBe(true);
   });
 
-  it('uses h-16 for size="lg"', () => {
+  it('uses h-24 for size="lg"', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" size="lg" />
     );
     const img = container.querySelector('img');
-    expect(img?.classList.contains('h-16')).toBe(true);
+    expect(img?.classList.contains('h-24')).toBe(true);
   });
 
   it('hides the image on load error', () => {
