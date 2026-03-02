@@ -241,7 +241,8 @@ const MelodyDungeonGame: React.FC = () => {
       stopBattleMusic();
       stopBgMusic();
     } else {
-      // shopping, inventory, floorComplete — keep music at normal volume
+      // shopping, inventory, floorComplete — stop battle music, restore ambient
+      stopBattleMusic();
       unduckBgMusic();
     }
   }, [phase, activeTileType]);
