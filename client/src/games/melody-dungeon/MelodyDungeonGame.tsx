@@ -143,6 +143,7 @@ const MelodyDungeonGame: React.FC = () => {
   const [shieldEffectActive, setShieldEffectActive] = useState(false);
   const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
     challengeType: ChallengeType;
     tier: Tier;
@@ -418,6 +419,21 @@ const MelodyDungeonGame: React.FC = () => {
           setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
           moveLockedRef.current = true;
           const challengeType: ChallengeType = anchorTile.challengeType || 'noteReading';
+
+          // Dev room: show config panel for boss encounters too
+          if (floor.floorNumber === 0) {
+            setPendingDevConfig({
+              challengeType,
+              tier: (anchorTile.enemyLevel || 3) as Tier,
+              tilePosition: bossAnchor.pos,
+              tileType: bossAnchor.type,
+              subtype: anchorTile.enemySubtype,
+              level: anchorTile.enemyLevel || 3,
+            });
+            setPhase('devConfig');
+            return prev;
+          }
+
           setActiveChallenge({ type: challengeType, tilePosition: bossAnchor.pos });
           setActiveTileType(bossAnchor.type);
           setActiveTileSubtype(anchorTile.enemySubtype);
@@ -432,6 +448,21 @@ const MelodyDungeonGame: React.FC = () => {
           setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
           moveLockedRef.current = true;
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
+
+          // Dev room: show config panel for boss encounters too
+          if (floor.floorNumber === 0) {
+            setPendingDevConfig({
+              challengeType,
+              tier: (tile.enemyLevel || 3) as Tier,
+              tilePosition: newPos,
+              tileType: tile.type,
+              subtype: tile.enemySubtype,
+              level: tile.enemyLevel || 3,
+            });
+            setPhase('devConfig');
+            return prev;
+          }
+
           // newPos is the anchor tile's position in this branch (player walked into the anchor directly)
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(tile.type);
@@ -758,6 +789,7 @@ const MelodyDungeonGame: React.FC = () => {
       }
 
       setActiveChallenge(null);
+      setOverrideTier(undefined);
       moveLockedRef.current = false;
 
       // Check game over or floor complete (dev room skips floorComplete)
@@ -912,9 +944,10 @@ const MelodyDungeonGame: React.FC = () => {
   const handleDevConfigStart = useCallback((type: ChallengeType, tier: Tier) => {
     if (!pendingDevConfig) return;
     setActiveChallenge({ type, tilePosition: pendingDevConfig.tilePosition });
-    setActiveTileType(TileType.Enemy);
+    setActiveTileType(pendingDevConfig.tileType);
     setActiveTileSubtype(pendingDevConfig.subtype);
-    setActiveTileLevel(tier);
+    setActiveTileLevel(pendingDevConfig.level);
+    setOverrideTier(tier);
     activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.armed.metronome > 0, tuningFork: playerRef.current.buffs.armed.tuningFork > 0 };
     setPendingDevConfig(null);
     setPhase('challenge');
@@ -923,6 +956,14 @@ const MelodyDungeonGame: React.FC = () => {
   const handleDevConfigCancel = useCallback(() => {
     setPendingDevConfig(null);
     moveLockedRef.current = false;
+    setPhase('playing');
+  }, []);
+
+  const handleExitEncounter = useCallback(() => {
+    setActiveChallenge(null);
+    setOverrideTier(undefined);
+    moveLockedRef.current = false;
+    activeChallengeBuffsRef.current = { metronome: false, tuningFork: false };
     setPhase('playing');
   }, []);
 
@@ -1287,6 +1328,8 @@ const MelodyDungeonGame: React.FC = () => {
           showIntervalHint={player.buffs.armed.tuningFork > 0}
           enemySubtype={activeTileSubtype}
           enemyLevel={activeTileLevel}
+          overrideTier={overrideTier}
+          onExit={floorNumber === 0 ? handleExitEncounter : undefined}
         />
       )}
 

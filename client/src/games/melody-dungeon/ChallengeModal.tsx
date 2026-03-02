@@ -29,6 +29,8 @@ interface Props {
   showIntervalHint?: boolean;
   enemySubtype?: EnemySubtype;
   enemyLevel?: number;
+  overrideTier?: Tier;
+  onExit?: () => void;
 }
 
 const MINI_BOSS_HP = 5;
@@ -180,7 +182,9 @@ const BossBattle: React.FC<{
   showIntervalHint?: boolean;
   enemySubtype?: EnemySubtype;
   enemyLevel?: number;
-}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel }) => {
+  overrideTier?: Tier;
+  onExit?: () => void;
+}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit }) => {
   const maxBossHp = useMemo(
     () => Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0)),
     [tileType, enemyLevel, dragonBane]
@@ -220,11 +224,12 @@ const BossBattle: React.FC<{
 
   const currentChallenge = useMemo(() => {
     if (bigBossSequence) {
-      return bigBossSequence[currentRound % bigBossSequence.length];
+      const round = bigBossSequence[currentRound % bigBossSequence.length];
+      return overrideTier ? { ...round, tier: overrideTier } : round;
     }
     const type = pickRandom(challengeTypes);
-    return { type, tier: rollTier(floorNumber) };
-  }, [bigBossSequence, challengeTypes, floorNumber, currentRound]);
+    return { type, tier: overrideTier ?? rollTier(floorNumber) };
+  }, [bigBossSequence, challengeTypes, floorNumber, currentRound, overrideTier]);
 
   const handleUsePotion = useCallback(() => {
     if (potionsRemaining > 0 && effectiveHealth < maxHealth) {
@@ -384,11 +389,20 @@ const BossBattle: React.FC<{
           <p className="text-sm text-gray-400 mt-1">Preparing...</p>
         </div>
       )}
+
+      {onExit && (
+        <button
+          onClick={onExit}
+          className="mt-2 w-full py-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          Exit Encounter
+        </button>
+      )}
     </div>
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1 }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit }) => {
   const theme = tileType === TileType.Enemy
     ? getEnemyTheme(enemySubtype)
     : (TILE_THEME[tileType] || DEFAULT_THEME);
@@ -397,7 +411,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
     tileType === TileType.MiniBoss ||
     tileType === TileType.BigBoss;
 
-  const tier = rollTier(floorNumber);
+  const tier = overrideTier ?? rollTier(floorNumber);
   const headerSprite = !isMultiRound ? getEncounterSprite(tileType, enemySubtype) : null;
 
   return (
@@ -437,9 +451,21 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
             showIntervalHint={showIntervalHint}
             enemySubtype={enemySubtype}
             enemyLevel={enemyLevel}
+            overrideTier={overrideTier}
+            onExit={onExit}
           />
         ) : (
-          <ChallengeRenderer type={challengeType} tier={tier} floorNumber={floorNumber} onResult={onResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
+          <>
+            <ChallengeRenderer type={challengeType} tier={tier} floorNumber={floorNumber} onResult={onResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="mt-3 w-full py-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                Exit Encounter
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import {
   type Position,
   type Rect,
   type EnemySubtype,
+  type ChallengeType,
   TileType,
   getDungeonSize,
   DUNGEON_BASE_SIZE,
@@ -591,16 +592,25 @@ export function generateDevRoom(): DungeonFloor {
   grid[13][14].type = TileType.Merchant;
 
   // Place one of each enemy type in a row south of player at y=18
-  const enemySubtypes: EnemySubtype[] = [
-    'ghost', 'skeleton', 'goblin', 'slime', 'bat',
-    'wraith', 'spider', 'shade', 'siren', 'dragon',
+  // Each subtype gets its signature challenge type matching normal gameplay
+  const enemySubtypes: { subtype: EnemySubtype; challengeType: ChallengeType }[] = [
+    { subtype: 'slime', challengeType: 'noteReading' },
+    { subtype: 'skeleton', challengeType: 'rhythmTap' },
+    { subtype: 'goblin', challengeType: 'interval' },
+    { subtype: 'bat', challengeType: 'dynamics' },
+    { subtype: 'wraith', challengeType: 'tempo' },
+    { subtype: 'spider', challengeType: 'symbols' },
+    { subtype: 'shade', challengeType: 'terms' },
+    { subtype: 'siren', challengeType: 'timbre' },
+    { subtype: 'ghost', challengeType: 'noteReading' },
+    { subtype: 'dragon', challengeType: 'noteReading' },
   ];
-  enemySubtypes.forEach((subtype, i) => {
+  enemySubtypes.forEach(({ subtype, challengeType }, i) => {
     const x = 10 + i;
     grid[18][x].type = TileType.Enemy;
     grid[18][x].enemySubtype = subtype;
     grid[18][x].enemyLevel = 3;
-    grid[18][x].challengeType = 'noteReading';
+    grid[18][x].challengeType = challengeType;
     grid[18][x].cleared = false;
     grid[18][x].enemyState = 'guarding';
   });
