@@ -18,6 +18,10 @@ interface NotationImageProps {
 /**
  * Displays a LilyPond-engraved SVG notation image with consistent
  * dark-theme styling (CSS invert filter) and error handling.
+ *
+ * Uses a wrapper div for width sizing because LilyPond SVGs have fixed
+ * intrinsic dimensions (e.g. width="37mm"). The inner img uses w-full
+ * to scale to fill the wrapper.
  */
 export default function NotationImage({
   src,
@@ -26,13 +30,15 @@ export default function NotationImage({
   className = '',
 }: NotationImageProps) {
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={`${SIZE_CLASSES[size]} mx-auto invert ${className}`.trim()}
-      onError={(e) => {
-        (e.target as HTMLImageElement).style.display = 'none';
-      }}
-    />
+    <div className={`${SIZE_CLASSES[size]} mx-auto ${className}`.trim()}>
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-auto invert"
+        onError={(e) => {
+          (e.target as HTMLImageElement).style.display = 'none';
+        }}
+      />
+    </div>
   );
 }

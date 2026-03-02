@@ -15,36 +15,37 @@ describe('NotationImage', () => {
     expect(img?.getAttribute('alt')).toBe('Test notation');
   });
 
-  it('applies the invert filter class', () => {
+  it('applies the invert filter class to the img', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" />
     );
     const img = container.querySelector('img');
     expect(img?.classList.contains('invert')).toBe(true);
+    expect(img?.classList.contains('w-full')).toBe(true);
   });
 
-  it('uses w-4/5 (md) size by default', () => {
+  it('uses w-4/5 (md) wrapper size by default', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" />
     );
-    const img = container.querySelector('img');
-    expect(img?.classList.contains('w-4/5')).toBe(true);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.classList.contains('w-4/5')).toBe(true);
   });
 
-  it('uses w-3/5 for size="sm"', () => {
+  it('uses w-3/5 wrapper for size="sm"', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" size="sm" />
     );
-    const img = container.querySelector('img');
-    expect(img?.classList.contains('w-3/5')).toBe(true);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.classList.contains('w-3/5')).toBe(true);
   });
 
-  it('uses w-full for size="lg"', () => {
+  it('uses w-full wrapper for size="lg"', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" size="lg" />
     );
-    const img = container.querySelector('img');
-    expect(img?.classList.contains('w-full')).toBe(true);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.classList.contains('w-full')).toBe(true);
   });
 
   it('hides the image on load error', () => {
@@ -56,11 +57,11 @@ describe('NotationImage', () => {
     expect(img.style.display).toBe('none');
   });
 
-  it('passes additional className to the img', () => {
+  it('passes additional className to the wrapper div', () => {
     const { container } = render(
       <NotationImage src="/images/test.svg" alt="Test" className="mb-2" />
     );
-    const img = container.querySelector('img');
-    expect(img?.classList.contains('mb-2')).toBe(true);
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.classList.contains('mb-2')).toBe(true);
   });
 });
