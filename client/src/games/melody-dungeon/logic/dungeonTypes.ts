@@ -9,6 +9,7 @@ export enum TileType {
   PlayerStart = 'playerStart',
   Merchant = 'merchant',
   MerchantStall = 'merchantStall',
+  Jukebox = 'jukebox',
   MiniBoss = 'miniBoss',
   BigBoss = 'bigBoss',
   BossBody = 'bossBody',
