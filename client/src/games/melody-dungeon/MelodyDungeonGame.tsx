@@ -146,6 +146,7 @@ const MelodyDungeonGame: React.FC = () => {
   const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showJukebox, setShowJukebox] = useState(false);
+  const [showLootBanner, setShowLootBanner] = useState(false);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
@@ -933,6 +934,10 @@ const MelodyDungeonGame: React.FC = () => {
     const newFloor = generateDungeon(selectedStartFloor);
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
+    if (visibleFloor.isLootFloor) {
+      setShowLootBanner(true);
+      setTimeout(() => setShowLootBanner(false), 2500);
+    }
     setPlayer(createPlayer(newFloor.playerStart));
     setFloorsCleared(0);
     setDevMode({ ...DEFAULT_DEV_MODE });
@@ -1017,6 +1022,10 @@ const MelodyDungeonGame: React.FC = () => {
     const newFloor = generateDungeon(nextFloorNum);
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
+    if (visibleFloor.isLootFloor) {
+      setShowLootBanner(true);
+      setTimeout(() => setShowLootBanner(false), 2500);
+    }
     setPlayer((prev) => ({
       ...prev,
       position: { ...newFloor.playerStart },
@@ -1248,9 +1257,10 @@ const MelodyDungeonGame: React.FC = () => {
 
   // --- FLOOR COMPLETE ---
   if (phase === 'floorComplete') {
+    const isLoot = floor.isLootFloor;
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-emerald-950/30 to-gray-950 flex flex-col items-center justify-center p-4 text-white">
-        <div className="bg-gray-900/80 rounded-2xl p-6 max-w-sm w-full text-center border border-emerald-800">
+      <div className={`min-h-screen bg-gradient-to-b ${isLoot ? 'from-gray-950 via-yellow-950/30 to-gray-950' : 'from-gray-950 via-emerald-950/30 to-gray-950'} flex flex-col items-center justify-center p-4 text-white`}>
+        <div className={`bg-gray-900/80 rounded-2xl p-6 max-w-sm w-full text-center ${isLoot ? 'border border-yellow-600' : 'border border-emerald-800'}`}>
           <div className="text-4xl mb-2">{'\uD83E\uDEDC'}</div>
           <h2 className="text-2xl font-bold mb-1">Floor {floorNumber} Cleared!</h2>
           <p className="text-gray-400 text-sm mb-4">
@@ -1282,7 +1292,7 @@ const MelodyDungeonGame: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} />
+          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} isLootFloor={floor.isLootFloor} />
         </div>
       </div>
       {devMode.active && (
@@ -1339,6 +1349,16 @@ const MelodyDungeonGame: React.FC = () => {
           <div className="absolute inset-0 shield-radial-bg" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-6xl animate-shield-pop">{'\uD83D\uDEE1\uFE0F'}</span>
+          </div>
+        </div>
+      )}
+
+      {showLootBanner && (
+        <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center">
+          <div className="bg-gradient-to-r from-yellow-900/90 via-amber-800/90 to-yellow-900/90 border-2 border-yellow-400 rounded-2xl px-8 py-4 text-center animate-bounce-in shadow-lg shadow-yellow-500/30">
+            <div className="text-4xl mb-1">{'\uD83D\uDCB0'}</div>
+            <h2 className="text-2xl font-bold text-yellow-300">Loot Floor!</h2>
+            <p className="text-yellow-100/80 text-sm">Treasure awaits...</p>
           </div>
         </div>
       )}

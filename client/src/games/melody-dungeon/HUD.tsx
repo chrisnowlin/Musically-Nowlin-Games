@@ -6,9 +6,10 @@ interface HUDProps {
   floorNumber: number;
   themeName?: string;
   onOpenBag?: () => void;
+  isLootFloor?: boolean;
 }
 
-const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag }) => {
+const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, isLootFloor }) => {
   const hearts = Array.from({ length: player.maxHealth }, (_, i) =>
     i < player.health ? '\u2764\uFE0F' : '\uD83E\uDD0D'
   );
@@ -92,8 +93,8 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag }) 
             {'\uD83D\uDD25'} {player.streak}
           </span>
         )}
-        <span className="text-purple-300 font-medium" title="Floor">
-          B{floorNumber}F
+        <span className={`font-medium ${isLootFloor ? 'text-yellow-400' : 'text-purple-300'}`} title="Floor">
+          B{floorNumber}F {isLootFloor && '\uD83D\uDCB0'}
         </span>
         {themeName && (
           <span className="text-gray-400 text-xs italic hidden sm:inline" title="Dungeon Theme">
