@@ -473,6 +473,25 @@
     animation: sprite-float 2.4s ease-in-out infinite;
   }
 
+  /* Enemy sprite shakes when taking damage in challenge modal */
+  @keyframes sprite-hit {
+    0%, 100% { transform: translateX(0); filter: brightness(1); }
+    15%, 45%, 75% { transform: translateX(-4px); filter: brightness(2.5); }
+    30%, 60%, 90% { transform: translateX(4px); filter: brightness(1.5); }
+  }
+  .animate-sprite-hit {
+    animation: sprite-hit 0.6s ease-out;
+  }
+
+  /* Enemy sprite lunges forward when attacking player */
+  @keyframes sprite-attack {
+    0%, 100% { transform: scale(1) translateY(0); }
+    40% { transform: scale(1.2) translateY(8%); }
+  }
+  .animate-sprite-attack {
+    animation: sprite-attack 0.5s ease-out;
+  }
+
   /* Dragon fire catch effect */
   @keyframes dragon-fire {
     0% { opacity: 0; }

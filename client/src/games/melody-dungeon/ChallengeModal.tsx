@@ -94,6 +94,28 @@ const DEFAULT_THEME = {
   bgColor: 'from-indigo-950/90 to-gray-900/95',
 };
 
+const ENEMY_SPRITE: Record<string, string> = {
+  ghost: '/images/melody-dungeon/ghost.png',
+  skeleton: '/images/melody-dungeon/skeleton.png',
+  dragon: '/images/melody-dungeon/dragon.png',
+  goblin: '/images/melody-dungeon/goblin.png',
+  slime: '/images/melody-dungeon/slime.png',
+  bat: '/images/melody-dungeon/bat.png',
+  wraith: '/images/melody-dungeon/wraith.png',
+  spider: '/images/melody-dungeon/spider.png',
+  shade: '/images/melody-dungeon/shade.png',
+  siren: '/images/melody-dungeon/siren.png',
+};
+
+function getEncounterSprite(tileType: TileType, enemySubtype?: EnemySubtype): string | null {
+  if (tileType === TileType.BigBoss) return '/images/melody-dungeon/bigboss.png';
+  if (tileType === TileType.MiniBoss) return '/images/melody-dungeon/miniboss.png';
+  if (tileType === TileType.Enemy && enemySubtype) {
+    return ENEMY_SPRITE[enemySubtype] ?? null;
+  }
+  return null;
+}
+
 function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColor: string; bgColor: string } {
   switch (enemySubtype) {
     case 'dragon':
@@ -257,8 +279,23 @@ const BossBattle: React.FC<{
     }
   }, [bossHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, potionsUsed, onResult]);
 
+  const spriteSrc = useMemo(() => getEncounterSprite(tileType, enemySubtype), [tileType, enemySubtype]);
+  const isReacting = roundTransition && !showItemPhase;
+  const spriteAnimClass = isReacting
+    ? (lastResult ? 'animate-sprite-hit' : 'animate-sprite-attack')
+    : 'animate-sprite-float';
+
   return (
     <div className="flex flex-col items-center gap-3">
+      {spriteSrc && (
+        <img
+          key={isReacting ? `react-${currentRound}` : 'idle'}
+          src={spriteSrc}
+          alt={bossLabel}
+          className={`w-16 h-16 object-contain drop-shadow-[0_0_8px_rgba(168,85,247,0.5)] ${spriteAnimClass}`}
+          draggable={false}
+        />
+      )}
       <div className="w-full max-w-[200px] space-y-2">
         <div>
           <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -361,6 +398,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
     tileType === TileType.BigBoss;
 
   const tier = rollTier(floorNumber);
+  const headerSprite = !isMultiRound ? getEncounterSprite(tileType, enemySubtype) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -371,6 +409,16 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
           animate-in fade-in zoom-in-95 duration-200
         `}
       >
+        {headerSprite && (
+          <div className="flex justify-center mb-2">
+            <img
+              src={headerSprite}
+              alt={theme.title}
+              className="w-14 h-14 object-contain animate-sprite-float drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+              draggable={false}
+            />
+          </div>
+        )}
         <h2 className="text-center text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
           {theme.title}
         </h2>
