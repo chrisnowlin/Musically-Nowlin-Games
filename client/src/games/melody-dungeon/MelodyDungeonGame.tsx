@@ -993,6 +993,13 @@ const MelodyDungeonGame: React.FC = () => {
     setPhase('playing');
   }, []);
 
+  const respawnToStart = useCallback(() => {
+    const start = floor.playerStart;
+    setPlayer((prev) => ({ ...prev, position: { ...start } }));
+    setFloor((f) => updateVisibility(f, start, getVisRadius()));
+    moveLockedRef.current = false;
+  }, [floor.playerStart]);
+
   const handleDevConfigStart = useCallback((type: ChallengeType, tier: Tier) => {
     if (!pendingDevConfig) return;
     setActiveChallenge({ type, tilePosition: pendingDevConfig.tilePosition });
@@ -1319,6 +1326,7 @@ const MelodyDungeonGame: React.FC = () => {
             onToggleInfiniteHealth={() => setDevMode((prev) => ({ ...prev, infiniteHealth: !prev.infiniteHealth }))}
             onReset={resetDevRoom}
             onLootFloor={enterLootFloor}
+            onRespawn={respawnToStart}
             onBackToMenu={() => {
               setDevMode({ ...DEFAULT_DEV_MODE });
               setPhase('menu');

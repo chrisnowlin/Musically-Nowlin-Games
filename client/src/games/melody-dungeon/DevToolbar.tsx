@@ -8,9 +8,10 @@ interface Props {
   onReset: () => void;
   onBackToMenu: () => void;
   onLootFloor?: () => void;
+  onRespawn?: () => void;
 }
 
-const DevToolbar: React.FC<Props> = ({ devMode, onToggleInfiniteGold, onToggleInfiniteHealth, onReset, onBackToMenu, onLootFloor }) => {
+const DevToolbar: React.FC<Props> = ({ devMode, onToggleInfiniteGold, onToggleInfiniteHealth, onReset, onBackToMenu, onLootFloor, onRespawn }) => {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 px-3 py-1.5 bg-cyan-950/60 backdrop-blur-sm rounded-lg border border-cyan-800 text-xs">
       <span className="text-cyan-400 font-bold uppercase tracking-wider mr-1">Dev</span>
@@ -43,6 +44,15 @@ const DevToolbar: React.FC<Props> = ({ devMode, onToggleInfiniteGold, onToggleIn
           className="px-2 py-1 rounded-md font-medium bg-yellow-900 text-yellow-300 border border-yellow-600 hover:bg-yellow-800 transition-colors"
         >
           {'\uD83D\uDCB0'} Loot Floor
+        </button>
+      )}
+
+      {onRespawn && (
+        <button
+          onClick={onRespawn}
+          className="px-2 py-1 rounded-md font-medium bg-purple-900 text-purple-300 border border-purple-600 hover:bg-purple-800 transition-colors"
+        >
+          Respawn
         </button>
       )}
 
