@@ -57,7 +57,7 @@ function buildOppositesChallenge(oppEntries: VocabEntry[]): OppositesChallengeDa
   // Pick two different opposites entries
   const shuffled = shuffle([...oppEntries]);
   const correctEntry = shuffled[0];
-  const wrongEntry = shuffled.find((e) => e.term !== correctEntry.term)!;
+  const wrongEntry = shuffled.find((e) => e.term !== correctEntry.term) ?? shuffled[1];
 
   const questionText = `Which means "${correctEntry.definition}"?`;
   const options = shuffle([correctEntry, wrongEntry]);
@@ -97,7 +97,7 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult }) => {
     const ordEntries = entries.filter((e) => e.format === 'ordering');
     const stdEntries = entries.filter((e) => !e.format || e.format === 'standard');
 
-    // Weighted random selection among available formats
+    // Uniform random selection among available formats
     const formats: Array<'standard' | 'opposites' | 'ordering'> = [];
     if (stdEntries.length > 0) formats.push('standard');
     if (oppEntries.length >= 2) formats.push('opposites');

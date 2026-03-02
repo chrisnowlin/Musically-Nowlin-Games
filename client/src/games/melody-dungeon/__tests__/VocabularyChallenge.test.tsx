@@ -83,20 +83,6 @@ describe('VocabularyChallenge – opposites format', () => {
   // So the only available format is 'opposites', which will always be chosen.
   // But we need at least 2 opposites entries, which we have (f, p, Dynamics, Loud vs Soft).
 
-  let originalRandom: () => number;
-
-  beforeEach(() => {
-    originalRandom = Math.random;
-    // Force format selection to pick opposites (index 0 if only format)
-    // For dynamics tier 1: all entries are opposites, no standard entries.
-    // formats = ['opposites'], so any random picks opposites.
-    // Then for entry selection / shuffle we can let it run naturally.
-  });
-
-  afterEach(() => {
-    Math.random = originalRandom;
-  });
-
   it('renders exactly 2 buttons for opposites format', () => {
     // dynamics tier 1 has ONLY opposites entries, so opposites format is guaranteed
     render(<VocabularyChallenge category="dynamics" tier={1} onResult={() => {}} />);
