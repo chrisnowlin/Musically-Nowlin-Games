@@ -1,11 +1,15 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { describe, it, expect } from 'vitest';
-import { mockVexFlow } from '@/test/vexflowMock';
+import { describe, it, expect, afterEach } from 'vitest';
+import { mockVexFlow, setVexFlowShouldThrow } from '@/test/vexflowMock';
 mockVexFlow();
 
 import StaffNote from '../StaffNote';
+
+afterEach(() => {
+  setVexFlowShouldThrow(false);
+});
 
 describe('StaffNote', () => {
   it('renders an SVG element', () => {
@@ -42,5 +46,22 @@ describe('StaffNote', () => {
     rerender(<StaffNote noteKey="G4" clef="treble" />);
     const svg2 = container.querySelector('svg');
     expect(svg2).toBeInTheDocument();
+  });
+
+  it('shows text fallback when VexFlow rendering fails', () => {
+    setVexFlowShouldThrow(true);
+    const { container } = render(
+      <StaffNote noteKey="D4" clef="treble" className="test-error" />
+    );
+    // Should NOT have an SVG since rendering threw
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeInTheDocument();
+    // Should show the noteKey as text fallback
+    expect(container.textContent).toBe('D4');
+    // Fallback div should have the expected classes
+    const fallback = container.firstElementChild;
+    expect(fallback?.classList.contains('text-slate-400')).toBe(true);
+    expect(fallback?.classList.contains('font-mono')).toBe(true);
+    expect(fallback?.classList.contains('test-error')).toBe(true);
   });
 });

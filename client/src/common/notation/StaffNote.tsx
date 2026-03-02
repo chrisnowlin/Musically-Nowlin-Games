@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Renderer, Stave, StaveNote, Voice, Formatter } from 'vexflow';
 
 interface StaffNoteProps {
@@ -28,48 +28,68 @@ function toVexFlowKey(noteKey: string): string {
  */
 export default function StaffNote({ noteKey, clef, className }: StaffNoteProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    setHasError(false);
+
     const el = containerRef.current;
     if (!el) return;
 
     // Clear previous render
     el.innerHTML = '';
 
-    const renderer = new Renderer(el, Renderer.Backends.SVG);
-    renderer.resize(200, 120);
-    const context = renderer.getContext();
+    try {
+      const w = el.clientWidth || 200;
+      const h = el.clientHeight || 120;
 
-    // Dark theme: gray staff lines
-    context.setStrokeStyle('#94a3b8');
-    context.setFillStyle('#94a3b8');
+      const renderer = new Renderer(el, Renderer.Backends.SVG);
+      renderer.resize(w, h);
+      const context = renderer.getContext();
 
-    const stave = new Stave(10, 10, 170);
-    stave.addClef(clef);
-    stave.setStyle({ strokeStyle: '#94a3b8', fillStyle: '#94a3b8' });
-    stave.setContext(context).draw();
+      // Dark theme: gray staff lines
+      context.setStrokeStyle('#94a3b8');
+      context.setFillStyle('#94a3b8');
 
-    // Create the note
-    const vexKey = toVexFlowKey(noteKey);
-    const note = new StaveNote({
-      keys: [vexKey],
-      duration: 'q',
-      clef: clef,
-    });
-    // Purple note head
-    note.setStyle({ fillStyle: '#a78bfa', strokeStyle: '#a78bfa' });
+      const staveWidth = Math.max(100, w - 30);
+      const stave = new Stave(10, 10, staveWidth);
+      stave.addClef(clef);
+      stave.setStyle({ strokeStyle: '#94a3b8', fillStyle: '#94a3b8' });
+      stave.setContext(context).draw();
 
-    const voice = new Voice({ numBeats: 1, beatValue: 4 });
-    voice.setStrict(false);
-    voice.addTickables([note]);
+      // Create the note
+      const vexKey = toVexFlowKey(noteKey);
+      const note = new StaveNote({
+        keys: [vexKey],
+        duration: 'q',
+        clef: clef,
+      });
+      // Purple note head
+      note.setStyle({ fillStyle: '#a78bfa', strokeStyle: '#a78bfa' });
 
-    new Formatter().joinVoices([voice]).format([voice], 100);
-    voice.draw(context, stave);
+      const voice = new Voice({ numBeats: 1, beatValue: 4 });
+      voice.setStrict(false);
+      voice.addTickables([note]);
+
+      new Formatter().joinVoices([voice]).format([voice], staveWidth - 70);
+      voice.draw(context, stave);
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn('StaffNote: VexFlow rendering failed', err);
+      setHasError(true);
+    }
 
     return () => {
       el.innerHTML = '';
     };
   }, [noteKey, clef]);
+
+  if (hasError) {
+    return (
+      <div className={`flex items-center justify-center text-slate-400 text-lg font-mono ${className ?? ''}`}>
+        {noteKey}
+      </div>
+    );
+  }
 
   return <div ref={containerRef} className={className} />;
 }
