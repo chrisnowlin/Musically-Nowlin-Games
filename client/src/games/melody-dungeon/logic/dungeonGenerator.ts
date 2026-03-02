@@ -3,6 +3,7 @@ import {
   type Tile,
   type Position,
   type Rect,
+  type EnemySubtype,
   TileType,
   getDungeonSize,
   DUNGEON_BASE_SIZE,
@@ -568,11 +569,61 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
   };
 }
 
+/** Generate a fixed 30×30 open room for dev/testing. All tiles visible, no fog of war. */
+export function generateDevRoom(): DungeonFloor {
+  const size = 30;
+  const grid = createEmptyGrid(size, size);
+
+  // Carve a single open room (the entire interior)
+  for (let y = 1; y < size - 1; y++) {
+    for (let x = 1; x < size - 1; x++) {
+      grid[y][x].type = TileType.Floor;
+      grid[y][x].visible = true;
+      grid[y][x].visited = true;
+    }
+  }
+
+  const playerStart: Position = { x: 15, y: 15 };
+  grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
+
+  // Place merchant pair northwest of player
+  grid[13][13].type = TileType.MerchantStall;
+  grid[13][14].type = TileType.Merchant;
+
+  // Place one of each enemy type in a row south of player at y=18
+  const enemySubtypes: EnemySubtype[] = [
+    'ghost', 'skeleton', 'goblin', 'slime', 'bat',
+    'wraith', 'spider', 'shade', 'siren', 'dragon',
+  ];
+  enemySubtypes.forEach((subtype, i) => {
+    const x = 10 + i;
+    grid[18][x].type = TileType.Enemy;
+    grid[18][x].enemySubtype = subtype;
+    grid[18][x].enemyLevel = 3;
+    grid[18][x].challengeType = 'noteReading';
+    grid[18][x].cleared = false;
+    grid[18][x].enemyState = 'guarding';
+  });
+
+  return {
+    tiles: grid,
+    width: size,
+    height: size,
+    floorNumber: 0,
+    themeIndex: 0,
+    playerStart,
+    stairsPosition: playerStart, // No stairs in dev room
+  };
+}
+
 /**
  * Move all uncleared enemies one step in a random cardinal direction.
  * Dragons stay within Chebyshev distance 2 of the nearest uncleared chest.
  */
 export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFloor {
+  // Dev room: enemies don't move
+  if (floor.floorNumber === 0) return floor;
+
   const tiles = floor.tiles.map((row) => row.map((t) => ({ ...t })));
 
   // Collect enemies and uncleared chests.
