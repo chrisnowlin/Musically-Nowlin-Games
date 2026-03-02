@@ -13,16 +13,14 @@ export interface VocabEntry {
 }
 
 const DYNAMICS_ENTRIES: VocabEntry[] = [
-  // Tier 1 (K-1): opposites format
-  { term: 'f', definition: 'Loud (forte)', tier: 1, category: 'dynamics', format: 'opposites' },
-  { term: 'p', definition: 'Soft (piano)', tier: 1, category: 'dynamics', format: 'opposites' },
-  { term: 'Dynamics', definition: 'How loud or soft music is', tier: 1, category: 'dynamics', format: 'opposites' },
-  { term: 'Loud vs Soft', definition: 'Music can be loud or soft', tier: 1, category: 'dynamics', format: 'opposites' },
+  // Tier 1 (K-1): opposites format — just f vs p, no parenthetical hints
+  { term: 'f', definition: 'Loud', tier: 1, category: 'dynamics', format: 'opposites' },
+  { term: 'p', definition: 'Soft', tier: 1, category: 'dynamics', format: 'opposites' },
   // Tier 2 (2-3): standard 4-choice MC
   { term: 'piano', definition: 'Soft', symbol: '𝆏', tier: 2, category: 'dynamics' },
   { term: 'forte', definition: 'Loud', symbol: '𝆑', tier: 2, category: 'dynamics' },
-  { term: 'mf', definition: 'Moderately loud (mezzo-forte)', symbol: 'mf', tier: 2, category: 'dynamics' },
-  { term: 'mp', definition: 'Moderately soft (mezzo-piano)', symbol: 'mp', tier: 2, category: 'dynamics' },
+  { term: 'mf', definition: 'Moderately loud', symbol: 'mf', tier: 2, category: 'dynamics' },
+  { term: 'mp', definition: 'Moderately soft', symbol: 'mp', tier: 2, category: 'dynamics' },
   { term: 'Crescendo', definition: 'Gradually getting louder', symbol: 'cresc.', tier: 2, category: 'dynamics' },
   { term: 'Decrescendo', definition: 'Gradually getting softer', symbol: 'decresc.', tier: 2, category: 'dynamics' },
   // Tier 3 (4-5): standard + ordering
@@ -44,11 +42,9 @@ const DYNAMICS_ENTRIES: VocabEntry[] = [
 ];
 
 const TEMPO_ENTRIES: VocabEntry[] = [
-  // Tier 1 (K-1): opposites format
+  // Tier 1 (K-1): opposites format — just Allegro vs Adagio
   { term: 'Allegro', definition: 'Fast', tier: 1, category: 'tempo', format: 'opposites' },
   { term: 'Adagio', definition: 'Slow', tier: 1, category: 'tempo', format: 'opposites' },
-  { term: 'Tempo', definition: 'How fast or slow music is', tier: 1, category: 'tempo', format: 'opposites' },
-  { term: 'Fast vs Slow', definition: 'Music can be fast or slow', tier: 1, category: 'tempo', format: 'opposites' },
   // Tier 2 (2-3): standard MC
   { term: 'Allegro (fast)', definition: 'Fast and lively', tier: 2, category: 'tempo' },
   { term: 'Adagio (slow)', definition: 'Slow and stately', tier: 2, category: 'tempo' },

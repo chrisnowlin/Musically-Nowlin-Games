@@ -51,11 +51,11 @@ describe('vocabData integrity', () => {
     }
   });
 
-  it('each tier within each category has at least 4 entries', () => {
+  it('each tier within each category has at least 2 entries', () => {
     for (const cat of CATEGORIES) {
       for (const tier of TIERS) {
         const entries = getAllVocabEntries().filter((e) => e.category === cat && e.tier === tier);
-        expect(entries.length, `${cat} tier ${tier} has fewer than 4 entries`).toBeGreaterThanOrEqual(4);
+        expect(entries.length, `${cat} tier ${tier} has fewer than 2 entries`).toBeGreaterThanOrEqual(2);
       }
     }
   });
@@ -88,10 +88,10 @@ describe('getVocabEntries', () => {
     }
   });
 
-  it('each category tier-1 has at least 4 entries (for 4-button quiz)', () => {
+  it('each category tier-1 has at least 2 entries (opposites format needs 2)', () => {
     for (const cat of CATEGORIES) {
       const entries = getVocabEntries(cat, 1);
-      expect(entries.length, `${cat} tier 1 has fewer than 4 entries`).toBeGreaterThanOrEqual(4);
+      expect(entries.length, `${cat} tier 1 has fewer than 2 entries`).toBeGreaterThanOrEqual(2);
     }
   });
 });
