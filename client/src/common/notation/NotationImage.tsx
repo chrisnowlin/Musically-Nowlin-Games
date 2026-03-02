@@ -1,7 +1,7 @@
 const SIZE_CLASSES = {
-  sm: 'max-h-40',
-  md: 'max-h-56',
-  lg: 'max-h-64',
+  sm: 'w-3/5',
+  md: 'w-4/5',
+  lg: 'w-full',
 } as const;
 
 interface NotationImageProps {
@@ -9,7 +9,7 @@ interface NotationImageProps {
   src: string;
   /** Accessible alt text. */
   alt: string;
-  /** Display size: sm=max-h-40, md=max-h-56 (default), lg=max-h-64. */
+  /** Display size: sm=w-3/5, md=w-4/5 (default), lg=w-full. */
   size?: 'sm' | 'md' | 'lg';
   /** Additional CSS classes (e.g., margin). */
   className?: string;
