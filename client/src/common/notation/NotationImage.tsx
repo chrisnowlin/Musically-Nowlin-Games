@@ -1,7 +1,7 @@
 const SIZE_CLASSES = {
-  sm: 'h-20',
-  md: 'h-28',
-  lg: 'h-32',
+  sm: 'h-40',
+  md: 'h-56',
+  lg: 'h-64',
 } as const;
 
 interface NotationImageProps {
@@ -9,7 +9,7 @@ interface NotationImageProps {
   src: string;
   /** Accessible alt text. */
   alt: string;
-  /** Display size: sm=h-20, md=h-28 (default), lg=h-32. */
+  /** Display size: sm=h-40, md=h-56 (default), lg=h-64. */
   size?: 'sm' | 'md' | 'lg';
   /** Additional CSS classes (e.g., margin). */
   className?: string;
