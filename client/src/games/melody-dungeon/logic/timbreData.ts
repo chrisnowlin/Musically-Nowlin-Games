@@ -9,13 +9,13 @@ export interface TimbreEntry {
   family?: InstrumentFamily; // for T2 family-level challenges
 }
 
-// ── T1: Voice types (conceptual, no real instruments) ─────────────
+// ── T1: Sound properties (pitch & speed, no real instruments) ─────
 
 const T1_POOL: TimbreEntry[] = [
-  { id: 't1-singing', displayName: 'Singing Voice' },
-  { id: 't1-speaking', displayName: 'Speaking Voice' },
   { id: 't1-high', displayName: 'High Sound' },
   { id: 't1-low', displayName: 'Low Sound' },
+  { id: 't1-fast', displayName: 'Fast Sound' },
+  { id: 't1-slow', displayName: 'Slow Sound' },
 ];
 
 // ── T2: Instrument families ──────────────────────────────────────
