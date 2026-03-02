@@ -591,6 +591,9 @@ export function generateDevRoom(): DungeonFloor {
   grid[13][13].type = TileType.MerchantStall;
   grid[13][14].type = TileType.Merchant;
 
+  // Place jukebox east of player (symmetrical to merchant on west side)
+  grid[14][17].type = TileType.Jukebox;
+
   // Place one of each enemy type in a row south of player at y=18
   // Each subtype gets its signature challenge type matching normal gameplay
   const enemySubtypes: { subtype: EnemySubtype; challengeType: ChallengeType }[] = [
