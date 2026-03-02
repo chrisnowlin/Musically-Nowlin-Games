@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "test:e2e": "bun playwright test",
     "test:e2e:ui": "bun playwright test --ui",
-    "install:bun": "bun install"
+    "install:bun": "bun install",
+    "build:notation": "bash lilypond/scripts/build-notation.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

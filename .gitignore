@@ -93,5 +93,8 @@ scripts/trim-sample-*.py
 .windsurf/
 .serena/
 
+# LilyPond build output (generated from lilypond/ source)
+client/public/images/notation/
+
 # Untracked build artifacts
 sliced_assets/
