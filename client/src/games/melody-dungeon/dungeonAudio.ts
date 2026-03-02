@@ -19,6 +19,16 @@ let scratchBuffer: AudioBuffer | null = null;
 let isUnlocked = false;
 
 function getAudioCtx(): AudioContext {
+  // If iOS force-closed the context (memory pressure, extended background),
+  // discard it along with any audio nodes tied to the old context.
+  if (audioCtx && audioCtx.state === 'closed') {
+    audioCtx = null;
+    scratchBuffer = null;
+    bgSource = null;
+    bgGain = null;
+    battleSource = null;
+    battleGain = null;
+  }
   if (!audioCtx) {
     const AC = window.AudioContext || (window as any).webkitAudioContext;
     audioCtx = new AC();
@@ -28,6 +38,12 @@ function getAudioCtx(): AudioContext {
     audioCtx.addEventListener('statechange', () => {
       if (audioCtx?.state === 'running') {
         isUnlocked = true;
+        // Context recovered — restart any music that should be playing
+        if (bgMusicShouldPlay && !bgSource) createBgSource();
+        if (battleMusicKey && !battleSource) {
+          const buffer = battleBuffers.get(battleMusicKey);
+          if (buffer) createBattleSource(buffer);
+        }
       } else if (audioCtx?.state === 'suspended' || (audioCtx?.state as string) === 'interrupted') {
         isUnlocked = false;
       }
@@ -36,47 +52,60 @@ function getAudioCtx(): AudioContext {
   return audioCtx;
 }
 
+/** Play the scratch buffer on a context — the key iOS Safari unlock technique. */
+function playScratch(ctx: AudioContext): void {
+  if (!scratchBuffer) return;
+  try {
+    const source = ctx.createBufferSource();
+    source.buffer = scratchBuffer;
+    source.connect(ctx.destination);
+    source.start(0);
+  } catch {
+    // scratch buffer play failed
+  }
+}
+
 /**
  * Resume AudioContext if suspended (required after user interaction).
  * On iOS Safari, also plays a scratch buffer to truly unlock audio output.
+ * If resume fails (context permanently stuck), recreates the AudioContext
+ * as a last resort so users don't need to refresh the page.
  */
-export function resumeAudioContext(): Promise<boolean> {
+export async function resumeAudioContext(): Promise<boolean> {
   try {
-    const ctx = getAudioCtx();
+    let ctx = getAudioCtx();
     if (ctx.state === 'running') {
       isUnlocked = true;
-      return Promise.resolve(true);
+      return true;
     }
     if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
-      // Play scratch buffer — this is the key iOS Safari unlock technique.
-      // Just calling resume() is not sufficient on iOS.
-      if (scratchBuffer) {
-        try {
-          const source = ctx.createBufferSource();
-          source.buffer = scratchBuffer;
-          source.connect(ctx.destination);
-          if (typeof source.start === 'undefined') {
-            (source as any).noteOn(0);
-          } else {
-            source.start(0);
-          }
-        } catch {
-          // scratch buffer play failed — continue with resume()
-        }
+      playScratch(ctx);
+      try { await ctx.resume(); } catch {}
+      // After resume(), the state may have transitioned to 'running'
+      if ((ctx.state as string) === 'running') {
+        isUnlocked = true;
+        return true;
       }
-      return ctx
-        .resume()
-        .then(() => {
-          const running = getAudioCtx().state === 'running';
-          if (running) isUnlocked = true;
-          return running;
-        })
-        .catch(() => false);
+      // Resume failed — force-recreate the AudioContext as last resort.
+      // AudioBuffers (bgBuffer, battleBuffers) are context-independent and survive.
+      try { ctx.close(); } catch {}
+      audioCtx = null;
+      scratchBuffer = null;
+      bgSource = null;
+      bgGain = null;
+      battleSource = null;
+      battleGain = null;
+      ctx = getAudioCtx();
+      playScratch(ctx);
+      try { await ctx.resume(); } catch {}
+      const running = ctx.state === 'running';
+      if (running) isUnlocked = true;
+      return running;
     }
   } catch {
     // ignore
   }
-  return Promise.resolve(false);
+  return false;
 }
 
 /** Get frequency for any note key (e.g. C4, C#4, Gb5) */
@@ -491,18 +520,17 @@ export function stopBattleMusic(): void {
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
-    // Page just became visible — try to resume audio
-    void resumeAudioContext().then((ok) => {
-      if (!ok) return;
-      // Restart background music if it should be playing but the source was lost
-      if (bgMusicShouldPlay && !bgSource) {
-        createBgSource();
-      }
-      // Restart battle music if it should be playing but the source was lost
-      if (battleMusicKey && !battleSource) {
-        const buffer = battleBuffers.get(battleMusicKey);
-        if (buffer) createBattleSource(buffer);
-      }
-    });
+    // Page just became visible — try to resume audio.
+    // Music restart is handled by the statechange handler on the context.
+    void resumeAudioContext();
   });
+
+  // Resume audio context on ANY user gesture — covers interruptions that
+  // happen while the page is visible (notifications, Siri, alarms, etc.)
+  // where visibilitychange never fires.
+  window.addEventListener('pointerdown', () => {
+    if (audioCtx && audioCtx.state !== 'running') {
+      void resumeAudioContext();
+    }
+  }, { passive: true });
 }
