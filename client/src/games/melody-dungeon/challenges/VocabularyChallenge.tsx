@@ -144,7 +144,7 @@ function ButtonNotation({ term }: { term: string }) {
     <img
       src={src}
       alt=""
-      className="w-3/5 h-auto invert"
+      className="w-full h-auto invert"
       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
     />
   );
