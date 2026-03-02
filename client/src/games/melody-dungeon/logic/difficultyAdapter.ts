@@ -1,4 +1,5 @@
 import type { ChallengeType, Tier } from './dungeonTypes';
+import { type TimbreEntry, getTimbrePool } from './timbreData';
 
 // ── Floor Zone System ────────────────────────────────────────
 // 9 zones across 100 floors: 5 "pure" tiers + 4 transitions between them.
@@ -212,5 +213,30 @@ export function getIntervalParams(tier: Tier): IntervalParams {
           { name: 'Octave', semitones: 12 },
         ],
       };
+  }
+}
+
+// ── Timbre ───────────────────────────────────────────────
+
+export interface TimbreParams {
+  pool: TimbreEntry[];     // available instruments for this tier
+  numChoices: number;       // always 4
+  playDuration: number;     // how long the sample plays (seconds)
+  allowReplay: boolean;     // whether replay button is shown
+}
+
+export function getTimbreParams(tier: Tier): TimbreParams {
+  const pool = getTimbrePool(tier);
+  switch (tier) {
+    case 1:
+      return { pool, numChoices: 4, playDuration: 2.0, allowReplay: true };
+    case 2:
+      return { pool, numChoices: 4, playDuration: 1.5, allowReplay: true };
+    case 3:
+      return { pool, numChoices: 4, playDuration: 1.5, allowReplay: true };
+    case 4:
+      return { pool, numChoices: 4, playDuration: 1.0, allowReplay: true };
+    case 5:
+      return { pool, numChoices: 4, playDuration: 0.8, allowReplay: false };
   }
 }
