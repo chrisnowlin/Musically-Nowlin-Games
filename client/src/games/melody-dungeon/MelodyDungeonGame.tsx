@@ -553,6 +553,10 @@ const MelodyDungeonGame: React.FC = () => {
             }
           }
           if (activeTileType === TileType.Treasure) {
+            // 40% chance to find a key in the treasure
+            if (Math.random() < 0.4) {
+              updated.keys += 1;
+            }
             // Treasure Magnet: double potion reward, consume one charge
             if (prev.buffs.armed.treasureMagnet > 0) {
               updated.potions += 2;
