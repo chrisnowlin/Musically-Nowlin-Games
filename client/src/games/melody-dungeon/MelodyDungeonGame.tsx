@@ -36,12 +36,14 @@ import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
-import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic } from './dungeonAudio';
+import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic, loadAndPlayBgMusic } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 import { ALL_ITEMS } from './logic/merchantItems';
 import DevRoomPasswordModal from './DevRoomPasswordModal';
 import DevChallengeConfigModal from './DevChallengeConfigModal';
 import DevToolbar from './DevToolbar';
+import MusicSelectModal from './MusicSelectModal';
+import type { MusicTrack } from './logic/musicTracks';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -143,6 +145,8 @@ const MelodyDungeonGame: React.FC = () => {
   const [shieldEffectActive, setShieldEffectActive] = useState(false);
   const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showJukebox, setShowJukebox] = useState(false);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>('cathedral');
   const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
     challengeType: ChallengeType;
@@ -513,6 +517,14 @@ const MelodyDungeonGame: React.FC = () => {
           return { ...prev, position: newPos };
         }
 
+        // Jukebox: open music selection (dev room only)
+        if (tile.type === TileType.Jukebox) {
+          setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
+          moveLockedRef.current = true;
+          setShowJukebox(true);
+          return { ...prev, position: newPos };
+        }
+
         // Stairs
         if (tile.type === TileType.Stairs) {
           setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
@@ -845,6 +857,22 @@ const MelodyDungeonGame: React.FC = () => {
   const handleMerchantClose = useCallback(() => {
     moveLockedRef.current = false;
     setPhase('playing');
+  }, []);
+
+  const handleJukeboxPlay = useCallback((track: MusicTrack) => {
+    const basePath = import.meta.env.BASE_URL || '/';
+    void loadAndPlayBgMusic(`${basePath}audio/${track.filename}`);
+    setCurrentTrackId(track.id);
+  }, []);
+
+  const handleJukeboxStop = useCallback(() => {
+    stopBgMusic();
+    setCurrentTrackId(null);
+  }, []);
+
+  const handleJukeboxClose = useCallback(() => {
+    setShowJukebox(false);
+    moveLockedRef.current = false;
   }, []);
 
   const openBag = useCallback(() => {
@@ -1350,6 +1378,15 @@ const MelodyDungeonGame: React.FC = () => {
           onBuy={handleMerchantBuy}
           onClose={handleMerchantClose}
           overrideItems={devMode.active ? ALL_ITEMS : undefined}
+        />
+      )}
+
+      {showJukebox && (
+        <MusicSelectModal
+          currentTrackId={currentTrackId}
+          onPlay={handleJukeboxPlay}
+          onStop={handleJukeboxStop}
+          onClose={handleJukeboxClose}
         />
       )}
 
