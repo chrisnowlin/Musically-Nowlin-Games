@@ -4,6 +4,7 @@ import type { RhythmSubdivision } from '../logic/difficultyAdapter';
 import { getRhythmParams } from '../logic/difficultyAdapter';
 import { playClick } from '../dungeonAudio';
 import { getRandomCuratedPattern } from '../logic/rhythmPatterns';
+import NotationImage from '@/common/notation/NotationImage';
 
 interface Props {
   tier: Tier;
@@ -268,11 +269,11 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-amber-200">Tap the Rhythm!</h3>
 
-      <img
+      <NotationImage
         src={`/images/notation/challenges/rhythm-patterns/${curatedPattern.id}.svg`}
         alt="Rhythm pattern notation"
-        className="h-12 mx-auto mb-2 invert"
-        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        size="sm"
+        className="mb-2"
       />
 
       <div className="flex gap-2 justify-center items-end">{beatVisuals}</div>
