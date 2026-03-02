@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getVocabEntries, getAllVocabEntries } from '../logic/vocabData';
-import type { VocabCategory, VocabEntry } from '../logic/vocabData';
+import type { VocabCategory } from '../logic/vocabData';
 import type { Tier } from '../logic/dungeonTypes';
 
 const CATEGORIES: VocabCategory[] = ['dynamics', 'tempo', 'symbols', 'terms'];

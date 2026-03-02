@@ -34,8 +34,8 @@ const DYNAMICS_ENTRIES: VocabEntry[] = [
   // Tier 4 (6-8)
   { term: 'Diminuendo', definition: 'Gradually getting softer', symbol: 'dim.', tier: 4, category: 'dynamics' },
   { term: 'Morendo', definition: 'Dying away in volume and tempo', symbol: 'morendo', tier: 4, category: 'dynamics' },
-  { term: 'What happens during a crescendo?', definition: 'The music gets louder', tier: 4, category: 'dynamics' },
-  { term: 'What does fortissimo mean?', definition: 'Very loud', tier: 4, category: 'dynamics' },
+  { term: 'Crescendo effect', definition: 'The music gradually gets louder', tier: 4, category: 'dynamics' },
+  { term: 'Fortissimo', definition: 'Very loud (ff)', tier: 4, category: 'dynamics' },
   // Tier 5 (HS)
   { term: 'Diminuendo vs Decrescendo', definition: 'Both mean getting softer; used interchangeably', tier: 5, category: 'dynamics' },
   { term: 'fp vs sfz', definition: 'fp = loud then soft; sfz = sudden accent', tier: 5, category: 'dynamics' },
