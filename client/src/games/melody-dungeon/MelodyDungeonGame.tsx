@@ -33,7 +33,7 @@ import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
-import { playNote, resumeAudioContext } from './dungeonAudio';
+import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, unduckBgMusic } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
@@ -212,6 +212,27 @@ const MelodyDungeonGame: React.FC = () => {
       window.removeEventListener('keydown', unlock);
     };
   }, []);
+
+  // Pre-load background music on mount.
+  useEffect(() => {
+    const basePath = import.meta.env.BASE_URL || '/';
+    void loadBgMusic(`${basePath}audio/Cathedral in the Cavern.mp3`);
+  }, []);
+
+  // Start/stop background music and duck during challenges.
+  useEffect(() => {
+    if (phase === 'playing') {
+      startBgMusic();
+      unduckBgMusic();
+    } else if (phase === 'challenge') {
+      duckBgMusic();
+    } else if (phase === 'menu' || phase === 'gameOver' || phase === 'victory') {
+      stopBgMusic();
+    } else {
+      // shopping, inventory, floorComplete — keep music at normal volume
+      unduckBgMusic();
+    }
+  }, [phase]);
 
   // Detect enemy catch after state settles
   useEffect(() => {

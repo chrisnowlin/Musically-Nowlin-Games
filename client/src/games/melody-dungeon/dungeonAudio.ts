@@ -221,3 +221,98 @@ export function noteKeyToName(noteKey: string): string {
 }
 
 export const ALL_NOTE_KEYS = Object.keys(NOTE_FREQUENCIES);
+
+// ── Background Music ──────────────────────────────────────────────
+let bgBuffer: AudioBuffer | null = null;
+let bgSource: AudioBufferSourceNode | null = null;
+let bgGain: GainNode | null = null;
+const BG_VOLUME = 0.18;       // normal playback volume
+const BG_DUCK_VOLUME = 0.03;  // ducked volume during challenges
+const DUCK_RAMP_S = 0.6;      // fade duration in seconds
+
+/** Pre-load the background music MP3 into an AudioBuffer. */
+export async function loadBgMusic(url: string): Promise<void> {
+  if (bgBuffer) return;
+  try {
+    const ctx = getAudioCtx();
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const arr = await res.arrayBuffer();
+    bgBuffer = await ctx.decodeAudioData(arr);
+  } catch {
+    // Audio load failed — game continues without music
+  }
+}
+
+/** Start looping background music. Safe to call multiple times (no-op if already playing). */
+export function startBgMusic(): void {
+  if (bgSource || !bgBuffer) return;
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') {
+      void ctx.resume();
+    }
+
+    bgGain = ctx.createGain();
+    bgGain.gain.value = BG_VOLUME;
+    bgGain.connect(ctx.destination);
+
+    bgSource = ctx.createBufferSource();
+    bgSource.buffer = bgBuffer;
+    bgSource.loop = true;
+    bgSource.connect(bgGain);
+    bgSource.start(0);
+
+    bgSource.addEventListener('ended', () => {
+      bgSource = null;
+    });
+  } catch {
+    // Audio not available
+  }
+}
+
+/** Stop background music with a short fade-out. */
+export function stopBgMusic(): void {
+  if (!bgSource || !bgGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    bgGain.gain.cancelScheduledValues(now);
+    bgGain.gain.setValueAtTime(bgGain.gain.value, now);
+    bgGain.gain.linearRampToValueAtTime(0, now + 0.3);
+    const src = bgSource;
+    const gain = bgGain;
+    bgSource = null;
+    bgGain = null;
+    setTimeout(() => {
+      try { src.stop(); src.disconnect(); gain.disconnect(); } catch {}
+    }, 400);
+  } catch {
+    bgSource = null;
+    bgGain = null;
+  }
+}
+
+/** Duck background music volume for challenges. */
+export function duckBgMusic(): void {
+  if (!bgGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    bgGain.gain.cancelScheduledValues(now);
+    bgGain.gain.setValueAtTime(bgGain.gain.value, now);
+    bgGain.gain.linearRampToValueAtTime(BG_DUCK_VOLUME, now + DUCK_RAMP_S);
+  } catch {}
+}
+
+/** Restore background music volume after a challenge. */
+export function unduckBgMusic(): void {
+  if (!bgGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    bgGain.gain.cancelScheduledValues(now);
+    bgGain.gain.setValueAtTime(bgGain.gain.value, now);
+    bgGain.gain.linearRampToValueAtTime(BG_VOLUME, now + DUCK_RAMP_S);
+  } catch {}
+}
