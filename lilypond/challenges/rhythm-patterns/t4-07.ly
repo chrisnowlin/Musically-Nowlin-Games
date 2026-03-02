@@ -4,5 +4,5 @@
 \new RhythmicStaff {
   \cadenzaOn
   \autoBeamOn
-  \tuplet 3/2 { c8 c c } \tuplet 3/2 { c8 c c } c4 c8 c c4
+  \tuplet 3/2 { c8 c c } \tuplet 3/2 { c8 c c } c4 c8[ c] c4
 }

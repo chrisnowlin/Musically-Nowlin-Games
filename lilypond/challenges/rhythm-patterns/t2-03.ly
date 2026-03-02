@@ -4,5 +4,5 @@
 \new RhythmicStaff {
   \cadenzaOn
   \autoBeamOn
-  c4 c8 c c2
+  c4 c8[ c] c2
 }
