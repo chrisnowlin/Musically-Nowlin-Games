@@ -3,6 +3,8 @@ import type { Tier } from '../logic/dungeonTypes';
 import type { RhythmSubdivision } from '../logic/difficultyAdapter';
 import { getRhythmParams } from '../logic/difficultyAdapter';
 import { playClick } from '../dungeonAudio';
+import { getRandomCuratedPattern } from '../logic/rhythmPatterns';
+import { getNotationAsset } from '@/common/notation/notationAssets';
 
 interface Props {
   tier: Tier;
@@ -91,8 +93,20 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     const p = getRhythmParams(tier);
     return slowMode ? { ...p, bpm: Math.round(p.bpm / 2) } : p;
   }, [tier, slowMode]);
+  const curatedPattern = useMemo(() => getRandomCuratedPattern(tier), [tier]);
+  const pattern = useMemo(() => {
+    const beatDuration = 60000 / params.bpm;
+    const events: PatternEvent[] = [];
+    let currentTime = 0;
+    for (const sub of curatedPattern.subdivisions) {
+      const info = SUBDIVISION_INFO[sub];
+      const dur = info.beats * beatDuration;
+      events.push({ time: currentTime, duration: dur, taps: info.taps, subdivision: sub });
+      currentTime += dur;
+    }
+    return events;
+  }, [curatedPattern, params.bpm]);
   const [phase, setPhase] = useState<'listen' | 'tap' | 'done'>('listen');
-  const [pattern] = useState<PatternEvent[]>(() => generatePattern(params));
   const [taps, setTaps] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [playbackIndex, setPlaybackIndex] = useState(-1);
@@ -273,6 +287,13 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-amber-200">Tap the Rhythm!</h3>
+
+      <img
+        src={getNotationAsset('challenges/rhythm-patterns', curatedPattern.id)}
+        alt="Rhythm pattern notation"
+        className="h-12 mx-auto mb-2 invert"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+      />
 
       <div className="flex gap-2 justify-center items-end">{beatVisuals}</div>
 
