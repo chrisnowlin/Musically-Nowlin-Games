@@ -100,6 +100,15 @@ function buildSubtlePairChoices(pool: TimbreEntry[]): { correct: TimbreEntry; op
   const familiesWithMultiple = FAMILIES.filter(fam =>
     pool.filter(e => e.family === fam).length >= 2
   );
+
+  if (familiesWithMultiple.length === 0) {
+    // Fallback to standard selection if no family has 2+ members
+    const shuffledPool = shuffle(pool);
+    const correct = shuffledPool[0];
+    const distractors = shuffledPool.slice(1, 4);
+    return { correct, options: shuffle([correct, ...distractors]) };
+  }
+
   const chosenFamily = familiesWithMultiple[Math.floor(Math.random() * familiesWithMultiple.length)];
 
   // Pick 2 from the chosen family

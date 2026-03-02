@@ -77,9 +77,10 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
       case 't1-singing': {
         // 3-note ascending sequence (C4=262, E4=330, G4=392) with small gaps
         const gap = duration / 3;
+        const gapMs = gap * 1000;
         playNoteAtFrequency(262, gap * 0.8, 0.3);
-        setTimeout(() => playNoteAtFrequency(330, gap * 0.8, 0.3), gap * 1000);
-        setTimeout(() => playNoteAtFrequency(392, gap * 0.8, 0.3), gap * 2 * 1000);
+        setTimeout(() => playNoteAtFrequency(330, gap * 0.8, 0.3), gapMs);
+        setTimeout(() => playNoteAtFrequency(392, gap * 0.8, 0.3), gapMs * 2);
         break;
       }
       case 't1-speaking': {
