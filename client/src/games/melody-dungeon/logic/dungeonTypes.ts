@@ -172,7 +172,7 @@ export const DUNGEON_HEIGHT = DUNGEON_BASE_SIZE;
 export const VISIBILITY_RADIUS = 3;
 export const MAX_HEALTH = 5;
 
-export const DEV_ROOM_PASSWORD = 'music123';
+export const DEV_ROOM_PASSWORD = 'musicgames123';
 
 export interface DevModeState {
   active: boolean;

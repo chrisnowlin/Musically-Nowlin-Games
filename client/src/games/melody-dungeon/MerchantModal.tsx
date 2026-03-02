@@ -63,21 +63,21 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-950/90 to-gray-900/95 p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        <h2 className="text-center text-sm font-medium text-gray-400 mb-1 uppercase tracking-wider">
+      <div className="w-full max-w-md max-h-[80vh] flex flex-col rounded-2xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-950/90 to-gray-900/95 p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <h2 className="text-center text-sm font-medium text-gray-400 mb-1 uppercase tracking-wider shrink-0">
           Wandering Merchant
         </h2>
-        <p className="text-center text-emerald-400/70 text-xs mb-4 italic">
+        <p className="text-center text-emerald-400/70 text-xs mb-4 italic shrink-0">
           &quot;What catches your eye?&quot;
         </p>
 
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-4 shrink-0">
           <span className="text-amber-400 font-bold text-lg">
             {'\uD83E\uDE99'} {player.gold} gold
           </span>
         </div>
 
-        <div className="grid gap-2 mb-4">
+        <div className="grid gap-2 mb-4 overflow-y-auto min-h-0">
           {coreItems.map((item) => {
             const price = item.getPrice(floorNumber);
             const canAfford = player.gold >= price;
@@ -171,7 +171,7 @@ const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose, o
 
         <button
           onClick={onClose}
-          className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl font-medium text-sm transition-colors"
+          className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl font-medium text-sm transition-colors shrink-0"
         >
           Leave Shop
         </button>

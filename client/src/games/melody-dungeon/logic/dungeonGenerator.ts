@@ -605,6 +605,26 @@ export function generateDevRoom(): DungeonFloor {
     grid[18][x].enemyState = 'guarding';
   });
 
+  // Place MiniBoss (2×2 footprint) south of enemy row, left side
+  const miniBossAnchor: Position = { x: 11, y: 21 };
+  for (let dy = 0; dy < 2; dy++) {
+    for (let dx = 0; dx < 2; dx++) {
+      const isAnchor = dx === 0 && dy === 0;
+      grid[miniBossAnchor.y + dy][miniBossAnchor.x + dx].type = isAnchor ? TileType.MiniBoss : TileType.BossBody;
+      if (isAnchor) grid[miniBossAnchor.y][miniBossAnchor.x].cleared = false;
+    }
+  }
+
+  // Place BigBoss (3×3 footprint) south of enemy row, right side
+  const bigBossAnchor: Position = { x: 16, y: 21 };
+  for (let dy = 0; dy < 3; dy++) {
+    for (let dx = 0; dx < 3; dx++) {
+      const isAnchor = dx === 0 && dy === 0;
+      grid[bigBossAnchor.y + dy][bigBossAnchor.x + dx].type = isAnchor ? TileType.BigBoss : TileType.BossBody;
+      if (isAnchor) grid[bigBossAnchor.y][bigBossAnchor.x].cleared = false;
+    }
+  }
+
   return {
     tiles: grid,
     width: size,

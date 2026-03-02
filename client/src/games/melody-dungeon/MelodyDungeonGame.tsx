@@ -699,7 +699,8 @@ const MelodyDungeonGame: React.FC = () => {
                 return { ...tile, cleared: correct, type: correct ? TileType.Floor : TileType.Door };
               }
               if (tile.type === TileType.MiniBoss || tile.type === TileType.BigBoss) {
-                return { ...tile, cleared: true, type: correct ? TileType.Stairs : tile.type };
+                const bossResultType = correct ? (floor.floorNumber === 0 ? TileType.Floor : TileType.Stairs) : tile.type;
+                return { ...tile, cleared: true, type: bossResultType };
               }
               return { ...tile, cleared: true, type: correct ? TileType.Floor : tile.type };
             }
@@ -713,29 +714,44 @@ const MelodyDungeonGame: React.FC = () => {
         return { ...prev, tiles };
       });
 
-      // Dev room: respawn enemies after a short delay
-      if (floor.floorNumber === 0 && activeTileType === TileType.Enemy && activeChallenge) {
+      // Dev room: respawn enemies and bosses after a short delay
+      if (floor.floorNumber === 0 && activeChallenge) {
         const { x, y } = activeChallenge.tilePosition;
         const savedSubtype = activeTileSubtype;
         const savedLevel = activeTileLevel;
+        const savedTileType = activeTileType;
         setTimeout(() => {
           setFloor((prev) => {
-            const tiles = prev.tiles.map((row, ry) =>
-              row.map((tile, rx) => {
-                if (rx === x && ry === y) {
-                  return {
-                    ...tile,
-                    type: TileType.Enemy,
-                    cleared: false,
-                    enemySubtype: savedSubtype,
-                    enemyLevel: savedLevel,
-                    challengeType: 'noteReading' as ChallengeType,
-                    enemyState: 'guarding' as const,
-                  };
+            const tiles = prev.tiles.map((row) => row.map((t) => ({ ...t })));
+
+            if (savedTileType === TileType.Enemy) {
+              tiles[y][x] = {
+                ...tiles[y][x],
+                type: TileType.Enemy,
+                cleared: false,
+                enemySubtype: savedSubtype,
+                enemyLevel: savedLevel,
+                challengeType: 'noteReading' as ChallengeType,
+                enemyState: 'guarding' as const,
+              };
+            } else if (savedTileType === TileType.MiniBoss) {
+              for (let dy = 0; dy < 2; dy++) {
+                for (let dx = 0; dx < 2; dx++) {
+                  const isAnchor = dx === 0 && dy === 0;
+                  tiles[y + dy][x + dx].type = isAnchor ? TileType.MiniBoss : TileType.BossBody;
+                  if (isAnchor) tiles[y][x].cleared = false;
                 }
-                return tile;
-              })
-            );
+              }
+            } else if (savedTileType === TileType.BigBoss) {
+              for (let dy = 0; dy < 3; dy++) {
+                for (let dx = 0; dx < 3; dx++) {
+                  const isAnchor = dx === 0 && dy === 0;
+                  tiles[y + dy][x + dx].type = isAnchor ? TileType.BigBoss : TileType.BossBody;
+                  if (isAnchor) tiles[y][x].cleared = false;
+                }
+              }
+            }
+
             return { ...prev, tiles };
           });
         }, 500);
@@ -744,11 +760,11 @@ const MelodyDungeonGame: React.FC = () => {
       setActiveChallenge(null);
       moveLockedRef.current = false;
 
-      // Check game over or floor complete
+      // Check game over or floor complete (dev room skips floorComplete)
       setPlayer((prev) => {
         if (prev.health <= 0) {
           setPhase('gameOver');
-        } else if (correct && (activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss)) {
+        } else if (correct && (activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss) && floor.floorNumber !== 0) {
           setPhase('floorComplete');
         } else {
           setPhase('playing');
