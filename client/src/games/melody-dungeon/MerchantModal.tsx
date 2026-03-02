@@ -8,6 +8,7 @@ interface Props {
   floorNumber: number;
   onBuy: (item: MerchantItem) => void;
   onClose: () => void;
+  overrideItems?: MerchantItem[];
 }
 
 function getOwnedCount(player: PlayerState, itemId: string): number {
@@ -46,8 +47,11 @@ function getOwnedCount(player: PlayerState, itemId: string): number {
   }
 }
 
-const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose }) => {
-  const shopItems = useMemo(() => getShopInventory(floorNumber), [floorNumber]);
+const MerchantModal: React.FC<Props> = ({ player, floorNumber, onBuy, onClose, overrideItems }) => {
+  const shopItems = useMemo(
+    () => overrideItems ?? getShopInventory(floorNumber),
+    [floorNumber, overrideItems]
+  );
   const coreItems = shopItems.filter((i) => i.category === 'core');
   const specialItems = shopItems.filter((i) => i.category !== 'core');
 
