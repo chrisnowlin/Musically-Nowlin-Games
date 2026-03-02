@@ -43,7 +43,7 @@ export function usePhilharmoniaInstruments(
   instrumentNames: string[],
   autoLoad: boolean = true
 ): UsePhilharmoniaResult {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(autoLoad && instrumentNames.length > 0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loadedInstruments, setLoadedInstruments] = useState<string[]>([]);
@@ -206,10 +206,6 @@ export function usePhilharmoniaInstruments(
       // Fallback to synthesized tone
       const sample = instrumentLibrary.getSample(instrumentName, note);
       if (sample) {
-        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
-        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
-        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
-        await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
         await sampleAudioService.playNote(sample.frequency, options.duration ?? 0.5);
       }
     }
