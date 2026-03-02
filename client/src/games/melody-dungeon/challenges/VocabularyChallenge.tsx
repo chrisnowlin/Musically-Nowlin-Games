@@ -146,31 +146,20 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
     setTimeout(() => onResult(correct), 800);
   };
 
-  const { target } = challenge;
-  const hasSymbol = challenge.showTermAskDef && target.symbol;
-
-  const questionNode = challenge.showTermAskDef
-    ? (hasSymbol
-        ? <p className="text-gray-200 text-center text-sm px-2">
-            What does <span className="text-3xl align-middle">&ldquo;{target.symbol}&rdquo;</span> ({target.term}) mean?
-          </p>
-        : <p className="text-gray-200 text-center text-sm px-2">What does &ldquo;{target.term}&rdquo; mean?</p>)
-    : <p className="text-gray-200 text-center text-sm px-2">Which term means &ldquo;{target.definition}&rdquo;?</p>;
+  const questionText = challenge.showTermAskDef
+    ? `What does "${challenge.target.term}" mean?`
+    : `Which term means "${challenge.target.definition}"?`;
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
-      {challenge.showTermAskDef && <VocabNotation term={target.term} />}
-      {questionNode}
+      {challenge.showTermAskDef && <VocabNotation term={challenge.target.term} />}
+      <p className="text-gray-200 text-center text-sm px-2">{questionText}</p>
 
       <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
         {challenge.options.map((opt) => {
           const isCorrect = opt.term === challenge.target.term;
-          const label = challenge.showTermAskDef
-            ? opt.definition
-            : (opt.symbol
-                ? <><span className="text-xl align-middle">{opt.symbol}</span> ({opt.term})</>
-                : opt.term);
+          const label = challenge.showTermAskDef ? opt.definition : opt.term;
 
           return (
             <button
@@ -224,9 +213,7 @@ const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge,
       <div className="grid grid-cols-2 gap-3 w-full max-w-[320px]">
         {challenge.options.map((opt) => {
           const isCorrect = opt.term === challenge.correctEntry.term;
-          const label = opt.symbol
-            ? <><span className="text-2xl">{opt.symbol}</span> ({opt.term})</>
-            : opt.term;
+          const label = opt.term;
 
           return (
             <button
