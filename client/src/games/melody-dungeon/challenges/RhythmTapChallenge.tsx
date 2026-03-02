@@ -161,18 +161,18 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     // Check for rest violations: did the player tap during a rest?
     const hasRests = pattern.some((ev) => ev.taps === 0);
     let restPenalty = 0;
-    if (hasRests) {
-      // Re-anchor taps to expected timing to check rest violations
-      // The first tap is at expectedTaps[0], so offset each tap
+    if (hasRests && expectedTaps.length > 0) {
+      // Re-anchor taps to pattern time before checking rest violations
+      const offset = expectedTaps[0];
       for (const tapTime of taps) {
-        if (isInsideRest(tapTime, pattern, params.toleranceMs)) {
+        if (isInsideRest(tapTime + offset, pattern, params.toleranceMs)) {
           restPenalty++;
         }
       }
     }
 
     const totalIntervals = expectedIntervals.length;
-    const accuracy = totalIntervals > 0 ? (matchCount - restPenalty) / totalIntervals : 1;
+    const accuracy = totalIntervals > 0 ? Math.max(0, matchCount - restPenalty) / totalIntervals : 1;
     const correct = accuracy >= 0.5;
     setFeedback(correct ? 'correct' : 'wrong');
     setPhase('done');
