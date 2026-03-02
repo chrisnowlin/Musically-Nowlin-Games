@@ -144,7 +144,7 @@ function InlineNotation({ term }: { term: string }) {
     <img
       src={src}
       alt=""
-      className="h-6 w-auto invert inline-block mr-2 align-middle"
+      className="h-12 w-auto invert inline-block mr-2 align-middle"
       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
     />
   );

@@ -72,7 +72,7 @@ describe('VocabularyChallenge – standard format', () => {
 
   it('shows question text for standard format', () => {
     render(<VocabularyChallenge category="symbols" tier={1} onResult={() => {}} />);
-    const q = screen.getByText(/what does|which term/i);
+    const q = screen.getByText(/what does|which term|how many beats/i);
     expect(q).toBeInTheDocument();
   });
 });
