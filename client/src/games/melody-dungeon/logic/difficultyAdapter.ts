@@ -97,11 +97,13 @@ export function getChallengeTypesForFloor(_floorNumber: number): ChallengeType[]
 
 // ── Note Reading ──────────────────────────────────────────
 
-export type NoteReadingMode = 'space' | 'both' | 'ledger';
+export type NoteReadingMode = 'space' | 'both' | 'ledger' | 'bass' | 'mixed';
 
 const SPACE_NOTES = ['F4', 'A4', 'C5', 'E5'];
 const BOTH_STAFF_NOTES = ['E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'];
 const LEDGER_NOTES = [...BOTH_STAFF_NOTES, 'C4', 'D4', 'G5', 'A5'];
+const BASS_STAFF_NOTES = ['G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3'];
+const BASS_LEDGER_NOTES = [...BASS_STAFF_NOTES, 'E2', 'F2', 'B3', 'C4'];
 
 export interface NoteReadingParams {
   notes: string[];
@@ -119,11 +121,9 @@ export function getNoteReadingParams(tier: Tier): NoteReadingParams {
     case 3:
       return { notes: [...LEDGER_NOTES], useBassClef: false, mode: 'ledger' };
     case 4:
-      // T4 placeholder: ledger lines + bass clef introduction
-      return { notes: [...LEDGER_NOTES], useBassClef: true, mode: 'ledger' };
+      return { notes: [...BASS_STAFF_NOTES], useBassClef: true, mode: 'bass' };
     case 5:
-      // T5 placeholder: full range with bass clef
-      return { notes: [...LEDGER_NOTES], useBassClef: true, mode: 'ledger' };
+      return { notes: [...LEDGER_NOTES, ...BASS_LEDGER_NOTES], useBassClef: false, mode: 'mixed' };
   }
 }
 
