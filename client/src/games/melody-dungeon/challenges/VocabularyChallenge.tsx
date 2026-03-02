@@ -136,15 +136,15 @@ function VocabNotation({ term }: { term: string }) {
   return <NotationImage src={src} alt={`${term} notation`} size="lg" className="mb-2" />;
 }
 
-/** Small inline notation image for answer buttons. */
-function InlineNotation({ term }: { term: string }) {
+/** Notation image sized for answer buttons. */
+function ButtonNotation({ term }: { term: string }) {
   const src = getVocabNotationAsset(term);
   if (!src) return null;
   return (
     <img
       src={src}
       alt=""
-      className="h-12 w-auto invert inline-block mr-2 align-middle"
+      className="w-3/5 h-auto invert"
       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
     />
   );
@@ -184,7 +184,8 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
               onClick={() => handleAnswer(opt)}
               disabled={!!feedback}
               className={`
-                px-4 py-2.5 rounded-lg font-medium text-sm text-left transition-all
+                px-4 py-2.5 rounded-lg font-medium text-sm transition-all
+                flex flex-col items-center gap-1
                 ${feedback && isCorrect
                   ? 'bg-green-600 text-white scale-[1.02]'
                   : feedback
@@ -195,7 +196,7 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
             >
               {challenge.showTermAskDef
                 ? opt.definition
-                : <><InlineNotation term={opt.term} />{opt.term}</>}
+                : <><ButtonNotation term={opt.term} />{opt.term}</>}
             </button>
           );
         })}
