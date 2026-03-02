@@ -4,7 +4,7 @@ import { getTimbreChoices, type TimbreEntry } from '../logic/timbreData';
 import { getTimbreParams } from '../logic/difficultyAdapter';
 import { usePhilharmoniaInstruments } from '@/common/hooks/usePhilharmoniaInstruments';
 import { instrumentLibrary, type InstrumentFamily } from '@/common/instruments/instrumentLibrary';
-import { playNoteAtFrequency, playClick } from '../dungeonAudio';
+import { playNoteAtFrequency } from '../dungeonAudio';
 
 interface Props {
   tier: Tier;
@@ -74,20 +74,22 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
       case 't1-low':
         playNoteAtFrequency(131, duration, 0.3);
         break;
-      case 't1-singing': {
-        // 3-note ascending sequence (C4=262, E4=330, G4=392) with small gaps
-        const gap = duration / 3;
-        const gapMs = gap * 1000;
-        playNoteAtFrequency(262, gap * 0.8, 0.3);
-        setTimeout(() => playNoteAtFrequency(330, gap * 0.8, 0.3), gapMs);
-        setTimeout(() => playNoteAtFrequency(392, gap * 0.8, 0.3), gapMs * 2);
+      case 't1-fast': {
+        // 8 rapid notes at 440Hz
+        const count = 8;
+        const gapMs = (duration * 1000) / count;
+        for (let i = 0; i < count; i++) {
+          setTimeout(() => playNoteAtFrequency(440, gapMs / 1000 * 0.6, 0.3), i * gapMs);
+        }
         break;
       }
-      case 't1-speaking': {
-        // 3 short staccato clicks
-        playClick(0.3);
-        setTimeout(() => playClick(0.3), 200);
-        setTimeout(() => playClick(0.3), 400);
+      case 't1-slow': {
+        // 2 slow notes at 440Hz
+        const count = 2;
+        const gapMs = (duration * 1000) / count;
+        for (let i = 0; i < count; i++) {
+          setTimeout(() => playNoteAtFrequency(440, gapMs / 1000 * 0.8, 0.3), i * gapMs);
+        }
         break;
       }
     }

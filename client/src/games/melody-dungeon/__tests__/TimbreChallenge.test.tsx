@@ -23,7 +23,6 @@ vi.mock('@/common/hooks/usePhilharmoniaInstruments', () => ({
 // Mock dungeonAudio so no real audio plays
 vi.mock('../dungeonAudio', () => ({
   playNoteAtFrequency: vi.fn(),
-  playClick: vi.fn(),
 }));
 
 describe('TimbreChallenge', () => {
