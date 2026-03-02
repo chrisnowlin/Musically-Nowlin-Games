@@ -305,6 +305,18 @@ export function duckBgMusic(): void {
   } catch {}
 }
 
+/** Mute background music completely (for boss battles). */
+export function muteBgMusic(): void {
+  if (!bgGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    bgGain.gain.cancelScheduledValues(now);
+    bgGain.gain.setValueAtTime(bgGain.gain.value, now);
+    bgGain.gain.linearRampToValueAtTime(0, now + DUCK_RAMP_S);
+  } catch {}
+}
+
 /** Restore background music volume after a challenge. */
 export function unduckBgMusic(): void {
   if (!bgGain) return;

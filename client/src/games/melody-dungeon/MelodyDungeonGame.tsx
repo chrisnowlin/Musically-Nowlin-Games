@@ -33,7 +33,7 @@ import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
-import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic } from './dungeonAudio';
+import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
@@ -231,7 +231,7 @@ const MelodyDungeonGame: React.FC = () => {
       const isBoss = activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss;
       if (isBoss) {
         // Boss fight: mute background music entirely, play battle track
-        duckBgMusic();
+        muteBgMusic();
         const key = activeTileType === TileType.BigBoss ? 'bigboss' : 'miniboss';
         startBattleMusic(key);
       } else {
