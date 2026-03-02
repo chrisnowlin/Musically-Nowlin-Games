@@ -5,8 +5,9 @@ import NoteReadingChallenge from './challenges/NoteReadingChallenge';
 import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
 import VocabularyChallenge from './challenges/VocabularyChallenge';
+import TimbreChallenge from './challenges/TimbreChallenge';
 import type { VocabCategory } from './logic/vocabData';
-import { getChallengeTypesForFloor, getTierForChallenge, pickRandom, generateBigBossSequence, getSubtypeChallengePool } from './challengeHelpers';
+import { getChallengeTypesForFloor, rollTier, pickRandom, generateBigBossSequence, getSubtypeChallengePool } from './challengeHelpers';
 
 export interface BossBattleMeta {
   damageDealt: number;
@@ -54,6 +55,7 @@ function getBossLabel(tileType: TileType, enemySubtype?: EnemySubtype): string {
     case 'wraith': return 'Wraith';
     case 'spider': return 'Spider';
     case 'shade': return 'Shade';
+    case 'siren': return 'Siren';
     default: return 'Enemy';
   }
 }
@@ -110,6 +112,8 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
       return { title: 'Spider Encounter!', borderColor: 'border-indigo-400', bgColor: 'from-indigo-950/90 to-gray-900/95' };
     case 'shade':
       return { title: 'Shade Encounter!', borderColor: 'border-amber-400', bgColor: 'from-amber-950/90 to-gray-900/95' };
+    case 'siren':
+      return { title: 'Siren Encounter!', borderColor: 'border-teal-400', bgColor: 'from-teal-950/90 to-gray-900/95' };
     default:
       return TILE_THEME[TileType.Enemy] ?? DEFAULT_THEME;
   }
@@ -134,6 +138,8 @@ function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, show
       return <RhythmTapChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} />;
     case 'interval':
       return <IntervalChallenge tier={tier} onResult={onResult} showHint={showIntervalHint} />;
+    case 'timbre':
+      return <TimbreChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} />;
     default:
       return <NoteReadingChallenge tier={tier} onResult={onResult} />;
   }
@@ -195,7 +201,7 @@ const BossBattle: React.FC<{
       return bigBossSequence[currentRound % bigBossSequence.length];
     }
     const type = pickRandom(challengeTypes);
-    return { type, tier: getTierForChallenge(floorNumber, type) };
+    return { type, tier: rollTier(floorNumber) };
   }, [bigBossSequence, challengeTypes, floorNumber, currentRound]);
 
   const handleUsePotion = useCallback(() => {
@@ -354,7 +360,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
     tileType === TileType.MiniBoss ||
     tileType === TileType.BigBoss;
 
-  const tier = getTierForChallenge(floorNumber, challengeType);
+  const tier = rollTier(floorNumber);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">

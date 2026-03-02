@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { getVocabEntries, getAllVocabEntries } from '../logic/vocabData';
-import type { VocabCategory, VocabEntry } from '../logic/vocabData';
+import type { VocabCategory } from '../logic/vocabData';
 import type { Tier } from '../logic/dungeonTypes';
 
 const CATEGORIES: VocabCategory[] = ['dynamics', 'tempo', 'symbols', 'terms'];
-const TIERS: Tier[] = [1, 2, 3];
+const TIERS: Tier[] = [1, 2, 3, 4, 5];
 
 describe('vocabData integrity', () => {
   it('every entry has a non-empty term and definition', () => {
@@ -16,7 +16,7 @@ describe('vocabData integrity', () => {
 
   it('no duplicate terms within the same category', () => {
     for (const cat of CATEGORIES) {
-      const entries = getVocabEntries(cat, 3);
+      const entries = getVocabEntries(cat, 5);
       const terms = entries.map((e) => e.term);
       const unique = new Set(terms);
       expect(unique.size, `duplicate term in ${cat}: ${terms.filter((t, i) => terms.indexOf(t) !== i)}`).toBe(terms.length);
@@ -30,9 +30,9 @@ describe('vocabData integrity', () => {
     expect(unique.size, `cross-category duplicate: ${terms.filter((t, i) => terms.indexOf(t) !== i)}`).toBe(terms.length);
   });
 
-  it('every entry has a valid tier (1, 2, or 3)', () => {
+  it('every entry has a valid tier (1, 2, 3, 4, or 5)', () => {
     for (const entry of getAllVocabEntries()) {
-      expect([1, 2, 3]).toContain(entry.tier);
+      expect([1, 2, 3, 4, 5]).toContain(entry.tier);
     }
   });
 
@@ -47,6 +47,15 @@ describe('vocabData integrity', () => {
       for (const tier of TIERS) {
         const entries = getAllVocabEntries().filter((e) => e.category === cat && e.tier === tier);
         expect(entries.length, `${cat} tier ${tier} has no entries`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('each tier within each category has at least 4 entries', () => {
+    for (const cat of CATEGORIES) {
+      for (const tier of TIERS) {
+        const entries = getAllVocabEntries().filter((e) => e.category === cat && e.tier === tier);
+        expect(entries.length, `${cat} tier ${tier} has fewer than 4 entries`).toBeGreaterThanOrEqual(4);
       }
     }
   });
@@ -71,11 +80,11 @@ describe('getVocabEntries', () => {
     expect(entries.some((e) => e.tier === 2)).toBe(true);
   });
 
-  it('tier 3 returns all entries for the category', () => {
+  it('tier 5 returns all entries for the category', () => {
     for (const cat of CATEGORIES) {
-      const tier3 = getVocabEntries(cat, 3);
+      const tier5 = getVocabEntries(cat, 5);
       const allInCat = getAllVocabEntries().filter((e) => e.category === cat);
-      expect(tier3.length).toBe(allInCat.length);
+      expect(tier5.length).toBe(allInCat.length);
     }
   });
 
@@ -95,7 +104,51 @@ describe('getAllVocabEntries', () => {
     }
   });
 
-  it('returns a non-trivial number of total entries', () => {
-    expect(getAllVocabEntries().length).toBeGreaterThanOrEqual(40);
+  it('returns at least 100 total entries', () => {
+    expect(getAllVocabEntries().length).toBeGreaterThanOrEqual(100);
+  });
+});
+
+describe('format field', () => {
+  it('T1 dynamics entries include at least one with format opposites', () => {
+    const entries = getAllVocabEntries().filter(
+      (e) => e.category === 'dynamics' && e.tier === 1 && e.format === 'opposites'
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('T3 dynamics entries include at least one with format ordering', () => {
+    const entries = getAllVocabEntries().filter(
+      (e) => e.category === 'dynamics' && e.tier === 3 && e.format === 'ordering'
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('T1 tempo entries include at least one with format opposites', () => {
+    const entries = getAllVocabEntries().filter(
+      (e) => e.category === 'tempo' && e.tier === 1 && e.format === 'opposites'
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('T3 tempo entries include at least one with format ordering', () => {
+    const entries = getAllVocabEntries().filter(
+      (e) => e.category === 'tempo' && e.tier === 3 && e.format === 'ordering'
+    );
+    expect(entries.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('opposites format only appears in T1', () => {
+    const opposites = getAllVocabEntries().filter((e) => e.format === 'opposites');
+    for (const entry of opposites) {
+      expect(entry.tier, `opposites format in tier ${entry.tier} for "${entry.term}"`).toBe(1);
+    }
+  });
+
+  it('ordering format only appears in T3', () => {
+    const ordering = getAllVocabEntries().filter((e) => e.format === 'ordering');
+    for (const entry of ordering) {
+      expect(entry.tier, `ordering format in tier ${entry.tier} for "${entry.term}"`).toBe(3);
+    }
   });
 });

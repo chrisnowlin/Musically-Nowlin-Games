@@ -117,16 +117,17 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
               🎵 Challenge Types
             </h3>
             <ul className="space-y-2 text-gray-300">
-              <li><strong>Note Reading:</strong> Identify notes on the treble clef staff</li>
+              <li><strong>Note Reading:</strong> Identify notes on the musical staff (treble and bass clef)</li>
               <li><strong>Dynamics Vocab:</strong> Match dynamic markings (p, f, mf) to their meanings</li>
               <li><strong>Tempo Markings:</strong> Learn Italian tempo terms like Allegro and Adagio</li>
               <li><strong>Musical Symbols:</strong> Recognize symbols like fermata, sharps, and repeat signs</li>
               <li><strong>Rhythm Tap:</strong> Listen to a rhythm pattern and tap it back</li>
               <li><strong>Music Terms:</strong> General vocabulary like staccato, legato, and arpeggio</li>
               <li><strong>Interval Recognition:</strong> Identify the distance between two notes by ear</li>
+              <li><strong>Instrument Timbre:</strong> Listen to an instrument and identify it by its sound</li>
             </ul>
             <p className="text-gray-400 text-xs mt-2">
-              New challenge types unlock as you descend deeper. Each type starts easy and gets harder the longer it's been available.
+              All challenge types are available from floor 1. Questions get progressively harder as you descend deeper into the dungeon.
             </p>
           </div>
 
@@ -143,6 +144,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
               <li><strong>Skeleton:</strong> Rhythm Tap challenges</li>
               <li><strong>Shade:</strong> Music Terms challenges</li>
               <li><strong>Goblin:</strong> Interval challenges</li>
+              <li><strong>Siren:</strong> Instrument Timbre challenges</li>
               <li><strong>Ghost:</strong> Wildcard — any challenge type!</li>
               <li><strong>Dragon 🐉:</strong> All challenge types. Harder to defeat but worth more rewards</li>
               <li><strong>Mini-Boss 🏆:</strong> Multi-round battle. Defeating them grants bonus rewards</li>
@@ -160,7 +162,7 @@ const DirectionsModal: React.FC<DirectionsModalProps> = ({ isOpen, onClose }) =>
               <li>🔑 <strong>Key Management:</strong> Prioritize opening chests that give potions and more keys</li>
               <li>⚔️ <strong>Buff Strategy:</strong> Save powerful buffs for tough encounters (bosses, dragons)</li>
               <li>🔥 <strong>Streak Bonuses:</strong> Every 3 correct answers grants +25 bonus gold. Build your streak!</li>
-              <li>🎯 <strong>Learn Your Music:</strong> New challenge types unlock as you go deeper — study up!</li>
+              <li>🎯 <strong>Learn Your Music:</strong> Questions get harder as you go deeper — practice makes perfect!</li>
               <li>🔍 <strong>Explore Carefully:</strong> Take your time exploring—every key and potion helps</li>
             </ul>
           </div>

@@ -66,34 +66,75 @@ describe('generateDungeon', () => {
       (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
     );
     expect(enemies.length).toBeGreaterThan(0);
-    // Floor 1 unlocks noteReading + dynamics, so ghost, slime, and bat are valid subtypes
-    const validSubtypes = ['ghost', 'slime', 'bat'];
+    // All 8 challenge types are unlocked from floor 1, so all subtypes are valid
+    const validSubtypes = ['ghost', 'slime', 'bat', 'wraith', 'spider', 'skeleton', 'shade', 'goblin', 'siren'];
     for (const e of enemies) {
       expect(validSubtypes).toContain(e.enemySubtype);
       expect(e.enemyLevel).toBe(1);
     }
   });
 
-  it('assigns dragon subtype with enemyLevel 3 on floor 4', () => {
+  it('assigns dragon subtype with zone-based level +1 on floor 4', () => {
+    // Floor 4 is in T1 pure zone, so getEnemyLevel(4) = 1, dragon = min(5, 1+1) = 2
     const floor = generateDungeon(4);
     const dragons = floor.tiles.flat().filter(
       (t) => t.type === TileType.Enemy && t.enemySubtype === 'dragon'
     );
     for (const d of dragons) {
       expect(d.enemyState).toBe('guarding');
-      expect(d.enemyLevel).toBe(3);
+      expect(d.enemyLevel).toBe(2);
     }
   });
 
-  it('assigns level 1 or 2 on floor 8', () => {
+  it('assigns level 1 on floor 8 (T1 pure zone)', () => {
     for (let run = 0; run < 5; run++) {
       const floor = generateDungeon(8);
       const enemies = floor.tiles.flat().filter(
         (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
       );
       for (const e of enemies) {
+        expect(e.enemyLevel).toBe(1);
+      }
+    }
+  });
+
+  it('assigns level 1 or 2 on floor 15 (T1→T2 transition)', () => {
+    for (let run = 0; run < 5; run++) {
+      const floor = generateDungeon(15);
+      const enemies = floor.tiles.flat().filter(
+        (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
+      );
+      for (const e of enemies) {
         expect(e.enemyLevel).toBeGreaterThanOrEqual(1);
         expect(e.enemyLevel).toBeLessThanOrEqual(2);
+      }
+    }
+  });
+
+  it('assigns level 3 on floor 52 (T3 pure zone)', () => {
+    for (let run = 0; run < 5; run++) {
+      const floor = generateDungeon(52);
+      const enemies = floor.tiles.flat().filter(
+        (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
+      );
+      for (const e of enemies) {
+        expect(e.enemyLevel).toBe(3);
+      }
+    }
+  });
+
+  it('dragon level is at most zone level + 1, capped at 5', () => {
+    // Test across several floors that produce dragons (floor >= 3, non-boss)
+    for (const floorNum of [3, 4, 8, 15, 50]) {
+      for (let run = 0; run < 5; run++) {
+        const floor = generateDungeon(floorNum);
+        const dragons = floor.tiles.flat().filter(
+          (t) => t.type === TileType.Enemy && t.enemySubtype === 'dragon'
+        );
+        for (const d of dragons) {
+          expect(d.enemyLevel).toBeGreaterThanOrEqual(1);
+          expect(d.enemyLevel).toBeLessThanOrEqual(5);
+        }
       }
     }
   });
