@@ -140,7 +140,7 @@ export interface DungeonFloor {
   stairsPosition: Position;
 }
 
-export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory';
+export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory' | 'devConfig';
 
 export interface ActiveChallenge {
   type: ChallengeType;
@@ -171,3 +171,17 @@ export const DUNGEON_WIDTH = DUNGEON_BASE_SIZE;
 export const DUNGEON_HEIGHT = DUNGEON_BASE_SIZE;
 export const VISIBILITY_RADIUS = 3;
 export const MAX_HEALTH = 5;
+
+export const DEV_ROOM_PASSWORD = 'music123';
+
+export interface DevModeState {
+  active: boolean;
+  infiniteGold: boolean;
+  infiniteHealth: boolean;
+}
+
+export const DEFAULT_DEV_MODE: DevModeState = {
+  active: false,
+  infiniteGold: false,
+  infiniteHealth: false,
+};
