@@ -266,7 +266,7 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
   });
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 w-full">
       <h3 className="text-lg font-bold text-amber-200">Tap the Rhythm!</h3>
 
       <NotationImage
