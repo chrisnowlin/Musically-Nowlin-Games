@@ -61,6 +61,16 @@ const ENEMY_SPRITE: Record<string, string> = {
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft }) => {
   const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
+  const effectiveTheme = useMemo(() => {
+    if (!floor.isLootFloor) return theme;
+    return {
+      ...theme,
+      floor: '#92702a',
+      floorCleared: '#7a5f24',
+      border: '#d4a017',
+      gridLine: 'rgba(212,160,23,0.2)',
+    };
+  }, [theme, floor.isLootFloor]);
   const viewportSize = VIEWPORT_RADIUS * 2 + 1;
   const startX = Math.max(0, Math.min(playerPosition.x - VIEWPORT_RADIUS, floor.width - viewportSize));
   const startY = Math.max(0, Math.min(playerPosition.y - VIEWPORT_RADIUS, floor.height - viewportSize));
@@ -76,9 +86,9 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
         width: '100%',
         maxWidth: 'min(96vw, calc(100vh - 4.5rem))',
         aspectRatio: '1 / 1',
-        backgroundColor: theme.containerBg,
+        backgroundColor: effectiveTheme.containerBg,
         borderWidth: '1px',
-        borderColor: theme.border,
+        borderColor: effectiveTheme.border,
         borderStyle: 'solid',
         position: 'relative',
       }}
@@ -105,16 +115,16 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
           let bgColor: string;
           let bgImage: string | undefined;
           if (vis === 'dark') {
-            bgColor = theme.containerBg;
+            bgColor = effectiveTheme.containerBg;
           } else if (isWall) {
-            bgColor = theme.wall;
-            bgImage = theme.wallImg;
+            bgColor = effectiveTheme.wall;
+            bgImage = effectiveTheme.wallImg;
           } else if (isFloorLike) {
-            bgColor = theme.floorCleared;
-            bgImage = theme.floorImg;
+            bgColor = effectiveTheme.floorCleared;
+            bgImage = effectiveTheme.floorImg;
           } else {
-            bgColor = theme.floor;
-            bgImage = theme.floorImg;
+            bgColor = effectiveTheme.floor;
+            bgImage = effectiveTheme.floorImg;
           }
 
           const isBossAnchor =
@@ -175,14 +185,14 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               {/* Fog overlay */}
               <div
                 className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-20"
-                style={{ opacity: fogOpacity, backgroundColor: theme.fog }}
+                style={{ opacity: fogOpacity, backgroundColor: effectiveTheme.fog }}
               />
 
               {/* Grid lines for visible/dim tiles */}
               {vis !== 'dark' && (
                 <div
                   className="absolute inset-0 pointer-events-none z-20"
-                  style={{ border: `1px solid ${theme.gridLine}` }}
+                  style={{ border: `1px solid ${effectiveTheme.gridLine}` }}
                 />
               )}
             </div>
@@ -234,7 +244,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               />
               <div
                 className="absolute inset-0"
-                style={{ opacity: fogOpacity, backgroundColor: theme.fog }}
+                style={{ opacity: fogOpacity, backgroundColor: effectiveTheme.fog }}
               />
             </div>,
           ];
