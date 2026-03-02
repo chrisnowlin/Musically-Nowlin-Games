@@ -171,6 +171,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
                   />
                 </div>
               )}
+              {showContent && !isPlayer && tile.type === TileType.Jukebox && (
+                <span className="absolute inset-0 flex items-center justify-center text-lg select-none">
+                  🎵
+                </span>
+              )}
 
               {/* Fog overlay */}
               <div
