@@ -193,14 +193,29 @@ describe('VocabularyChallenge – opposites format', () => {
 });
 
 describe('VocabularyChallenge – notation images', () => {
-  it('renders notation SVG when vocab entry has a matching LilyPond asset', () => {
-    // The "symbols" category at tier 1 includes "Quarter note" which has an asset
+  it('renders notation SVG in showTermAskDef mode when vocab entry has a matching asset', () => {
+    // Force showTermAskDef=true (Math.random() < 0.5 → needs random to return < 0.5)
+    const origRandom = Math.random;
+    Math.random = () => 0.1;
     const { container } = render(
       <VocabularyChallenge category="symbols" tier={1} onResult={() => {}} />
     );
+    Math.random = origRandom;
     // At least one img with notation asset source should be present
     const notationImages = container.querySelectorAll('img[src*="/images/notation/"]');
     expect(notationImages.length).toBeGreaterThan(0);
+  });
+
+  it('does NOT render notation SVG when asking for the term (answer giveaway)', () => {
+    // Force showTermAskDef=false (Math.random() >= 0.5)
+    const origRandom = Math.random;
+    Math.random = () => 0.9;
+    const { container } = render(
+      <VocabularyChallenge category="symbols" tier={1} onResult={() => {}} />
+    );
+    Math.random = origRandom;
+    const notationImages = container.querySelectorAll('img[src*="/images/notation/"]');
+    expect(notationImages.length).toBe(0);
   });
 });
 

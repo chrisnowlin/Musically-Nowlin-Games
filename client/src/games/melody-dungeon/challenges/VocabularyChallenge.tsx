@@ -155,7 +155,7 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
-      <VocabNotation term={challenge.target.term} />
+      {challenge.showTermAskDef && <VocabNotation term={challenge.target.term} />}
       <p className="text-gray-200 text-center text-sm px-2">{questionText}</p>
 
       <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
@@ -208,7 +208,6 @@ const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge,
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
-      <VocabNotation term={challenge.correctEntry.term} />
       <p className="text-gray-200 text-center text-base px-2 font-semibold">
         {challenge.questionText}
       </p>
