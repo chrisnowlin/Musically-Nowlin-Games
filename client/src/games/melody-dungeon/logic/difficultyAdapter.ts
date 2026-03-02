@@ -154,63 +154,61 @@ export function getRhythmParams(tier: Tier): RhythmParams {
 
 // ── Interval ──────────────────────────────────────────────
 
+export type IntervalMode = 'highLow' | 'stepSkip' | 'standard';
+
 export interface IntervalParams {
   intervals: { name: string; semitones: number }[];
+  mode: IntervalMode;
 }
 
 export function getIntervalParams(tier: Tier): IntervalParams {
   switch (tier) {
     case 1:
       return {
+        mode: 'highLow',
+        intervals: [
+          { name: 'Same', semitones: 0 },
+          { name: 'Higher', semitones: 2 },
+          { name: 'Lower', semitones: -2 },
+        ],
+      };
+    case 2:
+      return {
+        mode: 'stepSkip',
+        intervals: [
+          { name: 'Same', semitones: 0 },
+          { name: 'Step', semitones: 2 },
+          { name: 'Skip', semitones: 4 },
+        ],
+      };
+    case 3:
+      return {
+        mode: 'standard',
         intervals: [
           { name: 'Unison', semitones: 0 },
           { name: '2nd', semitones: 2 },
           { name: '3rd', semitones: 4 },
         ],
       };
-    case 2:
-      return {
-        intervals: [
-          { name: '2nd', semitones: 2 },
-          { name: '3rd', semitones: 4 },
-          { name: '4th', semitones: 5 },
-          { name: '5th', semitones: 7 },
-        ],
-      };
-    case 3:
-      return {
-        intervals: [
-          { name: '2nd', semitones: 2 },
-          { name: '3rd', semitones: 4 },
-          { name: '4th', semitones: 5 },
-          { name: '5th', semitones: 7 },
-          { name: '6th', semitones: 9 },
-          { name: 'Octave', semitones: 12 },
-        ],
-      };
     case 4:
-      // T4 placeholder: add 7th
       return {
+        mode: 'standard',
         intervals: [
           { name: '2nd', semitones: 2 },
           { name: '3rd', semitones: 4 },
           { name: '4th', semitones: 5 },
           { name: '5th', semitones: 7 },
-          { name: '6th', semitones: 9 },
-          { name: '7th', semitones: 11 },
-          { name: 'Octave', semitones: 12 },
         ],
       };
     case 5:
-      // T5 placeholder: add minor/major distinction
       return {
+        mode: 'standard',
         intervals: [
           { name: '2nd', semitones: 2 },
           { name: '3rd', semitones: 4 },
           { name: '4th', semitones: 5 },
           { name: '5th', semitones: 7 },
           { name: '6th', semitones: 9 },
-          { name: '7th', semitones: 11 },
           { name: 'Octave', semitones: 12 },
         ],
       };
