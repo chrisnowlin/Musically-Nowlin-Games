@@ -174,7 +174,7 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
       {challenge.showTermAskDef && <VocabNotation term={challenge.target.term} />}
       <p className="text-gray-200 text-center text-sm px-2">{questionText}</p>
 
-      <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
+      <div className={`grid gap-2 w-full ${challenge.showTermAskDef ? 'grid-cols-1 max-w-[280px]' : 'grid-cols-2 max-w-[340px]'}`}>
         {challenge.options.map((opt) => {
           const isCorrect = opt.term === challenge.target.term;
 
