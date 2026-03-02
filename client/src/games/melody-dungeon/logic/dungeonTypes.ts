@@ -139,6 +139,7 @@ export interface DungeonFloor {
   themeIndex: number;
   playerStart: Position;
   stairsPosition: Position;
+  isLootFloor: boolean;
 }
 
 export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory' | 'devConfig';

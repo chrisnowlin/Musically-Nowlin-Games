@@ -139,12 +139,18 @@ describe('generateDungeon', () => {
     }
   });
 
-  it('places 0 or 1 treasure tiles on non-boss floors', () => {
+  it('places 0 or 1 treasure tiles on non-boss, non-loot floors', () => {
     for (let run = 0; run < 20; run++) {
       const floor = generateDungeon(3);
       const treasures = findTiles(floor, TileType.Treasure);
-      expect(treasures.length).toBeGreaterThanOrEqual(0);
-      expect(treasures.length).toBeLessThanOrEqual(1);
+      if (floor.isLootFloor) {
+        // Loot floors place 15–20 treasure piles
+        expect(treasures.length).toBeGreaterThanOrEqual(15);
+        expect(treasures.length).toBeLessThanOrEqual(20);
+      } else {
+        expect(treasures.length).toBeGreaterThanOrEqual(0);
+        expect(treasures.length).toBeLessThanOrEqual(1);
+      }
     }
   });
 
@@ -222,6 +228,7 @@ function createTestFloor(
     themeIndex: 0,
     playerStart: { x: 0, y: 0 },
     stairsPosition: { x: width - 1, y: height - 1 },
+    isLootFloor: false,
   };
 }
 

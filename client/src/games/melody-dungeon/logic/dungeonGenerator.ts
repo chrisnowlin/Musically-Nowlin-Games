@@ -17,6 +17,13 @@ export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   return null;
 }
 
+/** Loot floors: 1% chance on eligible floors (>= 3, non-boss). */
+export function rollLootFloor(floorNumber: number): boolean {
+  if (floorNumber < 3) return false;
+  if (floorNumber % 5 === 0) return false;
+  return Math.random() < 0.01;
+}
+
 function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -302,6 +309,25 @@ function pickValidChestTile(
   return null;
 }
 
+/** Place 15–20 treasure piles on random floor tiles for loot floors. */
+function placeLootTreasure(
+  grid: Tile[][],
+  placedPositions: Position[],
+  playerStart: Position,
+  floorNumber: number,
+): void {
+  const count = rand(15, 20);
+  for (let i = 0; i < count; i++) {
+    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+    if (pos) {
+      grid[pos.y][pos.x].type = TileType.Treasure;
+      grid[pos.y][pos.x].challengeType = rollChallengeType(floorNumber);
+      grid[pos.y][pos.x].cleared = false;
+      placedPositions.push(pos);
+    }
+  }
+}
+
 export function generateDungeon(floorNumber: number): DungeonFloor {
   const { width, height } = getDungeonSize(floorNumber);
   const grid = createEmptyGrid(width, height);
@@ -409,153 +435,160 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  const challengeTypes = getChallengeTypesForFloor(floorNumber);
+  const isLootFloor = !bossType && rollLootFloor(floorNumber);
 
-  // Chests, dragons, and enemies do NOT spawn on boss floors.
-  if (!bossType) {
-    // Place locked chests first so dragons can spawn adjacent to them.
-    const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
-    const chestPositions: Position[] = [];
-    for (let i = 0; i < chestCount; i++) {
-      const pos = pickValidChestTile(grid, placedPositions, playerStart);
-      if (pos) {
-        placedPositions.push(pos);
-        chestPositions.push(pos);
-      }
-    }
+  if (isLootFloor) {
+    // Loot floor: only treasure piles, no enemies/doors/merchants/chests
+    placeLootTreasure(grid, placedPositions, playerStart, floorNumber);
+  } else {
+    const challengeTypes = getChallengeTypesForFloor(floorNumber);
 
-    // Place dragon adjacent to a chest (floor >= 3).
-    const hasDragon = floorNumber >= 3;
-    if (hasDragon && chestPositions.length > 0) {
-      const chest = chestPositions[rand(0, chestPositions.length - 1)];
-      const dirs = [
-        { x: 0, y: -1 },
-        { x: 0, y: 1 },
-        { x: -1, y: 0 },
-        { x: 1, y: 0 },
-      ];
-      const adjacentCandidates = dirs
-        .map((d) => ({ x: chest.x + d.x, y: chest.y + d.y }))
-        .filter(
-          (p) =>
-            p.y >= 0 &&
-            p.y < height &&
-            p.x >= 0 &&
-            p.x < width &&
-            grid[p.y][p.x].type === TileType.Floor &&
-            !placedPositions.some((e) => e.x === p.x && e.y === p.y) &&
-            isOpenEnough(grid, p)
-        );
-      const dragonPos =
-        adjacentCandidates.length > 0
-          ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
-          : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
-      if (dragonPos) {
-        const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
-        grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
-        grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
-        grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1);
-        grid[dragonPos.y][dragonPos.x].challengeType =
-          dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
-        grid[dragonPos.y][dragonPos.x].cleared = false;
-        grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
-        placedPositions.push(dragonPos);
-      }
-    }
-
-    // Place regular enemies.
-    const totalEnemies = Math.min(2 + floorNumber, 6);
-    const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
-    const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
-    for (let i = 0; i < regularCount; i++) {
-      const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
-      if (pos) {
-        const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
-        const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
-        grid[pos.y][pos.x].type = TileType.Enemy;
-        grid[pos.y][pos.x].enemySubtype = subtype;
-        grid[pos.y][pos.x].enemyLevel = getEnemyLevel(floorNumber);
-        grid[pos.y][pos.x].challengeType =
-          subtypePool[rand(0, subtypePool.length - 1)];
-        grid[pos.y][pos.x].cleared = false;
-        grid[pos.y][pos.x].enemyState = 'patrolling';
-        placedPositions.push(pos);
-      }
-    }
-  }
-
-  // Place doors only on straight hallway choke points.
-  const doorCount = Math.min(1 + Math.floor(floorNumber / 2), 3);
-  for (let i = 0; i < doorCount; i++) {
-    const pos = pickValidDoorTile(grid, placedPositions, playerStart, floorNumber);
-    if (pos) {
-      placedPositions.push(pos);
-    }
-  }
-
-  // Place merchant pair (stall + merchant): always on floor 2, ~40% on later floors.
-  if (floorNumber === 2 || (floorNumber > 2 && Math.random() < 0.4)) {
-    // Place stall first: needs open room tile (not hallway).
-    const stallCandidates = getFloorTiles(grid).filter((p) => {
-      if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) return false;
-      if (distanceSq(p, playerStart) < 4) return false;
-      if (isStraightHallwayTile(grid, p)) return false;
-      return isOpenEnough(grid, p);
-    });
-
-    while (stallCandidates.length > 0) {
-      const idx = rand(0, stallCandidates.length - 1);
-      const stallPos = stallCandidates.splice(idx, 1)[0];
-
-      // Find adjacent floor tile for the merchant character.
-      const dirs = [
-        { x: 0, y: -1 },
-        { x: 0, y: 1 },
-        { x: -1, y: 0 },
-        { x: 1, y: 0 },
-      ];
-      const merchantCandidates = dirs
-        .map((d) => ({ x: stallPos.x + d.x, y: stallPos.y + d.y }))
-        .filter(
-          (p) =>
-            p.y >= 0 &&
-            p.y < height &&
-            p.x >= 0 &&
-            p.x < width &&
-            grid[p.y][p.x].type === TileType.Floor &&
-            !placedPositions.some((e) => e.x === p.x && e.y === p.y)
-        );
-
-      if (merchantCandidates.length > 0) {
-        const merchantPos = merchantCandidates[rand(0, merchantCandidates.length - 1)];
-
-        const previousStall = { ...grid[stallPos.y][stallPos.x] };
-        const previousMerchant = { ...grid[merchantPos.y][merchantPos.x] };
-
-        grid[stallPos.y][stallPos.x].type = TileType.MerchantStall;
-        grid[merchantPos.y][merchantPos.x].type = TileType.Merchant;
-
-        if (noKeyTraversalIsValid(grid, playerStart)) {
-          placedPositions.push(stallPos, merchantPos);
-          break;
+    // Chests, dragons, and enemies do NOT spawn on boss floors.
+    if (!bossType) {
+      // Place locked chests first so dragons can spawn adjacent to them.
+      const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
+      const chestPositions: Position[] = [];
+      for (let i = 0; i < chestCount; i++) {
+        const pos = pickValidChestTile(grid, placedPositions, playerStart);
+        if (pos) {
+          placedPositions.push(pos);
+          chestPositions.push(pos);
         }
+      }
 
-        // Revert placement if it breaks reachability
-        grid[stallPos.y][stallPos.x] = previousStall;
-        grid[merchantPos.y][merchantPos.x] = previousMerchant;
+      // Place dragon adjacent to a chest (floor >= 3).
+      const hasDragon = floorNumber >= 3;
+      if (hasDragon && chestPositions.length > 0) {
+        const chest = chestPositions[rand(0, chestPositions.length - 1)];
+        const dirs = [
+          { x: 0, y: -1 },
+          { x: 0, y: 1 },
+          { x: -1, y: 0 },
+          { x: 1, y: 0 },
+        ];
+        const adjacentCandidates = dirs
+          .map((d) => ({ x: chest.x + d.x, y: chest.y + d.y }))
+          .filter(
+            (p) =>
+              p.y >= 0 &&
+              p.y < height &&
+              p.x >= 0 &&
+              p.x < width &&
+              grid[p.y][p.x].type === TileType.Floor &&
+              !placedPositions.some((e) => e.x === p.x && e.y === p.y) &&
+              isOpenEnough(grid, p)
+          );
+        const dragonPos =
+          adjacentCandidates.length > 0
+            ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
+            : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+        if (dragonPos) {
+          const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
+          grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
+          grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
+          grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1);
+          grid[dragonPos.y][dragonPos.x].challengeType =
+            dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
+          grid[dragonPos.y][dragonPos.x].cleared = false;
+          grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
+          placedPositions.push(dragonPos);
+        }
+      }
+
+      // Place regular enemies.
+      const totalEnemies = Math.min(2 + floorNumber, 6);
+      const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
+      const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
+      for (let i = 0; i < regularCount; i++) {
+        const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+        if (pos) {
+          const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
+          const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
+          grid[pos.y][pos.x].type = TileType.Enemy;
+          grid[pos.y][pos.x].enemySubtype = subtype;
+          grid[pos.y][pos.x].enemyLevel = getEnemyLevel(floorNumber);
+          grid[pos.y][pos.x].challengeType =
+            subtypePool[rand(0, subtypePool.length - 1)];
+          grid[pos.y][pos.x].cleared = false;
+          grid[pos.y][pos.x].enemyState = 'patrolling';
+          placedPositions.push(pos);
+        }
       }
     }
-  }
 
-  // Place treasure (free pickup)
-  const treasureCount = rand(0, 1);
-  for (let i = 0; i < treasureCount; i++) {
-    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
-    if (pos) {
-      grid[pos.y][pos.x].type = TileType.Treasure;
-      grid[pos.y][pos.x].challengeType = rollChallengeType(floorNumber);
-      grid[pos.y][pos.x].cleared = false;
-      placedPositions.push(pos);
+    // Place doors only on straight hallway choke points.
+    const doorCount = Math.min(1 + Math.floor(floorNumber / 2), 3);
+    for (let i = 0; i < doorCount; i++) {
+      const pos = pickValidDoorTile(grid, placedPositions, playerStart, floorNumber);
+      if (pos) {
+        placedPositions.push(pos);
+      }
+    }
+
+    // Place merchant pair (stall + merchant): always on floor 2, ~40% on later floors.
+    if (floorNumber === 2 || (floorNumber > 2 && Math.random() < 0.4)) {
+      // Place stall first: needs open room tile (not hallway).
+      const stallCandidates = getFloorTiles(grid).filter((p) => {
+        if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) return false;
+        if (distanceSq(p, playerStart) < 4) return false;
+        if (isStraightHallwayTile(grid, p)) return false;
+        return isOpenEnough(grid, p);
+      });
+
+      while (stallCandidates.length > 0) {
+        const idx = rand(0, stallCandidates.length - 1);
+        const stallPos = stallCandidates.splice(idx, 1)[0];
+
+        // Find adjacent floor tile for the merchant character.
+        const dirs = [
+          { x: 0, y: -1 },
+          { x: 0, y: 1 },
+          { x: -1, y: 0 },
+          { x: 1, y: 0 },
+        ];
+        const merchantCandidates = dirs
+          .map((d) => ({ x: stallPos.x + d.x, y: stallPos.y + d.y }))
+          .filter(
+            (p) =>
+              p.y >= 0 &&
+              p.y < height &&
+              p.x >= 0 &&
+              p.x < width &&
+              grid[p.y][p.x].type === TileType.Floor &&
+              !placedPositions.some((e) => e.x === p.x && e.y === p.y)
+          );
+
+        if (merchantCandidates.length > 0) {
+          const merchantPos = merchantCandidates[rand(0, merchantCandidates.length - 1)];
+
+          const previousStall = { ...grid[stallPos.y][stallPos.x] };
+          const previousMerchant = { ...grid[merchantPos.y][merchantPos.x] };
+
+          grid[stallPos.y][stallPos.x].type = TileType.MerchantStall;
+          grid[merchantPos.y][merchantPos.x].type = TileType.Merchant;
+
+          if (noKeyTraversalIsValid(grid, playerStart)) {
+            placedPositions.push(stallPos, merchantPos);
+            break;
+          }
+
+          // Revert placement if it breaks reachability
+          grid[stallPos.y][stallPos.x] = previousStall;
+          grid[merchantPos.y][merchantPos.x] = previousMerchant;
+        }
+      }
+    }
+
+    // Place treasure (free pickup)
+    const treasureCount = rand(0, 1);
+    for (let i = 0; i < treasureCount; i++) {
+      const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+      if (pos) {
+        grid[pos.y][pos.x].type = TileType.Treasure;
+        grid[pos.y][pos.x].challengeType = rollChallengeType(floorNumber);
+        grid[pos.y][pos.x].cleared = false;
+        placedPositions.push(pos);
+      }
     }
   }
 
@@ -567,6 +600,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     themeIndex: getThemeIndexForFloor(floorNumber),
     playerStart,
     stairsPosition,
+    isLootFloor,
   };
 }
 
@@ -646,6 +680,7 @@ export function generateDevRoom(): DungeonFloor {
     themeIndex: 0,
     playerStart,
     stairsPosition: playerStart, // No stairs in dev room
+    isLootFloor: false,
   };
 }
 
