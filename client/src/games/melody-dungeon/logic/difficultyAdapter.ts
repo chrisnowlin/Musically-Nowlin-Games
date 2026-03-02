@@ -51,10 +51,11 @@ export function rollTier(floor: number): Tier {
   return Math.random() < zone.progress ? zone.highTier : zone.lowTier;
 }
 
-/** Enemy difficulty level 1-5 based on zone. Pure zones use their tier; transitions use the higher tier. */
+/** Enemy difficulty level 1-5 based on zone. Pure zones use their tier; transitions use uniform random. */
 export function getEnemyLevel(floor: number): number {
   const zone = getFloorZone(floor);
-  return zone.highTier;
+  if (zone.lowTier === zone.highTier) return zone.lowTier;
+  return Math.random() < 0.5 ? zone.lowTier : zone.highTier;
 }
 
 // ── Challenge Type Weights ───────────────────────────────────

@@ -8,6 +8,7 @@ import {
   rollTier,
   getEnemyLevel,
   getChallengeTypeWeight,
+  rollChallengeType,
 } from '../challengeHelpers';
 
 // ── getFloorZone ─────────────────────────────────────────────
@@ -55,6 +56,58 @@ describe('getFloorZone', () => {
     const zone68 = getFloorZone(68);
     expect(zone68.lowTier).toBe(3);
     expect(zone68.highTier).toBe(3);
+  });
+
+  it('returns T2->T3 transition for floors 36-42', () => {
+    const zone36 = getFloorZone(36);
+    expect(zone36.lowTier).toBe(2);
+    expect(zone36.highTier).toBe(3);
+    expect(zone36.progress).toBeGreaterThanOrEqual(0);
+    expect(zone36.progress).toBeLessThanOrEqual(1);
+    expect(zone36.progress).toBeCloseTo(0, 5);
+
+    const zone42 = getFloorZone(42);
+    expect(zone42.lowTier).toBe(2);
+    expect(zone42.highTier).toBe(3);
+    expect(zone42.progress).toBeCloseTo(1, 5);
+  });
+
+  it('returns T3->T4 transition for floors 69-75', () => {
+    const zone69 = getFloorZone(69);
+    expect(zone69.lowTier).toBe(3);
+    expect(zone69.highTier).toBe(4);
+    expect(zone69.progress).toBeGreaterThanOrEqual(0);
+    expect(zone69.progress).toBeLessThanOrEqual(1);
+    expect(zone69.progress).toBeCloseTo(0, 5);
+
+    const zone75 = getFloorZone(75);
+    expect(zone75.lowTier).toBe(3);
+    expect(zone75.highTier).toBe(4);
+    expect(zone75.progress).toBeCloseTo(1, 5);
+  });
+
+  it('returns T4 pure for floors 76-88', () => {
+    const zone76 = getFloorZone(76);
+    expect(zone76.lowTier).toBe(4);
+    expect(zone76.highTier).toBe(4);
+
+    const zone88 = getFloorZone(88);
+    expect(zone88.lowTier).toBe(4);
+    expect(zone88.highTier).toBe(4);
+  });
+
+  it('returns T4->T5 transition for floors 89-94', () => {
+    const zone89 = getFloorZone(89);
+    expect(zone89.lowTier).toBe(4);
+    expect(zone89.highTier).toBe(5);
+    expect(zone89.progress).toBeGreaterThanOrEqual(0);
+    expect(zone89.progress).toBeLessThanOrEqual(1);
+    expect(zone89.progress).toBeCloseTo(0, 5);
+
+    const zone94 = getFloorZone(94);
+    expect(zone94.lowTier).toBe(4);
+    expect(zone94.highTier).toBe(5);
+    expect(zone94.progress).toBeCloseTo(1, 5);
   });
 
   it('returns T5 pure for floors 95-100', () => {
@@ -108,8 +161,17 @@ describe('getEnemyLevel', () => {
     expect(getEnemyLevel(5)).toBe(1);
   });
 
-  it('returns level 2 for T1->T2 transition', () => {
-    expect(getEnemyLevel(15)).toBe(2);
+  it('returns level 1 or 2 for T1->T2 transition (uniform random)', () => {
+    const levels = new Set<number>();
+    for (let i = 0; i < 200; i++) {
+      levels.add(getEnemyLevel(15));
+    }
+    // Should only contain 1 and/or 2
+    for (const l of levels) {
+      expect([1, 2]).toContain(l);
+    }
+    // With 200 iterations, both values should appear
+    expect(levels.size).toBe(2);
   });
 
   it('returns level 3 for T3 pure zone', () => {
@@ -144,6 +206,46 @@ describe('getChallengeTypeWeight', () => {
   it('returns 1.0 for late-bloomers on floors 25+', () => {
     expect(getChallengeTypeWeight('interval', 25)).toBe(1.0);
     expect(getChallengeTypeWeight('terms', 100)).toBe(1.0);
+  });
+});
+
+// ── rollChallengeType ───────────────────────────────────────
+
+describe('rollChallengeType', () => {
+  it('returns a valid ChallengeType', () => {
+    const validTypes = [
+      'noteReading', 'rhythmTap', 'interval', 'dynamics',
+      'tempo', 'symbols', 'terms', 'timbre',
+    ];
+    for (let i = 0; i < 50; i++) {
+      const result = rollChallengeType(50);
+      expect(validTypes).toContain(result);
+    }
+  });
+
+  it('late-bloomer types appear less frequently on early floors', () => {
+    const iterations = 2000;
+    const earlyFloor = 1;
+    const lateFloor = 50;
+
+    let earlyLateBloomerCount = 0;
+    let lateLateBloomerCount = 0;
+
+    for (let i = 0; i < iterations; i++) {
+      const earlyResult = rollChallengeType(earlyFloor);
+      if (earlyResult === 'interval' || earlyResult === 'terms') {
+        earlyLateBloomerCount++;
+      }
+      const lateResult = rollChallengeType(lateFloor);
+      if (lateResult === 'interval' || lateResult === 'terms') {
+        lateLateBloomerCount++;
+      }
+    }
+
+    // Late-bloomers should appear significantly less on early floors
+    const earlyRatio = earlyLateBloomerCount / iterations;
+    const lateRatio = lateLateBloomerCount / iterations;
+    expect(earlyRatio).toBeLessThan(lateRatio);
   });
 });
 
@@ -195,6 +297,12 @@ describe('generateBigBossSequence', () => {
     for (const round of seq) {
       expect([1, 2, 3, 4, 5]).toContain(round.tier);
     }
+  });
+
+  it('includes each of the 8 types at least once', () => {
+    const seq = generateBigBossSequence(50);
+    const usedTypes = new Set(seq.map(r => r.type));
+    expect(usedTypes.size).toBe(8);
   });
 });
 
