@@ -1053,9 +1053,9 @@ const MelodyDungeonGame: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-4 px-2 py-2">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 px-1 py-1">
         <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} />
-        <div className="shrink-0 flex flex-col items-center gap-3">
+        <div className="shrink-0 flex flex-col items-center gap-2">
           <MiniMap floor={floor} playerPosition={player.position} showStairs={player.buffs.floor.compass} />
           <MobileDPad
             onMove={handleMove}

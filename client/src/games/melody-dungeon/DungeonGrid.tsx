@@ -69,11 +69,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
 
   return (
     <div
-      className="grid gap-0 mx-auto select-none rounded-lg"
+      className="grid gap-0 mx-auto select-none rounded-lg flex-1 min-h-0"
       style={{
         gridTemplateColumns: `repeat(${viewWidth}, 1fr)`,
         width: '100%',
-        maxWidth: 'min(90vw, 70vh, 720px)',
+        maxWidth: 'min(96vw, calc(100vh - 4.5rem))',
         aspectRatio: '1 / 1',
         backgroundColor: theme.containerBg,
         borderWidth: '1px',
