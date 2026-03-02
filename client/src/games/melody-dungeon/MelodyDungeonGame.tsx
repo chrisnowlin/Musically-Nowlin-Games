@@ -8,6 +8,7 @@ import {
   DEFAULT_BUFFS,
   DEFAULT_FLOOR_BUFFS,
   DEFAULT_ARMED_BUFFS,
+  DEFAULT_DEV_MODE,
 } from './logic/dungeonTypes';
 import type {
   GamePhase,
@@ -18,8 +19,10 @@ import type {
   ChallengeType,
   EnemySubtype,
   Tile,
+  DevModeState,
+  Tier,
 } from './logic/dungeonTypes';
-import { generateDungeon, moveEnemies } from './logic/dungeonGenerator';
+import { generateDungeon, moveEnemies, generateDevRoom } from './logic/dungeonGenerator';
 import DungeonGrid from './DungeonGrid';
 import HUD from './HUD';
 import MobileDPad from './MobileDPad';
@@ -35,6 +38,10 @@ import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
 import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
+import { ALL_ITEMS } from './logic/merchantItems';
+import DevRoomPasswordModal from './DevRoomPasswordModal';
+import DevChallengeConfigModal from './DevChallengeConfigModal';
+import DevToolbar from './DevToolbar';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -134,6 +141,16 @@ const MelodyDungeonGame: React.FC = () => {
   const [showDirections, setShowDirections] = useState(false);
   const [dragonFireActive, setDragonFireActive] = useState(false);
   const [shieldEffectActive, setShieldEffectActive] = useState(false);
+  const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingDevConfig, setPendingDevConfig] = useState<{
+    challengeType: ChallengeType;
+    tier: Tier;
+    tilePosition: Position;
+    tileType: TileType;
+    subtype?: EnemySubtype;
+    level: number;
+  } | null>(null);
 
   const floorNumber = floor.floorNumber;
   const themeName = getTheme(floor.themeIndex).name;
@@ -433,6 +450,21 @@ const MelodyDungeonGame: React.FC = () => {
           setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
           moveLockedRef.current = true;
           const challengeType: ChallengeType = tile.challengeType || 'noteReading';
+
+          // Dev room: show config panel instead of starting challenge directly
+          if (floor.floorNumber === 0 && tile.type === TileType.Enemy) {
+            setPendingDevConfig({
+              challengeType,
+              tier: (tile.enemyLevel || 3) as Tier,
+              tilePosition: newPos,
+              tileType: TileType.Enemy,
+              subtype: tile.enemySubtype,
+              level: tile.enemyLevel || 3,
+            });
+            setPhase('devConfig');
+            return { ...prev, position: newPos };
+          }
+
           setActiveChallenge({ type: challengeType, tilePosition: newPos });
           setActiveTileType(tile.type);
           setActiveTileSubtype(tile.enemySubtype);
@@ -534,7 +566,9 @@ const MelodyDungeonGame: React.FC = () => {
             }
           } else {
             // Boss defeated the player — battle only calls onResult(false) when player HP=0
-            updated.health = 0;
+            if (!devMode.infiniteHealth) {
+              updated.health = 0;
+            }
             if (prev.buffs.persistent.streakSaver > 0) {
               updated = {
                 ...updated,
@@ -615,7 +649,7 @@ const MelodyDungeonGame: React.FC = () => {
               updated.shieldCharm = 0;
               setShieldEffectActive(true);
               setTimeout(() => setShieldEffectActive(false), 600);
-            } else {
+            } else if (!devMode.infiniteHealth) {
               updated.health = Math.max(0, prev.health - 1);
             }
             // Streak Saver: preserve streak, consume one armed charge
@@ -679,6 +713,34 @@ const MelodyDungeonGame: React.FC = () => {
         return { ...prev, tiles };
       });
 
+      // Dev room: respawn enemies after a short delay
+      if (floor.floorNumber === 0 && activeTileType === TileType.Enemy && activeChallenge) {
+        const { x, y } = activeChallenge.tilePosition;
+        const savedSubtype = activeTileSubtype;
+        const savedLevel = activeTileLevel;
+        setTimeout(() => {
+          setFloor((prev) => {
+            const tiles = prev.tiles.map((row, ry) =>
+              row.map((tile, rx) => {
+                if (rx === x && ry === y) {
+                  return {
+                    ...tile,
+                    type: TileType.Enemy,
+                    cleared: false,
+                    enemySubtype: savedSubtype,
+                    enemyLevel: savedLevel,
+                    challengeType: 'noteReading' as ChallengeType,
+                    enemyState: 'guarding' as const,
+                  };
+                }
+                return tile;
+              })
+            );
+            return { ...prev, tiles };
+          });
+        }, 500);
+      }
+
       setActiveChallenge(null);
       moveLockedRef.current = false;
 
@@ -726,11 +788,11 @@ const MelodyDungeonGame: React.FC = () => {
 
   const handleMerchantBuy = useCallback((item: MerchantItem) => {
     setPlayer((prev) => {
-      const price = item.getPrice(floorNumber);
-      if (prev.gold < price || !item.canBuy(prev)) return prev;
+      const price = devMode.infiniteGold ? 0 : item.getPrice(floorNumber);
+      if (!devMode.infiniteGold && (prev.gold < price || !item.canBuy(prev))) return prev;
       return item.apply({ ...prev, gold: prev.gold - price });
     });
-  }, [floorNumber]);
+  }, [floorNumber, devMode.infiniteGold]);
 
   const handleMerchantClose = useCallback(() => {
     moveLockedRef.current = false;
@@ -797,11 +859,56 @@ const MelodyDungeonGame: React.FC = () => {
     setFloor(visibleFloor);
     setPlayer(createPlayer(newFloor.playerStart));
     setFloorsCleared(0);
+    setDevMode({ ...DEFAULT_DEV_MODE });
     setActiveChallenge(null);
     moveLockedRef.current = false;
     setPhase('playing');
     playNote('C4', 0.2);
   }, [selectedStartFloor]);
+
+  const enterDevRoom = useCallback(() => {
+    const devFloor = generateDevRoom();
+    setFloor(devFloor);
+    setPlayer({
+      ...createPlayer(devFloor.playerStart),
+      gold: 999,
+    });
+    setDevMode({ active: true, infiniteGold: false, infiniteHealth: false });
+    setFloorsCleared(0);
+    setActiveChallenge(null);
+    moveLockedRef.current = false;
+    setPhase('playing');
+    setShowPasswordModal(false);
+  }, []);
+
+  const resetDevRoom = useCallback(() => {
+    const devFloor = generateDevRoom();
+    setFloor(devFloor);
+    setPlayer({
+      ...createPlayer(devFloor.playerStart),
+      gold: 999,
+    });
+    setActiveChallenge(null);
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, []);
+
+  const handleDevConfigStart = useCallback((type: ChallengeType, tier: Tier) => {
+    if (!pendingDevConfig) return;
+    setActiveChallenge({ type, tilePosition: pendingDevConfig.tilePosition });
+    setActiveTileType(TileType.Enemy);
+    setActiveTileSubtype(pendingDevConfig.subtype);
+    setActiveTileLevel(tier);
+    activeChallengeBuffsRef.current = { metronome: playerRef.current.buffs.armed.metronome > 0, tuningFork: playerRef.current.buffs.armed.tuningFork > 0 };
+    setPendingDevConfig(null);
+    setPhase('challenge');
+  }, [pendingDevConfig]);
+
+  const handleDevConfigCancel = useCallback(() => {
+    setPendingDevConfig(null);
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, []);
 
   const descendFloor = useCallback(() => {
     const nextFloorNum = floorNumber + 1;
@@ -920,6 +1027,12 @@ const MelodyDungeonGame: React.FC = () => {
             <HelpCircle size={20} />
             How to Play
           </button>
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            className="py-2 px-4 text-gray-500 hover:text-gray-300 font-medium transition-colors text-xs"
+          >
+            Dev Room
+          </button>
 
           {highGold > 0 && (
             <p className="text-center text-sm text-gray-500">
@@ -935,6 +1048,12 @@ const MelodyDungeonGame: React.FC = () => {
         </div>
       </div>
       <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+      {showPasswordModal && (
+        <DevRoomPasswordModal
+          onSuccess={enterDevRoom}
+          onCancel={() => setShowPasswordModal(false)}
+        />
+      )}
     </>
     );
   }
@@ -978,7 +1097,7 @@ const MelodyDungeonGame: React.FC = () => {
               Try Again
             </button>
             <button
-              onClick={() => setPhase('menu')}
+              onClick={() => { setDevMode({ ...DEFAULT_DEV_MODE }); setPhase('menu'); }}
               className="py-2 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm transition-colors"
             >
               Main Menu
@@ -1028,7 +1147,7 @@ const MelodyDungeonGame: React.FC = () => {
               Play Again
             </button>
             <button
-              onClick={() => setPhase('menu')}
+              onClick={() => { setDevMode({ ...DEFAULT_DEV_MODE }); setPhase('menu'); }}
               className="py-2 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm transition-colors"
             >
               Main Menu
@@ -1078,6 +1197,20 @@ const MelodyDungeonGame: React.FC = () => {
           <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} />
         </div>
       </div>
+      {devMode.active && (
+        <div className="px-2 shrink-0">
+          <DevToolbar
+            devMode={devMode}
+            onToggleInfiniteGold={() => setDevMode((prev) => ({ ...prev, infiniteGold: !prev.infiniteGold }))}
+            onToggleInfiniteHealth={() => setDevMode((prev) => ({ ...prev, infiniteHealth: !prev.infiniteHealth }))}
+            onReset={resetDevRoom}
+            onBackToMenu={() => {
+              setDevMode({ ...DEFAULT_DEV_MODE });
+              setPhase('menu');
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 px-1 py-1">
         <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} />
@@ -1141,12 +1274,23 @@ const MelodyDungeonGame: React.FC = () => {
         />
       )}
 
+      {phase === 'devConfig' && pendingDevConfig && (
+        <DevChallengeConfigModal
+          defaultType={pendingDevConfig.challengeType}
+          defaultTier={pendingDevConfig.tier as Tier}
+          enemyName={pendingDevConfig.subtype ? pendingDevConfig.subtype.charAt(0).toUpperCase() + pendingDevConfig.subtype.slice(1) : 'Enemy'}
+          onStart={handleDevConfigStart}
+          onCancel={handleDevConfigCancel}
+        />
+      )}
+
       {phase === 'shopping' && (
         <MerchantModal
           player={player}
           floorNumber={floorNumber}
           onBuy={handleMerchantBuy}
           onClose={handleMerchantClose}
+          overrideItems={devMode.active ? ALL_ITEMS : undefined}
         />
       )}
 
