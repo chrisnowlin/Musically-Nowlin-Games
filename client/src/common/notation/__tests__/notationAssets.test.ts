@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getNotationAsset, VOCAB_ASSET_MAP } from '../notationAssets';
+import { getNotationAsset, getVocabNotationAsset, VOCAB_ASSET_MAP } from '../notationAssets';
 
 describe('getNotationAsset', () => {
   it('returns the correct path for a known category and key', () => {
@@ -30,5 +30,15 @@ describe('VOCAB_ASSET_MAP', () => {
 
   it('returns undefined for terms without notation assets', () => {
     expect(VOCAB_ASSET_MAP['Melody']).toBeUndefined();
+  });
+});
+
+describe('getVocabNotationAsset', () => {
+  it('returns the full SVG path for a term with a notation asset', () => {
+    expect(getVocabNotationAsset('Quarter note')).toBe('/images/notation/notation/notes/quarter-note.svg');
+  });
+
+  it('returns undefined for a term without a notation asset', () => {
+    expect(getVocabNotationAsset('Melody')).toBeUndefined();
   });
 });
