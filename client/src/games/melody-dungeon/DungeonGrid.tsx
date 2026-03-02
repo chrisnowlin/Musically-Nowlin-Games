@@ -43,6 +43,7 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.BigBoss]: '/images/melody-dungeon/bigboss.png',
   [TileType.Merchant]: '/images/melody-dungeon/merchant.png',
   [TileType.MerchantStall]: '/images/melody-dungeon/stall.png',
+  [TileType.Jukebox]: '/images/melody-dungeon/jukebox.svg',
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
@@ -171,12 +172,6 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
                   />
                 </div>
               )}
-              {showContent && !isPlayer && tile.type === TileType.Jukebox && (
-                <span className="absolute inset-0 flex items-center justify-center text-lg select-none">
-                  🎵
-                </span>
-              )}
-
               {/* Fog overlay */}
               <div
                 className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-20"
