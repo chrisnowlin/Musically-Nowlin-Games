@@ -160,9 +160,13 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
     setTimeout(() => onResult(correct), 800);
   };
 
+  const { target } = challenge;
+  const defLooksLikeBeats = /beat/i.test(target.definition);
   const questionText = challenge.showTermAskDef
-    ? `What does "${challenge.target.term}" mean?`
-    : `Which term means "${challenge.target.definition}"?`;
+    ? (defLooksLikeBeats
+        ? `How many beats does a ${target.term} get?`
+        : `What does "${target.term}" mean?`)
+    : `Which term means "${target.definition}"?`;
 
   return (
     <div className="flex flex-col items-center gap-4">
