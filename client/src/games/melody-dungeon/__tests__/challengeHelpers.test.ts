@@ -125,6 +125,16 @@ describe('getFloorZone', () => {
     expect(zone.lowTier).toBe(5);
     expect(zone.highTier).toBe(5);
   });
+
+  it('clamps floor 0 and negative floors to T1 pure', () => {
+    const zone0 = getFloorZone(0);
+    expect(zone0.lowTier).toBe(1);
+    expect(zone0.highTier).toBe(1);
+
+    const zoneNeg = getFloorZone(-5);
+    expect(zoneNeg.lowTier).toBe(1);
+    expect(zoneNeg.highTier).toBe(1);
+  });
 });
 
 // ── rollTier ─────────────────────────────────────────────────

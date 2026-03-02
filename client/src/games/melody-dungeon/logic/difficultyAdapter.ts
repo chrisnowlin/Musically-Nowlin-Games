@@ -52,7 +52,7 @@ export function rollTier(floor: number): Tier {
 }
 
 /** Enemy difficulty level 1-5 based on zone. Pure zones use their tier; transitions use uniform random. */
-export function getEnemyLevel(floor: number): number {
+export function getEnemyLevel(floor: number): Tier {
   const zone = getFloorZone(floor);
   if (zone.lowTier === zone.highTier) return zone.lowTier;
   return Math.random() < 0.5 ? zone.lowTier : zone.highTier;
