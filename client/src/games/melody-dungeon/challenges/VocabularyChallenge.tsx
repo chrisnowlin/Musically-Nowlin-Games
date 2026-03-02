@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
 import { type VocabCategory, type VocabEntry, getVocabEntries, getAllVocabEntries } from '../logic/vocabData';
 import { shuffle } from '../challengeHelpers';
+import { getVocabNotationAsset } from '@/common/notation/notationAssets';
 
 interface Props {
   category: VocabCategory;
@@ -127,6 +128,19 @@ interface ViewProps<T> {
   onResult: (correct: boolean) => void;
 }
 
+/** Displays LilyPond-engraved notation if an asset exists for this term. */
+function NotationImage({ term }: { term: string }) {
+  const src = getVocabNotationAsset(term);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={`${term} notation`}
+      className="h-16 mx-auto mb-2 invert"
+    />
+  );
+}
+
 const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, theme, onResult }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
@@ -146,6 +160,7 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
+      <NotationImage term={challenge.target.term} />
       <p className="text-gray-200 text-center text-sm px-2">{questionText}</p>
 
       <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
@@ -198,6 +213,7 @@ const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge,
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
+      <NotationImage term={challenge.correctEntry.term} />
       <p className="text-gray-200 text-center text-base px-2 font-semibold">
         {challenge.questionText}
       </p>

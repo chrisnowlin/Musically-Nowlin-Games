@@ -192,6 +192,18 @@ describe('VocabularyChallenge – opposites format', () => {
   });
 });
 
+describe('VocabularyChallenge – notation images', () => {
+  it('renders notation SVG when vocab entry has a matching LilyPond asset', () => {
+    // The "symbols" category at tier 1 includes "Quarter note" which has an asset
+    const { container } = render(
+      <VocabularyChallenge category="symbols" tier={1} onResult={() => {}} />
+    );
+    // At least one img with notation asset source should be present
+    const notationImages = container.querySelectorAll('img[src*="/images/notation/"]');
+    expect(notationImages.length).toBeGreaterThan(0);
+  });
+});
+
 describe('VocabularyChallenge – ordering format', () => {
   // To test ordering, we need to force the ordering format to be chosen.
   // dynamics tier 3 has standard + ordering entries, so we mock Math.random.
