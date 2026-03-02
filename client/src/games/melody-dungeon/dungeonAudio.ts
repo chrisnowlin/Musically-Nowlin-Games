@@ -316,3 +316,75 @@ export function unduckBgMusic(): void {
     bgGain.gain.linearRampToValueAtTime(BG_VOLUME, now + DUCK_RAMP_S);
   } catch {}
 }
+
+// ── Battle Music ──────────────────────────────────────────────────
+const battleBuffers = new Map<string, AudioBuffer>();
+let battleSource: AudioBufferSourceNode | null = null;
+let battleGain: GainNode | null = null;
+const BATTLE_VOLUME = 0.25;
+const BATTLE_FADE_S = 0.4;
+
+/** Pre-load a battle music track by key (e.g. 'miniboss', 'bigboss'). */
+export async function loadBattleMusic(key: string, url: string): Promise<void> {
+  if (battleBuffers.has(key)) return;
+  try {
+    const ctx = getAudioCtx();
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const arr = await res.arrayBuffer();
+    battleBuffers.set(key, await ctx.decodeAudioData(arr));
+  } catch {
+    // Load failed — boss fights continue without music
+  }
+}
+
+/** Start looping battle music for the given key. Stops any currently playing battle track. */
+export function startBattleMusic(key: string): void {
+  stopBattleMusic();
+  const buffer = battleBuffers.get(key);
+  if (!buffer) return;
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') void ctx.resume();
+
+    battleGain = ctx.createGain();
+    battleGain.gain.value = 0;
+    battleGain.connect(ctx.destination);
+
+    battleSource = ctx.createBufferSource();
+    battleSource.buffer = buffer;
+    battleSource.loop = true;
+    battleSource.connect(battleGain);
+    battleSource.start(0);
+
+    // Fade in
+    const now = ctx.currentTime;
+    battleGain.gain.linearRampToValueAtTime(BATTLE_VOLUME, now + BATTLE_FADE_S);
+
+    battleSource.addEventListener('ended', () => { battleSource = null; });
+  } catch {
+    // Audio not available
+  }
+}
+
+/** Stop battle music with a fade-out. */
+export function stopBattleMusic(): void {
+  if (!battleSource || !battleGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    battleGain.gain.cancelScheduledValues(now);
+    battleGain.gain.setValueAtTime(battleGain.gain.value, now);
+    battleGain.gain.linearRampToValueAtTime(0, now + BATTLE_FADE_S);
+    const src = battleSource;
+    const gain = battleGain;
+    battleSource = null;
+    battleGain = null;
+    setTimeout(() => {
+      try { src.stop(); src.disconnect(); gain.disconnect(); } catch {}
+    }, (BATTLE_FADE_S + 0.1) * 1000);
+  } catch {
+    battleSource = null;
+    battleGain = null;
+  }
+}

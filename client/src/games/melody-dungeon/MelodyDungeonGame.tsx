@@ -33,7 +33,7 @@ import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
-import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, unduckBgMusic } from './dungeonAudio';
+import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
@@ -213,26 +213,38 @@ const MelodyDungeonGame: React.FC = () => {
     };
   }, []);
 
-  // Pre-load background music on mount.
+  // Pre-load background and battle music on mount.
   useEffect(() => {
     const basePath = import.meta.env.BASE_URL || '/';
     void loadBgMusic(`${basePath}audio/Cathedral in the Cavern.mp3`);
+    void loadBattleMusic('miniboss', `${basePath}audio/Dungeon Run.mp3`);
+    void loadBattleMusic('bigboss', `${basePath}audio/Dungeon Run_ Bloodsteel.mp3`);
   }, []);
 
-  // Start/stop background music and duck during challenges.
+  // Start/stop background music, duck during challenges, and play battle music for bosses.
   useEffect(() => {
     if (phase === 'playing') {
+      stopBattleMusic();
       startBgMusic();
       unduckBgMusic();
     } else if (phase === 'challenge') {
-      duckBgMusic();
+      const isBoss = activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss;
+      if (isBoss) {
+        // Boss fight: mute background music entirely, play battle track
+        duckBgMusic();
+        const key = activeTileType === TileType.BigBoss ? 'bigboss' : 'miniboss';
+        startBattleMusic(key);
+      } else {
+        duckBgMusic();
+      }
     } else if (phase === 'menu' || phase === 'gameOver' || phase === 'victory') {
+      stopBattleMusic();
       stopBgMusic();
     } else {
       // shopping, inventory, floorComplete — keep music at normal volume
       unduckBgMusic();
     }
-  }, [phase]);
+  }, [phase, activeTileType]);
 
   // Detect enemy catch after state settles
   useEffect(() => {
