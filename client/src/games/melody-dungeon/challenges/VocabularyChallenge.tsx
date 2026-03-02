@@ -137,6 +137,7 @@ function NotationImage({ term }: { term: string }) {
       src={src}
       alt={`${term} notation`}
       className="h-16 mx-auto mb-2 invert"
+      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
     />
   );
 }
