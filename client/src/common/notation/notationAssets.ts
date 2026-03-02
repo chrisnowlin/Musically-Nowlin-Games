@@ -24,6 +24,8 @@ export const VOCAB_ASSET_MAP: Record<string, string> = {
   'Whole rest': 'notes/whole-rest',
 
   // ── Dynamics ───────────────────────────
+  'f': 'dynamics/f',
+  'p': 'dynamics/p',
   'piano': 'dynamics/p',
   'forte': 'dynamics/f',
   'mf': 'dynamics/mf',
