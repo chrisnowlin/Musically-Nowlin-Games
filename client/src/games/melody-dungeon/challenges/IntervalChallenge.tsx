@@ -3,6 +3,7 @@ import type { Tier } from '../logic/dungeonTypes';
 import { getIntervalParams } from '../logic/difficultyAdapter';
 import { playTwoNotes, getFrequency, ALL_NOTE_KEYS } from '../dungeonAudio';
 import { getIntervalSvgUrl } from '../logic/intervalAssets';
+import NotationImage from '@/common/notation/NotationImage';
 
 interface Props {
   tier: Tier;
@@ -287,16 +288,17 @@ const StandardMode: React.FC<{
     setTimeout(() => onResult(correct), 800);
   };
 
+  const intervalUrl = getIntervalSvgUrl(challenge.interval.name);
+
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-cyan-200">Name the Interval!</h3>
       {/* Interval reference notation */}
-      {getIntervalSvgUrl(challenge.interval.name) && (
-        <img
-          src={getIntervalSvgUrl(challenge.interval.name)}
+      {intervalUrl && (
+        <NotationImage
+          src={intervalUrl}
           alt={`${challenge.interval.name} interval notation`}
-          className="h-14 mx-auto mb-1 invert"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          className="mb-1"
         />
       )}
       <p className="text-gray-400 text-sm">Listen to the two notes and identify the interval.</p>
