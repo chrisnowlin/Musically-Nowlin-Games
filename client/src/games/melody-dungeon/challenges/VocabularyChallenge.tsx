@@ -136,6 +136,20 @@ function VocabNotation({ term }: { term: string }) {
   return <NotationImage src={src} alt={`${term} notation`} size="lg" className="mb-2" />;
 }
 
+/** Small inline notation image for answer buttons. */
+function InlineNotation({ term }: { term: string }) {
+  const src = getVocabNotationAsset(term);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt=""
+      className="h-6 w-auto invert inline-block mr-2 align-middle"
+      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+    />
+  );
+}
+
 const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, theme, onResult }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
@@ -159,7 +173,6 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
       <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
         {challenge.options.map((opt) => {
           const isCorrect = opt.term === challenge.target.term;
-          const label = challenge.showTermAskDef ? opt.definition : opt.term;
 
           return (
             <button
@@ -176,7 +189,9 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
                 disabled:cursor-default
               `}
             >
-              {label}
+              {challenge.showTermAskDef
+                ? opt.definition
+                : <><InlineNotation term={opt.term} />{opt.term}</>}
             </button>
           );
         })}

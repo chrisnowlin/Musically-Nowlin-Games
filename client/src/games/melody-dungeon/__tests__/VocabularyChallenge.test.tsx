@@ -206,7 +206,7 @@ describe('VocabularyChallenge – notation images', () => {
     expect(notationImages.length).toBeGreaterThan(0);
   });
 
-  it('does NOT render notation SVG when asking for the term (answer giveaway)', () => {
+  it('does NOT render featured notation above question when asking for the term', () => {
     // Force showTermAskDef=false (Math.random() >= 0.5)
     const origRandom = Math.random;
     Math.random = () => 0.9;
@@ -214,8 +214,10 @@ describe('VocabularyChallenge – notation images', () => {
       <VocabularyChallenge category="symbols" tier={1} onResult={() => {}} />
     );
     Math.random = origRandom;
-    const notationImages = container.querySelectorAll('img[src*="/images/notation/"]');
-    expect(notationImages.length).toBe(0);
+    // The large VocabNotation uses NotationImage which wraps in a div with mx-auto.
+    // Small inline button images are fine (they don't give away the answer).
+    const featuredNotation = container.querySelectorAll('div.mx-auto > img[src*="/images/notation/"]');
+    expect(featuredNotation.length).toBe(0);
   });
 });
 
