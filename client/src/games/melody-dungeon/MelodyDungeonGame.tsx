@@ -146,7 +146,7 @@ const MelodyDungeonGame: React.FC = () => {
   const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showJukebox, setShowJukebox] = useState(false);
-  const [currentTrackId, setCurrentTrackId] = useState<string | null>('cathedral');
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
     challengeType: ChallengeType;
@@ -519,7 +519,7 @@ const MelodyDungeonGame: React.FC = () => {
 
         // Jukebox: open music selection (dev room only)
         if (tile.type === TileType.Jukebox) {
-          setFloor((f) => updateVisibility(f, newPos, getVisRadius()));
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
           moveLockedRef.current = true;
           setShowJukebox(true);
           return { ...prev, position: newPos };
@@ -937,6 +937,7 @@ const MelodyDungeonGame: React.FC = () => {
     setFloorsCleared(0);
     setDevMode({ ...DEFAULT_DEV_MODE });
     setActiveChallenge(null);
+    setShowJukebox(false);
     moveLockedRef.current = false;
     setPhase('playing');
     playNote('C4', 0.2);
@@ -952,6 +953,7 @@ const MelodyDungeonGame: React.FC = () => {
     setDevMode({ active: true, infiniteGold: false, infiniteHealth: false });
     setFloorsCleared(0);
     setActiveChallenge(null);
+    setShowJukebox(false);
     moveLockedRef.current = false;
     setPhase('playing');
     setShowPasswordModal(false);
@@ -965,6 +967,7 @@ const MelodyDungeonGame: React.FC = () => {
       gold: 999,
     });
     setActiveChallenge(null);
+    setShowJukebox(false);
     moveLockedRef.current = false;
     setPhase('playing');
   }, []);
