@@ -30,7 +30,7 @@ export default function NotationImage({
   className = '',
 }: NotationImageProps) {
   return (
-    <div className={`${SIZE_CLASSES[size]} mx-auto ${className}`.trim()}>
+    <div className={`${SIZE_CLASSES[size]} mx-auto self-stretch ${className}`.trim()}>
       <img
         src={src}
         alt={alt}
