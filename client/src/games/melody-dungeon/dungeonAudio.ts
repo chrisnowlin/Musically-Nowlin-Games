@@ -380,6 +380,14 @@ export function stopBgMusic(): void {
   }
 }
 
+/** Stop current background music, load a new track, and start playing it. */
+export async function loadAndPlayBgMusic(url: string): Promise<void> {
+  stopBgMusic();
+  bgBuffer = null; // clear cached buffer so loadBgMusic fetches the new URL
+  await loadBgMusic(url);
+  startBgMusic();
+}
+
 /** Duck background music volume for challenges. */
 export function duckBgMusic(): void {
   bgMusicDucked = true;
