@@ -24,6 +24,7 @@ const MiniMap: React.FC<MiniMapProps> = ({ floor, playerPosition, showStairs }) 
         className="grid rounded-md overflow-hidden border border-gray-700/60"
         style={{
           gridTemplateColumns: `repeat(${floor.width}, 1fr)`,
+          gridTemplateRows: `repeat(${floor.height}, 1fr)`,
           aspectRatio: '1 / 1',
           backgroundColor: '#020617',
         }}
@@ -45,8 +46,11 @@ const MiniMap: React.FC<MiniMapProps> = ({ floor, playerPosition, showStairs }) 
                 {isPlayer && (
                   <div className="absolute inset-[22%] rounded-full bg-fuchsia-400 shadow-[0_0_4px_rgba(217,70,239,0.9)]" />
                 )}
-                {showStairs && tile.type === TileType.Stairs && !isPlayer && (
+                {!isPlayer && tile.type === TileType.Stairs && (showStairs || tile.visited) && (
                   <div className="absolute inset-[22%] rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.9)]" />
+                )}
+                {!isPlayer && tile.type === TileType.Merchant && tile.visited && (
+                  <div className="absolute inset-[22%] rounded-full bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.9)]" />
                 )}
               </div>
             );
