@@ -343,7 +343,7 @@ const MelodyDungeonGame: React.FC = () => {
               position: newPos,
               keys: prev.keys - 1,
               potions: prev.potions + 1,
-              gold: prev.gold + 200,
+              gold: prev.gold + 100,
             };
           }
           // item reward: apply item effect + base bonus (no extra potion)
@@ -351,7 +351,7 @@ const MelodyDungeonGame: React.FC = () => {
             ...prev,
             position: newPos,
             keys: prev.keys - 1,
-            gold: prev.gold + 200,
+            gold: prev.gold + 100,
           });
           return afterItem;
         }
@@ -470,33 +470,33 @@ const MelodyDungeonGame: React.FC = () => {
           updated.potions = Math.max(0, prev.potions - (meta.potionsUsed || 0));
 
           if (correct) {
-            const streakBonus = Math.floor(prev.streak / 3) * 25;
+            const streakBonus = Math.floor(prev.streak / 3) * 15;
             updated.streak += 1;
             // Net health after battle: damage taken minus potions healed (min 1 since player won)
             const battleHealth = Math.max(1, Math.min(prev.maxHealth, prev.health - meta.damageDealt + (meta.potionsUsed || 0)));
 
             if (activeTileType === TileType.BigBoss) {
               updated.health = prev.maxHealth; // Full health restore
-              updated.gold += 1500 + streakBonus;
-              updated.keys += 3;
+              updated.gold += 800 + streakBonus;
+              updated.keys += 2;
               updated.potions += 2; // reward (after battle consumption deducted above)
             } else if (activeTileType === TileType.MiniBoss) {
               updated.health = battleHealth;
-              updated.gold += 750 + streakBonus;
-              updated.keys += 2;
+              updated.gold += 400 + streakBonus;
+              updated.keys += 1;
               updated.potions += 2; // reward (after battle consumption deducted above)
             } else if (activeTileSubtype === 'dragon') {
               // Dragon
               updated.health = battleHealth;
-              updated.gold += 500 + streakBonus;
-              updated.keys += 2;
+              updated.gold += 250 + streakBonus;
+              updated.keys += 1;
               updated.potions += 1; // reward (after battle consumption deducted above)
             } else {
               // Regular level 2–3 enemy (ghost/skeleton/goblin)
               updated.health = battleHealth;
-              const levelGold = activeTileLevel === 3 ? 250 : 175;
+              const levelGold = activeTileLevel === 3 ? 150 : 100;
               updated.gold += levelGold + streakBonus;
-              updated.keys += activeTileLevel === 3 ? 2 : 1;
+              updated.keys += 1;
             }
           } else {
             // Boss defeated the player — battle only calls onResult(false) when player HP=0
@@ -532,13 +532,12 @@ const MelodyDungeonGame: React.FC = () => {
           }
         } else if (correct) {
           // Non-boss correct answer
-          const baseGold = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 200 : 100;
-          const streakBonus = Math.floor(prev.streak / 3) * 25;
+          const baseGold = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 100 : 50;
+          const streakBonus = Math.floor(prev.streak / 3) * 15;
           updated.gold += baseGold + streakBonus;
           updated.streak += 1;
 
           if (activeTileType === TileType.Enemy) {
-            updated.keys += 1;
             // Lucky Coin: double base gold, consume one charge
             if (prev.buffs.armed.luckyCoin > 0) {
               updated = {
