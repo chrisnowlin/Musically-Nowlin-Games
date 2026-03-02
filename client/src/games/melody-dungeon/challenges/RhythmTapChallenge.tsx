@@ -272,7 +272,7 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
       <NotationImage
         src={`/images/notation/challenges/rhythm-patterns/${curatedPattern.id}.svg`}
         alt="Rhythm pattern notation"
-        size="md"
+        size="lg"
         className="mb-2"
       />
 
