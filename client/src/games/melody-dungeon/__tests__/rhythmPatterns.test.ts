@@ -19,11 +19,11 @@ describe('rhythmPatterns', () => {
     }
   });
 
-  it('each pattern has an assetKey matching its tier', () => {
+  it('each pattern ID encodes its tier', () => {
     for (const tier of [1, 2, 3, 4, 5] as Tier[]) {
       const patterns = getCuratedPatterns(tier);
       for (const p of patterns) {
-        expect(p.assetKey).toMatch(new RegExp(`^rhythm-patterns/t${tier}-`));
+        expect(p.id).toMatch(new RegExp(`^t${tier}-\\d{2}$`));
       }
     }
   });
@@ -33,7 +33,6 @@ describe('rhythmPatterns', () => {
     expect(pattern).toBeDefined();
     expect(pattern.subdivisions.length).toBeGreaterThan(0);
     expect(pattern.id).toBeDefined();
-    expect(pattern.assetKey).toBeDefined();
   });
 
   it('pattern IDs are unique across all tiers', () => {

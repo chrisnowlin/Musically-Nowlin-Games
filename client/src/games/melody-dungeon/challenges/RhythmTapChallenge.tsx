@@ -4,7 +4,6 @@ import type { RhythmSubdivision } from '../logic/difficultyAdapter';
 import { getRhythmParams } from '../logic/difficultyAdapter';
 import { playClick } from '../dungeonAudio';
 import { getRandomCuratedPattern } from '../logic/rhythmPatterns';
-import { getNotationAsset } from '@/common/notation/notationAssets';
 
 interface Props {
   tier: Tier;
@@ -34,25 +33,6 @@ const SUBDIVISION_INFO: Record<RhythmSubdivision, { beats: number; taps: number 
   'dotted-quarter':{ beats: 1.5,  taps: 1 },
   triplet:         { beats: 1,    taps: 3 },
 };
-
-/**
- * Generates a rhythm pattern from the given params.
- * Returns an array of PatternEvents (one per subdivision chosen).
- */
-function generatePattern(params: ReturnType<typeof getRhythmParams>): PatternEvent[] {
-  const beatDuration = 60000 / params.bpm;
-  const events: PatternEvent[] = [];
-  let currentTime = 0;
-
-  for (let i = 0; i < params.patternLength; i++) {
-    const sub = params.subdivisions[Math.floor(Math.random() * params.subdivisions.length)];
-    const info = SUBDIVISION_INFO[sub];
-    const dur = info.beats * beatDuration;
-    events.push({ time: currentTime, duration: dur, taps: info.taps, subdivision: sub });
-    currentTime += dur;
-  }
-  return events;
-}
 
 /**
  * Expands a pattern into the expected tap timestamps the player must reproduce.
@@ -289,7 +269,7 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
       <h3 className="text-lg font-bold text-amber-200">Tap the Rhythm!</h3>
 
       <img
-        src={getNotationAsset('challenges/rhythm-patterns', curatedPattern.id)}
+        src={`/images/notation/challenges/rhythm-patterns/${curatedPattern.id}.svg`}
         alt="Rhythm pattern notation"
         className="h-12 mx-auto mb-2 invert"
         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
