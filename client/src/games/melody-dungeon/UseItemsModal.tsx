@@ -119,11 +119,11 @@ const UseItemsModal: React.FC<Props> = ({ player, onUse, onClose }) => {
                       <span className="text-gray-400 text-sm font-medium shrink-0">&times;{held}</span>
                       <button
                         onClick={() => onUse(item.id)}
-                        disabled={held <= 0}
+                        disabled={held <= 0 || armed > 0}
                         className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors bg-blue-800 hover:bg-blue-700 text-white disabled:opacity-40 disabled:cursor-default"
-                        title={item.trigger}
+                        title={armed > 0 ? 'Already armed' : item.trigger}
                       >
-                        Arm
+                        {armed > 0 ? 'Armed' : 'Arm'}
                       </button>
                     </div>
                   );

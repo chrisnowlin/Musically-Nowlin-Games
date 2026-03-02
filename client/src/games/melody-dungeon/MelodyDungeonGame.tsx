@@ -572,7 +572,7 @@ const MelodyDungeonGame: React.FC = () => {
           updated.streak += 1;
 
           if (activeTileType === TileType.Enemy) {
-            // Lucky Coin: double base gold, consume one charge
+            // Lucky Coin: double base gold, consume armed charge
             if (prev.buffs.armed.luckyCoin > 0) {
               updated = {
                 ...updated,
@@ -580,7 +580,7 @@ const MelodyDungeonGame: React.FC = () => {
                   ...updated.buffs,
                   armed: {
                     ...updated.buffs.armed,
-                    luckyCoin: updated.buffs.armed.luckyCoin - 1,
+                    luckyCoin: 0,
                   },
                 },
               };
@@ -632,6 +632,19 @@ const MelodyDungeonGame: React.FC = () => {
               };
             } else {
               updated.streak = 0;
+            }
+            // Lucky Coin: consume armed charge on any enemy encounter (win or lose)
+            if (activeTileType === TileType.Enemy && updated.buffs.armed.luckyCoin > 0) {
+              updated = {
+                ...updated,
+                buffs: {
+                  ...updated.buffs,
+                  armed: {
+                    ...updated.buffs.armed,
+                    luckyCoin: 0,
+                  },
+                },
+              };
             }
           }
         }
@@ -762,8 +775,8 @@ const MelodyDungeonGame: React.FC = () => {
       if (itemId === 'dragon-bane' && p.dragonBane > 0) {
         return { ...prev, buffs: { ...prev.buffs, armed: { ...a, dragonBane: a.dragonBane + 1 }, persistent: { ...p, dragonBane: p.dragonBane - 1 } } };
       }
-      if (itemId === 'lucky-coin' && p.luckyCoin > 0) {
-        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, luckyCoin: a.luckyCoin + 1 }, persistent: { ...p, luckyCoin: p.luckyCoin - 1 } } };
+      if (itemId === 'lucky-coin' && p.luckyCoin > 0 && a.luckyCoin === 0) {
+        return { ...prev, buffs: { ...prev.buffs, armed: { ...a, luckyCoin: 1 }, persistent: { ...p, luckyCoin: p.luckyCoin - 1 } } };
       }
       if (itemId === 'treasure-magnet' && p.treasureMagnet > 0) {
         return { ...prev, buffs: { ...prev.buffs, armed: { ...a, treasureMagnet: a.treasureMagnet + 1 }, persistent: { ...p, treasureMagnet: p.treasureMagnet - 1 } } };
