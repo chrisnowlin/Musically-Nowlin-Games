@@ -24,6 +24,7 @@ export function mockVexFlow() {
       Stave: class {
         addClef() { return this; }
         setStyle() {}
+        setContext() { return this; }
         draw() {}
       },
       StaveNote: class {

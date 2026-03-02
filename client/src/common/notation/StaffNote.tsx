@@ -47,7 +47,7 @@ export default function StaffNote({ noteKey, clef, className }: StaffNoteProps) 
     const stave = new Stave(10, 10, 170);
     stave.addClef(clef);
     stave.setStyle({ strokeStyle: '#94a3b8', fillStyle: '#94a3b8' });
-    stave.draw(context);
+    stave.setContext(context).draw();
 
     // Create the note
     const vexKey = toVexFlowKey(noteKey);
@@ -59,7 +59,7 @@ export default function StaffNote({ noteKey, clef, className }: StaffNoteProps) 
     // Purple note head
     note.setStyle({ fillStyle: '#a78bfa', strokeStyle: '#a78bfa' });
 
-    const voice = new Voice({ num_beats: 1, beat_value: 4 });
+    const voice = new Voice({ numBeats: 1, beatValue: 4 });
     voice.setStrict(false);
     voice.addTickables([note]);
 
