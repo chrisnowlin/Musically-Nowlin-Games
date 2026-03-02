@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateDungeon, moveEnemies, getBossType } from '../logic/dungeonGenerator';
+import { generateDungeon, moveEnemies, getBossType, rollLootFloor } from '../logic/dungeonGenerator';
 import { TileType } from '../logic/dungeonTypes';
 import type { DungeonFloor, Position, Tile } from '../logic/dungeonTypes';
 
@@ -502,5 +502,74 @@ describe('boss floor generation', () => {
     expect(findTiles(floor, TileType.MiniBoss).length).toBe(0);
     expect(findTiles(floor, TileType.BigBoss).length).toBe(0);
     expect(findTiles(floor, TileType.Stairs).length).toBe(1);
+  });
+});
+
+describe('rollLootFloor', () => {
+  it('returns false for floors 1-2', () => {
+    for (let i = 0; i < 100; i++) {
+      expect(rollLootFloor(1)).toBe(false);
+      expect(rollLootFloor(2)).toBe(false);
+    }
+  });
+
+  it('returns false for boss floors', () => {
+    for (let i = 0; i < 100; i++) {
+      expect(rollLootFloor(5)).toBe(false);
+      expect(rollLootFloor(10)).toBe(false);
+      expect(rollLootFloor(50)).toBe(false);
+      expect(rollLootFloor(100)).toBe(false);
+    }
+  });
+});
+
+describe('loot floor generation', () => {
+  it('loot floor has 15-20 treasure tiles and no enemies/doors/chests/merchants', () => {
+    // Generate floor 3 many times until we naturally hit a loot floor (1% chance)
+    let lootFloor: ReturnType<typeof generateDungeon> | null = null;
+    for (let i = 0; i < 500; i++) {
+      const floor = generateDungeon(3);
+      if (floor.isLootFloor) {
+        lootFloor = floor;
+        break;
+      }
+    }
+
+    // If we didn't get one in 500 tries (probability ~0.6%), skip gracefully
+    if (!lootFloor) return;
+
+    const treasures = findTiles(lootFloor, TileType.Treasure);
+    const enemies = findTiles(lootFloor, TileType.Enemy);
+    const doors = findTiles(lootFloor, TileType.Door);
+    const chests = findTiles(lootFloor, TileType.Chest);
+    const merchants = findTiles(lootFloor, TileType.Merchant);
+    const stalls = findTiles(lootFloor, TileType.MerchantStall);
+
+    expect(treasures.length).toBeGreaterThanOrEqual(15);
+    expect(treasures.length).toBeLessThanOrEqual(20);
+    expect(enemies.length).toBe(0);
+    expect(doors.length).toBe(0);
+    expect(chests.length).toBe(0);
+    expect(merchants.length).toBe(0);
+    expect(stalls.length).toBe(0);
+    expect(lootFloor.isLootFloor).toBe(true);
+  });
+
+  it('loot floor still has stairs', () => {
+    for (let i = 0; i < 500; i++) {
+      const floor = generateDungeon(3);
+      if (floor.isLootFloor) {
+        expect(findTiles(floor, TileType.Stairs).length).toBe(1);
+        return;
+      }
+    }
+  });
+
+  it('normal floors have isLootFloor set to false', () => {
+    const floor = generateDungeon(1);
+    expect(floor.isLootFloor).toBe(false);
+
+    const bossFloor = generateDungeon(5);
+    expect(bossFloor.isLootFloor).toBe(false);
   });
 });
