@@ -380,11 +380,15 @@ export function stopBgMusic(): void {
   }
 }
 
+let bgLoadSeq = 0;
+
 /** Stop current background music, load a new track, and start playing it. */
 export async function loadAndPlayBgMusic(url: string): Promise<void> {
+  const seq = ++bgLoadSeq;
   stopBgMusic();
   bgBuffer = null; // clear cached buffer so loadBgMusic fetches the new URL
   await loadBgMusic(url);
+  if (seq !== bgLoadSeq) return; // a newer call already took over
   startBgMusic();
 }
 
