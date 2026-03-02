@@ -102,6 +102,8 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
   const tapCountTarget = expectedTaps.length;
 
   // ── Playback ──────────────────────────────────────────────
+  const [replaying, setReplaying] = useState(false);
+
   const playPattern = useCallback(() => {
     setPlaybackIndex(0);
     // Schedule clicks for tap events (not rests)
@@ -121,6 +123,28 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
       tapStartRef.current = 0;
     }, totalDuration + 300);
   }, [pattern]);
+
+  /** Replay the pattern audio during the tap phase without changing phase. */
+  const replayPattern = useCallback(() => {
+    if (replaying) return;
+    setReplaying(true);
+    setTaps([]);
+    setPlaybackIndex(0);
+    const tapTimes = getExpectedTapTimes(pattern);
+    tapTimes.forEach((t) => {
+      setTimeout(() => playClick(), t);
+    });
+    pattern.forEach((ev, i) => {
+      setTimeout(() => setPlaybackIndex(i), ev.time);
+    });
+    const last = pattern[pattern.length - 1];
+    const totalDuration = last.time + last.duration;
+    setTimeout(() => {
+      setPlaybackIndex(-1);
+      setReplaying(false);
+      tapStartRef.current = 0;
+    }, totalDuration + 300);
+  }, [pattern, replaying]);
 
   useEffect(() => {
     const timer = setTimeout(playPattern, 500);
@@ -263,20 +287,19 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
           </p>
           <button
             onPointerDown={handleTap}
-            className="w-24 h-24 rounded-full bg-amber-700 hover:bg-amber-600 active:bg-amber-500 active:scale-95 border-4 border-amber-500 text-white font-bold text-xl transition-all touch-manipulation select-none"
+            disabled={replaying}
+            className="w-24 h-24 rounded-full bg-amber-700 hover:bg-amber-600 active:bg-amber-500 active:scale-95 border-4 border-amber-500 text-white font-bold text-xl transition-all touch-manipulation select-none disabled:opacity-40"
           >
             TAP
           </button>
+          <button
+            onClick={replayPattern}
+            disabled={replaying}
+            className="text-xs text-amber-300 underline disabled:opacity-40"
+          >
+            {replaying ? 'Listening...' : 'Replay'}
+          </button>
         </>
-      )}
-
-      {phase === 'listen' && (
-        <button
-          onClick={playPattern}
-          className="text-xs text-amber-300 underline"
-        >
-          Replay
-        </button>
       )}
 
       {feedback && (
