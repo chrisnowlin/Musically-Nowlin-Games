@@ -879,9 +879,22 @@ const MelodyDungeonGame: React.FC = () => {
               >
                 -
               </button>
-              <span className="w-20 text-center text-2xl font-bold text-purple-300 tabular-nums">
-                B{selectedStartFloor}F
-              </span>
+              <div className="relative flex items-center justify-center w-24">
+                <span className="absolute left-1 text-2xl font-bold text-purple-300 pointer-events-none">B</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={deepestUnlocked}
+                  value={selectedStartFloor}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setSelectedStartFloor(Math.max(1, Math.min(deepestUnlocked, v)));
+                  }}
+                  className="w-full text-center text-2xl font-bold text-purple-300 tabular-nums bg-transparent border-b-2 border-purple-700 focus:border-purple-400 outline-none px-6 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <span className="absolute right-1 text-2xl font-bold text-purple-300 pointer-events-none">F</span>
+              </div>
               <button
                 onClick={() => setSelectedStartFloor((f) => Math.min(deepestUnlocked, f + 1))}
                 disabled={selectedStartFloor >= deepestUnlocked}
