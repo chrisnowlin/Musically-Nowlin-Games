@@ -977,6 +977,22 @@ const MelodyDungeonGame: React.FC = () => {
     setPhase('playing');
   }, []);
 
+  const enterLootFloor = useCallback(() => {
+    const lootFloor = generateDungeon(3, { forceLootFloor: true });
+    const visibleFloor = updateVisibility(lootFloor, lootFloor.playerStart, getVisRadius());
+    setFloor(visibleFloor);
+    setPlayer((prev) => ({
+      ...prev,
+      position: { ...lootFloor.playerStart },
+      buffs: { ...prev.buffs, floor: { ...DEFAULT_FLOOR_BUFFS } },
+    }));
+    setActiveChallenge(null);
+    setShowLootBanner(true);
+    setTimeout(() => setShowLootBanner(false), 2500);
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, []);
+
   const handleDevConfigStart = useCallback((type: ChallengeType, tier: Tier) => {
     if (!pendingDevConfig) return;
     setActiveChallenge({ type, tilePosition: pendingDevConfig.tilePosition });
@@ -1302,6 +1318,7 @@ const MelodyDungeonGame: React.FC = () => {
             onToggleInfiniteGold={() => setDevMode((prev) => ({ ...prev, infiniteGold: !prev.infiniteGold }))}
             onToggleInfiniteHealth={() => setDevMode((prev) => ({ ...prev, infiniteHealth: !prev.infiniteHealth }))}
             onReset={resetDevRoom}
+            onLootFloor={enterLootFloor}
             onBackToMenu={() => {
               setDevMode({ ...DEFAULT_DEV_MODE });
               setPhase('menu');

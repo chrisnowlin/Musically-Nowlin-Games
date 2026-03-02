@@ -328,7 +328,11 @@ function placeLootTreasure(
   }
 }
 
-export function generateDungeon(floorNumber: number): DungeonFloor {
+export interface GenerateDungeonOptions {
+  forceLootFloor?: boolean;
+}
+
+export function generateDungeon(floorNumber: number, options?: GenerateDungeonOptions): DungeonFloor {
   const { width, height } = getDungeonSize(floorNumber);
   const grid = createEmptyGrid(width, height);
   const bossType = getBossType(floorNumber);
@@ -435,7 +439,7 @@ export function generateDungeon(floorNumber: number): DungeonFloor {
     }
   }
 
-  const isLootFloor = !bossType && rollLootFloor(floorNumber);
+  const isLootFloor = options?.forceLootFloor || (!bossType && rollLootFloor(floorNumber));
 
   if (isLootFloor) {
     // Loot floor: only treasure piles, no enemies/doors/merchants/chests
