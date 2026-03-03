@@ -154,6 +154,18 @@ describe('generateDungeon', () => {
     }
   });
 
+  it('ghost enemies spawn with ghostVisible set to true', () => {
+    for (let run = 0; run < 20; run++) {
+      const floor = generateDungeon(1);
+      const ghosts = floor.tiles.flat().filter(
+        (t) => t.type === TileType.Enemy && t.enemySubtype === 'ghost'
+      );
+      for (const g of ghosts) {
+        expect(g.ghostVisible).toBe(true);
+      }
+    }
+  });
+
   it('chests never block hallways or room entrances (all floor tiles reachable from player start)', () => {
     // BFS treating chests and merchant stalls as solid — mirrors getReachableWithoutKey.
     function reachableWithoutChests(floor: ReturnType<typeof generateDungeon>): Set<string> {

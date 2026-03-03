@@ -515,6 +515,10 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
             subtypePool[rand(0, subtypePool.length - 1)];
           grid[pos.y][pos.x].cleared = false;
           grid[pos.y][pos.x].enemyState = 'patrolling';
+          if (subtype === 'ghost') {
+            grid[pos.y][pos.x].ghostVisible = true;
+            grid[pos.y][pos.x].ghostNearPlayerTurns = 0;
+          }
           placedPositions.push(pos);
         }
       }
