@@ -1150,6 +1150,8 @@ const MelodyDungeonGame: React.FC = () => {
           {[
             { src: '/images/melody-dungeon/character.png', label: 'Hero 1' },
             { src: '/images/melody-dungeon/character_2.png', label: 'Hero 2' },
+            { src: '/images/melody-dungeon/character_3.png', label: 'Hero 3' },
+            { src: '/images/melody-dungeon/character_4.png', label: 'Hero 4' },
           ].map(({ src, label }) => {
             const selected = characterSprite === src;
             return (
