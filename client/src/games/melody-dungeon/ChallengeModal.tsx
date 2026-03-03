@@ -63,6 +63,7 @@ function getBossLabel(tileType: TileType, enemySubtype?: EnemySubtype): string {
     case 'spider': return 'Spider';
     case 'shade': return 'Shade';
     case 'siren': return 'Siren';
+    case 'wizard': return 'Wizard';
     default: return 'Enemy';
   }
 }
@@ -112,6 +113,7 @@ const ENEMY_SPRITE: Record<string, string> = {
   spider: '/images/melody-dungeon/spider.png',
   shade: '/images/melody-dungeon/shade.png',
   siren: '/images/melody-dungeon/siren.png',
+  wizard: '/images/melody-dungeon/wizard.png',
 };
 
 function getEncounterSprite(tileType: TileType, enemySubtype?: EnemySubtype): string | null {
@@ -145,6 +147,8 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
       return { title: 'Siren Encounter!', borderColor: 'border-teal-400', bgColor: 'from-teal-950/90 to-gray-900/95' };
     case 'ghost':
       return { title: 'Ghost Encounter!', borderColor: 'border-cyan-500', bgColor: 'from-cyan-950/90 to-gray-900/95' };
+    case 'wizard':
+      return { title: 'Wizard Encounter!', borderColor: 'border-violet-400', bgColor: 'from-violet-950/90 to-gray-900/95' };
     default:
       return TILE_THEME[TileType.Enemy] ?? DEFAULT_THEME;
   }

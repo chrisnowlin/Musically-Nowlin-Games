@@ -58,6 +58,7 @@ const ENEMY_SPRITE: Record<string, string> = {
   spider: '/images/melody-dungeon/spider.png',
   shade: '/images/melody-dungeon/shade.png',
   siren: '/images/melody-dungeon/siren.png',
+  wizard: '/images/melody-dungeon/wizard.png',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft, characterSprite }) => {
