@@ -15,11 +15,11 @@ export enum TileType {
   BossBody = 'bossBody',
 }
 
-export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics' | 'tempo' | 'symbols' | 'terms' | 'timbre';
+export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics' | 'tempo' | 'symbols' | 'terms' | 'timbre' | 'custom';
 
 export type EnemyState = 'guarding' | 'chasing' | 'patrolling';
 
-export type EnemySubtype = 'ghost' | 'skeleton' | 'dragon' | 'goblin' | 'slime' | 'bat' | 'wraith' | 'spider' | 'shade' | 'siren';
+export type EnemySubtype = 'ghost' | 'skeleton' | 'dragon' | 'goblin' | 'slime' | 'bat' | 'wraith' | 'spider' | 'shade' | 'siren' | 'wizard';
 
 export interface Tile {
   type: TileType;
