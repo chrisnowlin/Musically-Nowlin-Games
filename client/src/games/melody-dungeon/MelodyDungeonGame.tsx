@@ -132,6 +132,13 @@ const MelodyDungeonGame: React.FC = () => {
       return 0;
     }
   });
+  const [characterSprite, setCharacterSprite] = useState<string>(() => {
+    try {
+      return localStorage.getItem('melodyDungeonCharacter') || '/images/melody-dungeon/character.png';
+    } catch {
+      return '/images/melody-dungeon/character.png';
+    }
+  });
   const moveLockedRef = useRef(false);
   const playerRef = useRef(player);
   playerRef.current = player;
@@ -1139,6 +1146,30 @@ const MelodyDungeonGame: React.FC = () => {
           <p className="text-gray-400 mt-2">A musical adventure awaits...</p>
         </div>
 
+        <div className="flex items-center gap-6 mb-6">
+          {[
+            { src: '/images/melody-dungeon/character.png', label: 'Hero 1' },
+            { src: '/images/melody-dungeon/character_2.png', label: 'Hero 2' },
+          ].map(({ src, label }) => {
+            const selected = characterSprite === src;
+            return (
+              <button
+                key={src}
+                onClick={() => {
+                  setCharacterSprite(src);
+                  try { localStorage.setItem('melodyDungeonCharacter', src); } catch {}
+                }}
+                className={`flex flex-col items-center gap-1 transition-all duration-200 ${selected ? '' : 'opacity-40 hover:opacity-70'}`}
+              >
+                <div className={`w-20 h-20 rounded-xl p-1 transition-all duration-200 ${selected ? 'ring-2 ring-purple-400 bg-purple-900/40 shadow-lg shadow-purple-500/30' : 'bg-gray-800/50'}`}>
+                  <img src={src} alt={label} className="w-full h-full object-contain" draggable={false} />
+                </div>
+                <span className={`text-xs font-medium ${selected ? 'text-purple-300' : 'text-gray-500'}`}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <div className="flex flex-col gap-1">
             <label htmlFor="floor-select" className="text-xs text-gray-400 text-center">
@@ -1382,7 +1413,7 @@ const MelodyDungeonGame: React.FC = () => {
       )}
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 px-1 py-1">
-        <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} />
+        <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} characterSprite={characterSprite} />
         <div className="shrink-0 flex flex-col items-center gap-2">
           <MiniMap floor={floor} playerPosition={player.position} showStairs={player.buffs.floor.compass} />
           <MobileDPad

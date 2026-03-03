@@ -7,6 +7,7 @@ interface DungeonGridProps {
   floor: DungeonFloor;
   playerPosition: Position;
   facingLeft?: boolean;
+  characterSprite?: string;
 }
 
 type Visibility = 'lit' | 'dim' | 'dark';
@@ -59,7 +60,7 @@ const ENEMY_SPRITE: Record<string, string> = {
   siren: '/images/melody-dungeon/siren.png',
 };
 
-const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft }) => {
+const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft, characterSprite }) => {
   const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
   const effectiveTheme = useMemo(() => {
     if (!floor.isLootFloor) return theme;
@@ -164,7 +165,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               {isPlayer && showContent && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[4%]">
                   <img
-                    src="/images/melody-dungeon/character.png"
+                    src={characterSprite || '/images/melody-dungeon/character.png'}
                     alt="Player"
                     className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)] transition-transform duration-150"
                     style={facingLeft ? { transform: 'scaleX(-1)' } : undefined}
