@@ -19,11 +19,24 @@ function pickRandomInstrumentForFamily(family: InstrumentFamily): string | undef
   return instruments[Math.floor(Math.random() * instruments.length)].name;
 }
 
-/** Pick a random available note for an instrument from the library. */
-function pickRandomNote(instrumentName: string): string | undefined {
+const NOTE_ORDER = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+function noteToSortKey(note: string): number {
+  const octave = parseInt(note[note.length - 1], 10);
+  const letterIdx = NOTE_ORDER.indexOf(note[0]);
+  return octave * 7 + letterIdx;
+}
+
+/** Pick 4–5 ascending scale notes for the instrument to form a melodic phrase. */
+function pickMelodyNotes(instrumentName: string): string[] {
   const samples = instrumentLibrary.getSamples(instrumentName);
-  if (samples.length === 0) return undefined;
-  return samples[Math.floor(Math.random() * samples.length)].note;
+  if (samples.length === 0) return [];
+
+  const sorted = [...samples].sort((a, b) => noteToSortKey(a.note) - noteToSortKey(b.note));
+  const maxNotes = 5;
+  const maxStart = Math.max(0, sorted.length - maxNotes);
+  const start = Math.floor(Math.random() * (maxStart + 1));
+  return sorted.slice(start, start + maxNotes).map(s => s.note);
 }
 
 const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
@@ -40,21 +53,21 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
 
     // For T2, resolve which actual instrument to play from the correct family
     let instrumentToPlay: string | undefined;
-    let noteToPlay: string | undefined;
+    let notesToPlay: string[] = [];
 
     if (tier >= 2 && correct.instrumentName) {
       // T3-T5: play the specific instrument
       instrumentToPlay = correct.instrumentName;
-      noteToPlay = pickRandomNote(correct.instrumentName);
+      notesToPlay = pickMelodyNotes(correct.instrumentName);
     } else if (tier === 2 && correct.family) {
       // T2: play a random instrument from the correct family
       instrumentToPlay = pickRandomInstrumentForFamily(correct.family);
       if (instrumentToPlay) {
-        noteToPlay = pickRandomNote(instrumentToPlay);
+        notesToPlay = pickMelodyNotes(instrumentToPlay);
       }
     }
 
-    return { correct, options, instrumentToPlay, noteToPlay };
+    return { correct, options, instrumentToPlay, notesToPlay };
   }, [tier]);
 
   // For T2+, preload the instrument to play
@@ -63,7 +76,7 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     return [challengeData.instrumentToPlay];
   }, [tier, challengeData.instrumentToPlay]);
 
-  const { isLoading, playNote: playInstrumentNote } = usePhilharmoniaInstruments(instrumentsToLoad);
+  const { isLoading, playMelody: playInstrumentMelody } = usePhilharmoniaInstruments(instrumentsToLoad);
 
   // Play the T1 synthesized sound
   const playT1Sound = useCallback((entry: TimbreEntry, duration: number) => {
@@ -95,16 +108,16 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     }
   }, []);
 
-  // Play the sound (T1 synth or T2+ Philharmonia)
+  // Play the sound (T1 synth or T2+ Philharmonia melody)
   const playSound = useCallback(() => {
     if (tier === 1) {
       playT1Sound(challengeData.correct, playDuration);
-    } else if (challengeData.instrumentToPlay && challengeData.noteToPlay) {
-      playInstrumentNote(challengeData.instrumentToPlay, challengeData.noteToPlay, {
-        duration: playDuration,
+    } else if (challengeData.instrumentToPlay && challengeData.notesToPlay.length > 0) {
+      playInstrumentMelody(challengeData.instrumentToPlay, challengeData.notesToPlay, 0.7, {
+        volume: 2.5,
       });
     }
-  }, [tier, challengeData, playDuration, playT1Sound, playInstrumentNote]);
+  }, [tier, challengeData, playDuration, playT1Sound, playInstrumentMelody]);
 
   // Auto-play after a brief delay once loading is done
   useEffect(() => {
