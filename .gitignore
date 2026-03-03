@@ -98,3 +98,6 @@ client/public/images/notation/
 
 # Untracked build artifacts
 sliced_assets/
+
+# Git worktrees
+.worktrees/
