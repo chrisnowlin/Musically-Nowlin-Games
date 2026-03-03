@@ -270,12 +270,16 @@ const MelodyDungeonGame: React.FC = () => {
     };
   }, []);
 
-  // Pre-load background and battle music on mount.
+  // Pre-load background and battle music on mount. Stop all music on unmount.
   useEffect(() => {
     const basePath = import.meta.env.BASE_URL || '/';
     void loadBgMusic(`${basePath}audio/Cathedral in the Cavern.mp3`);
     void loadBattleMusic('miniboss', `${basePath}audio/Dungeon Run.mp3`);
     void loadBattleMusic('bigboss', `${basePath}audio/Dungeon Run_ Bloodsteel.mp3`);
+    return () => {
+      stopBgMusic();
+      stopBattleMusic();
+    };
   }, []);
 
   // Start/stop background music, duck during challenges, and play battle music for bosses.
