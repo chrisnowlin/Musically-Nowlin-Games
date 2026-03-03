@@ -129,11 +129,16 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
 
           const isBossAnchor =
             tile.type === TileType.MiniBoss || tile.type === TileType.BigBoss;
+          const isInvisibleGhost = tile.type === TileType.Enemy &&
+            tile.enemySubtype === 'ghost' &&
+            tile.ghostVisible === false &&
+            !cleared;
           const spriteSrc =
             showContent &&
             !isPlayer &&
             !cleared &&
             !isBossAnchor &&
+            !isInvisibleGhost &&
             (tile.type === TileType.Enemy
               ? ENEMY_SPRITE[tile.enemySubtype ?? 'dragon']
               : TILE_SPRITE[tile.type]);
@@ -178,6 +183,17 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
                     alt={tile.type}
                     className={`w-full h-full object-contain ${isAnimated ? 'animate-sprite-float' : ''}`}
                     style={isAnimated ? { animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` } : undefined}
+                    draggable={false}
+                  />
+                </div>
+              )}
+              {showContent && isInvisibleGhost && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[8%]">
+                  <img
+                    src={ENEMY_SPRITE['ghost']}
+                    alt="shimmer"
+                    className="w-full h-full object-contain animate-pulse"
+                    style={{ opacity: 0.12, filter: 'brightness(2) blur(1px)' }}
                     draggable={false}
                   />
                 </div>
