@@ -442,6 +442,66 @@ describe('moveEnemies', () => {
       result.tiles[0][2].type === TileType.Enemy;
     expect(ghostExists).toBe(true);
   });
+
+  it('patrolling Ghost can phase through a wall to reach floor on the other side', () => {
+    // 5x1 corridor: [player] [wall] [ghost] [wall] [floor]
+    const floor = createTestFloor(5, 1, (tiles) => {
+      tiles[0][0] = { type: TileType.Floor, visible: false, visited: false };
+      tiles[0][1] = { type: TileType.Wall, visible: false, visited: false };
+      tiles[0][2] = {
+        type: TileType.Enemy,
+        enemySubtype: 'ghost' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+        ghostVisible: true,
+        ghostNearPlayerTurns: 0,
+      };
+      tiles[0][3] = { type: TileType.Wall, visible: false, visited: false };
+      tiles[0][4] = { type: TileType.Floor, visible: false, visited: false };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    let reachedFarSide = false;
+    for (let i = 0; i < 50; i++) {
+      const result = moveEnemies(floor, playerPos);
+      if (result.tiles[0][4].type === TileType.Enemy && result.tiles[0][4].enemySubtype === 'ghost') {
+        reachedFarSide = true;
+        break;
+      }
+    }
+    expect(reachedFarSide).toBe(true);
+  });
+
+  it('patrolling Ghost does NOT stop on a wall tile (phases through, not into)', () => {
+    // 3x1: [player] [wall] [ghost]
+    const floor = createTestFloor(3, 1, (tiles) => {
+      tiles[0][0] = { type: TileType.Floor, visible: false, visited: false };
+      tiles[0][1] = { type: TileType.Wall, visible: false, visited: false };
+      tiles[0][2] = {
+        type: TileType.Enemy,
+        enemySubtype: 'ghost' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+        ghostVisible: true,
+        ghostNearPlayerTurns: 0,
+      };
+    });
+
+    const playerPos: Position = { x: 0, y: 0 };
+    for (let i = 0; i < 20; i++) {
+      const result = moveEnemies(floor, playerPos);
+      expect(result.tiles[0][1].type).toBe(TileType.Wall);
+      expect(result.tiles[0][2].type).toBe(TileType.Enemy);
+    }
+  });
 });
 
 describe('boss floor generation', () => {

@@ -830,7 +830,53 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       const isPlayerTile = nx === playerPos.x && ny === playerPos.y;
       const target = tiles[ny][nx];
       if (isPlayerTile && tile.enemySubtype === 'ghost') continue;
-      if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+
+      if (tile.enemySubtype === 'ghost') {
+        if (target.type === TileType.Wall) {
+          // Phase through wall: check tile beyond the wall
+          const beyondX = nx + d.x;
+          const beyondY = ny + d.y;
+          if (beyondX < 0 || beyondX >= floor.width || beyondY < 0 || beyondY >= floor.height) continue;
+          const beyondTile = tiles[beyondY][beyondX];
+          const isBeyondPlayer = beyondX === playerPos.x && beyondY === playerPos.y;
+          if (isBeyondPlayer) continue; // ghost can't land on player
+          if (beyondTile.type !== TileType.Floor && beyondTile.type !== TileType.PlayerStart) continue;
+          const beyondKey = `${beyondX},${beyondY}`;
+          if (occupied.has(beyondKey)) continue;
+
+          // Execute phase: move ghost to beyond-tile
+          tiles[beyondY][beyondX] = {
+            ...beyondTile,
+            type: tile.type,
+            enemySubtype: tile.enemySubtype,
+            enemyLevel: tile.enemyLevel,
+            challengeType: tile.challengeType,
+            cleared: false,
+            enemyState: tile.enemyState,
+            ghostVisible: tile.ghostVisible,
+            ghostNearPlayerTurns: tile.ghostNearPlayerTurns,
+          };
+          tiles[pos.y][pos.x] = {
+            ...tiles[pos.y][pos.x],
+            type: TileType.Floor,
+            enemySubtype: undefined,
+            enemyLevel: undefined,
+            challengeType: undefined,
+            cleared: undefined,
+            enemyState: undefined,
+            ghostVisible: undefined,
+            ghostNearPlayerTurns: undefined,
+          };
+          occupied.delete(`${pos.x},${pos.y}`);
+          occupied.add(beyondKey);
+          moved = true;
+          break;
+        }
+        // Non-wall neighbor for ghost: normal floor check
+        if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+      } else {
+        if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+      }
 
       const key = `${nx},${ny}`;
       if (occupied.has(key)) continue;
