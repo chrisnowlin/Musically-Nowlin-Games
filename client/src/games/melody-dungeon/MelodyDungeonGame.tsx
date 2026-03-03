@@ -18,6 +18,7 @@ import type {
   Position,
   ChallengeType,
   EnemySubtype,
+  EnemyState,
   Tile,
   DevModeState,
   Tier,
@@ -135,7 +136,7 @@ const MelodyDungeonGame: React.FC = () => {
   const playerRef = useRef(player);
   playerRef.current = player;
   const getVisRadius = () => playerRef.current.buffs.floor.torch ? VISIBILITY_RADIUS + 2 : VISIBILITY_RADIUS;
-  const enemyCaughtRef = useRef<{ challengeType: ChallengeType; subtype: EnemySubtype; level: number; tilePosition?: Position } | false>(false);
+  const enemyCaughtRef = useRef<{ challengeType: ChallengeType; subtype: EnemySubtype; level: number; tilePosition?: Position; enemyState?: EnemyState } | false>(false);
   const [challengeKey, setChallengeKey] = useState(0);
   const activeChallengeBuffsRef = useRef({ metronome: false, tuningFork: false });
   const [facingLeft, setFacingLeft] = useState(false);
@@ -171,6 +172,7 @@ const MelodyDungeonGame: React.FC = () => {
           challengeType: caught.challengeType || 'noteReading',
           subtype: caught.enemySubtype || 'ghost',
           level: caught.enemyLevel || 1,
+          enemyState: caught.enemyState,
         };
       } else {
         // Check for materialized ghost adjacent to player (Manhattan distance 1)
@@ -298,11 +300,14 @@ const MelodyDungeonGame: React.FC = () => {
   // Detect enemy catch after state settles
   useEffect(() => {
     if (!enemyCaughtRef.current || phase !== 'playing') return;
-    const { challengeType, subtype, level, tilePosition: enemyTilePos } = enemyCaughtRef.current;
+    const { challengeType, subtype, level, tilePosition: enemyTilePos, enemyState: caughtEnemyState } = enemyCaughtRef.current;
     enemyCaughtRef.current = false;
 
-    if (subtype === 'dragon') {
-      // Dragon catch: deal damage, show fire effect, then start challenge after delay
+    // Dragon whose guarded chest has been opened: deal fire damage before the challenge
+    const enragedDragon = subtype === 'dragon' && caughtEnemyState === 'chasing';
+
+    if (enragedDragon) {
+      // Enraged dragon: deal damage, show fire effect, then start challenge after delay
       moveLockedRef.current = true;
       setPlayer((prev) => {
         let updated = { ...prev };

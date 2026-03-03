@@ -869,6 +869,48 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       continue; // Skip the default random movement
     }
 
+    // Ghosts stalk the player: always move toward the player, phasing through walls.
+    // They cannot land on the player tile; the encounter triggers via ghostMaterialized.
+    if (tile.enemySubtype === 'ghost') {
+      const sorted = [...dirs].sort((a, b) => {
+        const distA = Math.abs(pos.x + a.x - playerPos.x) + Math.abs(pos.y + a.y - playerPos.y);
+        const distB = Math.abs(pos.x + b.x - playerPos.x) + Math.abs(pos.y + b.y - playerPos.y);
+        return distA - distB;
+      });
+
+      for (const d of sorted) {
+        const nx = pos.x + d.x;
+        const ny = pos.y + d.y;
+        if (nx < 0 || nx >= floor.width || ny < 0 || ny >= floor.height) continue;
+
+        const isPlayerTile = nx === playerPos.x && ny === playerPos.y;
+        if (isPlayerTile) continue;
+
+        const target = tiles[ny][nx];
+
+        if (target.type === TileType.Wall) {
+          // Phase through exactly one wall tile
+          const beyondX = nx + d.x;
+          const beyondY = ny + d.y;
+          if (beyondX < 0 || beyondX >= floor.width || beyondY < 0 || beyondY >= floor.height) continue;
+          const beyondTile = tiles[beyondY][beyondX];
+          if (beyondX === playerPos.x && beyondY === playerPos.y) continue;
+          if (beyondTile.type !== TileType.Floor && beyondTile.type !== TileType.PlayerStart) continue;
+          const beyondKey = `${beyondX},${beyondY}`;
+          if (occupied.has(beyondKey)) continue;
+          transferEnemy(tiles, pos, { x: beyondX, y: beyondY }, tile, occupied);
+          break;
+        }
+
+        if (target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+        const key = `${nx},${ny}`;
+        if (occupied.has(key)) continue;
+        transferEnemy(tiles, pos, { x: nx, y: ny }, tile, occupied);
+        break;
+      }
+      continue; // Skip general patrolling movement for ghosts
+    }
+
     // Shuffle directions for this enemy.
     const shuffled = [...dirs];
     for (let i = shuffled.length - 1; i > 0; i--) {
