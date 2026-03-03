@@ -6,6 +6,8 @@ import RhythmTapChallenge from './challenges/RhythmTapChallenge';
 import IntervalChallenge from './challenges/IntervalChallenge';
 import VocabularyChallenge from './challenges/VocabularyChallenge';
 import TimbreChallenge from './challenges/TimbreChallenge';
+import CustomChallenge from './challenges/CustomChallenge';
+import type { CustomQuestion } from './challenges/CustomChallenge';
 import type { VocabCategory } from './logic/vocabData';
 import { getChallengeTypesForFloor, rollTier, pickRandom, generateBigBossSequence, getSubtypeChallengePool } from './challengeHelpers';
 
@@ -31,6 +33,7 @@ interface Props {
   enemyLevel?: number;
   overrideTier?: Tier;
   onExit?: () => void;
+  customQuestions?: CustomQuestion[];
 }
 
 const MINI_BOSS_HP = 5;
@@ -145,13 +148,14 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
   }
 }
 
-function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint }: {
+function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint, customQuestions }: {
   type: ChallengeType;
   tier: Tier;
   floorNumber: number;
   onResult: (correct: boolean) => void;
   slowRhythm?: boolean;
   showIntervalHint?: boolean;
+  customQuestions?: CustomQuestion[];
 }) {
   if (VOCAB_CATEGORIES.has(type)) {
     return <VocabularyChallenge category={type as VocabCategory} tier={tier} onResult={onResult} />;
@@ -166,6 +170,8 @@ function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, show
       return <IntervalChallenge tier={tier} onResult={onResult} showHint={showIntervalHint} />;
     case 'timbre':
       return <TimbreChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} />;
+    case 'custom':
+      return <CustomChallenge questions={customQuestions ?? []} tier={tier} onResult={onResult} />;
     default:
       return <NoteReadingChallenge tier={tier} onResult={onResult} />;
   }
@@ -186,7 +192,8 @@ const BossBattle: React.FC<{
   enemyLevel?: number;
   overrideTier?: Tier;
   onExit?: () => void;
-}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit }) => {
+  customQuestions?: CustomQuestion[];
+}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit, customQuestions }) => {
   const maxBossHp = useMemo(
     () => Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0)),
     [tileType, enemyLevel, dragonBane]
@@ -392,6 +399,7 @@ const BossBattle: React.FC<{
           onResult={handleRoundResult}
           slowRhythm={slowRhythm}
           showIntervalHint={showIntervalHint}
+          customQuestions={customQuestions}
         />
       ) : (
         <div className="py-8 text-center">
@@ -414,7 +422,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit, customQuestions }) => {
   const theme = tileType === TileType.Enemy
     ? getEnemyTheme(enemySubtype)
     : (TILE_THEME[tileType] || DEFAULT_THEME);
@@ -483,10 +491,11 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
             enemyLevel={enemyLevel}
             overrideTier={overrideTier}
             onExit={onExit}
+            customQuestions={customQuestions}
           />
         ) : (
           <>
-            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
+            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} customQuestions={customQuestions} />
             {onExit && (
               <button
                 onClick={onExit}
