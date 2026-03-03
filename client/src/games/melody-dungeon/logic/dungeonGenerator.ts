@@ -162,6 +162,45 @@ function isOpenEnough(grid: Tile[][], pos: Position): boolean {
   return walkable >= 3;
 }
 
+/**
+ * Returns true if placing a blocking tile at `pos` would leave any
+ * adjacent walkable tile with fewer than 2 walkable cardinal neighbors.
+ * This catches corridor-mouth placements where the chest would block
+ * entry into a narrow passage.
+ */
+function wouldCreateBottleneck(grid: Tile[][], pos: Position): boolean {
+  const dirs = [
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
+  ];
+
+  for (const d of dirs) {
+    const nx = pos.x + d.x;
+    const ny = pos.y + d.y;
+    if (ny < 0 || ny >= grid.length || nx < 0 || nx >= grid[0].length) continue;
+    if (grid[ny][nx].type === TileType.Wall) continue;
+
+    // Count how many walkable neighbors this neighbor would have
+    // if we blocked pos (placed a chest there)
+    let walkable = 0;
+    for (const d2 of dirs) {
+      const nnx = nx + d2.x;
+      const nny = ny + d2.y;
+      if (nny < 0 || nny >= grid.length || nnx < 0 || nnx >= grid[0].length) continue;
+      if (nnx === pos.x && nny === pos.y) continue; // this tile would be blocked
+      if (grid[nny][nnx].type !== TileType.Wall) {
+        walkable++;
+      }
+    }
+
+    if (walkable < 2) return true;
+  }
+
+  return false;
+}
+
 function getCardinalWalkableNeighbors(grid: Tile[][], pos: Position): Position[] {
   const dirs = [
     { x: 0, y: -1 },
@@ -288,7 +327,8 @@ function pickValidChestTile(
     if (exclude.some((e) => e.x === p.x && e.y === p.y)) return false;
     if (distanceSq(p, playerStart) < 4) return false;
     if (isStraightHallwayTile(grid, p)) return false;
-    return isOpenEnough(grid, p);
+    if (!isOpenEnough(grid, p)) return false;
+    return !wouldCreateBottleneck(grid, p);
   });
 
   while (candidates.length > 0) {

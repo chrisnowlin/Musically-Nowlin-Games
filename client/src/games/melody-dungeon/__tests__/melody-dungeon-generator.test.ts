@@ -184,4 +184,42 @@ describe('Melody Dungeon generator placement rules', () => {
       }
     }
   });
+
+  it('chests never create a bottleneck for adjacent tiles', () => {
+    const dirs = [
+      { x: 0, y: -1 },
+      { x: 0, y: 1 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+    ];
+
+    for (let floorNumber = 1; floorNumber <= 10; floorNumber++) {
+      for (let i = 0; i < 40; i++) {
+        const floor = generateDungeon(floorNumber);
+        const chests = getAllPositionsByType(floor, TileType.Chest);
+
+        for (const chest of chests) {
+          // Each walkable neighbor of the chest must still have >= 2
+          // walkable neighbors (treating the chest as blocking).
+          for (const d of dirs) {
+            const nx = chest.x + d.x;
+            const ny = chest.y + d.y;
+            if (!inBounds(floor, nx, ny)) continue;
+            if (!isNonWall(floor.tiles[ny][nx])) continue;
+
+            let walkable = 0;
+            for (const d2 of dirs) {
+              const nnx = nx + d2.x;
+              const nny = ny + d2.y;
+              if (!inBounds(floor, nnx, nny)) continue;
+              if (nnx === chest.x && nny === chest.y) continue;
+              if (isNonWall(floor.tiles[nny][nnx])) walkable++;
+            }
+
+            expect(walkable).toBeGreaterThanOrEqual(2);
+          }
+        }
+      }
+    }
+  });
 });
