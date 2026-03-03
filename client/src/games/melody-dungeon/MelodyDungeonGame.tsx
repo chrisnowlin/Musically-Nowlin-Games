@@ -135,7 +135,7 @@ const MelodyDungeonGame: React.FC = () => {
   const playerRef = useRef(player);
   playerRef.current = player;
   const getVisRadius = () => playerRef.current.buffs.floor.torch ? VISIBILITY_RADIUS + 2 : VISIBILITY_RADIUS;
-  const enemyCaughtRef = useRef<{ challengeType: ChallengeType; subtype: EnemySubtype; level: number } | false>(false);
+  const enemyCaughtRef = useRef<{ challengeType: ChallengeType; subtype: EnemySubtype; level: number; tilePosition?: Position } | false>(false);
   const [challengeKey, setChallengeKey] = useState(0);
   const activeChallengeBuffsRef = useRef({ metronome: false, tuningFork: false });
   const [facingLeft, setFacingLeft] = useState(false);
@@ -192,6 +192,7 @@ const MelodyDungeonGame: React.FC = () => {
               challengeType: tile.challengeType || 'noteReading',
               subtype: 'ghost',
               level: tile.enemyLevel || 1,
+              tilePosition: { x: nx, y: ny },
             };
             break;
           }
@@ -297,7 +298,7 @@ const MelodyDungeonGame: React.FC = () => {
   // Detect enemy catch after state settles
   useEffect(() => {
     if (!enemyCaughtRef.current || phase !== 'playing') return;
-    const { challengeType, subtype, level } = enemyCaughtRef.current;
+    const { challengeType, subtype, level, tilePosition: enemyTilePos } = enemyCaughtRef.current;
     enemyCaughtRef.current = false;
 
     if (subtype === 'dragon') {
@@ -335,7 +336,7 @@ const MelodyDungeonGame: React.FC = () => {
         // Start challenge if player survived the catch damage
         setPlayer((prev) => {
           if (prev.health <= 0) return prev;
-          setActiveChallenge({ type: challengeType, tilePosition: prev.position });
+          setActiveChallenge({ type: challengeType, tilePosition: enemyTilePos ?? prev.position });
           setActiveTileType(TileType.Enemy);
           setActiveTileSubtype(subtype);
           setActiveTileLevel(level);
@@ -348,7 +349,7 @@ const MelodyDungeonGame: React.FC = () => {
       // Non-dragon enemies: go straight to challenge
       setPlayer((prev) => {
         moveLockedRef.current = true;
-        setActiveChallenge({ type: challengeType, tilePosition: prev.position });
+        setActiveChallenge({ type: challengeType, tilePosition: enemyTilePos ?? prev.position });
         setActiveTileType(TileType.Enemy);
         setActiveTileSubtype(subtype);
         setActiveTileLevel(level);
@@ -812,6 +813,11 @@ const MelodyDungeonGame: React.FC = () => {
                 enemyLevel: savedLevel,
                 challengeType: 'noteReading' as ChallengeType,
                 enemyState: 'guarding' as const,
+                ...(savedSubtype === 'ghost' && {
+                  ghostVisible: true,
+                  ghostNearPlayerTurns: 0,
+                  ghostMaterialized: false,
+                }),
               };
             } else if (savedTileType === TileType.MiniBoss) {
               for (let dy = 0; dy < 2; dy++) {
