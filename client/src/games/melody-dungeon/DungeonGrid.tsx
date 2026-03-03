@@ -36,7 +36,7 @@ function getFogOverlayOpacity(vis: Visibility, dist: number): number {
 }
 
 function getBigBossSprite(floorNumber: number): string {
-  return floorNumber % 2 === 0
+  return floorNumber % 20 >= 10
     ? '/images/melody-dungeon/bigboss.png'
     : '/images/melody-dungeon/bigboss_2.png';
 }
@@ -51,6 +51,10 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.Merchant]: '/images/melody-dungeon/merchant.png',
   [TileType.MerchantStall]: '/images/melody-dungeon/stall.png',
   [TileType.Jukebox]: '/images/melody-dungeon/jukebox.svg',
+  [TileType.HealingPool]: '/images/melody-dungeon/healing-pool.png',
+  [TileType.PotionShrine]: '/images/melody-dungeon/potion-shrine.png',
+  [TileType.Gambler]: '/images/melody-dungeon/gambler.png',
+  [TileType.ArenaChest]: '/images/melody-dungeon/arena-chest.png',
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
@@ -70,15 +74,37 @@ const ENEMY_SPRITE: Record<string, string> = {
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft, characterSprite }) => {
   const theme = useMemo(() => getTheme(floor.themeIndex), [floor.themeIndex]);
   const effectiveTheme = useMemo(() => {
-    if (!floor.isLootFloor) return theme;
-    return {
-      ...theme,
-      floor: '#92702a',
-      floorCleared: '#7a5f24',
-      border: '#d4a017',
-      gridLine: 'rgba(212,160,23,0.2)',
+    if (floor.specialFloorType === 'normal') return theme;
+    
+    const specialThemes: Record<string, Partial<typeof theme>> = {
+      loot: {
+        floor: '#92702a',
+        floorCleared: '#7a5f24',
+        border: '#d4a017',
+        gridLine: 'rgba(212,160,23,0.2)',
+      },
+      healing: {
+        floor: '#1a4a3a',
+        floorCleared: '#0f3a2a',
+        border: '#22c55e',
+        gridLine: 'rgba(34,197,94,0.2)',
+      },
+      gambling: {
+        floor: '#3d1a5c',
+        floorCleared: '#2d1040',
+        border: '#a855f7',
+        gridLine: 'rgba(168,85,247,0.2)',
+      },
+      challenge: {
+        floor: '#4a1a1a',
+        floorCleared: '#3a1010',
+        border: '#ef4444',
+        gridLine: 'rgba(239,68,68,0.2)',
+      },
     };
-  }, [theme, floor.isLootFloor]);
+    
+    return { ...theme, ...specialThemes[floor.specialFloorType] };
+  }, [theme, floor.specialFloorType]);
   const viewportSize = VIEWPORT_RADIUS * 2 + 1;
   const startX = Math.max(0, Math.min(playerPosition.x - VIEWPORT_RADIUS, floor.width - viewportSize));
   const startY = Math.max(0, Math.min(playerPosition.y - VIEWPORT_RADIUS, floor.height - viewportSize));

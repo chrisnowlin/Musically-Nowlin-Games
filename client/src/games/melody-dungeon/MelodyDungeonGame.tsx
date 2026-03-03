@@ -22,6 +22,7 @@ import type {
   Tile,
   DevModeState,
   Tier,
+  SpecialFloorType,
 } from './logic/dungeonTypes';
 import { generateDungeon, moveEnemies, generateDevRoom } from './logic/dungeonGenerator';
 import DungeonGrid from './DungeonGrid';
@@ -33,11 +34,12 @@ import type { BossBattleMeta } from './ChallengeModal';
 import MerchantModal from './MerchantModal';
 import DirectionsModal from './DirectionsModal';
 import UseItemsModal from './UseItemsModal';
+import GamblingModal from './GamblingModal';
 import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
-import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic, loadAndPlayBgMusic } from './dungeonAudio';
+import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic, muteBattleMusic, unmuteBattleMusic, loadAndPlayBgMusic } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 import { ALL_ITEMS } from './logic/merchantItems';
 import DevRoomPasswordModal from './DevRoomPasswordModal';
@@ -46,6 +48,7 @@ import DevToolbar from './DevToolbar';
 import MusicSelectModal from './MusicSelectModal';
 import type { MusicTrack } from './logic/musicTracks';
 import { TeacherPoolProvider, useTeacherPool, poolVocabToEntries } from './TeacherPoolContext';
+import { fetchDefaults } from './logic/useDefaultVocab';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -157,7 +160,8 @@ const MelodyDungeonGameInner: React.FC = () => {
   const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showJukebox, setShowJukebox] = useState(false);
-  const [showLootBanner, setShowLootBanner] = useState(false);
+  const [showSpecialFloorBanner, setShowSpecialFloorBanner] = useState<SpecialFloorType | null>(null);
+  const [showGamblingModal, setShowGamblingModal] = useState(false);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
@@ -279,6 +283,7 @@ const MelodyDungeonGameInner: React.FC = () => {
     void loadBgMusic(`${basePath}audio/Cathedral in the Cavern.mp3`);
     void loadBattleMusic('miniboss', `${basePath}audio/Dungeon Run.mp3`);
     void loadBattleMusic('bigboss', `${basePath}audio/Dungeon Run_ Bloodsteel.mp3`);
+    void fetchDefaults();
     return () => {
       stopBgMusic();
       stopBattleMusic();
@@ -568,6 +573,95 @@ const MelodyDungeonGameInner: React.FC = () => {
           moveLockedRef.current = true;
           setShowJukebox(true);
           return { ...prev, position: newPos };
+        }
+
+        // HealingPool: restore 1 HP and disappear
+        if (tile.type === TileType.HealingPool && !tile.cleared) {
+          const healed = prev.health < prev.maxHealth;
+          setFloor((f) => {
+            const tiles = f.tiles.map((row, ry) =>
+              row.map((t, rx) =>
+                rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Floor } : t
+              )
+            );
+            return moveEnemiesAndDetectCatch(updateVisibility({ ...f, tiles }, newPos, getVisRadius()), newPos);
+          });
+          if (healed) {
+            playNote('E5', 0.15);
+            setTimeout(() => playNote('G5', 0.2), 100);
+          }
+          return {
+            ...prev,
+            position: newPos,
+            health: healed ? prev.health + 1 : prev.health,
+          };
+        }
+
+        // PotionShrine: grant 1 potion and disappear
+        if (tile.type === TileType.PotionShrine && !tile.cleared) {
+          setFloor((f) => {
+            const tiles = f.tiles.map((row, ry) =>
+              row.map((t, rx) =>
+                rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Floor } : t
+              )
+            );
+            return moveEnemiesAndDetectCatch(updateVisibility({ ...f, tiles }, newPos, getVisRadius()), newPos);
+          });
+          playNote('A4', 0.15);
+          setTimeout(() => playNote('C5', 0.2), 100);
+          return {
+            ...prev,
+            position: newPos,
+            potions: prev.potions + 1,
+          };
+        }
+
+        // Gambler: open gambling modal
+        if (tile.type === TileType.Gambler && !tile.cleared) {
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
+          moveLockedRef.current = true;
+          setShowGamblingModal(true);
+          return { ...prev, position: newPos };
+        }
+
+        // ArenaChest: locked until all enemies defeated, then grants rewards
+        if (tile.type === TileType.ArenaChest) {
+          // Check if all enemies are cleared
+          const allEnemiesCleared = floor.tiles.every((row) =>
+            row.every((t) => t.type !== TileType.Enemy || t.cleared)
+          );
+          if (!allEnemiesCleared) {
+            // Chest is locked, can't interact
+            return prev;
+          }
+          // Open chest and grant rewards
+          setFloor((f) => {
+            const tiles = f.tiles.map((row, ry) =>
+              row.map((t, rx) =>
+                rx === nx && ry === ny ? { ...t, cleared: true, type: TileType.Stairs } : t
+              )
+            );
+            return { ...f, tiles };
+          });
+          const reward = rollChestReward(floorNumber);
+          moveLockedRef.current = true;
+          setPendingChestReward(reward);
+          if (reward.kind === 'potion') {
+            return {
+              ...prev,
+              position: newPos,
+              potions: prev.potions + 1,
+              gold: prev.gold + 100,
+              keys: prev.keys + 1,
+            };
+          }
+          const afterItem = reward.item.apply({
+            ...prev,
+            position: newPos,
+            gold: prev.gold + 100,
+            keys: prev.keys + 1,
+          });
+          return afterItem;
         }
 
         // Stairs
@@ -994,9 +1088,9 @@ const MelodyDungeonGameInner: React.FC = () => {
     const newFloor = generateDungeon(selectedStartFloor, { hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
-    if (visibleFloor.isLootFloor) {
-      setShowLootBanner(true);
-      setTimeout(() => setShowLootBanner(false), 2500);
+    if (visibleFloor.specialFloorType !== 'normal') {
+      setShowSpecialFloorBanner(visibleFloor.specialFloorType);
+      setTimeout(() => setShowSpecialFloorBanner(null), 2500);
     }
     setPlayer(createPlayer(newFloor.playerStart));
     setFloorsCleared(0);
@@ -1038,7 +1132,7 @@ const MelodyDungeonGameInner: React.FC = () => {
   }, []);
 
   const enterLootFloor = useCallback(() => {
-    const lootFloor = generateDungeon(3, { forceLootFloor: true, hasCustomQuestions: !!(pool?.customQuestions?.length) });
+    const lootFloor = generateDungeon(3, { forceSpecialFloorType: 'loot', hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(lootFloor, lootFloor.playerStart, getVisRadius());
     setFloor(visibleFloor);
     setPlayer((prev) => ({
@@ -1047,8 +1141,8 @@ const MelodyDungeonGameInner: React.FC = () => {
       buffs: { ...prev.buffs, floor: { ...DEFAULT_FLOOR_BUFFS } },
     }));
     setActiveChallenge(null);
-    setShowLootBanner(true);
-    setTimeout(() => setShowLootBanner(false), 2500);
+    setShowSpecialFloorBanner('loot');
+    setTimeout(() => setShowSpecialFloorBanner(null), 2500);
     moveLockedRef.current = false;
     setPhase('playing');
   }, [pool]);
@@ -1086,6 +1180,17 @@ const MelodyDungeonGameInner: React.FC = () => {
     setPhase('playing');
   }, []);
 
+  const handleListeningChange = useCallback((isPlaying: boolean) => {
+    const isBoss = activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss;
+    if (isBoss) {
+      if (isPlaying) {
+        muteBattleMusic();
+      } else {
+        unmuteBattleMusic();
+      }
+    }
+  }, [activeTileType]);
+
   const descendFloor = useCallback(() => {
     const nextFloorNum = floorNumber + 1;
     setFloorsCleared((c) => c + 1);
@@ -1105,9 +1210,9 @@ const MelodyDungeonGameInner: React.FC = () => {
     const newFloor = generateDungeon(nextFloorNum, { hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
-    if (visibleFloor.isLootFloor) {
-      setShowLootBanner(true);
-      setTimeout(() => setShowLootBanner(false), 2500);
+    if (visibleFloor.specialFloorType !== 'normal') {
+      setShowSpecialFloorBanner(visibleFloor.specialFloorType);
+      setTimeout(() => setShowSpecialFloorBanner(null), 2500);
     }
     setPlayer((prev) => ({
       ...prev,
@@ -1401,7 +1506,8 @@ const MelodyDungeonGameInner: React.FC = () => {
 
   // --- FLOOR COMPLETE ---
   if (phase === 'floorComplete') {
-    const isLoot = floor.isLootFloor;
+    const isSpecial = floor.specialFloorType !== 'normal';
+    const isLoot = floor.specialFloorType === 'loot';
     return (
       <div className={`min-h-screen bg-gradient-to-b ${isLoot ? 'from-gray-950 via-yellow-950/30 to-gray-950' : 'from-gray-950 via-emerald-950/30 to-gray-950'} flex flex-col items-center justify-center p-4 text-white`}>
         <div className={`bg-gray-900/80 rounded-2xl p-6 max-w-sm w-full text-center ${isLoot ? 'border border-yellow-600' : 'border border-emerald-800'}`}>
@@ -1436,7 +1542,7 @@ const MelodyDungeonGameInner: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} isLootFloor={floor.isLootFloor} onBackToMenu={() => setPhase('menu')} />
+          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} specialFloorType={floor.specialFloorType} onBackToMenu={() => setPhase('menu')} />
         </div>
       </div>
       {devMode.active && (
@@ -1499,12 +1605,42 @@ const MelodyDungeonGameInner: React.FC = () => {
         </div>
       )}
 
-      {showLootBanner && (
+      {showSpecialFloorBanner && (
         <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center">
-          <div className="bg-gradient-to-r from-yellow-900/90 via-amber-800/90 to-yellow-900/90 border-2 border-yellow-400 rounded-2xl px-8 py-4 text-center animate-bounce-in shadow-lg shadow-yellow-500/30">
-            <div className="text-4xl mb-1">{'\uD83D\uDCB0'}</div>
-            <h2 className="text-2xl font-bold text-yellow-300">Loot Floor!</h2>
-            <p className="text-yellow-100/80 text-sm">Treasure awaits...</p>
+          <div className={`bg-gradient-to-r border-2 rounded-2xl px-8 py-4 text-center animate-bounce-in shadow-lg ${
+            showSpecialFloorBanner === 'loot' ? 'from-yellow-900/90 via-amber-800/90 to-yellow-900/90 border-yellow-400 shadow-yellow-500/30' :
+            showSpecialFloorBanner === 'healing' ? 'from-emerald-900/90 via-green-800/90 to-emerald-900/90 border-emerald-400 shadow-emerald-500/30' :
+            showSpecialFloorBanner === 'gambling' ? 'from-purple-900/90 via-violet-800/90 to-purple-900/90 border-purple-400 shadow-purple-500/30' :
+            'from-red-900/90 via-rose-800/90 to-red-900/90 border-red-400 shadow-red-500/30'
+          }`}>
+            <div className="text-4xl mb-1">{
+              showSpecialFloorBanner === 'loot' ? '\uD83D\uDCB0' :
+              showSpecialFloorBanner === 'healing' ? '\uD83E\uDDEA' :
+              showSpecialFloorBanner === 'gambling' ? '\uD83C\uDFB2' :
+              '\u2694\uFE0F'
+            }</div>
+            <h2 className={`text-2xl font-bold ${
+              showSpecialFloorBanner === 'loot' ? 'text-yellow-300' :
+              showSpecialFloorBanner === 'healing' ? 'text-emerald-300' :
+              showSpecialFloorBanner === 'gambling' ? 'text-purple-300' :
+              'text-red-300'
+            }`}>{
+              showSpecialFloorBanner === 'loot' ? 'Loot Floor!' :
+              showSpecialFloorBanner === 'healing' ? 'Healing Sanctuary!' :
+              showSpecialFloorBanner === 'gambling' ? 'Gambling Den!' :
+              'Challenge Arena!'
+            }</h2>
+            <p className={`text-sm ${
+              showSpecialFloorBanner === 'loot' ? 'text-yellow-100/80' :
+              showSpecialFloorBanner === 'healing' ? 'text-emerald-100/80' :
+              showSpecialFloorBanner === 'gambling' ? 'text-purple-100/80' :
+              'text-red-100/80'
+            }`}>{
+              showSpecialFloorBanner === 'loot' ? 'Treasure awaits...' :
+              showSpecialFloorBanner === 'healing' ? 'Rest and recover...' :
+              showSpecialFloorBanner === 'gambling' ? 'Test your luck...' :
+              'Defeat all enemies!'
+            }</p>
           </div>
         </div>
       )}
@@ -1530,6 +1666,7 @@ const MelodyDungeonGameInner: React.FC = () => {
           customQuestions={pool?.customQuestions}
           poolVocabEntries={pool ? poolVocabToEntries(pool.vocabEntries) : undefined}
           poolUseDefaults={pool?.useDefaults}
+          onListeningChange={handleListeningChange}
         />
       )}
 

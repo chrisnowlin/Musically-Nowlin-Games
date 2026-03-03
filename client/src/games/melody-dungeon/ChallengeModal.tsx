@@ -36,6 +36,7 @@ interface Props {
   customQuestions?: CustomQuestion[];
   poolVocabEntries?: VocabEntry[];
   poolUseDefaults?: boolean;
+  onListeningChange?: (isPlaying: boolean) => void;
 }
 
 const MINI_BOSS_HP = 5;
@@ -117,9 +118,9 @@ const ENEMY_SPRITE: Record<string, string> = {
 };
 
 function getBigBossSprite(floorNumber: number): string {
-  return floorNumber % 2 === 0
+  return floorNumber % 20 >= 10
     ? '/images/melody-dungeon/bigboss.png'
-    : '/images/melody-dungeon/bigboss_2.png';
+    : '/images/melody-dungeon/bigboss_2.png'
 }
 
 function getEncounterSprite(tileType: TileType, enemySubtype?: EnemySubtype, floorNumber?: number): string | null {
@@ -160,7 +161,7 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
   }
 }
 
-function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint, customQuestions, poolVocabEntries, poolUseDefaults }: {
+function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint, customQuestions, poolVocabEntries, poolUseDefaults, onListeningChange }: {
   type: ChallengeType;
   tier: Tier;
   floorNumber: number;
@@ -170,6 +171,7 @@ function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, show
   customQuestions?: CustomQuestion[];
   poolVocabEntries?: VocabEntry[];
   poolUseDefaults?: boolean;
+  onListeningChange?: (isPlaying: boolean) => void;
 }) {
   if (VOCAB_CATEGORIES.has(type)) {
     return (
@@ -189,9 +191,9 @@ function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, show
     case 'rhythmTap':
       return <RhythmTapChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} />;
     case 'interval':
-      return <IntervalChallenge tier={tier} onResult={onResult} showHint={showIntervalHint} />;
+      return <IntervalChallenge tier={tier} onResult={onResult} showHint={showIntervalHint} onListeningChange={onListeningChange} />;
     case 'timbre':
-      return <TimbreChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} />;
+      return <TimbreChallenge tier={tier} onResult={onResult} slowMode={slowRhythm} onListeningChange={onListeningChange} />;
     case 'custom':
       return <CustomChallenge questions={customQuestions ?? []} tier={tier} onResult={onResult} />;
     default:
@@ -217,7 +219,8 @@ const BossBattle: React.FC<{
   customQuestions?: CustomQuestion[];
   poolVocabEntries?: VocabEntry[];
   poolUseDefaults?: boolean;
-}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit, customQuestions, poolVocabEntries, poolUseDefaults }) => {
+  onListeningChange?: (isPlaying: boolean) => void;
+}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit, customQuestions, poolVocabEntries, poolUseDefaults, onListeningChange }) => {
   const maxBossHp = useMemo(
     () => Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0)),
     [tileType, enemyLevel, dragonBane]
@@ -426,6 +429,7 @@ const BossBattle: React.FC<{
           customQuestions={customQuestions}
           poolVocabEntries={poolVocabEntries}
           poolUseDefaults={poolUseDefaults}
+          onListeningChange={onListeningChange}
         />
       ) : (
         <div className="py-8 text-center">
@@ -448,7 +452,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit, customQuestions, poolVocabEntries, poolUseDefaults }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit, customQuestions, poolVocabEntries, poolUseDefaults, onListeningChange }) => {
   const theme = tileType === TileType.Enemy
     ? getEnemyTheme(enemySubtype)
     : (TILE_THEME[tileType] || DEFAULT_THEME);
@@ -520,10 +524,11 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
             customQuestions={customQuestions}
             poolVocabEntries={poolVocabEntries}
             poolUseDefaults={poolUseDefaults}
+            onListeningChange={onListeningChange}
           />
         ) : (
           <>
-            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} customQuestions={customQuestions} poolVocabEntries={poolVocabEntries} poolUseDefaults={poolUseDefaults} />
+            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} customQuestions={customQuestions} poolVocabEntries={poolVocabEntries} poolUseDefaults={poolUseDefaults} onListeningChange={onListeningChange} />
             {onExit && (
               <button
                 onClick={onExit}

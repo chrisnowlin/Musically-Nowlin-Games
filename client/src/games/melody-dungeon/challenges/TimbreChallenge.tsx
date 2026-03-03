@@ -10,6 +10,7 @@ interface Props {
   tier: Tier;
   onResult: (correct: boolean) => void;
   slowMode?: boolean;
+  onListeningChange?: (isPlaying: boolean) => void;
 }
 
 /** Pick a random instrument name from the given family via instrumentLibrary. */
@@ -39,7 +40,7 @@ function pickMelodyNotes(instrumentName: string): string[] {
   return sorted.slice(start, start + maxNotes).map(s => s.note);
 }
 
-const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
+const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListeningChange }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
   const playedRef = useRef(false);
@@ -80,19 +81,21 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
 
   // Play the T1 synthesized sound
   const playT1Sound = useCallback((entry: TimbreEntry, duration: number) => {
+    onListeningChange?.(true);
+    const totalDuration = duration * 1000 + 200;
     switch (entry.id) {
       case 't1-high':
-        playNoteAtFrequency(880, duration, 0.3);
+        playNoteAtFrequency(880, duration, 0.5);
         break;
       case 't1-low':
-        playNoteAtFrequency(131, duration, 0.3);
+        playNoteAtFrequency(131, duration, 0.5);
         break;
       case 't1-fast': {
         // 8 rapid notes at 440Hz
         const count = 8;
         const gapMs = (duration * 1000) / count;
         for (let i = 0; i < count; i++) {
-          setTimeout(() => playNoteAtFrequency(440, gapMs / 1000 * 0.6, 0.3), i * gapMs);
+          setTimeout(() => playNoteAtFrequency(440, gapMs / 1000 * 0.6, 0.5), i * gapMs);
         }
         break;
       }
@@ -101,23 +104,27 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
         const count = 2;
         const gapMs = (duration * 1000) / count;
         for (let i = 0; i < count; i++) {
-          setTimeout(() => playNoteAtFrequency(440, gapMs / 1000 * 0.8, 0.3), i * gapMs);
+          setTimeout(() => playNoteAtFrequency(440, gapMs / 1000 * 0.8, 0.5), i * gapMs);
         }
         break;
       }
     }
-  }, []);
+    setTimeout(() => onListeningChange?.(false), totalDuration);
+  }, [onListeningChange]);
 
   // Play the sound (T1 synth or T2+ Philharmonia melody)
   const playSound = useCallback(() => {
     if (tier === 1) {
       playT1Sound(challengeData.correct, playDuration);
     } else if (challengeData.instrumentToPlay && challengeData.notesToPlay.length > 0) {
+      onListeningChange?.(true);
+      const melodyDuration = challengeData.notesToPlay.length * 0.7 * 1000 + 500;
       playInstrumentMelody(challengeData.instrumentToPlay, challengeData.notesToPlay, 0.7, {
-        volume: 2.5,
+        volume: 4,
       });
+      setTimeout(() => onListeningChange?.(false), melodyDuration);
     }
-  }, [tier, challengeData, playDuration, playT1Sound, playInstrumentMelody]);
+  }, [tier, challengeData, playDuration, playT1Sound, playInstrumentMelody, onListeningChange]);
 
   // Auto-play after a brief delay once loading is done
   useEffect(() => {

@@ -180,10 +180,11 @@ export function playTwoNotes(
   note1: string,
   note2: string,
   gap = 0.6,
-  duration = 0.4
+  duration = 0.4,
+  volume = 0.3
 ): void {
-  playNote(note1, duration);
-  setTimeout(() => playNote(note2, duration), gap * 1000);
+  playNote(note1, duration, volume);
+  setTimeout(() => playNote(note2, duration, volume), gap * 1000);
 }
 
 export function playClick(volume = 0.2): void {
@@ -443,6 +444,7 @@ const BATTLE_FADE_S = 0.4;
 
 // Track desired battle music state for recovery after iPad interruptions
 let battleMusicKey: string | null = null;
+let battleMusicMuted = false;
 
 /** Pre-load a battle music track by key (e.g. 'miniboss', 'bigboss'). */
 export async function loadBattleMusic(key: string, url: string): Promise<void> {
@@ -473,9 +475,10 @@ function createBattleSource(buffer: AudioBuffer): void {
     battleSource.connect(battleGain);
     battleSource.start(0);
 
-    // Fade in
+    // Fade in unless muted
+    const targetVolume = battleMusicMuted ? 0 : BATTLE_VOLUME;
     const now = ctx.currentTime;
-    battleGain.gain.linearRampToValueAtTime(BATTLE_VOLUME, now + BATTLE_FADE_S);
+    battleGain.gain.linearRampToValueAtTime(targetVolume, now + BATTLE_FADE_S);
   } catch {
     // Audio not available
   }
@@ -504,6 +507,7 @@ export function startBattleMusic(key: string): void {
 /** Stop battle music with a fade-out. */
 export function stopBattleMusic(): void {
   battleMusicKey = null;
+  battleMusicMuted = false;
   if (!battleSource || !battleGain) return;
   try {
     const ctx = getAudioCtx();
@@ -522,6 +526,32 @@ export function stopBattleMusic(): void {
     battleSource = null;
     battleGain = null;
   }
+}
+
+/** Mute battle music (for listening questions during boss fights). */
+export function muteBattleMusic(): void {
+  battleMusicMuted = true;
+  if (!battleGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    battleGain.gain.cancelScheduledValues(now);
+    battleGain.gain.setValueAtTime(battleGain.gain.value, now);
+    battleGain.gain.linearRampToValueAtTime(0, now + 0.2);
+  } catch {}
+}
+
+/** Unmute battle music (after listening questions during boss fights). */
+export function unmuteBattleMusic(): void {
+  battleMusicMuted = false;
+  if (!battleGain) return;
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+    battleGain.gain.cancelScheduledValues(now);
+    battleGain.gain.setValueAtTime(battleGain.gain.value, now);
+    battleGain.gain.linearRampToValueAtTime(BATTLE_VOLUME, now + 0.3);
+  } catch {}
 }
 
 // ── Visibility & Interruption Recovery (iPad) ─────────────────────

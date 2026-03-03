@@ -9,6 +9,7 @@ interface Props {
   tier: Tier;
   onResult: (correct: boolean) => void;
   showHint?: boolean;
+  onListeningChange?: (isPlaying: boolean) => void;
 }
 
 // ── Shared helpers ──────────────────────────────────────────
@@ -100,7 +101,8 @@ const HighLowMode: React.FC<{
   params: ReturnType<typeof getIntervalParams>;
   onResult: (correct: boolean) => void;
   showHint?: boolean;
-}> = ({ params, onResult, showHint }) => {
+  onListeningChange?: (isPlaying: boolean) => void;
+}> = ({ params, onResult, showHint, onListeningChange }) => {
   const challenge = useHighLowChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
@@ -113,8 +115,10 @@ const HighLowMode: React.FC<{
   }, [showHint]);
 
   const playInterval = useCallback(() => {
-    playTwoNotes(challenge.baseNote, challenge.topNote, 0.5);
-  }, [challenge]);
+    onListeningChange?.(true);
+    playTwoNotes(challenge.baseNote, challenge.topNote, 0.5, 0.5, 0.5);
+    setTimeout(() => onListeningChange?.(false), 1200);
+  }, [challenge, onListeningChange]);
 
   useEffect(() => {
     const timer = setTimeout(playInterval, 400);
@@ -180,7 +184,8 @@ const StepSkipMode: React.FC<{
   params: ReturnType<typeof getIntervalParams>;
   onResult: (correct: boolean) => void;
   showHint?: boolean;
-}> = ({ params, onResult, showHint }) => {
+  onListeningChange?: (isPlaying: boolean) => void;
+}> = ({ params, onResult, showHint, onListeningChange }) => {
   const challenge = useStepSkipChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
@@ -193,8 +198,10 @@ const StepSkipMode: React.FC<{
   }, [showHint]);
 
   const playInterval = useCallback(() => {
-    playTwoNotes(challenge.baseNote, challenge.topNote, 0.5);
-  }, [challenge]);
+    onListeningChange?.(true);
+    playTwoNotes(challenge.baseNote, challenge.topNote, 0.5, 0.5, 0.5);
+    setTimeout(() => onListeningChange?.(false), 1200);
+  }, [challenge, onListeningChange]);
 
   useEffect(() => {
     const timer = setTimeout(playInterval, 400);
@@ -260,7 +267,8 @@ const StandardMode: React.FC<{
   params: ReturnType<typeof getIntervalParams>;
   onResult: (correct: boolean) => void;
   showHint?: boolean;
-}> = ({ params, onResult, showHint }) => {
+  onListeningChange?: (isPlaying: boolean) => void;
+}> = ({ params, onResult, showHint, onListeningChange }) => {
   const challenge = useStandardChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
@@ -273,8 +281,10 @@ const StandardMode: React.FC<{
   }, [showHint]);
 
   const playInterval = useCallback(() => {
-    playTwoNotes(challenge.baseNote, challenge.topNote, 0.5);
-  }, [challenge]);
+    onListeningChange?.(true);
+    playTwoNotes(challenge.baseNote, challenge.topNote, 0.5, 0.5, 0.5);
+    setTimeout(() => onListeningChange?.(false), 1200);
+  }, [challenge, onListeningChange]);
 
   useEffect(() => {
     const timer = setTimeout(playInterval, 400);
@@ -346,16 +356,16 @@ const StandardMode: React.FC<{
 
 // ── Main component ──────────────────────────────────────────
 
-const IntervalChallenge: React.FC<Props> = ({ tier, onResult, showHint }) => {
+const IntervalChallenge: React.FC<Props> = ({ tier, onResult, showHint, onListeningChange }) => {
   const params = useMemo(() => getIntervalParams(tier), [tier]);
 
   switch (params.mode) {
     case 'highLow':
-      return <HighLowMode params={params} onResult={onResult} showHint={showHint} />;
+      return <HighLowMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} />;
     case 'stepSkip':
-      return <StepSkipMode params={params} onResult={onResult} showHint={showHint} />;
+      return <StepSkipMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} />;
     case 'standard':
-      return <StandardMode params={params} onResult={onResult} showHint={showHint} />;
+      return <StandardMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} />;
   }
 };
 
