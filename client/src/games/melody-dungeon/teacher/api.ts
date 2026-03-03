@@ -194,3 +194,21 @@ export async function clonePool(id: number): Promise<Pool> {
   if (!res.ok) throw new Error('Failed to clone pool');
   return res.json();
 }
+
+// --- Defaults ---
+
+export interface DefaultsResponse {
+  id: number;
+  name: string;
+  vocabEntries: VocabEntryApi[];
+}
+
+export async function getDefaults(): Promise<DefaultsResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/pools/defaults`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
