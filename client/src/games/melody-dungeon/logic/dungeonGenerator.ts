@@ -658,6 +658,10 @@ export function generateDevRoom(): DungeonFloor {
     grid[18][x].challengeType = challengeType;
     grid[18][x].cleared = false;
     grid[18][x].enemyState = 'guarding';
+    if (subtype === 'ghost') {
+      grid[18][x].ghostVisible = true;
+      grid[18][x].ghostNearPlayerTurns = 0;
+    }
   });
 
   // Place MiniBoss (2×2 footprint) south of enemy row, left side
@@ -788,6 +792,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
           challengeType: tile.challengeType,
           cleared: false,
           enemyState: tile.enemyState,
+          ghostVisible: tile.ghostVisible,
+          ghostNearPlayerTurns: tile.ghostNearPlayerTurns,
         };
         tiles[pos.y][pos.x] = {
           ...tiles[pos.y][pos.x],
@@ -797,6 +803,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
           challengeType: undefined,
           cleared: undefined,
           enemyState: undefined,
+          ghostVisible: undefined,
+          ghostNearPlayerTurns: undefined,
         };
 
         occupied.delete(`${pos.x},${pos.y}`);
@@ -844,6 +852,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         challengeType: tile.challengeType,
         cleared: false,
         enemyState: tile.enemyState,
+        ghostVisible: tile.ghostVisible,
+        ghostNearPlayerTurns: tile.ghostNearPlayerTurns,
       };
       tiles[pos.y][pos.x] = {
         ...tiles[pos.y][pos.x],
@@ -853,6 +863,8 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         challengeType: undefined,
         cleared: undefined,
         enemyState: undefined,
+        ghostVisible: undefined,
+        ghostNearPlayerTurns: undefined,
       };
 
       // Update occupied set.

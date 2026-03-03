@@ -162,6 +162,7 @@ describe('generateDungeon', () => {
       );
       for (const g of ghosts) {
         expect(g.ghostVisible).toBe(true);
+        expect(g.ghostNearPlayerTurns).toBe(0);
       }
     }
   });
