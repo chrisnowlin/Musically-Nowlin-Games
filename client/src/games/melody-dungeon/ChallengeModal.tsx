@@ -8,7 +8,7 @@ import VocabularyChallenge from './challenges/VocabularyChallenge';
 import TimbreChallenge from './challenges/TimbreChallenge';
 import CustomChallenge from './challenges/CustomChallenge';
 import type { CustomQuestion } from './challenges/CustomChallenge';
-import type { VocabCategory } from './logic/vocabData';
+import type { VocabCategory, VocabEntry } from './logic/vocabData';
 import { getChallengeTypesForFloor, rollTier, pickRandom, generateBigBossSequence, getSubtypeChallengePool } from './challengeHelpers';
 
 export interface BossBattleMeta {
@@ -34,6 +34,8 @@ interface Props {
   overrideTier?: Tier;
   onExit?: () => void;
   customQuestions?: CustomQuestion[];
+  poolVocabEntries?: VocabEntry[];
+  poolUseDefaults?: boolean;
 }
 
 const MINI_BOSS_HP = 5;
@@ -148,7 +150,7 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
   }
 }
 
-function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint, customQuestions }: {
+function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, showIntervalHint, customQuestions, poolVocabEntries, poolUseDefaults }: {
   type: ChallengeType;
   tier: Tier;
   floorNumber: number;
@@ -156,9 +158,19 @@ function ChallengeRenderer({ type, tier, floorNumber, onResult, slowRhythm, show
   slowRhythm?: boolean;
   showIntervalHint?: boolean;
   customQuestions?: CustomQuestion[];
+  poolVocabEntries?: VocabEntry[];
+  poolUseDefaults?: boolean;
 }) {
   if (VOCAB_CATEGORIES.has(type)) {
-    return <VocabularyChallenge category={type as VocabCategory} tier={tier} onResult={onResult} />;
+    return (
+      <VocabularyChallenge
+        category={type as VocabCategory}
+        tier={tier}
+        onResult={onResult}
+        poolEntries={poolVocabEntries}
+        useDefaults={poolUseDefaults}
+      />
+    );
   }
 
   switch (type) {
@@ -193,7 +205,9 @@ const BossBattle: React.FC<{
   overrideTier?: Tier;
   onExit?: () => void;
   customQuestions?: CustomQuestion[];
-}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit, customQuestions }) => {
+  poolVocabEntries?: VocabEntry[];
+  poolUseDefaults?: boolean;
+}> = ({ tileType, floorNumber, onResult, playerHealth, maxHealth, shieldCharm, potions, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel, overrideTier, onExit, customQuestions, poolVocabEntries, poolUseDefaults }) => {
   const maxBossHp = useMemo(
     () => Math.max(1, getBossHp(tileType, enemyLevel) - (dragonBane ? 1 : 0)),
     [tileType, enemyLevel, dragonBane]
@@ -400,6 +414,8 @@ const BossBattle: React.FC<{
           slowRhythm={slowRhythm}
           showIntervalHint={showIntervalHint}
           customQuestions={customQuestions}
+          poolVocabEntries={poolVocabEntries}
+          poolUseDefaults={poolUseDefaults}
         />
       ) : (
         <div className="py-8 text-center">
@@ -422,7 +438,7 @@ const BossBattle: React.FC<{
   );
 };
 
-const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit, customQuestions }) => {
+const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber, onResult, playerHealth = 5, maxHealth = 5, shieldCharm = 0, potions = 0, dragonBane, slowRhythm, showIntervalHint, enemySubtype, enemyLevel = 1, overrideTier, onExit, customQuestions, poolVocabEntries, poolUseDefaults }) => {
   const theme = tileType === TileType.Enemy
     ? getEnemyTheme(enemySubtype)
     : (TILE_THEME[tileType] || DEFAULT_THEME);
@@ -492,10 +508,12 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
             overrideTier={overrideTier}
             onExit={onExit}
             customQuestions={customQuestions}
+            poolVocabEntries={poolVocabEntries}
+            poolUseDefaults={poolUseDefaults}
           />
         ) : (
           <>
-            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} customQuestions={customQuestions} />
+            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} customQuestions={customQuestions} poolVocabEntries={poolVocabEntries} poolUseDefaults={poolUseDefaults} />
             {onExit && (
               <button
                 onClick={onExit}

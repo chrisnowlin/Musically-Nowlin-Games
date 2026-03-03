@@ -45,6 +45,7 @@ import DevChallengeConfigModal from './DevChallengeConfigModal';
 import DevToolbar from './DevToolbar';
 import MusicSelectModal from './MusicSelectModal';
 import type { MusicTrack } from './logic/musicTracks';
+import { TeacherPoolProvider, useTeacherPool, poolVocabToEntries } from './TeacherPoolContext';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -102,7 +103,9 @@ function createPlayer(start: Position): PlayerState {
 
 const MAX_FLOOR = 100;
 
-const MelodyDungeonGame: React.FC = () => {
+const MelodyDungeonGameInner: React.FC = () => {
+  const { pool, loading, error, joinPool, leavePool } = useTeacherPool();
+  const [gameCodeInput, setGameCodeInput] = useState('');
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<GamePhase>('menu');
   const [floor, setFloor] = useState<DungeonFloor>(() => {
@@ -988,7 +991,7 @@ const MelodyDungeonGame: React.FC = () => {
   }, []);
 
   const startNewGame = useCallback(() => {
-    const newFloor = generateDungeon(selectedStartFloor);
+    const newFloor = generateDungeon(selectedStartFloor, { hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
     if (visibleFloor.isLootFloor) {
@@ -1003,7 +1006,7 @@ const MelodyDungeonGame: React.FC = () => {
     moveLockedRef.current = false;
     setPhase('playing');
     playNote('C4', 0.2);
-  }, [selectedStartFloor]);
+  }, [selectedStartFloor, pool]);
 
   const enterDevRoom = useCallback(() => {
     const devFloor = generateDevRoom();
@@ -1035,7 +1038,7 @@ const MelodyDungeonGame: React.FC = () => {
   }, []);
 
   const enterLootFloor = useCallback(() => {
-    const lootFloor = generateDungeon(3, { forceLootFloor: true });
+    const lootFloor = generateDungeon(3, { forceLootFloor: true, hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(lootFloor, lootFloor.playerStart, getVisRadius());
     setFloor(visibleFloor);
     setPlayer((prev) => ({
@@ -1048,7 +1051,7 @@ const MelodyDungeonGame: React.FC = () => {
     setTimeout(() => setShowLootBanner(false), 2500);
     moveLockedRef.current = false;
     setPhase('playing');
-  }, []);
+  }, [pool]);
 
   const respawnToStart = useCallback(() => {
     const start = floor.playerStart;
@@ -1099,7 +1102,7 @@ const MelodyDungeonGame: React.FC = () => {
       return;
     }
 
-    const newFloor = generateDungeon(nextFloorNum);
+    const newFloor = generateDungeon(nextFloorNum, { hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
     if (visibleFloor.isLootFloor) {
@@ -1118,7 +1121,7 @@ const MelodyDungeonGame: React.FC = () => {
     setPhase('playing');
     playNote('G4', 0.15);
     setTimeout(() => playNote('C5', 0.3), 150);
-  }, [floorNumber, deepestUnlocked]);
+  }, [floorNumber, deepestUnlocked, pool]);
 
   // Save high gold
   useEffect(() => {
@@ -1213,6 +1216,35 @@ const MelodyDungeonGame: React.FC = () => {
                 +
               </button>
             </div>
+          </div>
+
+          {/* Game Code */}
+          <div className="flex flex-col items-center gap-2 mt-2 mb-2">
+            {pool ? (
+              <div className="flex items-center gap-2 bg-purple-900/50 px-4 py-2 rounded-lg">
+                <span className="text-purple-200 text-sm">Playing with: <strong>{pool.name}</strong></span>
+                <button onClick={leavePool} className="text-purple-400 hover:text-purple-200 text-xs underline ml-2">Leave</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Game Code"
+                  value={gameCodeInput}
+                  onChange={(e) => setGameCodeInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                  className="px-3 py-2 rounded bg-slate-800 text-white text-center uppercase tracking-widest w-32 text-sm border border-slate-600 focus:border-purple-400 outline-none"
+                  maxLength={6}
+                />
+                <button
+                  onClick={() => gameCodeInput.length === 6 && joinPool(gameCodeInput)}
+                  disabled={gameCodeInput.length !== 6 || loading}
+                  className="px-3 py-2 rounded bg-purple-700 hover:bg-purple-600 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+                >
+                  {loading ? '...' : 'Join'}
+                </button>
+              </div>
+            )}
+            {error && <p className="text-red-400 text-xs">{error}</p>}
           </div>
 
           <button
@@ -1489,6 +1521,9 @@ const MelodyDungeonGame: React.FC = () => {
           enemyLevel={activeTileLevel}
           overrideTier={overrideTier}
           onExit={floorNumber === 0 ? handleExitEncounter : undefined}
+          customQuestions={pool?.customQuestions}
+          poolVocabEntries={pool ? poolVocabToEntries(pool.vocabEntries) : undefined}
+          poolUseDefaults={pool?.useDefaults}
         />
       )}
 
@@ -1543,5 +1578,11 @@ const MelodyDungeonGame: React.FC = () => {
     </div>
   );
 };
+
+const MelodyDungeonGame: React.FC = () => (
+  <TeacherPoolProvider>
+    <MelodyDungeonGameInner />
+  </TeacherPoolProvider>
+);
 
 export default MelodyDungeonGame;

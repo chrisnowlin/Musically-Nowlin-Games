@@ -370,6 +370,7 @@ function placeLootTreasure(
 
 export interface GenerateDungeonOptions {
   forceLootFloor?: boolean;
+  hasCustomQuestions?: boolean;
 }
 
 export function generateDungeon(floorNumber: number, options?: GenerateDungeonOptions): DungeonFloor {
@@ -486,6 +487,9 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
     placeLootTreasure(grid, placedPositions, playerStart, floorNumber);
   } else {
     const challengeTypes = getChallengeTypesForFloor(floorNumber);
+    if (options?.hasCustomQuestions) {
+      challengeTypes.push('custom');
+    }
 
     // Chests, dragons, and enemies do NOT spawn on boss floors.
     if (!bossType) {
@@ -541,6 +545,9 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
       const totalEnemies = Math.min(2 + floorNumber, 6);
       const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
       const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
+      if (options?.hasCustomQuestions) {
+        availableSubtypes.push('wizard');
+      }
       for (let i = 0; i < regularCount; i++) {
         const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
         if (pos) {
