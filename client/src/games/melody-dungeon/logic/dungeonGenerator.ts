@@ -750,6 +750,41 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
     { x: 1, y: 0 },
   ];
 
+  /** Transfer an enemy from one tile to another, updating the occupied set. */
+  function transferEnemy(
+    tiles: Tile[][],
+    from: Position,
+    to: Position,
+    enemyTile: Tile,
+    occupied: Set<string>
+  ): void {
+    const target = tiles[to.y][to.x];
+    tiles[to.y][to.x] = {
+      ...target,
+      type: enemyTile.type,
+      enemySubtype: enemyTile.enemySubtype,
+      enemyLevel: enemyTile.enemyLevel,
+      challengeType: enemyTile.challengeType,
+      cleared: false,
+      enemyState: enemyTile.enemyState,
+      ghostVisible: enemyTile.ghostVisible,
+      ghostNearPlayerTurns: enemyTile.ghostNearPlayerTurns,
+    };
+    tiles[from.y][from.x] = {
+      ...tiles[from.y][from.x],
+      type: TileType.Floor,
+      enemySubtype: undefined,
+      enemyLevel: undefined,
+      challengeType: undefined,
+      cleared: undefined,
+      enemyState: undefined,
+      ghostVisible: undefined,
+      ghostNearPlayerTurns: undefined,
+    };
+    occupied.delete(`${from.x},${from.y}`);
+    occupied.add(`${to.x},${to.y}`);
+  }
+
   for (const enemy of enemies) {
     const { pos, tile } = enemy;
 
@@ -784,31 +819,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         const key = `${nx},${ny}`;
         if (occupied.has(key)) continue;
 
-        tiles[ny][nx] = {
-          ...target,
-          type: tile.type,
-          enemySubtype: tile.enemySubtype,
-          enemyLevel: tile.enemyLevel,
-          challengeType: tile.challengeType,
-          cleared: false,
-          enemyState: tile.enemyState,
-          ghostVisible: tile.ghostVisible,
-          ghostNearPlayerTurns: tile.ghostNearPlayerTurns,
-        };
-        tiles[pos.y][pos.x] = {
-          ...tiles[pos.y][pos.x],
-          type: TileType.Floor,
-          enemySubtype: undefined,
-          enemyLevel: undefined,
-          challengeType: undefined,
-          cleared: undefined,
-          enemyState: undefined,
-          ghostVisible: undefined,
-          ghostNearPlayerTurns: undefined,
-        };
-
-        occupied.delete(`${pos.x},${pos.y}`);
-        occupied.add(key);
+        transferEnemy(tiles, pos, { x: nx, y: ny }, tile, occupied);
         break;
       }
       continue; // Skip the default random movement
@@ -831,52 +842,26 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       const target = tiles[ny][nx];
       if (isPlayerTile && tile.enemySubtype === 'ghost') continue;
 
-      if (tile.enemySubtype === 'ghost') {
-        if (target.type === TileType.Wall) {
-          // Phase through wall: check tile beyond the wall
-          const beyondX = nx + d.x;
-          const beyondY = ny + d.y;
-          if (beyondX < 0 || beyondX >= floor.width || beyondY < 0 || beyondY >= floor.height) continue;
-          const beyondTile = tiles[beyondY][beyondX];
-          const isBeyondPlayer = beyondX === playerPos.x && beyondY === playerPos.y;
-          if (isBeyondPlayer) continue; // ghost can't land on player
-          if (beyondTile.type !== TileType.Floor && beyondTile.type !== TileType.PlayerStart) continue;
-          const beyondKey = `${beyondX},${beyondY}`;
-          if (occupied.has(beyondKey)) continue;
+      if (tile.enemySubtype === 'ghost' && target.type === TileType.Wall) {
+        // Phase through exactly one wall tile. Double walls are impassable
+        // (the beyond-tile would also be a wall, so the direction is skipped).
+        const beyondX = nx + d.x;
+        const beyondY = ny + d.y;
+        if (beyondX < 0 || beyondX >= floor.width || beyondY < 0 || beyondY >= floor.height) continue;
+        const beyondTile = tiles[beyondY][beyondX];
+        const isBeyondPlayer = beyondX === playerPos.x && beyondY === playerPos.y;
+        if (isBeyondPlayer) continue; // ghost can't land on player
+        if (beyondTile.type !== TileType.Floor && beyondTile.type !== TileType.PlayerStart) continue;
+        const beyondKey = `${beyondX},${beyondY}`;
+        if (occupied.has(beyondKey)) continue;
 
-          // Execute phase: move ghost to beyond-tile
-          tiles[beyondY][beyondX] = {
-            ...beyondTile,
-            type: tile.type,
-            enemySubtype: tile.enemySubtype,
-            enemyLevel: tile.enemyLevel,
-            challengeType: tile.challengeType,
-            cleared: false,
-            enemyState: tile.enemyState,
-            ghostVisible: tile.ghostVisible,
-            ghostNearPlayerTurns: tile.ghostNearPlayerTurns,
-          };
-          tiles[pos.y][pos.x] = {
-            ...tiles[pos.y][pos.x],
-            type: TileType.Floor,
-            enemySubtype: undefined,
-            enemyLevel: undefined,
-            challengeType: undefined,
-            cleared: undefined,
-            enemyState: undefined,
-            ghostVisible: undefined,
-            ghostNearPlayerTurns: undefined,
-          };
-          occupied.delete(`${pos.x},${pos.y}`);
-          occupied.add(beyondKey);
-          moved = true;
-          break;
-        }
-        // Non-wall neighbor for ghost: normal floor check
-        if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
-      } else {
-        if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
+        // Execute phase: move ghost to beyond-tile
+        transferEnemy(tiles, pos, { x: beyondX, y: beyondY }, tile, occupied);
+        moved = true;
+        break;
       }
+      // Shared guard for both ghosts (non-wall neighbor) and all other enemies
+      if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
 
       const key = `${nx},${ny}`;
       if (occupied.has(key)) continue;
@@ -890,32 +875,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       }
 
       // Execute move: transfer entity to new tile, old tile becomes floor.
-      tiles[ny][nx] = {
-        ...target,
-        type: tile.type,
-        enemySubtype: tile.enemySubtype,
-        enemyLevel: tile.enemyLevel,
-        challengeType: tile.challengeType,
-        cleared: false,
-        enemyState: tile.enemyState,
-        ghostVisible: tile.ghostVisible,
-        ghostNearPlayerTurns: tile.ghostNearPlayerTurns,
-      };
-      tiles[pos.y][pos.x] = {
-        ...tiles[pos.y][pos.x],
-        type: TileType.Floor,
-        enemySubtype: undefined,
-        enemyLevel: undefined,
-        challengeType: undefined,
-        cleared: undefined,
-        enemyState: undefined,
-        ghostVisible: undefined,
-        ghostNearPlayerTurns: undefined,
-      };
-
-      // Update occupied set.
-      occupied.delete(`${pos.x},${pos.y}`);
-      occupied.add(key);
+      transferEnemy(tiles, pos, { x: nx, y: ny }, tile, occupied);
       moved = true;
       break;
     }
