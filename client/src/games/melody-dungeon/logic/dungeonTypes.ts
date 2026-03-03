@@ -32,6 +32,7 @@ export interface Tile {
   enemyLevel?: number;
   ghostVisible?: boolean;
   ghostNearPlayerTurns?: number;
+  ghostMaterialized?: boolean;
 }
 
 export interface Position {

@@ -476,6 +476,105 @@ describe('moveEnemies', () => {
     expect(reachedFarSide).toBe(true);
   });
 
+  it('ghost visibility can toggle after moveEnemies (30% flip chance)', () => {
+    let sawInvisible = false;
+    for (let i = 0; i < 100; i++) {
+      const floor = createTestFloor(5, 5, (tiles) => {
+        tiles[2][2] = {
+          type: TileType.Enemy,
+          enemySubtype: 'ghost' as const,
+          enemyLevel: 1,
+          visible: false,
+          visited: false,
+          challengeType: 'noteReading',
+          cleared: false,
+          enemyState: 'patrolling',
+          ghostVisible: true,
+          ghostNearPlayerTurns: 0,
+        };
+      });
+      const result = moveEnemies(floor, { x: 0, y: 0 });
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          if (result.tiles[y][x].type === TileType.Enemy && result.tiles[y][x].enemySubtype === 'ghost') {
+            if (result.tiles[y][x].ghostVisible === false) sawInvisible = true;
+          }
+        }
+      }
+      if (sawInvisible) break;
+    }
+    expect(sawInvisible).toBe(true);
+  });
+
+  it('invisible ghost near player increments ghostNearPlayerTurns', () => {
+    const floor = createTestFloor(7, 1, (tiles) => {
+      tiles[0][2] = {
+        type: TileType.Enemy,
+        enemySubtype: 'ghost' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+        ghostVisible: false,
+        ghostNearPlayerTurns: 0,
+      };
+    });
+    const origRandom = Math.random;
+    Math.random = () => 0.5; // > 0.3, so ghost stays invisible; also controls movement
+    try {
+      const result = moveEnemies(floor, { x: 0, y: 0 });
+      for (let y = 0; y < 1; y++) {
+        for (let x = 0; x < 7; x++) {
+          if (result.tiles[y][x].type === TileType.Enemy && result.tiles[y][x].enemySubtype === 'ghost') {
+            expect(result.tiles[y][x].ghostNearPlayerTurns).toBeGreaterThanOrEqual(1);
+          }
+        }
+      }
+    } finally {
+      Math.random = origRandom;
+    }
+  });
+
+  it('ghost materializes after 3 invisible turns near player', () => {
+    // Ghost already has ghostNearPlayerTurns = 2, invisible, near player
+    const floor = createTestFloor(5, 5, (tiles) => {
+      tiles[1][1] = {
+        type: TileType.Enemy,
+        enemySubtype: 'ghost' as const,
+        enemyLevel: 1,
+        visible: false,
+        visited: false,
+        challengeType: 'noteReading',
+        cleared: false,
+        enemyState: 'patrolling',
+        ghostVisible: false,
+        ghostNearPlayerTurns: 2,
+      };
+    });
+    const origRandom = Math.random;
+    Math.random = () => 0.5; // > 0.3, ghost stays invisible → counter hits 3 → materializes
+    try {
+      const result = moveEnemies(floor, { x: 0, y: 0 });
+      let found = false;
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 5; x++) {
+          const t = result.tiles[y][x];
+          if (t.type === TileType.Enemy && t.enemySubtype === 'ghost') {
+            expect(t.ghostVisible).toBe(true);
+            expect(t.ghostMaterialized).toBe(true);
+            expect(t.ghostNearPlayerTurns).toBe(0);
+            found = true;
+          }
+        }
+      }
+      expect(found).toBe(true);
+    } finally {
+      Math.random = origRandom;
+    }
+  });
+
   it('patrolling Ghost does NOT stop on a wall tile (phases through, not into)', () => {
     // 3x1: [player] [wall] [ghost]
     const floor = createTestFloor(3, 1, (tiles) => {

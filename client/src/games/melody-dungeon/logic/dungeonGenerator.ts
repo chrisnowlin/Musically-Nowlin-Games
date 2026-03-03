@@ -518,6 +518,7 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
           if (subtype === 'ghost') {
             grid[pos.y][pos.x].ghostVisible = true;
             grid[pos.y][pos.x].ghostNearPlayerTurns = 0;
+            grid[pos.y][pos.x].ghostMaterialized = false;
           }
           placedPositions.push(pos);
         }
@@ -661,6 +662,7 @@ export function generateDevRoom(): DungeonFloor {
     if (subtype === 'ghost') {
       grid[18][x].ghostVisible = true;
       grid[18][x].ghostNearPlayerTurns = 0;
+      grid[18][x].ghostMaterialized = false;
     }
   });
 
@@ -769,6 +771,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       enemyState: enemyTile.enemyState,
       ghostVisible: enemyTile.ghostVisible,
       ghostNearPlayerTurns: enemyTile.ghostNearPlayerTurns,
+      ghostMaterialized: enemyTile.ghostMaterialized,
     };
     tiles[from.y][from.x] = {
       ...tiles[from.y][from.x],
@@ -780,6 +783,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
       enemyState: undefined,
       ghostVisible: undefined,
       ghostNearPlayerTurns: undefined,
+      ghostMaterialized: undefined,
     };
     occupied.delete(`${from.x},${from.y}`);
     occupied.add(`${to.x},${to.y}`);
@@ -882,6 +886,32 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
 
     if (!moved) {
       // Enemy stays; position already in occupied set.
+    }
+  }
+
+  // Ghost visibility flickering and materialization
+  for (let y = 0; y < floor.height; y++) {
+    for (let x = 0; x < floor.width; x++) {
+      const t = tiles[y][x];
+      if (t.type !== TileType.Enemy || t.enemySubtype !== 'ghost' || t.cleared) continue;
+
+      // 30% chance to flip visibility
+      if (Math.random() < 0.3) {
+        t.ghostVisible = !t.ghostVisible;
+      }
+
+      // Materialization counter
+      const distToPlayer = Math.max(Math.abs(x - playerPos.x), Math.abs(y - playerPos.y));
+      if (!t.ghostVisible && distToPlayer <= 3) {
+        t.ghostNearPlayerTurns = (t.ghostNearPlayerTurns ?? 0) + 1;
+        if (t.ghostNearPlayerTurns >= 3) {
+          t.ghostVisible = true;
+          t.ghostMaterialized = true;
+          t.ghostNearPlayerTurns = 0;
+        }
+      } else {
+        t.ghostNearPlayerTurns = 0;
+      }
     }
   }
 
