@@ -172,6 +172,30 @@ const MelodyDungeonGame: React.FC = () => {
           subtype: caught.enemySubtype || 'ghost',
           level: caught.enemyLevel || 1,
         };
+      } else {
+        // Check for materialized ghost adjacent to player (Manhattan distance 1)
+        const dirs = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+        for (const d of dirs) {
+          const nx = pos.x + d.x;
+          const ny = pos.y + d.y;
+          if (ny < 0 || ny >= result.height || nx < 0 || nx >= result.width) continue;
+          const tile = result.tiles[ny][nx];
+          if (
+            tile.type === TileType.Enemy &&
+            tile.enemySubtype === 'ghost' &&
+            !tile.cleared &&
+            tile.ghostMaterialized === true
+          ) {
+            // Clear the materialized flag so it doesn't re-trigger
+            result.tiles[ny][nx] = { ...tile, ghostMaterialized: false };
+            enemyCaughtRef.current = {
+              challengeType: tile.challengeType || 'noteReading',
+              subtype: 'ghost',
+              level: tile.enemyLevel || 1,
+            };
+            break;
+          }
+        }
       }
       return result;
     },
@@ -601,8 +625,14 @@ const MelodyDungeonGame: React.FC = () => {
               updated.gold += 250 + streakBonus;
               updated.keys += 1;
               updated.potions += 1; // reward (after battle consumption deducted above)
+            } else if (activeTileSubtype === 'ghost') {
+              // Ghost trickster: lower gold, +1 bonus streak
+              updated.health = battleHealth;
+              updated.gold += 50 + streakBonus;
+              updated.keys += 1;
+              updated.streak += 1; // +1 bonus on top of the +1 already applied above
             } else {
-              // Regular level 2–3 enemy (ghost/skeleton/goblin)
+              // Regular level 2–3 enemy (skeleton/goblin)
               updated.health = battleHealth;
               const levelGold = activeTileLevel === 3 ? 150 : 100;
               updated.gold += levelGold + streakBonus;
@@ -648,6 +678,11 @@ const MelodyDungeonGame: React.FC = () => {
           const streakBonus = Math.floor(prev.streak / 3) * 15;
           updated.gold += baseGold + streakBonus;
           updated.streak += 1;
+
+          // Ghost trickster: +1 bonus streak
+          if (activeTileType === TileType.Enemy && activeTileSubtype === 'ghost') {
+            updated.streak += 1;
+          }
 
           if (activeTileType === TileType.Enemy) {
             // Lucky Coin: double base gold, consume armed charge
