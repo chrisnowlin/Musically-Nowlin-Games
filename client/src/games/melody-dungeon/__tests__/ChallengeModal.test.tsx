@@ -105,4 +105,15 @@ describe('ChallengeModal', () => {
     // pickRandom returns arr[0] which is 'noteReading', so NoteReading Mock appears.
     expect(screen.getByText('NoteReading Mock')).toBeInTheDocument();
   });
+
+  it('renders with tile type Enemy + ghost subtype and shows "Ghost Encounter!" theme', () => {
+    render(
+      <ChallengeModal
+        {...defaultProps}
+        tileType={TileType.Enemy}
+        enemySubtype="ghost"
+      />
+    );
+    expect(screen.getByText('Ghost Encounter!')).toBeInTheDocument();
+  });
 });

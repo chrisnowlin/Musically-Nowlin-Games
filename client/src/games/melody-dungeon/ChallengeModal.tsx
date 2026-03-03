@@ -138,6 +138,8 @@ function getEnemyTheme(enemySubtype?: EnemySubtype): { title: string; borderColo
       return { title: 'Shade Encounter!', borderColor: 'border-amber-400', bgColor: 'from-amber-950/90 to-gray-900/95' };
     case 'siren':
       return { title: 'Siren Encounter!', borderColor: 'border-teal-400', bgColor: 'from-teal-950/90 to-gray-900/95' };
+    case 'ghost':
+      return { title: 'Ghost Encounter!', borderColor: 'border-cyan-500', bgColor: 'from-cyan-950/90 to-gray-900/95' };
     default:
       return TILE_THEME[TileType.Enemy] ?? DEFAULT_THEME;
   }
@@ -218,6 +220,7 @@ const BossBattle: React.FC<{
   const [showItemPhase, setShowItemPhase] = useState(false);
   const [lastResult, setLastResult] = useState<boolean | null>(null);
   const [lastShieldBlocked, setLastShieldBlocked] = useState(false);
+  const [ghostSwapUsed, setGhostSwapUsed] = useState(false);
   const [showPrefight, setShowPrefight] = useState(
     playerHealth < maxHealth && potions > 0
   );
@@ -245,9 +248,18 @@ const BossBattle: React.FC<{
     setLastShieldBlocked(false);
     setShowItemPhase(false);
     setRoundTransition(false);
+    setGhostSwapUsed(false);
   }, []);
 
   const handleRoundResult = useCallback((correct: boolean) => {
+    if (!correct && enemySubtype === 'ghost' && !ghostSwapUsed) {
+      setGhostSwapUsed(true);
+      setCurrentRound((r) => r + 1); // Force re-roll of challenge type via the useMemo
+      setLastResult(null);
+      setRoundTransition(false);
+      return;
+    }
+
     setLastResult(correct);
 
     if (correct) {
@@ -282,7 +294,7 @@ const BossBattle: React.FC<{
         setTimeout(() => setShowItemPhase(true), 1200);
       }
     }
-  }, [bossHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, potionsUsed, onResult]);
+  }, [bossHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, potionsUsed, onResult, enemySubtype, ghostSwapUsed]);
 
   const spriteSrc = useMemo(() => getEncounterSprite(tileType, enemySubtype), [tileType, enemySubtype]);
   const isReacting = roundTransition && !showItemPhase;
@@ -414,6 +426,24 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
   const tier = overrideTier ?? rollTier(floorNumber);
   const headerSprite = !isMultiRound ? getEncounterSprite(tileType, enemySubtype) : null;
 
+  const [ghostSwapped, setGhostSwapped] = useState(false);
+  const [swappedChallengeType, setSwappedChallengeType] = useState<ChallengeType | null>(null);
+  const effectiveChallengeType = swappedChallengeType ?? challengeType;
+
+  const handleSingleRoundResult = useCallback((correct: boolean) => {
+    if (!correct && enemySubtype === 'ghost' && !ghostSwapped) {
+      setGhostSwapped(true);
+      const floorTypes = getChallengeTypesForFloor(floorNumber);
+      const alternatives = floorTypes.filter(t => t !== effectiveChallengeType);
+      const newType = alternatives.length > 0
+        ? alternatives[Math.floor(Math.random() * alternatives.length)]
+        : effectiveChallengeType;
+      setSwappedChallengeType(newType);
+      return;
+    }
+    onResult(correct);
+  }, [enemySubtype, ghostSwapped, effectiveChallengeType, floorNumber, onResult]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div
@@ -456,7 +486,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
           />
         ) : (
           <>
-            <ChallengeRenderer type={challengeType} tier={tier} floorNumber={floorNumber} onResult={onResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
+            <ChallengeRenderer key={ghostSwapped ? 'swapped' : 'initial'} type={effectiveChallengeType} tier={tier} floorNumber={floorNumber} onResult={handleSingleRoundResult} slowRhythm={slowRhythm} showIntervalHint={showIntervalHint} />
             {onExit && (
               <button
                 onClick={onExit}
