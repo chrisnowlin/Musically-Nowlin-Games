@@ -9,6 +9,8 @@ interface Props {
   category: VocabCategory;
   tier: Tier;
   onResult: (correct: boolean) => void;
+  poolEntries?: VocabEntry[];
+  useDefaults?: boolean;
 }
 
 const CATEGORY_THEME: Record<VocabCategory, { title: string; color: string; hoverColor: string; activeColor: string }> = {
@@ -90,8 +92,13 @@ type ChallengeData = StandardChallengeData | OppositesChallengeData | OrderingCh
 
 // --- Component ---
 
-const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult }) => {
-  const entries = useMemo(() => getVocabEntries(category, tier), [category, tier]);
+const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEntries, useDefaults }) => {
+  const entries = useMemo(() => {
+    const builtIn = (useDefaults !== false) ? getVocabEntries(category, tier) : [];
+    const poolFiltered = (poolEntries ?? []).filter((e) => e.category === category && e.tier <= tier);
+    const combined = [...builtIn, ...poolFiltered];
+    return combined.length > 0 ? combined : getVocabEntries(category, tier);
+  }, [category, tier, poolEntries, useDefaults]);
   const theme = CATEGORY_THEME[category];
 
   const challenge: ChallengeData = useMemo(() => {

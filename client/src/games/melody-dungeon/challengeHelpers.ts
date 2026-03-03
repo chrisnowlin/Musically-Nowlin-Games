@@ -68,6 +68,7 @@ export function getSubtypeChallengePool(
     case 'spider': return allFloorTypes.includes('symbols') ? ['symbols'] : allFloorTypes;
     case 'shade': return allFloorTypes.includes('terms') ? ['terms'] : allFloorTypes;
     case 'siren': return allFloorTypes.includes('timbre') ? ['timbre'] : allFloorTypes;
+    case 'wizard': return allFloorTypes.includes('custom') ? ['custom'] : allFloorTypes;
     case 'ghost': return allFloorTypes; // Wildcard — any type on the floor
     case 'dragon': return allFloorTypes;
     default: return allFloorTypes;
