@@ -34,7 +34,7 @@ import type { BossBattleMeta } from './ChallengeModal';
 import MerchantModal from './MerchantModal';
 import DirectionsModal from './DirectionsModal';
 import UseItemsModal from './UseItemsModal';
-import GamblingModal from './GamblingModal';
+import FortuneModal from './FortuneModal';
 import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
@@ -157,11 +157,12 @@ const MelodyDungeonGameInner: React.FC = () => {
   const [showDirections, setShowDirections] = useState(false);
   const [dragonFireActive, setDragonFireActive] = useState(false);
   const [shieldEffectActive, setShieldEffectActive] = useState(false);
+  const [healingEffectActive, setHealingEffectActive] = useState(false);
   const [devMode, setDevMode] = useState<DevModeState>({ ...DEFAULT_DEV_MODE });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showJukebox, setShowJukebox] = useState(false);
   const [showSpecialFloorBanner, setShowSpecialFloorBanner] = useState<SpecialFloorType | null>(null);
-  const [showGamblingModal, setShowGamblingModal] = useState(false);
+  const [showFortuneModal, setShowFortuneModal] = useState(false);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
@@ -589,6 +590,8 @@ const MelodyDungeonGameInner: React.FC = () => {
           if (healed) {
             playNote('E5', 0.15);
             setTimeout(() => playNote('G5', 0.2), 100);
+            setHealingEffectActive(true);
+            setTimeout(() => setHealingEffectActive(false), 800);
           }
           return {
             ...prev,
@@ -616,11 +619,11 @@ const MelodyDungeonGameInner: React.FC = () => {
           };
         }
 
-        // Gambler: open gambling modal
-        if (tile.type === TileType.Gambler && !tile.cleared) {
+        // Fortune Teller: open fortune modal
+        if (tile.type === TileType.FortuneTeller) {
           setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
           moveLockedRef.current = true;
-          setShowGamblingModal(true);
+          setShowFortuneModal(true);
           return { ...prev, position: newPos };
         }
 
@@ -1147,6 +1150,54 @@ const MelodyDungeonGameInner: React.FC = () => {
     setPhase('playing');
   }, [pool]);
 
+  const enterHealingFloor = useCallback(() => {
+    const healingFloor = generateDungeon(3, { forceSpecialFloorType: 'healing', hasCustomQuestions: !!(pool?.customQuestions?.length) });
+    const visibleFloor = updateVisibility(healingFloor, healingFloor.playerStart, getVisRadius());
+    setFloor(visibleFloor);
+    setPlayer((prev) => ({
+      ...prev,
+      position: { ...healingFloor.playerStart },
+      buffs: { ...prev.buffs, floor: { ...DEFAULT_FLOOR_BUFFS } },
+    }));
+    setActiveChallenge(null);
+    setShowSpecialFloorBanner('healing');
+    setTimeout(() => setShowSpecialFloorBanner(null), 2500);
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, [pool]);
+
+  const enterFortuneFloor = useCallback(() => {
+    const fortuneFloor = generateDungeon(3, { forceSpecialFloorType: 'fortune', hasCustomQuestions: !!(pool?.customQuestions?.length) });
+    const visibleFloor = updateVisibility(fortuneFloor, fortuneFloor.playerStart, getVisRadius());
+    setFloor(visibleFloor);
+    setPlayer((prev) => ({
+      ...prev,
+      position: { ...fortuneFloor.playerStart },
+      buffs: { ...prev.buffs, floor: { ...DEFAULT_FLOOR_BUFFS } },
+    }));
+    setActiveChallenge(null);
+    setShowSpecialFloorBanner('fortune');
+    setTimeout(() => setShowSpecialFloorBanner(null), 2500);
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, [pool]);
+
+  const enterChallengeFloor = useCallback(() => {
+    const challengeFloor = generateDungeon(3, { forceSpecialFloorType: 'challenge', hasCustomQuestions: !!(pool?.customQuestions?.length) });
+    const visibleFloor = updateVisibility(challengeFloor, challengeFloor.playerStart, getVisRadius());
+    setFloor(visibleFloor);
+    setPlayer((prev) => ({
+      ...prev,
+      position: { ...challengeFloor.playerStart },
+      buffs: { ...prev.buffs, floor: { ...DEFAULT_FLOOR_BUFFS } },
+    }));
+    setActiveChallenge(null);
+    setShowSpecialFloorBanner('challenge');
+    setTimeout(() => setShowSpecialFloorBanner(null), 2500);
+    moveLockedRef.current = false;
+    setPhase('playing');
+  }, [pool]);
+
   const respawnToStart = useCallback(() => {
     const start = floor.playerStart;
     setPlayer((prev) => ({ ...prev, position: { ...start } }));
@@ -1553,6 +1604,9 @@ const MelodyDungeonGameInner: React.FC = () => {
             onToggleInfiniteHealth={() => setDevMode((prev) => ({ ...prev, infiniteHealth: !prev.infiniteHealth }))}
             onReset={resetDevRoom}
             onLootFloor={enterLootFloor}
+            onHealingFloor={enterHealingFloor}
+            onFortuneFloor={enterFortuneFloor}
+            onChallengeFloor={enterChallengeFloor}
             onRespawn={respawnToStart}
             onBackToMenu={() => {
               setDevMode({ ...DEFAULT_DEV_MODE });
@@ -1605,40 +1659,60 @@ const MelodyDungeonGameInner: React.FC = () => {
         </div>
       )}
 
+      {healingEffectActive && (
+        <div className="fixed inset-0 z-40 pointer-events-none animate-healing-fade">
+          <div className="absolute inset-0 bg-gradient-to-t from-green-900/50 via-emerald-600/30 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative">
+              {Array.from({ length: 12 }, (_, i) => (
+                <span key={i} className="absolute animate-heal-particle" style={{
+                  animationDelay: `${i * 0.08}s`,
+                  left: `${50 + Math.cos(i * 0.52) * 20}%`,
+                  top: `${50 + Math.sin(i * 0.52) * 20}%`,
+                }}>
+                  {'\u2764\uFE0F'}
+                </span>
+              ))}
+              <span className="text-6xl animate-heal-pop">{'\u2764\uFE0F'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSpecialFloorBanner && (
         <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center">
           <div className={`bg-gradient-to-r border-2 rounded-2xl px-8 py-4 text-center animate-bounce-in shadow-lg ${
             showSpecialFloorBanner === 'loot' ? 'from-yellow-900/90 via-amber-800/90 to-yellow-900/90 border-yellow-400 shadow-yellow-500/30' :
             showSpecialFloorBanner === 'healing' ? 'from-emerald-900/90 via-green-800/90 to-emerald-900/90 border-emerald-400 shadow-emerald-500/30' :
-            showSpecialFloorBanner === 'gambling' ? 'from-purple-900/90 via-violet-800/90 to-purple-900/90 border-purple-400 shadow-purple-500/30' :
+            showSpecialFloorBanner === 'fortune' ? 'from-purple-900/90 via-violet-800/90 to-purple-900/90 border-purple-400 shadow-purple-500/30' :
             'from-red-900/90 via-rose-800/90 to-red-900/90 border-red-400 shadow-red-500/30'
           }`}>
             <div className="text-4xl mb-1">{
               showSpecialFloorBanner === 'loot' ? '\uD83D\uDCB0' :
               showSpecialFloorBanner === 'healing' ? '\uD83E\uDDEA' :
-              showSpecialFloorBanner === 'gambling' ? '\uD83C\uDFB2' :
+              showSpecialFloorBanner === 'fortune' ? '\uD83D\uDD2E' :
               '\u2694\uFE0F'
             }</div>
             <h2 className={`text-2xl font-bold ${
               showSpecialFloorBanner === 'loot' ? 'text-yellow-300' :
               showSpecialFloorBanner === 'healing' ? 'text-emerald-300' :
-              showSpecialFloorBanner === 'gambling' ? 'text-purple-300' :
+              showSpecialFloorBanner === 'fortune' ? 'text-purple-300' :
               'text-red-300'
             }`}>{
               showSpecialFloorBanner === 'loot' ? 'Loot Floor!' :
               showSpecialFloorBanner === 'healing' ? 'Healing Sanctuary!' :
-              showSpecialFloorBanner === 'gambling' ? 'Gambling Den!' :
+              showSpecialFloorBanner === 'fortune' ? 'Fortune Room!' :
               'Challenge Arena!'
             }</h2>
             <p className={`text-sm ${
               showSpecialFloorBanner === 'loot' ? 'text-yellow-100/80' :
               showSpecialFloorBanner === 'healing' ? 'text-emerald-100/80' :
-              showSpecialFloorBanner === 'gambling' ? 'text-purple-100/80' :
+              showSpecialFloorBanner === 'fortune' ? 'text-purple-100/80' :
               'text-red-100/80'
             }`}>{
               showSpecialFloorBanner === 'loot' ? 'Treasure awaits...' :
               showSpecialFloorBanner === 'healing' ? 'Rest and recover...' :
-              showSpecialFloorBanner === 'gambling' ? 'Test your luck...' :
+              showSpecialFloorBanner === 'fortune' ? 'Read your fortune...' :
               'Defeat all enemies!'
             }</p>
           </div>
@@ -1712,6 +1786,19 @@ const MelodyDungeonGameInner: React.FC = () => {
           reward={pendingChestReward}
           onClose={() => {
             setPendingChestReward(null);
+            moveLockedRef.current = false;
+          }}
+        />
+      )}
+
+      {showFortuneModal && (
+        <FortuneModal
+          playerGold={player.gold}
+          onResult={(goldChange) => {
+            setPlayer((prev) => ({ ...prev, gold: Math.max(0, prev.gold + goldChange) }));
+          }}
+          onClose={() => {
+            setShowFortuneModal(false);
             moveLockedRef.current = false;
           }}
         />
