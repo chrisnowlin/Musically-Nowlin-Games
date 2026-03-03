@@ -504,28 +504,26 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
       const hasDragon = floorNumber >= 3;
       if (hasDragon && chestPositions.length > 0) {
         const chest = chestPositions[rand(0, chestPositions.length - 1)];
-        const dirs = [
-          { x: 0, y: -1 },
-          { x: 0, y: 1 },
-          { x: -1, y: 0 },
-          { x: 1, y: 0 },
-        ];
-        const adjacentCandidates = dirs
-          .map((d) => ({ x: chest.x + d.x, y: chest.y + d.y }))
-          .filter(
-            (p) =>
-              p.y >= 0 &&
-              p.y < height &&
-              p.x >= 0 &&
-              p.x < width &&
-              grid[p.y][p.x].type === TileType.Floor &&
-              !placedPositions.some((e) => e.x === p.x && e.y === p.y) &&
-              isOpenEnough(grid, p)
-          );
+        // Search all tiles within Chebyshev-2 of the chest so the dragon always
+        // starts within tether range. Cardinal neighbors are preferred; the outer
+        // ring is a fallback. A random far-away tile must never be used, because
+        // that causes the dragon to immediately transition to 'chasing' and deal
+        // fire damage even when the chest is still unopened.
+        const dragonSpawnCandidates: Position[] = [];
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const p = { x: chest.x + dx, y: chest.y + dy };
+            if (p.y < 0 || p.y >= height || p.x < 0 || p.x >= width) continue;
+            if (grid[p.y][p.x].type !== TileType.Floor) continue;
+            if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) continue;
+            if (isOpenEnough(grid, p)) dragonSpawnCandidates.push(p);
+          }
+        }
         const dragonPos =
-          adjacentCandidates.length > 0
-            ? adjacentCandidates[rand(0, adjacentCandidates.length - 1)]
-            : pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+          dragonSpawnCandidates.length > 0
+            ? dragonSpawnCandidates[rand(0, dragonSpawnCandidates.length - 1)]
+            : null;
         if (dragonPos) {
           const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
           grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
