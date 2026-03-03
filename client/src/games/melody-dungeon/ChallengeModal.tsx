@@ -116,8 +116,14 @@ const ENEMY_SPRITE: Record<string, string> = {
   wizard: '/images/melody-dungeon/wizard.png',
 };
 
-function getEncounterSprite(tileType: TileType, enemySubtype?: EnemySubtype): string | null {
-  if (tileType === TileType.BigBoss) return '/images/melody-dungeon/bigboss.png';
+function getBigBossSprite(floorNumber: number): string {
+  return floorNumber % 2 === 0
+    ? '/images/melody-dungeon/bigboss.png'
+    : '/images/melody-dungeon/bigboss_2.png';
+}
+
+function getEncounterSprite(tileType: TileType, enemySubtype?: EnemySubtype, floorNumber?: number): string | null {
+  if (tileType === TileType.BigBoss) return getBigBossSprite(floorNumber ?? 0);
   if (tileType === TileType.MiniBoss) return '/images/melody-dungeon/miniboss.png';
   if (tileType === TileType.Enemy && enemySubtype) {
     return ENEMY_SPRITE[enemySubtype] ?? null;
@@ -321,7 +327,7 @@ const BossBattle: React.FC<{
     }
   }, [bossHp, effectiveHealth, shieldActive, damageDealt, shieldUsed, potionsUsed, onResult, enemySubtype, ghostSwapUsed]);
 
-  const spriteSrc = useMemo(() => getEncounterSprite(tileType, enemySubtype), [tileType, enemySubtype]);
+  const spriteSrc = useMemo(() => getEncounterSprite(tileType, enemySubtype, floorNumber), [tileType, enemySubtype, floorNumber]);
   const isReacting = roundTransition && !showItemPhase;
   const spriteAnimClass = isReacting
     ? (lastResult ? 'animate-sprite-hit' : 'animate-sprite-attack')
@@ -452,7 +458,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
     tileType === TileType.BigBoss;
 
   const tier = overrideTier ?? rollTier(floorNumber);
-  const headerSprite = !isMultiRound ? getEncounterSprite(tileType, enemySubtype) : null;
+  const headerSprite = !isMultiRound ? getEncounterSprite(tileType, enemySubtype, floorNumber) : null;
 
   const [ghostSwapped, setGhostSwapped] = useState(false);
   const [swappedChallengeType, setSwappedChallengeType] = useState<ChallengeType | null>(null);

@@ -6,6 +6,10 @@ function creds() {
 
 // --- Auth ---
 
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: creds() });
+}
+
 export async function authMe(): Promise<{ id: number; username: string; role?: string; displayName?: string } | null> {
   const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: creds() });
   if (res.status === 401) return null;
@@ -15,6 +19,17 @@ export async function authMe(): Promise<{ id: number; username: string; role?: s
 
 export function getGoogleAuthUrl(): string {
   return `${API_BASE}/api/auth/google`;
+}
+
+export async function isGoogleAuthEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/google/status`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.enabled === true;
+  } catch {
+    return false;
+  }
 }
 
 // --- Types ---

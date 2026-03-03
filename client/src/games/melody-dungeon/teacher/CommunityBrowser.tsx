@@ -3,7 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { listSharedPools, clonePool, type Pool } from './api';
 
-const CommunityBrowser: React.FC = () => {
+interface Props {
+  onLogout?: () => void;
+}
+
+const CommunityBrowser: React.FC<Props> = ({ onLogout }) => {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
@@ -29,12 +33,22 @@ const CommunityBrowser: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-white">Community Pools</h1>
-          <button
-            onClick={() => setLocation('/games/melody-dungeon/teacher')}
-            className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
-          >
-            Back to Dashboard
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLocation('/games/melody-dungeon/teacher')}
+              className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
+            >
+              Back to Dashboard
+            </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="text-slate-400 hover:text-red-400 text-sm font-medium transition-colors border-l border-slate-700 pl-4"
+              >
+                Sign out
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Loading */}

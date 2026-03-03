@@ -3,7 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { listPools, createPool, deletePool, type Pool } from './api';
 
-const TeacherDashboard: React.FC = () => {
+interface Props {
+  user: { id: number; role?: string; displayName?: string } | null;
+  onLogout: () => void;
+}
+
+const TeacherDashboard: React.FC<Props> = ({ user, onLogout }) => {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
@@ -55,12 +60,25 @@ const TeacherDashboard: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-white">My Question Pools</h1>
-          <button
-            onClick={() => setLocation('/games/melody-dungeon/teacher/community')}
-            className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
-          >
-            Browse Community
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setLocation('/games/melody-dungeon/teacher/community')}
+              className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
+            >
+              Browse Community
+            </button>
+            <div className="flex items-center gap-3 border-l border-slate-700 pl-4">
+              {user?.displayName && (
+                <span className="text-slate-400 text-sm">{user.displayName}</span>
+              )}
+              <button
+                onClick={onLogout}
+                className="text-slate-400 hover:text-red-400 text-sm font-medium transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Create Pool */}

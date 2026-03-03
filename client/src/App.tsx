@@ -201,7 +201,7 @@ function Router() {
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-invaders" component={StaffInvadersGamePage} />
-      <Route path="/games/melody-dungeon/teacher/:rest*" component={TeacherDashboardPage} />
+      <Route path="/games/melody-dungeon/teacher/*" component={TeacherDashboardPage} />
       <Route path="/games/melody-dungeon/teacher" component={TeacherDashboardPage} />
       <Route path="/games/melody-dungeon" component={MelodyDungeonPage} />
       <Route path="/games/cadence-quest" component={CadenceQuestPage} />

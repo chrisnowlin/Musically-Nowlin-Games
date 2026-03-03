@@ -1144,6 +1144,12 @@ const MelodyDungeonGameInner: React.FC = () => {
         >
           <ChevronLeft size={18} /> Back
         </button>
+        <button
+          onClick={() => setLocation('/games/melody-dungeon/teacher')}
+          className="absolute top-4 right-4 text-gray-500 hover:text-purple-300 transition-colors text-xs"
+        >
+          Teacher Dashboard
+        </button>
 
         <div className="text-center mb-8">
           <div className="text-6xl mb-3">{'\uD83C\uDFB5'}</div>
@@ -1168,7 +1174,7 @@ const MelodyDungeonGameInner: React.FC = () => {
                   setCharacterSprite(src);
                   try { localStorage.setItem('melodyDungeonCharacter', src); } catch {}
                 }}
-                className={`flex flex-col items-center gap-1 transition-all duration-200 ${selected ? '' : 'opacity-40 hover:opacity-70'}`}
+                className={`flex flex-col items-center gap-1 transition-all duration-200 ${selected ? 'scale-125' : 'opacity-40 hover:opacity-70'}`}
               >
                 <div className={`w-20 h-20 rounded-xl p-1 transition-all duration-200 ${selected ? 'ring-2 ring-purple-400 bg-purple-900/40 shadow-lg shadow-purple-500/30' : 'bg-gray-800/50'}`}>
                   <img src={src} alt={label} className="w-full h-full object-contain" draggable={false} />
@@ -1430,7 +1436,7 @@ const MelodyDungeonGameInner: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} isLootFloor={floor.isLootFloor} />
+          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} isLootFloor={floor.isLootFloor} onBackToMenu={() => setPhase('menu')} />
         </div>
       </div>
       {devMode.active && (

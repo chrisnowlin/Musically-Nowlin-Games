@@ -7,9 +7,10 @@ interface HUDProps {
   themeName?: string;
   onOpenBag?: () => void;
   isLootFloor?: boolean;
+  onBackToMenu?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, isLootFloor }) => {
+const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, isLootFloor, onBackToMenu }) => {
   const hearts = Array.from({ length: player.maxHealth }, (_, i) =>
     i < player.health ? '\u2764\uFE0F' : '\uD83E\uDD0D'
   );
@@ -100,6 +101,15 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, is
           <span className="text-gray-400 text-xs italic hidden sm:inline" title="Dungeon Theme">
             {themeName}
           </span>
+        )}
+        {onBackToMenu && (
+          <button
+            onClick={onBackToMenu}
+            className="text-xs text-gray-400 hover:text-white bg-gray-700/60 hover:bg-gray-600 border border-gray-600/60 hover:border-gray-500 px-2 py-1 rounded-lg transition-colors"
+            title="Back to Menu"
+          >
+            Menu
+          </button>
         )}
       </div>
     </div>

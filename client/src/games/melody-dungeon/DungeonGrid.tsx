@@ -35,6 +35,12 @@ function getFogOverlayOpacity(vis: Visibility, dist: number): number {
   return 0.92;
 }
 
+function getBigBossSprite(floorNumber: number): string {
+  return floorNumber % 2 === 0
+    ? '/images/melody-dungeon/bigboss.png'
+    : '/images/melody-dungeon/bigboss_2.png';
+}
+
 const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.Door]: '/images/melody-dungeon/door.png',
   [TileType.Treasure]: '/images/melody-dungeon/treasure.png',
@@ -143,7 +149,9 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             !isInvisibleGhost &&
             (tile.type === TileType.Enemy
               ? ENEMY_SPRITE[tile.enemySubtype ?? 'dragon']
-              : TILE_SPRITE[tile.type]);
+              : tile.type === TileType.BigBoss
+                ? getBigBossSprite(floor.floorNumber)
+                : TILE_SPRITE[tile.type]);
           const fullTileSprite =
             tile.type === TileType.Door || tile.type === TileType.Stairs || tile.type === TileType.MerchantStall;
           const isEnemy =
@@ -235,7 +243,9 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
           const vx = x - startX; // viewport-relative x
           const vy = y - startY; // viewport-relative y
           const bossSize = tile.type === TileType.BigBoss ? 3 : 2;
-          const spriteSrc = TILE_SPRITE[tile.type];
+          const spriteSrc = tile.type === TileType.BigBoss
+            ? getBigBossSprite(floor.floorNumber)
+            : TILE_SPRITE[tile.type];
           if (!spriteSrc) return [];
 
           const dist = Math.max(Math.abs(x - playerPosition.x), Math.abs(y - playerPosition.y));

@@ -80,13 +80,33 @@ router.get('/me', (req: Request, res: Response) => {
   });
 });
 
+// Check at request time so Bun's auto-loaded .env.local is available
+function isGoogleEnabled() {
+  return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
+// Google OAuth availability check
+router.get('/google/status', (_req: Request, res: Response) => {
+  res.json({ enabled: isGoogleEnabled() });
+});
+
 // Google OAuth initiation
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req, res, next) => {
+  if (!isGoogleEnabled()) {
+    return res.status(503).json({ error: 'Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.' });
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 // Google OAuth callback
 router.get(
   '/google/callback',
-  passport.authenticate('google', { failureRedirect: '/games/melody-dungeon/teacher' }),
+  (req, res, next) => {
+    if (!isGoogleEnabled()) {
+      return res.status(503).json({ error: 'Google OAuth is not configured' });
+    }
+    passport.authenticate('google', { failureRedirect: '/games/melody-dungeon/teacher' })(req, res, next);
+  },
   (req: Request, res: Response) => {
     const user = req.user as any;
     req.session.userId = user.id;

@@ -10,6 +10,7 @@ import {
 
 interface Props {
   poolId: number;
+  onLogout?: () => void;
 }
 
 const CATEGORIES = ['dynamics', 'tempo', 'symbols', 'terms'] as const;
@@ -19,7 +20,7 @@ const FORMATS = ['', 'standard', 'opposites', 'ordering'] as const;
 const emptyVocab = { term: '', definition: '', symbol: '', tier: 1, category: 'dynamics', format: '' };
 const emptyQuestion = { question: '', correctAnswer: '', wrongAnswer1: '', wrongAnswer2: '', wrongAnswer3: '', tier: 1 };
 
-const PoolEditor: React.FC<Props> = ({ poolId }) => {
+const PoolEditor: React.FC<Props> = ({ poolId, onLogout }) => {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
@@ -255,12 +256,22 @@ const PoolEditor: React.FC<Props> = ({ poolId }) => {
 
         {/* ===== Header ===== */}
         <div className="mb-8">
-          <button
-            onClick={() => setLocation('/games/melody-dungeon/teacher')}
-            className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors mb-4 inline-block"
-          >
-            &larr; Back to Dashboard
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setLocation('/games/melody-dungeon/teacher')}
+              className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
+            >
+              &larr; Back to Dashboard
+            </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="text-slate-400 hover:text-red-400 text-sm font-medium transition-colors"
+              >
+                Sign out
+              </button>
+            )}
+          </div>
 
           {/* Pool name (inline edit) */}
           <div className="flex items-center gap-3 mb-4">
