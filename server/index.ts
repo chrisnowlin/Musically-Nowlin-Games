@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
+import passport from 'passport';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -8,6 +9,7 @@ import authRoutes from './routes/auth';
 import characterRoutes from './routes/characters';
 import battleRoutes from './routes/battles';
 import { registerCadencePvP } from './ws/cadence-pvp';
+import { configurePassport } from './routes/passport';
 
 const app = express();
 const httpServer = createServer(app);
@@ -42,6 +44,9 @@ const sessionMiddleware = session({
   },
 });
 app.use(sessionMiddleware);
+configurePassport();
+app.use(passport.initialize());
+app.use(passport.session());
 io.engine.use(sessionMiddleware);
 
 app.use('/api/auth', authRoutes);

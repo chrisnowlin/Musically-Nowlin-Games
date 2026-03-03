@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import passport from 'passport';
 import { db } from '../db';
 import { users } from '../db/schema';
 
@@ -74,7 +75,27 @@ router.get('/me', (req: Request, res: Response) => {
   return res.json({
     id: req.session.userId,
     username: req.session.username,
+    role: req.session.role,
+    displayName: req.session.displayName,
   });
 });
+
+// Google OAuth initiation
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Google OAuth callback
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { failureRedirect: '/games/melody-dungeon/teacher' }),
+  (req: Request, res: Response) => {
+    const user = req.user as any;
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+    req.session.displayName = user.displayName;
+    const clientOrigin = process.env.CORS_ORIGIN || 'http://localhost:5174';
+    res.redirect(`${clientOrigin}/games/melody-dungeon/teacher`);
+  }
+);
 
 export default router;
