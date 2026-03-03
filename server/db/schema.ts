@@ -17,6 +17,10 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: text('username').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
+  email: text('email'),
+  googleId: text('google_id').unique(),
+  displayName: text('display_name'),
+  role: text('role').notNull().default('player'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -57,5 +61,40 @@ export const matchmakingSessions = pgTable('matchmaking_sessions', {
   levelBracket: integer('level_bracket').notNull(),
   status: text('status').notNull().default('searching'), // searching | matched
   battleRoomId: text('battle_room_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const questionPools = pgTable('question_pools', {
+  id: serial('id').primaryKey(),
+  teacherId: integer('teacher_id').notNull().references(() => users.id),
+  name: text('name').notNull(),
+  gameCode: text('game_code').notNull().unique(),
+  isShared: boolean('is_shared').notNull().default(false),
+  useDefaults: boolean('use_defaults').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const poolVocabEntries = pgTable('pool_vocab_entries', {
+  id: serial('id').primaryKey(),
+  poolId: integer('pool_id').notNull().references(() => questionPools.id),
+  term: text('term').notNull(),
+  definition: text('definition').notNull(),
+  symbol: text('symbol'),
+  tier: integer('tier').notNull(),
+  category: text('category').notNull(),
+  format: text('format'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const poolCustomQuestions = pgTable('pool_custom_questions', {
+  id: serial('id').primaryKey(),
+  poolId: integer('pool_id').notNull().references(() => questionPools.id),
+  question: text('question').notNull(),
+  correctAnswer: text('correct_answer').notNull(),
+  wrongAnswer1: text('wrong_answer_1').notNull(),
+  wrongAnswer2: text('wrong_answer_2').notNull(),
+  wrongAnswer3: text('wrong_answer_3').notNull(),
+  tier: integer('tier').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
