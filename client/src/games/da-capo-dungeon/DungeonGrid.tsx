@@ -167,10 +167,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             tile.enemySubtype === 'ghost' &&
             tile.ghostVisible === false &&
             !cleared;
+          const showSpriteIfCleared = tile.type === TileType.Stairs;
           const spriteSrc =
             showContent &&
             !isPlayer &&
-            !cleared &&
+            (!cleared || showSpriteIfCleared) &&
             !isBossAnchor &&
             !isInvisibleGhost &&
             (tile.type === TileType.Enemy
