@@ -3,7 +3,7 @@ import type { Tier } from '../logic/dungeonTypes';
 import type { RhythmSubdivision } from '../logic/difficultyAdapter';
 import { getRhythmParams } from '../logic/difficultyAdapter';
 import { playClick } from '../dungeonAudio';
-import { getRandomCuratedPattern } from '../logic/rhythmPatterns';
+import { getRandomCuratedPattern, getAllSubdivisions } from '../logic/rhythmPatterns';
 import NotationImage from '@/common/notation/NotationImage';
 
 interface Props {
@@ -33,6 +33,8 @@ const SUBDIVISION_INFO: Record<RhythmSubdivision, { beats: number; taps: number 
   'quarter-rest':  { beats: 1,    taps: 0 },
   'dotted-quarter':{ beats: 1.5,  taps: 1 },
   triplet:         { beats: 1,    taps: 3 },
+  'tied-quarter-quarter': { beats: 2, taps: 1 },
+  'tied-half-half':       { beats: 4, taps: 1 },
 };
 
 /**
@@ -79,7 +81,8 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     const beatDuration = 60000 / params.bpm;
     const events: PatternEvent[] = [];
     let currentTime = 0;
-    for (const sub of curatedPattern.subdivisions) {
+    const subdivisions = getAllSubdivisions(curatedPattern);
+    for (const sub of subdivisions) {
       const info = SUBDIVISION_INFO[sub];
       const dur = info.beats * beatDuration;
       events.push({ time: currentTime, duration: dur, taps: info.taps, subdivision: sub });

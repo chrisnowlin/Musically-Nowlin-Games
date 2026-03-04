@@ -120,7 +120,7 @@ export function getNoteReadingParams(tier: Tier): NoteReadingParams {
     case 3:
       return { notes: [...LEDGER_NOTES], mode: 'ledger' };
     case 4:
-      return { notes: [...BASS_STAFF_NOTES], mode: 'bass' };
+      return { notes: [...new Set([...BASS_STAFF_NOTES, ...BOTH_STAFF_NOTES])], mode: 'mixed' };
     case 5:
       return { notes: [...new Set([...LEDGER_NOTES, ...BASS_LEDGER_NOTES])], mode: 'mixed' };
   }
@@ -128,7 +128,7 @@ export function getNoteReadingParams(tier: Tier): NoteReadingParams {
 
 // ── Rhythm ────────────────────────────────────────────────
 
-export type RhythmSubdivision = 'quarter' | 'eighth' | 'half' | 'sixteenth' | 'quarter-rest' | 'dotted-quarter' | 'triplet';
+export type RhythmSubdivision = 'quarter' | 'eighth' | 'half' | 'sixteenth' | 'quarter-rest' | 'dotted-quarter' | 'triplet' | 'tied-quarter-quarter' | 'tied-half-half';
 
 export interface RhythmParams {
   patternLength: number;
@@ -140,7 +140,7 @@ export interface RhythmParams {
 export function getRhythmParams(tier: Tier): RhythmParams {
   switch (tier) {
     case 1:
-      return { patternLength: 4, subdivisions: ['quarter', 'half'], bpm: 72, toleranceMs: 350 };
+      return { patternLength: 4, subdivisions: ['quarter', 'half', 'eighth'], bpm: 72, toleranceMs: 350 };
     case 2:
       return { patternLength: 4, subdivisions: ['quarter', 'half', 'quarter-rest', 'eighth'], bpm: 80, toleranceMs: 300 };
     case 3:

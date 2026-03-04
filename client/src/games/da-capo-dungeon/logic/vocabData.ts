@@ -61,6 +61,8 @@ const TEMPO_ENTRIES: VocabEntry[] = [
   { term: 'Prestissimo', definition: 'Extremely fast', tier: 4, category: 'tempo' },
   { term: 'Tempo primo', definition: 'Return to the original tempo', tier: 4, category: 'tempo' },
   { term: 'A tempo', definition: 'Return to the previous tempo', tier: 4, category: 'tempo' },
+  { term: 'Rallentando', definition: 'Gradually slowing down', tier: 4, category: 'tempo' },
+  { term: 'Allargando', definition: 'Slowing and growing broader', tier: 4, category: 'tempo' },
   // Tier 5 (HS)
   { term: 'Rubato', definition: 'Flexible tempo, speeding up and slowing down expressively', tier: 5, category: 'tempo' },
   { term: 'Alla breve', definition: 'Cut time (2/2)', tier: 5, category: 'tempo' },
@@ -99,7 +101,9 @@ const SYMBOLS_ENTRIES: VocabEntry[] = [
   { term: 'Tie vs Slur', definition: 'One connects same pitches to extend duration; the other connects different pitches smoothly', tier: 4, category: 'symbols' },
   { term: 'Triplet', definition: 'Three notes in the space of two', tier: 4, category: 'symbols' },
   { term: 'Bass clef', definition: 'Marks the lower-pitched staff', symbol: '\u{1D122}', tier: 4, category: 'symbols' },
-  { term: 'Key signature', definition: 'Sharps or flats at the beginning of a staff', tier: 4, category: 'symbols' },
+  { term: 'Key signature', definition: 'Sharps or flats at the beginning of a staff', tier: 3, category: 'symbols' },
+  { term: 'Time signature 12/8', definition: '4 beats per measure, dotted quarter note gets 1 beat', tier: 4, category: 'symbols' },
+  { term: 'Time signature 3/8', definition: '1 beat per measure, dotted quarter note gets 1 beat', tier: 4, category: 'symbols' },
   // Tier 5 (HS)
   { term: 'Trill', definition: 'Rapid alternation between two adjacent notes', symbol: 'tr', tier: 5, category: 'symbols' },
   { term: 'Mordent', definition: 'Quick alternation with the note below', tier: 5, category: 'symbols' },
@@ -108,6 +112,8 @@ const SYMBOLS_ENTRIES: VocabEntry[] = [
   { term: '8va', definition: 'Play one octave higher', tier: 5, category: 'symbols' },
   { term: '8vb', definition: 'Play one octave lower', tier: 5, category: 'symbols' },
   { term: 'Tremolo', definition: 'Rapid repetition of a note or alternation between two notes', tier: 5, category: 'symbols' },
+  { term: 'Accent', definition: 'Emphasis on a note', symbol: '>', tier: 4, category: 'symbols' },
+  { term: 'Marcato', definition: 'Strongly accented note', symbol: '^', tier: 4, category: 'symbols' },
 ];
 
 const TERMS_ENTRIES: VocabEntry[] = [
@@ -115,6 +121,7 @@ const TERMS_ENTRIES: VocabEntry[] = [
   { term: 'Melody', definition: 'A sequence of notes that make a tune', tier: 1, category: 'terms' },
   { term: 'Rhythm', definition: 'The pattern of long and short sounds', tier: 1, category: 'terms' },
   { term: 'Beat', definition: 'The steady pulse in music', tier: 1, category: 'terms' },
+  { term: 'Steady beat', definition: 'An even, regular pulse that stays the same speed', tier: 1, category: 'terms' },
   { term: 'High', definition: 'A thin, bright sound like a piccolo or whistle', tier: 1, category: 'terms' },
   { term: 'Low', definition: 'A deep, rumbling sound like a tuba or bass drum', tier: 1, category: 'terms' },
   { term: 'Song', definition: 'A piece of music with words', tier: 1, category: 'terms' },
@@ -131,9 +138,14 @@ const TERMS_ENTRIES: VocabEntry[] = [
   { term: 'Ensemble', definition: 'A group of musicians performing together', tier: 2, category: 'terms' },
   { term: 'AB form', definition: 'A musical structure with two contrasting sections', tier: 2, category: 'terms' },
   { term: 'ABA form', definition: 'A musical structure: first section, contrasting section, return to first', tier: 2, category: 'terms' },
+  { term: 'Form', definition: 'The overall structure or organization of a piece of music', tier: 2, category: 'terms' },
+  { term: 'Texture', definition: 'How many layers of sound are heard at once (thick or thin)', tier: 2, category: 'terms' },
+  { term: 'One Sound Alone (Monophonic)', definition: 'Music with a single melody line', tier: 2, category: 'terms' },
+  { term: 'Many Sounds Together (Polyphonic)', definition: 'Music with multiple independent melodies at once', tier: 2, category: 'terms' },
+  { term: 'Staccato', definition: 'Notes played short and detached', tier: 2, category: 'terms' },
+  { term: 'Legato', definition: 'Notes played smooth and connected', tier: 2, category: 'terms' },
+  { term: 'Phrase', definition: 'A musical thought, like a sentence in music', tier: 2, category: 'terms' },
   // Tier 3 (4-5)
-  { term: 'Staccato', definition: 'Notes played short and detached', tier: 3, category: 'terms' },
-  { term: 'Legato', definition: 'Notes played smooth and connected', tier: 3, category: 'terms' },
   { term: 'Pentatonic scale', definition: 'A five-note scale', tier: 3, category: 'terms' },
   { term: 'Syncopation', definition: 'Emphasis on unexpected beats', tier: 3, category: 'terms' },
   { term: 'Arpeggio', definition: 'Notes of a chord played one after another', tier: 3, category: 'terms' },
