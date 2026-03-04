@@ -78,7 +78,7 @@ function getAllPositionsByType(floor: DungeonFloor, type: TileType): Position[] 
   return out;
 }
 
-describe('Melody Dungeon generator placement rules', () => {
+describe('Da Capo Dungeon generator placement rules', () => {
   it('places doors only on straight hallway tiles', () => {
     for (let floorNumber = 1; floorNumber <= 10; floorNumber++) {
       for (let i = 0; i < 40; i++) {

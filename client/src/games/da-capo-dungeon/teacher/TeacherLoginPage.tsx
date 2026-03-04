@@ -11,7 +11,7 @@ const TeacherLoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-purple-950 flex items-center justify-center">
       <div className="bg-slate-800 rounded-xl p-8 shadow-xl max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold text-white mb-2">Melody Dungeon</h1>
+        <h1 className="text-2xl font-bold text-white mb-2">Da Capo Dungeon</h1>
         <h2 className="text-lg text-purple-300 mb-6">Teacher Dashboard</h2>
         <p className="text-slate-400 text-sm mb-8">
           Create custom question pools for your students. Sign in with your Google account to get started.

@@ -11,6 +11,7 @@ const router = Router();
 
 // ---------- Characters for non-ambiguous game codes ----------
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O, 1/I/L
+const SYSTEM_POOL_CODE = 'SYSTEM_DEFAULTS';
 
 function generateGameCode(): string {
   let code = '';
@@ -41,9 +42,46 @@ function requireTeacher(req: Request, res: Response, next: () => void) {
   next();
 }
 
+function requireAdminOrTeacher(req: Request, res: Response, next: () => void) {
+  if (req.session.role !== 'admin' && req.session.role !== 'teacher') {
+    res.status(403).json({ error: 'Admin or teacher access required' });
+    return;
+  }
+  next();
+}
+
+function isAdmin(req: Request): boolean {
+  return req.session.role === 'admin';
+}
+
 // =================================================================
 // PUBLIC ROUTES (no auth) — must come before /:id
 // =================================================================
+
+// GET /defaults — fetch system default vocab entries
+router.get('/defaults', async (_req: Request, res: Response) => {
+  if (!db) return res.status(503).json({ error: 'Database not configured' });
+
+  const [pool] = await db
+    .select()
+    .from(questionPools)
+    .where(eq(questionPools.gameCode, SYSTEM_POOL_CODE));
+
+  if (!pool) {
+    return res.status(404).json({ error: 'System defaults not found. Run db:seed first.' });
+  }
+
+  const vocabEntries = await db
+    .select()
+    .from(poolVocabEntries)
+    .where(eq(poolVocabEntries.poolId, pool.id));
+
+  return res.json({
+    id: pool.id,
+    name: pool.name,
+    vocabEntries,
+  });
+});
 
 // GET /join/:gameCode — fetch pool data by game code (case-insensitive)
 router.get('/join/:gameCode', async (req: Request, res: Response) => {
@@ -156,12 +194,41 @@ router.post('/', requireAuth, requireTeacher, async (req: Request, res: Response
 });
 
 // GET /:id — get pool with all entries
-router.get('/:id', requireAuth, requireTeacher, async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, requireAdminOrTeacher, async (req: Request, res: Response) => {
   if (!db) return res.status(503).json({ error: 'Database not configured' });
-  const teacherId = req.session.userId!;
+  
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
 
+  const isAdminUser = isAdmin(req);
+  
+  if (isAdminUser) {
+    const [pool] = await db
+      .select()
+      .from(questionPools)
+      .where(eq(questionPools.id, id));
+
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+
+    const vocabEntries = await db
+      .select()
+      .from(poolVocabEntries)
+      .where(eq(poolVocabEntries.poolId, id));
+
+    const customQuestions = await db
+      .select()
+      .from(poolCustomQuestions)
+      .where(eq(poolCustomQuestions.poolId, id));
+
+    return res.json({
+      ...pool,
+      vocabEntries,
+      customQuestions,
+    });
+  }
+
+  const teacherId = req.session.userId!;
+  
   const [pool] = await db
     .select()
     .from(questionPools)
@@ -187,19 +254,13 @@ router.get('/:id', requireAuth, requireTeacher, async (req: Request, res: Respon
 });
 
 // PUT /:id — update pool
-router.put('/:id', requireAuth, requireTeacher, async (req: Request, res: Response) => {
+router.put('/:id', requireAuth, requireAdminOrTeacher, async (req: Request, res: Response) => {
   if (!db) return res.status(503).json({ error: 'Database not configured' });
-  const teacherId = req.session.userId!;
+  
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
 
-  const [existing] = await db
-    .select()
-    .from(questionPools)
-    .where(and(eq(questionPools.id, id), eq(questionPools.teacherId, teacherId)));
-
-  if (!existing) return res.status(404).json({ error: 'Pool not found' });
-
+  const isAdminUser = isAdmin(req);
   const updates: Record<string, unknown> = { updatedAt: new Date() };
 
   if (req.body.name !== undefined) {
@@ -214,6 +275,26 @@ router.put('/:id', requireAuth, requireTeacher, async (req: Request, res: Respon
   if (typeof req.body.isShared === 'boolean') {
     updates.isShared = req.body.isShared;
   }
+
+  if (isAdminUser) {
+    const [pool] = await db
+      .update(questionPools)
+      .set(updates as typeof questionPools.$inferInsert)
+      .where(eq(questionPools.id, id))
+      .returning();
+
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+    return res.json(pool);
+  }
+
+  const teacherId = req.session.userId!;
+  
+  const [existing] = await db
+    .select()
+    .from(questionPools)
+    .where(and(eq(questionPools.id, id), eq(questionPools.teacherId, teacherId)));
+
+  if (!existing) return res.status(404).json({ error: 'Pool not found' });
 
   const [pool] = await db
     .update(questionPools)
@@ -292,19 +373,12 @@ router.post('/:id/regenerate-code', requireAuth, requireTeacher, async (req: Req
 // =================================================================
 
 // POST /:id/vocab — add vocab entry
-router.post('/:id/vocab', requireAuth, requireTeacher, async (req: Request, res: Response) => {
+router.post('/:id/vocab', requireAuth, requireAdminOrTeacher, async (req: Request, res: Response) => {
   if (!db) return res.status(503).json({ error: 'Database not configured' });
-  const teacherId = req.session.userId!;
   const poolId = parseInt(req.params.id, 10);
   if (isNaN(poolId)) return res.status(400).json({ error: 'Invalid id' });
 
-  const [pool] = await db
-    .select()
-    .from(questionPools)
-    .where(and(eq(questionPools.id, poolId), eq(questionPools.teacherId, teacherId)));
-
-  if (!pool) return res.status(404).json({ error: 'Pool not found' });
-
+  const isAdminUser = isAdmin(req);
   const { term, definition, tier, category, symbol, format } = req.body;
 
   if (!term || typeof term !== 'string' || !term.trim()) {
@@ -320,6 +394,23 @@ router.post('/:id/vocab', requireAuth, requireTeacher, async (req: Request, res:
     return res.status(400).json({ error: 'Category must be one of: dynamics, tempo, symbols, terms' });
   }
 
+  if (isAdminUser) {
+    const [pool] = await db
+      .select()
+      .from(questionPools)
+      .where(eq(questionPools.id, poolId));
+
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+  } else {
+    const teacherId = req.session.userId!;
+    const [pool] = await db
+      .select()
+      .from(questionPools)
+      .where(and(eq(questionPools.id, poolId), eq(questionPools.teacherId, teacherId)));
+
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+  }
+
   const [entry] = await db
     .insert(poolVocabEntries)
     .values({
@@ -333,7 +424,10 @@ router.post('/:id/vocab', requireAuth, requireTeacher, async (req: Request, res:
     })
     .returning();
 
-  // Touch pool's updatedAt
+  await db
+    .update(questionPools)
+    .set({ updatedAt: new Date() } as typeof questionPools.$inferInsert)
+    .where(eq(questionPools.id, poolId));
   await db
     .update(questionPools)
     .set({ updatedAt: new Date() } as typeof questionPools.$inferInsert)
@@ -343,13 +437,78 @@ router.post('/:id/vocab', requireAuth, requireTeacher, async (req: Request, res:
 });
 
 // PUT /:id/vocab/:entryId — edit vocab entry
-router.put('/:id/vocab/:entryId', requireAuth, requireTeacher, async (req: Request, res: Response) => {
+router.put('/:id/vocab/:entryId', requireAuth, requireAdminOrTeacher, async (req: Request, res: Response) => {
   if (!db) return res.status(503).json({ error: 'Database not configured' });
-  const teacherId = req.session.userId!;
   const poolId = parseInt(req.params.id, 10);
   const entryId = parseInt(req.params.entryId, 10);
   if (isNaN(poolId) || isNaN(entryId)) return res.status(400).json({ error: 'Invalid id' });
 
+  const isAdminUser = isAdmin(req);
+
+  if (isAdminUser) {
+    const [pool] = await db
+      .select()
+      .from(questionPools)
+      .where(eq(questionPools.id, poolId));
+
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+
+    const [existing] = await db
+      .select()
+      .from(poolVocabEntries)
+      .where(and(eq(poolVocabEntries.id, entryId), eq(poolVocabEntries.poolId, poolId)));
+
+    if (!existing) return res.status(404).json({ error: 'Vocab entry not found' });
+
+    const updates: Record<string, unknown> = {};
+
+    if (req.body.term !== undefined) {
+      if (typeof req.body.term !== 'string' || !req.body.term.trim()) {
+        return res.status(400).json({ error: 'Term cannot be empty' });
+      }
+      updates.term = req.body.term.trim().slice(0, 200);
+    }
+    if (req.body.definition !== undefined) {
+      if (typeof req.body.definition !== 'string' || !req.body.definition.trim()) {
+        return res.status(400).json({ error: 'Definition cannot be empty' });
+      }
+      updates.definition = req.body.definition.trim().slice(0, 500);
+    }
+    if (req.body.tier !== undefined) {
+      if (typeof req.body.tier !== 'number' || req.body.tier < 1 || req.body.tier > 5 || !Number.isInteger(req.body.tier)) {
+        return res.status(400).json({ error: 'Tier must be an integer between 1 and 5' });
+      }
+      updates.tier = req.body.tier;
+    }
+    if (req.body.category !== undefined) {
+      if (!VALID_CATEGORIES.includes(req.body.category as (typeof VALID_CATEGORIES)[number])) {
+        return res.status(400).json({ error: 'Category must be one of: dynamics, tempo, symbols, terms' });
+      }
+      updates.category = req.body.category;
+    }
+    if (req.body.symbol !== undefined) {
+      updates.symbol = req.body.symbol ? String(req.body.symbol).trim().slice(0, 200) : null;
+    }
+    if (req.body.format !== undefined) {
+      updates.format = req.body.format ? String(req.body.format).trim().slice(0, 100) : null;
+    }
+
+    const [entry] = await db
+      .update(poolVocabEntries)
+      .set(updates as typeof poolVocabEntries.$inferInsert)
+      .where(and(eq(poolVocabEntries.id, entryId), eq(poolVocabEntries.poolId, poolId)))
+      .returning();
+
+    await db
+      .update(questionPools)
+      .set({ updatedAt: new Date() } as typeof questionPools.$inferInsert)
+      .where(eq(questionPools.id, poolId));
+
+    return res.json(entry);
+  }
+
+  const teacherId = req.session.userId!;
+  
   const [pool] = await db
     .select()
     .from(questionPools)
@@ -403,7 +562,6 @@ router.put('/:id/vocab/:entryId', requireAuth, requireTeacher, async (req: Reque
     .where(and(eq(poolVocabEntries.id, entryId), eq(poolVocabEntries.poolId, poolId)))
     .returning();
 
-  // Touch pool's updatedAt
   await db
     .update(questionPools)
     .set({ updatedAt: new Date() } as typeof questionPools.$inferInsert)
@@ -413,13 +571,41 @@ router.put('/:id/vocab/:entryId', requireAuth, requireTeacher, async (req: Reque
 });
 
 // DELETE /:id/vocab/:entryId — delete vocab entry
-router.delete('/:id/vocab/:entryId', requireAuth, requireTeacher, async (req: Request, res: Response) => {
+router.delete('/:id/vocab/:entryId', requireAuth, requireAdminOrTeacher, async (req: Request, res: Response) => {
   if (!db) return res.status(503).json({ error: 'Database not configured' });
-  const teacherId = req.session.userId!;
   const poolId = parseInt(req.params.id, 10);
   const entryId = parseInt(req.params.entryId, 10);
   if (isNaN(poolId) || isNaN(entryId)) return res.status(400).json({ error: 'Invalid id' });
 
+  const isAdminUser = isAdmin(req);
+
+  if (isAdminUser) {
+    const [pool] = await db
+      .select()
+      .from(questionPools)
+      .where(eq(questionPools.id, poolId));
+
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+
+    const [existing] = await db
+      .select()
+      .from(poolVocabEntries)
+      .where(and(eq(poolVocabEntries.id, entryId), eq(poolVocabEntries.poolId, poolId)));
+
+    if (!existing) return res.status(404).json({ error: 'Vocab entry not found' });
+
+    await db.delete(poolVocabEntries).where(and(eq(poolVocabEntries.id, entryId), eq(poolVocabEntries.poolId, poolId)));
+
+    await db
+      .update(questionPools)
+      .set({ updatedAt: new Date() } as typeof questionPools.$inferInsert)
+      .where(eq(questionPools.id, poolId));
+
+    return res.json({ success: true });
+  }
+
+  const teacherId = req.session.userId!;
+  
   const [pool] = await db
     .select()
     .from(questionPools)

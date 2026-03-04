@@ -104,28 +104,28 @@ const DEFAULT_THEME = {
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
-  ghost: '/images/melody-dungeon/ghost.png',
-  skeleton: '/images/melody-dungeon/skeleton.png',
-  dragon: '/images/melody-dungeon/dragon.png',
-  goblin: '/images/melody-dungeon/goblin.png',
-  slime: '/images/melody-dungeon/slime.png',
-  bat: '/images/melody-dungeon/bat.png',
-  wraith: '/images/melody-dungeon/wraith.png',
-  spider: '/images/melody-dungeon/spider.png',
-  shade: '/images/melody-dungeon/shade.png',
-  siren: '/images/melody-dungeon/siren.png',
-  wizard: '/images/melody-dungeon/wizard.png',
+  ghost: '/images/da-capo-dungeon/ghost.png',
+  skeleton: '/images/da-capo-dungeon/skeleton.png',
+  dragon: '/images/da-capo-dungeon/dragon.png',
+  goblin: '/images/da-capo-dungeon/goblin.png',
+  slime: '/images/da-capo-dungeon/slime.png',
+  bat: '/images/da-capo-dungeon/bat.png',
+  wraith: '/images/da-capo-dungeon/wraith.png',
+  spider: '/images/da-capo-dungeon/spider.png',
+  shade: '/images/da-capo-dungeon/shade.png',
+  siren: '/images/da-capo-dungeon/siren.png',
+  wizard: '/images/da-capo-dungeon/wizard.png',
 };
 
 function getBigBossSprite(floorNumber: number): string {
   return floorNumber % 20 >= 10
-    ? '/images/melody-dungeon/bigboss.png'
-    : '/images/melody-dungeon/bigboss_2.png'
+    ? '/images/da-capo-dungeon/bigboss.png'
+    : '/images/da-capo-dungeon/bigboss_2.png'
 }
 
 function getEncounterSprite(tileType: TileType, enemySubtype?: EnemySubtype, floorNumber?: number): string | null {
   if (tileType === TileType.BigBoss) return getBigBossSprite(floorNumber ?? 0);
-  if (tileType === TileType.MiniBoss) return '/images/melody-dungeon/miniboss.png';
+  if (tileType === TileType.MiniBoss) return '/images/da-capo-dungeon/miniboss.png';
   if (tileType === TileType.Enemy && enemySubtype) {
     return ENEMY_SPRITE[enemySubtype] ?? null;
   }

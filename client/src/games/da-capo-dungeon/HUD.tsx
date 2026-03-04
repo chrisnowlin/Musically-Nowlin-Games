@@ -1,16 +1,16 @@
 import React from 'react';
-import type { PlayerState } from './logic/dungeonTypes';
+import type { PlayerState, SpecialFloorType } from './logic/dungeonTypes';
 
 interface HUDProps {
   player: PlayerState;
   floorNumber: number;
   themeName?: string;
   onOpenBag?: () => void;
-  isLootFloor?: boolean;
+  specialFloorType?: SpecialFloorType;
   onBackToMenu?: () => void;
 }
 
-const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, isLootFloor, onBackToMenu }) => {
+const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, specialFloorType, onBackToMenu }) => {
   const hearts = Array.from({ length: player.maxHealth }, (_, i) =>
     i < player.health ? '\u2764\uFE0F' : '\uD83E\uDD0D'
   );
@@ -28,11 +28,11 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, is
           {'\uD83E\uDE99'} {player.gold}
         </span>
         <span className="flex items-center gap-0.5 text-yellow-300" title="Keys">
-          <img src="/images/melody-dungeon/key.png" alt="Key" className="w-5 h-5 object-contain" /> {player.keys}
+          <img src="/images/da-capo-dungeon/key.png" alt="Key" className="w-5 h-5 object-contain" /> {player.keys}
         </span>
         {player.potions > 0 && (
           <span className="flex items-center gap-0.5 text-pink-400" title="Potions">
-            <img src="/images/melody-dungeon/potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
+            <img src="/images/da-capo-dungeon/potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
           </span>
         )}
         {(() => {
@@ -94,8 +94,8 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, is
             {'\uD83D\uDD25'} {player.streak}
           </span>
         )}
-        <span className={`font-medium ${isLootFloor ? 'text-yellow-400' : 'text-purple-300'}`} title="Floor">
-          B{floorNumber}F {isLootFloor && '\uD83D\uDCB0'}
+        <span className={`font-medium ${specialFloorType === 'loot' ? 'text-yellow-400' : 'text-purple-300'}`} title="Floor">
+          B{floorNumber}F {specialFloorType === 'loot' && '\uD83D\uDCB0'}
         </span>
         {themeName && (
           <span className="text-gray-400 text-xs italic hidden sm:inline" title="Dungeon Theme">

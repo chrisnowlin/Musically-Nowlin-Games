@@ -37,38 +37,38 @@ function getFogOverlayOpacity(vis: Visibility, dist: number): number {
 
 function getBigBossSprite(floorNumber: number): string {
   return floorNumber % 20 >= 10
-    ? '/images/melody-dungeon/bigboss.png'
-    : '/images/melody-dungeon/bigboss_2.png';
+    ? '/images/da-capo-dungeon/bigboss.png'
+    : '/images/da-capo-dungeon/bigboss_2.png';
 }
 
 const TILE_SPRITE: Partial<Record<TileType, string>> = {
-  [TileType.Door]: '/images/melody-dungeon/door.png',
-  [TileType.Treasure]: '/images/melody-dungeon/treasure.png',
-  [TileType.Chest]: '/images/melody-dungeon/chest.png',
-  [TileType.Stairs]: '/images/melody-dungeon/stairs.png',
-  [TileType.MiniBoss]: '/images/melody-dungeon/miniboss.png',
-  [TileType.BigBoss]: '/images/melody-dungeon/bigboss.png',
-  [TileType.Merchant]: '/images/melody-dungeon/merchant.png',
-  [TileType.MerchantStall]: '/images/melody-dungeon/stall.png',
-  [TileType.Jukebox]: '/images/melody-dungeon/jukebox.svg',
-  [TileType.HealingPool]: '/images/melody-dungeon/healing-pool.png',
-  [TileType.PotionShrine]: '/images/melody-dungeon/potion-shrine.png',
-  [TileType.Gambler]: '/images/melody-dungeon/gambler.png',
-  [TileType.ArenaChest]: '/images/melody-dungeon/arena-chest.png',
+  [TileType.Door]: '/images/da-capo-dungeon/door.png',
+  [TileType.Treasure]: '/images/da-capo-dungeon/treasure.png',
+  [TileType.Chest]: '/images/da-capo-dungeon/chest.png',
+  [TileType.Stairs]: '/images/da-capo-dungeon/stairs.png',
+  [TileType.MiniBoss]: '/images/da-capo-dungeon/miniboss.png',
+  [TileType.BigBoss]: '/images/da-capo-dungeon/bigboss.png',
+  [TileType.Merchant]: '/images/da-capo-dungeon/merchant.png',
+  [TileType.MerchantStall]: '/images/da-capo-dungeon/stall.png',
+  [TileType.Jukebox]: '/images/da-capo-dungeon/jukebox.svg',
+  [TileType.HealingPool]: '/images/da-capo-dungeon/healing-pool.png',
+  [TileType.PotionShrine]: '/images/da-capo-dungeon/potion-shrine.png',
+  [TileType.FortuneTeller]: '/images/da-capo-dungeon/fortune-teller.png',
+  [TileType.ArenaChest]: '/images/da-capo-dungeon/arena-chest.png',
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
-  ghost: '/images/melody-dungeon/ghost.png',
-  skeleton: '/images/melody-dungeon/skeleton.png',
-  dragon: '/images/melody-dungeon/dragon.png',
-  goblin: '/images/melody-dungeon/goblin.png',
-  slime: '/images/melody-dungeon/slime.png',
-  bat: '/images/melody-dungeon/bat.png',
-  wraith: '/images/melody-dungeon/wraith.png',
-  spider: '/images/melody-dungeon/spider.png',
-  shade: '/images/melody-dungeon/shade.png',
-  siren: '/images/melody-dungeon/siren.png',
-  wizard: '/images/melody-dungeon/wizard.png',
+  ghost: '/images/da-capo-dungeon/ghost.png',
+  skeleton: '/images/da-capo-dungeon/skeleton.png',
+  dragon: '/images/da-capo-dungeon/dragon.png',
+  goblin: '/images/da-capo-dungeon/goblin.png',
+  slime: '/images/da-capo-dungeon/slime.png',
+  bat: '/images/da-capo-dungeon/bat.png',
+  wraith: '/images/da-capo-dungeon/wraith.png',
+  spider: '/images/da-capo-dungeon/spider.png',
+  shade: '/images/da-capo-dungeon/shade.png',
+  siren: '/images/da-capo-dungeon/siren.png',
+  wizard: '/images/da-capo-dungeon/wizard.png',
 };
 
 const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facingLeft, characterSprite }) => {
@@ -89,7 +89,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
         border: '#22c55e',
         gridLine: 'rgba(34,197,94,0.2)',
       },
-      gambling: {
+      fortune: {
         floor: '#3d1a5c',
         floorCleared: '#2d1040',
         border: '#a855f7',
@@ -200,7 +200,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               {isPlayer && showContent && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[4%]">
                   <img
-                    src={characterSprite || '/images/melody-dungeon/character.png'}
+                    src={characterSprite || '/images/da-capo-dungeon/character.png'}
                     alt="Player"
                     className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)] transition-transform duration-150"
                     style={facingLeft ? { transform: 'scaleX(-1)' } : undefined}

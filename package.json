@@ -9,6 +9,7 @@
     "dev:all": "concurrently -n client,server -c blue,green \"bun run dev\" \"bun run dev:server\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed": "bun run server/db/seed.ts",
     "build": "bun --bun vite build",
     "preview": "bun --bun vite preview",
     "check": "bun tsc",

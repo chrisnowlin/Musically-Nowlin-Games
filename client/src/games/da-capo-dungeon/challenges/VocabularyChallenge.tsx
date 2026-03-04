@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
-import { type VocabCategory, type VocabEntry, getVocabEntries, getAllVocabEntries } from '../logic/vocabData';
+import { type VocabCategory, type VocabEntry } from '../logic/vocabData';
+import { useDefaultVocab, getAllDefaultVocabEntriesSync } from '../logic/useDefaultVocab';
 import { shuffle } from '../challengeHelpers';
 import { getVocabNotationAsset } from '@/common/notation/notationAssets';
 import NotationImage from '@/common/notation/NotationImage';
@@ -41,7 +42,7 @@ function buildStandardChallenge(entries: VocabEntry[], standardEntries: VocabEnt
   const target = standardEntries[Math.floor(Math.random() * standardEntries.length)];
   const showTermAskDef = Math.random() < 0.5;
   // Use full vocab pool for distractors if category pool is small
-  const distractorPool = entries.length >= 7 ? entries : getAllVocabEntries();
+  const distractorPool = entries.length >= 7 ? entries : getAllDefaultVocabEntriesSync();
   const distractors = pickDistractors(target, distractorPool, 3);
   const options = shuffle([target, ...distractors]);
   return { format: 'standard', target, showTermAskDef, options };
@@ -93,18 +94,24 @@ type ChallengeData = StandardChallengeData | OppositesChallengeData | OrderingCh
 // --- Component ---
 
 const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEntries, useDefaults }) => {
+  const apiDefaults = useDefaultVocab();
+  
   const entries = useMemo(() => {
-    const builtIn = (useDefaults !== false) ? getVocabEntries(category, tier) : [];
-    const poolFiltered = (poolEntries ?? []).filter((e) => e.category === category && e.tier <= tier);
+    const builtIn = (useDefaults !== false)
+      ? apiDefaults.filter((e: VocabEntry) => e.category === category && e.tier <= tier)
+      : [];
+    const poolFiltered = (poolEntries ?? []).filter((e: VocabEntry) => e.category === category && e.tier <= tier);
     const combined = [...builtIn, ...poolFiltered];
-    return combined.length > 0 ? combined : getVocabEntries(category, tier);
-  }, [category, tier, poolEntries, useDefaults]);
+    if (combined.length > 0) return combined;
+    // Fallback to sync hardcoded entries if async data not loaded yet
+    return getAllDefaultVocabEntriesSync().filter((e: VocabEntry) => e.category === category && e.tier <= tier);
+  }, [category, tier, poolEntries, useDefaults, apiDefaults]);
   const theme = CATEGORY_THEME[category];
 
   const challenge: ChallengeData = useMemo(() => {
-    const oppEntries = entries.filter((e) => e.format === 'opposites');
-    const ordEntries = entries.filter((e) => e.format === 'ordering');
-    const stdEntries = entries.filter((e) => !e.format || e.format === 'standard');
+    const oppEntries = entries.filter((e: VocabEntry) => e.format === 'opposites');
+    const ordEntries = entries.filter((e: VocabEntry) => e.format === 'ordering');
+    const stdEntries = entries.filter((e: VocabEntry) => !e.format || e.format === 'standard');
 
     // Uniform random selection among available formats
     const formats: Array<'standard' | 'opposites' | 'ordering'> = [];

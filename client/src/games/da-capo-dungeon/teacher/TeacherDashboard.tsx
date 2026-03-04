@@ -8,6 +8,8 @@ interface Props {
   onLogout: () => void;
 }
 
+const SYSTEM_POOL_ID = 2;
+
 const TeacherDashboard: React.FC<Props> = ({ user, onLogout }) => {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -20,6 +22,8 @@ const TeacherDashboard: React.FC<Props> = ({ user, onLogout }) => {
     queryKey: ['pools'],
     queryFn: listPools,
   });
+
+  const isAdmin = user?.role === 'admin';
 
   const createMutation = useMutation({
     mutationFn: (name: string) => createPool(name),
@@ -62,7 +66,7 @@ const TeacherDashboard: React.FC<Props> = ({ user, onLogout }) => {
           <h1 className="text-2xl font-bold text-white">My Question Pools</h1>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setLocation('/games/melody-dungeon/teacher/community')}
+              onClick={() => setLocation('/games/da-capo-dungeon/teacher/community')}
               className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
             >
               Browse Community
@@ -138,7 +142,7 @@ const TeacherDashboard: React.FC<Props> = ({ user, onLogout }) => {
         )}
 
         {/* Empty state */}
-        {pools && pools.length === 0 && (
+        {pools && pools.length === 0 && !isAdmin && (
           <div className="text-center py-20">
             <p className="text-slate-400 text-lg mb-2">No pools yet</p>
             <p className="text-slate-500 text-sm">
@@ -147,64 +151,93 @@ const TeacherDashboard: React.FC<Props> = ({ user, onLogout }) => {
           </div>
         )}
 
-        {/* Pool grid */}
-        {pools && pools.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pools.map((pool) => (
-              <div
-                key={pool.id}
-                className="bg-slate-800 border border-slate-700 rounded-xl p-5 flex flex-col gap-3"
-              >
-                {/* Pool name */}
-                <h2 className="text-white font-bold text-lg truncate" title={pool.name}>
-                  {pool.name}
-                </h2>
-
-                {/* Game code + shared badge */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 bg-slate-900 rounded-md px-2.5 py-1">
-                    <code className="text-purple-300 text-sm font-mono">{pool.gameCode}</code>
-                    <button
-                      onClick={() => handleCopy(pool)}
-                      className="text-slate-400 hover:text-white transition-colors ml-1"
-                      title="Copy game code"
-                    >
-                      {copiedId === pool.id ? (
-                        <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  {pool.isShared && (
-                    <span className="bg-purple-900/50 text-purple-300 text-xs font-medium px-2 py-0.5 rounded-full border border-purple-700">
-                      Shared
-                    </span>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-auto pt-2">
-                  <button
-                    onClick={() => setLocation(`/games/melody-dungeon/teacher/pool/${pool.id}`)}
-                    className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(pool)}
-                    disabled={deleteMutation.isPending}
-                    className="bg-slate-700 hover:bg-red-700 text-slate-300 hover:text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors"
-                  >
-                    Delete
-                  </button>
+        {/* Admin system pool */}
+        {isAdmin && (
+          <div className="mb-8">
+            <h3 className="text-purple-300 text-sm font-medium mb-3">System Defaults</h3>
+            <div className="bg-slate-800 border border-purple-500/50 rounded-xl p-5 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-white font-bold text-lg">Default Music Vocabulary</h2>
+                <span className="bg-purple-600/30 border border-purple-500 text-purple-300 text-xs px-2 py-1 rounded-full">
+                  System Pool
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-slate-900 rounded-md px-2.5 py-1">
+                  <code className="text-purple-300 text-sm font-mono">SYSTEM_DEFAULTS</code>
                 </div>
               </div>
-            ))}
+              <button
+                onClick={() => setLocation(`/games/da-capo-dungeon/teacher/pool/${SYSTEM_POOL_ID}`)}
+                className="bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+              >
+                Manage System Pool
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pool grid */}
+        {pools && pools.length > 0 && (
+          <div>
+            <h3 className="text-slate-400 text-sm font-medium mb-3">Your Pools</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pools.map((pool) => (
+                <div
+                  key={pool.id}
+                  className="bg-slate-800 border border-slate-700 rounded-xl p-5 flex flex-col gap-3"
+                >
+                  {/* Pool name */}
+                  <h2 className="text-white font-bold text-lg truncate" title={pool.name}>
+                    {pool.name}
+                  </h2>
+
+                  {/* Game code + shared badge */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 bg-slate-900 rounded-md px-2.5 py-1">
+                      <code className="text-purple-300 text-sm font-mono">{pool.gameCode}</code>
+                      <button
+                        onClick={() => handleCopy(pool)}
+                        className="text-slate-400 hover:text-white transition-colors ml-1"
+                        title="Copy game code"
+                      >
+                        {copiedId === pool.id ? (
+                          <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {pool.isShared && (
+                      <span className="bg-purple-900/50 text-purple-300 text-xs font-medium px-2 py-0.5 rounded-full border border-purple-700">
+                        Shared
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 mt-auto pt-2">
+                    <button
+                      onClick={() => setLocation(`/games/da-capo-dungeon/teacher/pool/${pool.id}`)}
+                      className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium py-2 rounded-lg transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(pool)}
+                      disabled={deleteMutation.isPending}
+                      className="bg-slate-700 hover:bg-red-700 text-slate-300 hover:text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -30,7 +30,7 @@ const TeacherPage: React.FC = () => {
     );
   }
 
-  if (!user || user.role !== 'teacher') {
+  if (!user || (user.role !== 'teacher' && user.role !== 'admin')) {
     return <TeacherLoginPage />;
   }
 
@@ -41,13 +41,13 @@ const TeacherPage: React.FC = () => {
   return (
     <QueryClientProvider client={teacherQueryClient}>
       <Switch>
-        <Route path="/games/melody-dungeon/teacher/pool/:id">
+        <Route path="/games/da-capo-dungeon/teacher/pool/:id">
           {(params) => <PoolEditor poolId={parseInt(params.id, 10)} onLogout={handleLogout} />}
         </Route>
-        <Route path="/games/melody-dungeon/teacher/community">
+        <Route path="/games/da-capo-dungeon/teacher/community">
           <CommunityBrowser onLogout={handleLogout} />
         </Route>
-        <Route path="/games/melody-dungeon/teacher">
+        <Route path="/games/da-capo-dungeon/teacher">
           <TeacherDashboard user={user} onLogout={handleLogout} />
         </Route>
       </Switch>

@@ -67,7 +67,7 @@ const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, onOpenBag, di
               aria-label="Use potion"
               title="Use potion"
             >
-              <img src="/images/melody-dungeon/potion.png" alt="Potion" className="w-8 h-8 object-contain" />
+              <img src="/images/da-capo-dungeon/potion.png" alt="Potion" className="w-8 h-8 object-contain" />
             </button>
           )}
           {onOpenBag && (

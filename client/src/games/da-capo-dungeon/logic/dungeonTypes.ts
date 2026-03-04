@@ -13,7 +13,13 @@ export enum TileType {
   MiniBoss = 'miniBoss',
   BigBoss = 'bigBoss',
   BossBody = 'bossBody',
+  HealingPool = 'healingPool',
+  PotionShrine = 'potionShrine',
+  FortuneTeller = 'fortuneTeller',
+  ArenaChest = 'arenaChest',
 }
+
+export type SpecialFloorType = 'normal' | 'loot' | 'healing' | 'fortune' | 'challenge';
 
 export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics' | 'tempo' | 'symbols' | 'terms' | 'timbre' | 'custom';
 
@@ -142,7 +148,7 @@ export interface DungeonFloor {
   themeIndex: number;
   playerStart: Position;
   stairsPosition: Position;
-  isLootFloor: boolean;
+  specialFloorType: SpecialFloorType;
 }
 
 export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory' | 'devConfig';

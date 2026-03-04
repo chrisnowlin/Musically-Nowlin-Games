@@ -14,8 +14,8 @@ export interface DungeonTheme {
 export const THEMES: DungeonTheme[] = [
   {
     name: 'Stone Crypt',
-    wallImg: '/images/melody-dungeon/theme-stonecrypt-wall.png',
-    floorImg: '/images/melody-dungeon/theme-stonecrypt-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-stonecrypt-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-stonecrypt-floor.png',
     wall: '#1f2937',
     floor: '#44403c',
     floorCleared: '#44403c',
@@ -26,8 +26,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Emerald Cavern',
-    wallImg: '/images/melody-dungeon/theme-emerald-wall.png',
-    floorImg: '/images/melody-dungeon/theme-emerald-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-emerald-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-emerald-floor.png',
     wall: '#064e3b',
     floor: '#365314',
     floorCleared: '#365314',
@@ -38,8 +38,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Crimson Dungeon',
-    wallImg: '/images/melody-dungeon/theme-crimson-wall.png',
-    floorImg: '/images/melody-dungeon/theme-crimson-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-crimson-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-crimson-floor.png',
     wall: '#450a0a',
     floor: '#78350f',
     floorCleared: '#78350f',
@@ -50,8 +50,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Frozen Depths',
-    wallImg: '/images/melody-dungeon/theme-frozen-wall.png',
-    floorImg: '/images/melody-dungeon/theme-frozen-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-frozen-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-frozen-floor.png',
     wall: '#1e3a5f',
     floor: '#1e40af',
     floorCleared: '#1e3a5f',
@@ -62,8 +62,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Violet Sanctum',
-    wallImg: '/images/melody-dungeon/theme-violet-wall.png',
-    floorImg: '/images/melody-dungeon/theme-violet-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-violet-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-violet-floor.png',
     wall: '#3b0764',
     floor: '#581c87',
     floorCleared: '#4c1d95',
@@ -74,8 +74,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Amber Ruins',
-    wallImg: '/images/melody-dungeon/theme-amber-wall.png',
-    floorImg: '/images/melody-dungeon/theme-amber-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-amber-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-amber-floor.png',
     wall: '#451a03',
     floor: '#92400e',
     floorCleared: '#78350f',
@@ -86,8 +86,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Obsidian Halls',
-    wallImg: '/images/melody-dungeon/theme-obsidian-wall.png',
-    floorImg: '/images/melody-dungeon/theme-obsidian-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-obsidian-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-obsidian-floor.png',
     wall: '#18181b',
     floor: '#27272a',
     floorCleared: '#27272a',
@@ -98,8 +98,8 @@ export const THEMES: DungeonTheme[] = [
   },
   {
     name: 'Teal Abyss',
-    wallImg: '/images/melody-dungeon/theme-teal-wall.png',
-    floorImg: '/images/melody-dungeon/theme-teal-floor.png',
+    wallImg: '/images/da-capo-dungeon/theme-teal-wall.png',
+    floorImg: '/images/da-capo-dungeon/theme-teal-floor.png',
     wall: '#134e4a',
     floor: '#115e59',
     floorCleared: '#115e59',

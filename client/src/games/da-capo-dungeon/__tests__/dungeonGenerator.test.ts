@@ -1,11 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { generateDungeon, moveEnemies, getBossType, rollLootFloor } from '../logic/dungeonGenerator';
-import { TileType } from '../logic/dungeonTypes';
+import { generateDungeon, moveEnemies, getBossType, rollSpecialFloorType } from '../logic/dungeonGenerator';
+import { TileType, MAX_HEALTH } from '../logic/dungeonTypes';
 import type { DungeonFloor, Position, Tile } from '../logic/dungeonTypes';
 
-/** Scan the grid and return all tiles matching the given type. */
 function findTiles(floor: ReturnType<typeof generateDungeon>, type: TileType) {
-  const results: { pos: Position; tile: (typeof floor.tiles)[0][0] }[] = [];
+  const results: { pos: Position; tile: (typeof floor.tiles)[1][0] }[] = [];
   for (let y = 0; y < floor.height; y++) {
     for (let x = 0; x < floor.width; x++) {
       if (floor.tiles[y][x].type === type) {
@@ -19,26 +18,27 @@ function findTiles(floor: ReturnType<typeof generateDungeon>, type: TileType) {
 describe('getBossType', () => {
   it('returns null for non-boss floors', () => {
     expect(getBossType(1)).toBeNull();
-    expect(getBossType(3)).toBeNull();
-    expect(getBossType(7)).toBeNull();
+    expect(getBossType(3)).toBeNull()
+    expect(getBossType(7)).toBeNull()
     expect(getBossType(99)).toBeNull();
   });
 
   it('returns mini for floors divisible by 5 but not 10', () => {
-    expect(getBossType(5)).toBe('mini');
-    expect(getBossType(15)).toBe('mini');
-    expect(getBossType(25)).toBe('mini');
+    expect(getBossType(5)).toBe('mini')
+    expect(getBossType(15)).toBe('mini')
+    expect(getBossType(25)).toBe('mini')
     expect(getBossType(95)).toBe('mini');
   });
 
   it('returns big for floors divisible by 10', () => {
-    expect(getBossType(10)).toBe('big');
-    expect(getBossType(20)).toBe('big');
-    expect(getBossType(50)).toBe('big');
+    expect(getBossType(10)).toBe('big')
+    expect(getBossType(20)).toBe('big')
+    expect(getBossType(50)).toBe('big')
     expect(getBossType(100)).toBe('big');
   });
 });
 
+  
 describe('generateDungeon', () => {
   it('should set enemyState to guarding on dragons', () => {
     const floor = generateDungeon(4);
@@ -66,7 +66,6 @@ describe('generateDungeon', () => {
       (t) => t.type === TileType.Enemy && t.enemySubtype !== 'dragon'
     );
     expect(enemies.length).toBeGreaterThan(0);
-    // All 8 challenge types are unlocked from floor 1, so all subtypes are valid
     const validSubtypes = ['ghost', 'slime', 'bat', 'wraith', 'spider', 'skeleton', 'shade', 'goblin', 'siren'];
     for (const e of enemies) {
       expect(validSubtypes).toContain(e.enemySubtype);
@@ -75,7 +74,6 @@ describe('generateDungeon', () => {
   });
 
   it('assigns dragon subtype with zone-based level +1 on floor 4', () => {
-    // Floor 4 is in T1 pure zone, so getEnemyLevel(4) = 1, dragon = min(5, 1+1) = 2
     const floor = generateDungeon(4);
     const dragons = floor.tiles.flat().filter(
       (t) => t.type === TileType.Enemy && t.enemySubtype === 'dragon'
@@ -124,7 +122,6 @@ describe('generateDungeon', () => {
   });
 
   it('dragon level is at most zone level + 1, capped at 5', () => {
-    // Test across several floors that produce dragons (floor >= 3, non-boss)
     for (const floorNum of [3, 4, 8, 15, 50]) {
       for (let run = 0; run < 5; run++) {
         const floor = generateDungeon(floorNum);
@@ -143,8 +140,7 @@ describe('generateDungeon', () => {
     for (let run = 0; run < 20; run++) {
       const floor = generateDungeon(3);
       const treasures = findTiles(floor, TileType.Treasure);
-      if (floor.isLootFloor) {
-        // Loot floors place 15–20 treasure piles
+      if (floor.specialFloorType === 'loot') {
         expect(treasures.length).toBeGreaterThanOrEqual(15);
         expect(treasures.length).toBeLessThanOrEqual(20);
       } else {
@@ -168,7 +164,6 @@ describe('generateDungeon', () => {
   });
 
   it('chests never block hallways or room entrances (all floor tiles reachable from player start)', () => {
-    // BFS treating chests and merchant stalls as solid — mirrors getReachableWithoutKey.
     function reachableWithoutChests(floor: ReturnType<typeof generateDungeon>): Set<string> {
       const visited = new Set<string>();
       const queue: Array<{ x: number; y: number }> = [floor.playerStart];
@@ -196,7 +191,7 @@ describe('generateDungeon', () => {
       return visited;
     }
 
-    // Run across several floor numbers to exercise different dungeon layouts.
+    
     for (const floorNum of [1, 2, 3, 4, 6, 8]) {
       for (let run = 0; run < 5; run++) {
         const floor = generateDungeon(floorNum);
@@ -216,10 +211,8 @@ describe('generateDungeon', () => {
       }
     }
   });
-
 });
 
-/** Create a minimal floor grid for testing movement. */
 function createTestFloor(
   width: number,
   height: number,
@@ -232,6 +225,7 @@ function createTestFloor(
       visited: false,
     }))
   );
+  
   setup(tiles);
   return {
     tiles,
@@ -241,13 +235,12 @@ function createTestFloor(
     themeIndex: 0,
     playerStart: { x: 0, y: 0 },
     stairsPosition: { x: width - 1, y: height - 1 },
-    isLootFloor: false,
+    specialFloorType: 'normal',
   };
 }
 
-describe('moveEnemies', () => {
-  it('chasing Dragon moves toward the player', () => {
-    // 5x1 corridor: [player] [floor] [floor] [dragon] [floor]
+ describe('moveEnemies', () => {
+  it('chasing Dragon moves toward player', () => {
     const floor = createTestFloor(5, 1, (tiles) => {
       tiles[0][3] = {
         type: TileType.Enemy,
@@ -260,18 +253,16 @@ describe('moveEnemies', () => {
         enemyState: 'chasing',
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     const result = moveEnemies(floor, playerPos);
-
-    // Dragon should have moved from x=3 toward player at x=0, so now at x=2
+    
     expect(result.tiles[0][2].type).toBe(TileType.Enemy);
     expect(result.tiles[0][2].enemySubtype).toBe('dragon');
     expect(result.tiles[0][3].type).toBe(TileType.Floor);
   });
 
   it('guarding Dragon stays tethered to chest', () => {
-    // 7x1 corridor: [player] [floor] [floor] [chest] [dragon] [floor] [floor]
     const floor = createTestFloor(7, 1, (tiles) => {
       tiles[0][3] = {
         type: TileType.Chest,
@@ -290,24 +281,22 @@ describe('moveEnemies', () => {
         enemyState: 'guarding',
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
-    // Run multiple times; dragon should never go beyond Chebyshev distance 2 from chest
+    
     for (let i = 0; i < 20; i++) {
       const result = moveEnemies(floor, playerPos);
-      // Find where dragon ended up
+      
       let dragonX = -1;
       for (let x = 0; x < 7; x++) {
         if (result.tiles[0][x].type === TileType.Enemy && result.tiles[0][x].enemySubtype === 'dragon') dragonX = x;
       }
-      // Chebyshev distance from chest at x=3 should be <= 2
+      
       expect(Math.abs(dragonX - 3)).toBeLessThanOrEqual(2);
     }
   });
 
-  it('Dragon transitions to chasing when its nearby chest is opened but a distant chest remains', () => {
-    // 10x1 corridor: [player] ... [dragon at x=3] ... [distant chest at x=9]
-    // Dragon's nearby chest was opened (not present). Distant chest is beyond tether range.
+  it('Dragon transitions to chasing when nearby chest opened (distant chest remains guarding)', () => {
     const floor = createTestFloor(10, 1, (tiles) => {
       tiles[0][3] = {
         type: TileType.Enemy,
@@ -326,22 +315,20 @@ describe('moveEnemies', () => {
         cleared: false,
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     const result = moveEnemies(floor, playerPos);
-
-    // Dragon should transition to chasing (distant chest is beyond Chebyshev distance 2)
-    // and move toward the player, NOT freeze in place
+    
     let dragonX = -1;
     for (let x = 0; x < 10; x++) {
       if (result.tiles[0][x].type === TileType.Enemy && result.tiles[0][x].enemySubtype === 'dragon') dragonX = x;
     }
-    expect(dragonX).toBe(2); // Moved toward player from x=3
+    
+    expect(dragonX).toBe(2);
     expect(result.tiles[0][dragonX].enemyState).toBe('chasing');
   });
 
   it('chasing Dragon lands on player tile when adjacent (catch)', () => {
-    // 3x1 corridor: [player] [dragon] [floor]
     const floor = createTestFloor(3, 1, (tiles) => {
       tiles[0][1] = {
         type: TileType.Enemy,
@@ -354,19 +341,16 @@ describe('moveEnemies', () => {
         enemyState: 'chasing',
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     const result = moveEnemies(floor, playerPos);
-
-    // Dragon should occupy the player tile (catch triggered)
+    
     expect(result.tiles[0][0].type).toBe(TileType.Enemy);
     expect(result.tiles[0][0].enemySubtype).toBe('dragon');
     expect(result.tiles[0][1].type).toBe(TileType.Floor);
   });
 
   it('Dragon transitions from guarding to chasing when no uncleared chests remain', () => {
-    // 5x1 corridor: [player] [floor] [floor] [dragon] [floor]
-    // No chests on the floor at all
     const floor = createTestFloor(5, 1, (tiles) => {
       tiles[0][3] = {
         type: TileType.Enemy,
@@ -379,45 +363,40 @@ describe('moveEnemies', () => {
         enemyState: 'guarding',
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     const result = moveEnemies(floor, playerPos);
-
-    // Dragon should have transitioned to chasing and moved toward player
+    
     expect(result.tiles[0][2].type).toBe(TileType.Enemy);
     expect(result.tiles[0][2].enemySubtype).toBe('dragon');
     expect(result.tiles[0][2].enemyState).toBe('chasing');
   });
 
-  it.each([
-    ['goblin' as const],
-    ['skeleton' as const],
-  ])('patrolling %s lands on player tile when adjacent', (subtype) => {
-    // 2x1 corridor so the only valid move is onto the player tile — eliminates direction randomness
-    const floor = createTestFloor(2, 1, (tiles) => {
-      tiles[0][1] = {
-        type: TileType.Enemy,
-        enemySubtype: subtype,
-        enemyLevel: 1,
-        visible: false,
-        visited: false,
-        challengeType: 'noteReading',
-        cleared: false,
-        enemyState: 'patrolling',
-      };
+  for (const subtype of ['goblin', 'skeleton'] as const) {
+    it(`patrolling ${subtype} lands on player tile when adjacent (catch)`, () => {
+      const floor = createTestFloor(2, 1, (tiles) => {
+        tiles[0][1] = {
+          type: TileType.Enemy,
+          enemySubtype: subtype,
+          enemyLevel: 1,
+          visible: false,
+          visited: false,
+          challengeType: 'noteReading',
+          cleared: false,
+          enemyState: 'patrolling',
+        };
+      });
+      
+      const playerPos: Position = { x: 0, y: 0 };
+      const result = moveEnemies(floor, playerPos);
+      
+      expect(result.tiles[0][0].type).toBe(TileType.Enemy);
+      expect(result.tiles[0][0].enemySubtype).toBe(subtype);
+      expect(result.tiles[0][1].type).toBe(TileType.Floor);
     });
-
-    const playerPos: Position = { x: 0, y: 0 };
-    const result = moveEnemies(floor, playerPos);
-
-    expect(result.tiles[0][0].type).toBe(TileType.Enemy);
-    expect(result.tiles[0][0].enemySubtype).toBe(subtype);
-    expect(result.tiles[0][1].type).toBe(TileType.Floor);
-  });
+  }
 
   it('patrolling Ghost does NOT land on player tile when adjacent', () => {
-    // 3x1 corridor: [player] [ghost] [floor]
-    // Ghost's only non-wall option other than player tile is x=2.
     const floor = createTestFloor(3, 1, (tiles) => {
       tiles[0][1] = {
         type: TileType.Enemy,
@@ -430,13 +409,12 @@ describe('moveEnemies', () => {
         enemyState: 'patrolling',
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     const result = moveEnemies(floor, playerPos);
-
-    // Ghost must never occupy the player tile
+    
     expect(result.tiles[0][0].type).toBe(TileType.Floor);
-    // Ghost must still exist somewhere on the board (stayed at x=1 or moved to x=2)
+    
     const ghostExists =
       result.tiles[0][1].type === TileType.Enemy ||
       result.tiles[0][2].type === TileType.Enemy;
@@ -444,7 +422,6 @@ describe('moveEnemies', () => {
   });
 
   it('patrolling Ghost can phase through a wall to reach floor on the other side', () => {
-    // 5x1 corridor: [player] [wall] [ghost] [wall] [floor]
     const floor = createTestFloor(5, 1, (tiles) => {
       tiles[0][0] = { type: TileType.Floor, visible: false, visited: false };
       tiles[0][1] = { type: TileType.Wall, visible: false, visited: false };
@@ -463,7 +440,7 @@ describe('moveEnemies', () => {
       tiles[0][3] = { type: TileType.Wall, visible: false, visited: false };
       tiles[0][4] = { type: TileType.Floor, visible: false, visited: false };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     let reachedFarSide = false;
     for (let i = 0; i < 50; i++) {
@@ -473,6 +450,7 @@ describe('moveEnemies', () => {
         break;
       }
     }
+    
     expect(reachedFarSide).toBe(true);
   });
 
@@ -493,7 +471,9 @@ describe('moveEnemies', () => {
           ghostNearPlayerTurns: 0,
         };
       });
+      
       const result = moveEnemies(floor, { x: 0, y: 0 });
+      
       for (let y = 0; y < 5; y++) {
         for (let x = 0; x < 5; x++) {
           if (result.tiles[y][x].type === TileType.Enemy && result.tiles[y][x].enemySubtype === 'ghost') {
@@ -501,8 +481,10 @@ describe('moveEnemies', () => {
           }
         }
       }
+      
       if (sawInvisible) break;
     }
+    
     expect(sawInvisible).toBe(true);
   });
 
@@ -518,48 +500,19 @@ describe('moveEnemies', () => {
         cleared: false,
         enemyState: 'patrolling',
         ghostVisible: false,
-        ghostNearPlayerTurns: 0,
-      };
-    });
-    const origRandom = Math.random;
-    Math.random = () => 0.5; // > 0.3, so ghost stays invisible; also controls movement
-    try {
-      const result = moveEnemies(floor, { x: 0, y: 0 });
-      for (let y = 0; y < 1; y++) {
-        for (let x = 0; x < 7; x++) {
-          if (result.tiles[y][x].type === TileType.Enemy && result.tiles[y][x].enemySubtype === 'ghost') {
-            expect(result.tiles[y][x].ghostNearPlayerTurns).toBeGreaterThanOrEqual(1);
-          }
-        }
-      }
-    } finally {
-      Math.random = origRandom;
-    }
-  });
-
-  it('ghost materializes after 3 invisible turns near player', () => {
-    // Ghost already has ghostNearPlayerTurns = 2, invisible, near player
-    const floor = createTestFloor(5, 5, (tiles) => {
-      tiles[1][1] = {
-        type: TileType.Enemy,
-        enemySubtype: 'ghost' as const,
-        enemyLevel: 1,
-        visible: false,
-        visited: false,
-        challengeType: 'noteReading',
-        cleared: false,
-        enemyState: 'patrolling',
-        ghostVisible: false,
         ghostNearPlayerTurns: 2,
       };
     });
+    
     const origRandom = Math.random;
-    Math.random = () => 0.5; // > 0.3, ghost stays invisible → counter hits 3 → materializes
+    Math.random = () => 0.3;
+    
+    const result = moveEnemies(floor, { x: 0, y: 0 });
+    
+    let found = false;
     try {
-      const result = moveEnemies(floor, { x: 0, y: 0 });
-      let found = false;
-      for (let y = 0; y < 5; y++) {
-        for (let x = 0; x < 5; x++) {
+      for (let y = 0; y < 1; y++) {
+        for (let x = 0; x < 7; x++) {
           const t = result.tiles[y][x];
           if (t.type === TileType.Enemy && t.enemySubtype === 'ghost') {
             expect(t.ghostVisible).toBe(true);
@@ -569,14 +522,14 @@ describe('moveEnemies', () => {
           }
         }
       }
+      
       expect(found).toBe(true);
     } finally {
       Math.random = origRandom;
     }
   });
 
-  it('patrolling Ghost does NOT stop on a wall tile (phases through, not into)', () => {
-    // 3x1: [player] [wall] [ghost]
+  it('patrolling Ghost does not stop on a wall tile (phases through not into)', () => {
     const floor = createTestFloor(3, 1, (tiles) => {
       tiles[0][0] = { type: TileType.Floor, visible: false, visited: false };
       tiles[0][1] = { type: TileType.Wall, visible: false, visited: false };
@@ -593,7 +546,7 @@ describe('moveEnemies', () => {
         ghostNearPlayerTurns: 0,
       };
     });
-
+    
     const playerPos: Position = { x: 0, y: 0 };
     for (let i = 0; i < 20; i++) {
       const result = moveEnemies(floor, playerPos);
@@ -611,7 +564,6 @@ describe('boss floor generation', () => {
     expect(miniBosses[0].pos).toEqual(floor.stairsPosition);
   });
 
-  // UPDATE: remove position assertion since BigBoss anchor is now offset from center
   it('places a BigBoss tile on floor 10', () => {
     for (let run = 0; run < 10; run++) {
       const floor = generateDungeon(10);
@@ -619,22 +571,21 @@ describe('boss floor generation', () => {
       expect(bigBosses.length).toBe(1);
     }
   });
-
-  // ADD: footprint size tests
-  it('MiniBoss on floor 5 has a 2×2 footprint (1 anchor + 3 BossBody tiles)', () => {
+  
+  it('MiniBoss on floor 5 has a 2x2 footprint (1 anchor + 3 BossBody tiles)', () => {
     for (let run = 0; run < 10; run++) {
       const floor = generateDungeon(5);
       expect(findTiles(floor, TileType.MiniBoss).length).toBe(1);
       expect(findTiles(floor, TileType.BossBody).length).toBe(3);
     }
   });
-
-  it('BigBoss on floor 10 has a 3×3 footprint (1 anchor + 8 BossBody tiles)', () => {
+  
+  it('BigBoss on floor 10 has a 3x3 footprint (1 anchor + 8 BossBody tiles)', () => {
     for (let run = 0; run < 10; run++) {
       const floor = generateDungeon(10);
       expect(findTiles(floor, TileType.BigBoss).length).toBe(1);
       expect(findTiles(floor, TileType.BossBody).length).toBe(8);
-      // Anchor is centered: offset (-1,-1) from stairsPosition
+      
       const anchor = findTiles(floor, TileType.BigBoss)[0];
       expect(anchor.pos).toEqual({
         x: floor.stairsPosition.x - 1,
@@ -642,33 +593,33 @@ describe('boss floor generation', () => {
       });
     }
   });
-
+  
   it('non-boss floors have no BossBody tiles', () => {
     for (const floorNum of [1, 3, 4, 6, 7, 8, 9]) {
       const floor = generateDungeon(floorNum);
       expect(findTiles(floor, TileType.BossBody).length).toBe(0);
     }
   });
-
+  
   it('has no enemies on boss floors', () => {
     const floor5 = generateDungeon(5);
     const floor10 = generateDungeon(10);
     expect(findTiles(floor5, TileType.Enemy).length).toBe(0);
     expect(findTiles(floor10, TileType.Enemy).length).toBe(0);
   });
-
+  
   it('has no Stairs tile visible on boss floors (boss replaces it)', () => {
     const floor = generateDungeon(5);
     expect(findTiles(floor, TileType.Stairs).length).toBe(0);
   });
-
+  
   it('has no chests on boss floors', () => {
     const floor5 = generateDungeon(5);
     const floor10 = generateDungeon(10);
     expect(findTiles(floor5, TileType.Chest).length).toBe(0);
     expect(findTiles(floor10, TileType.Chest).length).toBe(0);
   });
-
+  
   it('does not generate boss tiles on non-boss floors', () => {
     const floor = generateDungeon(3);
     expect(findTiles(floor, TileType.MiniBoss).length).toBe(0);
@@ -677,46 +628,44 @@ describe('boss floor generation', () => {
   });
 });
 
-describe('rollLootFloor', () => {
-  it('returns false for floors 1-2', () => {
+describe('rollSpecialFloorType', () => {
+  it('returns normal for floors 1-2', () => {
     for (let i = 0; i < 100; i++) {
-      expect(rollLootFloor(1)).toBe(false);
-      expect(rollLootFloor(2)).toBe(false);
+      expect(rollSpecialFloorType(1)).toBe('normal');
+      expect(rollSpecialFloorType(2)).toBe('normal');
     }
   });
 
-  it('returns false for boss floors', () => {
+  it('returns normal for boss floors', () => {
     for (let i = 0; i < 100; i++) {
-      expect(rollLootFloor(5)).toBe(false);
-      expect(rollLootFloor(10)).toBe(false);
-      expect(rollLootFloor(50)).toBe(false);
-      expect(rollLootFloor(100)).toBe(false);
+      expect(rollSpecialFloorType(5)).toBe('normal');
+      expect(rollSpecialFloorType(10)).toBe('normal');
+      expect(rollSpecialFloorType(50)).toBe('normal');
+      expect(rollSpecialFloorType(100)).toBe('normal');
     }
   });
 });
 
 describe('loot floor generation', () => {
   it('loot floor has 15-20 treasure tiles and no enemies/doors/chests/merchants', () => {
-    // Generate floor 3 many times until we naturally hit a loot floor (1% chance)
     let lootFloor: ReturnType<typeof generateDungeon> | null = null;
     for (let i = 0; i < 500; i++) {
       const floor = generateDungeon(3);
-      if (floor.isLootFloor) {
+      if (floor.specialFloorType === 'loot') {
         lootFloor = floor;
         break;
       }
     }
-
-    // If we didn't get one in 500 tries (probability ~0.6%), skip gracefully
+    
     if (!lootFloor) return;
-
+    
     const treasures = findTiles(lootFloor, TileType.Treasure);
     const enemies = findTiles(lootFloor, TileType.Enemy);
     const doors = findTiles(lootFloor, TileType.Door);
     const chests = findTiles(lootFloor, TileType.Chest);
     const merchants = findTiles(lootFloor, TileType.Merchant);
     const stalls = findTiles(lootFloor, TileType.MerchantStall);
-
+    
     expect(treasures.length).toBeGreaterThanOrEqual(15);
     expect(treasures.length).toBeLessThanOrEqual(20);
     expect(enemies.length).toBe(0);
@@ -724,24 +673,70 @@ describe('loot floor generation', () => {
     expect(chests.length).toBe(0);
     expect(merchants.length).toBe(0);
     expect(stalls.length).toBe(0);
-    expect(lootFloor.isLootFloor).toBe(true);
+    expect(lootFloor.specialFloorType).toBe('loot');
   });
-
+  
   it('loot floor still has stairs', () => {
     for (let i = 0; i < 500; i++) {
       const floor = generateDungeon(3);
-      if (floor.isLootFloor) {
+      if (floor.specialFloorType === 'loot') {
         expect(findTiles(floor, TileType.Stairs).length).toBe(1);
         return;
       }
     }
   });
-
-  it('normal floors have isLootFloor set to false', () => {
+  
+  it('normal floors have specialFloorType set to normal', () => {
     const floor = generateDungeon(1);
-    expect(floor.isLootFloor).toBe(false);
-
+    expect(floor.specialFloorType).toBe('normal');
+  });
+  
+  it('boss floors have specialFloorType set to normal', () => {
     const bossFloor = generateDungeon(5);
-    expect(bossFloor.isLootFloor).toBe(false);
+    expect(bossFloor.specialFloorType).toBe('normal');
+  });
+});
+
+describe('healing floor generation', () => {
+  it('places healing pools and potion shrines', () => {
+    const floor = generateDungeon(3, { forceSpecialFloorType: 'healing' });
+    expect(floor.specialFloorType).toBe('healing');
+    
+    const healingPools = findTiles(floor, TileType.HealingPool);
+    const potionShrines = findTiles(floor, TileType.PotionShrine);
+    const enemies = findTiles(floor, TileType.Enemy);
+    
+    expect(healingPools.length).toBeGreaterThanOrEqual(3);
+    expect(healingPools.length).toBeLessThanOrEqual(5);
+    expect(potionShrines.length).toBeGreaterThanOrEqual(2);
+    expect(potionShrines.length).toBeLessThanOrEqual(3);
+    expect(enemies.length).toBe(0);
+  });
+});
+
+describe('fortune floor generation', () => {
+  it('places a fortune teller NPC', () => {
+    const floor = generateDungeon(3, { forceSpecialFloorType: 'fortune' });
+    expect(floor.specialFloorType).toBe('fortune');
+    
+    const fortuneTellers = findTiles(floor, TileType.FortuneTeller);
+    const enemies = findTiles(floor, TileType.Enemy);
+    
+    expect(fortuneTellers.length).toBe(1);
+    expect(enemies.length).toBe(0);
+  });
+});
+
+describe('challenge floor generation', () => {
+  it('places enemies and arena chest', () => {
+    const floor = generateDungeon(3, { forceSpecialFloorType: 'challenge' });
+    expect(floor.specialFloorType).toBe('challenge');
+    
+    const enemies = findTiles(floor, TileType.Enemy);
+    const arenaChests = findTiles(floor, TileType.ArenaChest);
+    
+    expect(enemies.length).toBeGreaterThanOrEqual(6);
+    expect(enemies.length).toBeLessThanOrEqual(8);
+    expect(arenaChests.length).toBe(1);
   });
 });

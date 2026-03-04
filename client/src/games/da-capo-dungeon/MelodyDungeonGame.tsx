@@ -140,9 +140,9 @@ const MelodyDungeonGameInner: React.FC = () => {
   });
   const [characterSprite, setCharacterSprite] = useState<string>(() => {
     try {
-      return localStorage.getItem('melodyDungeonCharacter') || '/images/melody-dungeon/character.png';
+      return localStorage.getItem('daCapoDungeonCharacter') || '/images/da-capo-dungeon/character.png';
     } catch {
-      return '/images/melody-dungeon/character.png';
+      return '/images/da-capo-dungeon/character.png';
     }
   });
   const moveLockedRef = useRef(false);
@@ -1301,7 +1301,7 @@ const MelodyDungeonGameInner: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <button
-          onClick={() => setLocation('/games/melody-dungeon/teacher')}
+          onClick={() => setLocation('/games/da-capo-dungeon/teacher')}
           className="absolute top-4 right-4 text-gray-500 hover:text-purple-300 transition-colors text-xs"
         >
           Teacher Dashboard
@@ -1310,17 +1310,17 @@ const MelodyDungeonGameInner: React.FC = () => {
         <div className="text-center mb-8">
           <div className="text-6xl mb-3">{'\uD83C\uDFB5'}</div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Melody Dungeon
+            Da Capo Dungeon
           </h1>
           <p className="text-gray-400 mt-2">A musical adventure awaits...</p>
         </div>
 
         <div className="flex items-center gap-6 mb-6">
           {[
-            { src: '/images/melody-dungeon/character.png', label: 'Hero 1' },
-            { src: '/images/melody-dungeon/character_2.png', label: 'Hero 2' },
-            { src: '/images/melody-dungeon/character_3.png', label: 'Hero 3' },
-            { src: '/images/melody-dungeon/character_4.png', label: 'Hero 4' },
+            { src: '/images/da-capo-dungeon/character.png', label: 'Hero 1' },
+            { src: '/images/da-capo-dungeon/character_2.png', label: 'Hero 2' },
+            { src: '/images/da-capo-dungeon/character_3.png', label: 'Hero 3' },
+            { src: '/images/da-capo-dungeon/character_4.png', label: 'Hero 4' },
           ].map(({ src, label }) => {
             const selected = characterSprite === src;
             return (
@@ -1328,7 +1328,7 @@ const MelodyDungeonGameInner: React.FC = () => {
                 key={src}
                 onClick={() => {
                   setCharacterSprite(src);
-                  try { localStorage.setItem('melodyDungeonCharacter', src); } catch {}
+                  try { localStorage.setItem('daCapoDungeonCharacter', src); } catch {}
                 }}
                 className={`flex flex-col items-center gap-1 transition-all duration-200 ${selected ? 'scale-125' : 'opacity-40 hover:opacity-70'}`}
               >
@@ -1518,7 +1518,7 @@ const MelodyDungeonGameInner: React.FC = () => {
             Victory!
           </h2>
           <p className="text-gray-400 text-sm mb-4">
-            You conquered all {MAX_FLOOR} floors of the Melody Dungeon!
+            You conquered all {MAX_FLOOR} floors of the Da Capo Dungeon!
           </p>
           {isNewHigh && (
             <p className="text-yellow-400 animate-pulse mb-2">New Gold Record!</p>

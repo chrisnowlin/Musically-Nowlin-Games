@@ -102,19 +102,25 @@ router.get('/google', (req, res, next) => {
 router.get(
   '/google/callback',
   (req, res, next) => {
+    console.log('Google OAuth callback received');
     if (!isGoogleEnabled()) {
+      console.log('Google OAuth not configured');
       return res.status(503).json({ error: 'Google OAuth is not configured' });
     }
-    passport.authenticate('google', { failureRedirect: '/games/melody-dungeon/teacher' })(req, res, next);
+    passport.authenticate('google', { failureRedirect: '/games/da-capo-dungeon/teacher' })(req, res, next);
   },
   (req: Request, res: Response) => {
+    console.log('Google OAuth callback - Authenticated successfully');
     const user = req.user as any;
+    console.log('Google OAuth callback - User:', user);
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.role = user.role;
     req.session.displayName = user.displayName;
+    console.log('Google OAuth callback - Session set:', { userId: user.id, username: user.username, role: user.role });
     const clientOrigin = process.env.CORS_ORIGIN || 'http://localhost:5174';
-    res.redirect(`${clientOrigin}/games/melody-dungeon/teacher`);
+    console.log(`Google OAuth callback - Redirecting to: ${clientOrigin}/games/da-capo-dungeon/teacher`);
+    res.redirect(`${clientOrigin}/games/da-capo-dungeon/teacher`);
   }
 );
 

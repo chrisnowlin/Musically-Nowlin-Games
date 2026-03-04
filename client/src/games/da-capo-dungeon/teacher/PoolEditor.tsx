@@ -237,7 +237,7 @@ const PoolEditor: React.FC<Props> = ({ poolId, onLogout }) => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-purple-950 p-6">
         <div className="max-w-5xl mx-auto">
           <button
-            onClick={() => setLocation('/games/melody-dungeon/teacher')}
+            onClick={() => setLocation('/games/da-capo-dungeon/teacher')}
             className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors mb-6"
           >
             &larr; Back to Dashboard
@@ -258,7 +258,7 @@ const PoolEditor: React.FC<Props> = ({ poolId, onLogout }) => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => setLocation('/games/melody-dungeon/teacher')}
+              onClick={() => setLocation('/games/da-capo-dungeon/teacher')}
               className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
             >
               &larr; Back to Dashboard

@@ -9,7 +9,7 @@ import {
   playListeningPhrase,
   resumeAudioContext,
   noteKeyToName,
-} from '@/games/melody-dungeon/dungeonAudio';
+} from '@/games/da-capo-dungeon/dungeonAudio';
 import RhythmTapChallengePanel from './RhythmTapChallengePanel';
 
 const NOTE_POSITIONS: Record<string, number> = {

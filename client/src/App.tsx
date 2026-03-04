@@ -107,8 +107,8 @@ const Cross003Page = lazy(() => import("@/games/cross-curricular/cross-003/page"
 const Advanced001Page = lazy(() => import("@/games/advanced/advanced-001/page"));
 const Challenge001Page = lazy(() => import("@/games/advanced/challenge-001/page"));
 const TrebleRunnerGamePage = lazy(() => import("@/games/treble-runner/page"));
-const MelodyDungeonPage = lazy(() => import("@/games/melody-dungeon/page"));
-const TeacherDashboardPage = lazy(() => import("@/games/melody-dungeon/teacher/page"));
+const DaCapoDungeonPage = lazy(() => import("@/games/da-capo-dungeon/page"));
+const TeacherDashboardPage = lazy(() => import("@/games/da-capo-dungeon/teacher/page"));
 const CadenceQuestPage = lazy(() => import("@/games/cadence-quest/page"));
 const PlaceholderGame = lazy(() => import("@/games/PlaceholderGame"));
 const UnderDevelopmentPage = lazy(() => import("@/pages/UnderDevelopmentPage"));
@@ -201,9 +201,9 @@ function Router() {
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-invaders" component={StaffInvadersGamePage} />
-      <Route path="/games/melody-dungeon/teacher/*" component={TeacherDashboardPage} />
-      <Route path="/games/melody-dungeon/teacher" component={TeacherDashboardPage} />
-      <Route path="/games/melody-dungeon" component={MelodyDungeonPage} />
+      <Route path="/games/da-capo-dungeon/teacher/*" component={TeacherDashboardPage} />
+      <Route path="/games/da-capo-dungeon/teacher" component={TeacherDashboardPage} />
+      <Route path="/games/da-capo-dungeon" component={DaCapoDungeonPage} />
       <Route path="/games/cadence-quest" component={CadenceQuestPage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
       {/* Tools */}

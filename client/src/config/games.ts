@@ -834,10 +834,10 @@ export const games: GameConfig[] = [
     ageRange: "7-12 years",
   },
   {
-    id: "melody-dungeon",
-    title: "Melody Dungeon",
+    id: "da-capo-dungeon",
+    title: "Da Capo Dungeon",
     description: "Explore a music-themed dungeon! Defeat enemies with note reading, rhythm, intervals, and dynamics.",
-    route: "/games/melody-dungeon",
+    route: "/games/da-capo-dungeon",
     status: "available",
     icon: Swords,
     color: "bg-purple-700",
@@ -881,7 +881,7 @@ export const AVAILABLE_NOW_IDS = [
   "instrument-family-sorter",
   "treble-runner",
   "animal-orchestra-conductor",
-  "melody-dungeon",
+  "da-capo-dungeon",
 ] as const;/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
 export const getUnderDevelopmentGames = (): GameConfig[] => {
   return games

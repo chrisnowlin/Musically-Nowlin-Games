@@ -5,6 +5,7 @@ import {
   type Rect,
   type EnemySubtype,
   type ChallengeType,
+  type SpecialFloorType,
   TileType,
   getDungeonSize,
   DUNGEON_BASE_SIZE,
@@ -17,11 +18,16 @@ export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   return null;
 }
 
-/** Loot floors: 1% chance on eligible floors (>= 3, non-boss). */
-export function rollLootFloor(floorNumber: number): boolean {
-  if (floorNumber < 3) return false;
-  if (floorNumber % 5 === 0) return false;
-  return Math.random() < 0.01;
+export function rollSpecialFloorType(floorNumber: number): SpecialFloorType {
+  if (floorNumber < 3) return 'normal';
+  if (floorNumber % 5 === 0) return 'normal';
+  
+  if (Math.random() < 0.01) return 'healing';
+  if (Math.random() < 0.01) return 'loot';
+  if (Math.random() < 0.01) return 'fortune';
+  if (Math.random() < 0.01) return 'challenge';
+  
+  return 'normal';
 }
 
 function rand(min: number, max: number): number {
@@ -368,28 +374,492 @@ function placeLootTreasure(
   }
 }
 
+/** Place 3-5 healing pools and 2-3 potion shrines for healing floors. */
+function placeHealingPools(
+  grid: Tile[][],
+  placedPositions: Position[],
+  playerStart: Position,
+): void {
+  const poolCount = rand(3, 5);
+  for (let i = 0; i < poolCount; i++) {
+    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+    if (pos) {
+      grid[pos.y][pos.x].type = TileType.HealingPool;
+      grid[pos.y][pos.x].cleared = false;
+      placedPositions.push(pos);
+    }
+  }
+  
+  const shrineCount = rand(2, 3);
+  for (let i = 0; i < shrineCount; i++) {
+    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+    if (pos) {
+      grid[pos.y][pos.x].type = TileType.PotionShrine;
+      grid[pos.y][pos.x].cleared = false;
+      placedPositions.push(pos);
+    }
+  }
+}
+
+/** Place a fortune teller NPC for fortune floors. */
+function placeFortuneTeller(
+  grid: Tile[][],
+  placedPositions: Position[],
+  playerStart: Position,
+): void {
+  const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+  if (pos) {
+    grid[pos.y][pos.x].type = TileType.FortuneTeller;
+    grid[pos.y][pos.x].cleared = false;
+    placedPositions.push(pos);
+  }
+}
+
+/** Place 6-8 enemies for challenge arena floors. */
+function placeChallengeEnemies(
+  grid: Tile[][],
+  placedPositions: Position[],
+  playerStart: Position,
+  floorNumber: number,
+  hasCustomQuestions?: boolean,
+): void {
+  const enemyCount = rand(6, 8);
+  const challengeTypes = getChallengeTypesForFloor(floorNumber);
+  if (hasCustomQuestions) {
+    challengeTypes.push('custom');
+  }
+  const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
+  if (hasCustomQuestions) {
+    availableSubtypes.push('wizard');
+  }
+  
+  for (let i = 0; i < enemyCount; i++) {
+    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
+    if (pos) {
+      const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
+      const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
+      grid[pos.y][pos.x].type = TileType.Enemy;
+      grid[pos.y][pos.x].enemySubtype = subtype;
+      grid[pos.y][pos.x].enemyLevel = getEnemyLevel(floorNumber);
+      grid[pos.y][pos.x].challengeType = subtypePool[rand(0, subtypePool.length - 1)];
+      grid[pos.y][pos.x].cleared = false;
+      grid[pos.y][pos.x].enemyState = 'guarding';
+      if (subtype === 'ghost') {
+        grid[pos.y][pos.x].ghostVisible = true;
+        grid[pos.y][pos.x].ghostNearPlayerTurns = 0;
+        grid[pos.y][pos.x].ghostMaterialized = false;
+      }
+      placedPositions.push(pos);
+    }
+  }
+}
+
+/** Place arena chest at the stairs position (will unlock when all enemies defeated). */
+function placeArenaChest(
+  grid: Tile[][],
+  placedPositions: Position[],
+  playerStart: Position,
+  stairsPosition: Position,
+): void {
+  grid[stairsPosition.y][stairsPosition.x].type = TileType.ArenaChest;
+  grid[stairsPosition.y][stairsPosition.x].cleared = false;
+}
+
+function generateFortuneFloorLayout(floorNumber: number): { grid: Tile[][]; playerStart: Position; stairsPosition: Position } {
+  const { width, height } = getDungeonSize(floorNumber);
+  const grid = createEmptyGrid(width, height);
+
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+
+  const roomSize = Math.min(11, Math.floor(Math.min(width, height) / 2));
+  const roomStartX = Math.floor((width - roomSize) / 2);
+  const roomStartY = Math.floor((height - roomSize) / 2);
+  const roomEndX = roomStartX + roomSize - 1;
+  const roomEndY = roomStartY + roomSize - 1;
+
+  for (let dy = 0; dy < roomSize; dy++) {
+    for (let dx = 0; dx < roomSize; dx++) {
+      const x = roomStartX + dx;
+      const y = roomStartY + dy;
+      if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
+        grid[y][x].type = TileType.Floor;
+      }
+    }
+  }
+
+  const pillars: Position[] = [
+    { x: roomStartX + 2, y: roomStartY + 2 },
+    { x: roomEndX - 2, y: roomStartY + 2 },
+    { x: roomStartX + 2, y: roomEndY - 2 },
+    { x: roomEndX - 2, y: roomEndY - 2 },
+  ];
+  for (const pillar of pillars) {
+    grid[pillar.y][pillar.x].type = TileType.Wall;
+  }
+
+  const innerPillars: Position[] = [
+    { x: centerX - 2, y: centerY },
+    { x: centerX + 2, y: centerY },
+  ];
+  for (const pillar of innerPillars) {
+    if (pillar.x > roomStartX && pillar.x < roomEndX) {
+      grid[pillar.y][pillar.x].type = TileType.Wall;
+    }
+  }
+
+  const entryX = 1;
+  const entryY = centerY;
+  for (let x = 1; x <= roomStartX; x++) {
+    grid[entryY][x].type = TileType.Floor;
+  }
+
+  const exitX = width - 2;
+  const exitY = centerY;
+  for (let x = roomEndX; x < width - 1; x++) {
+    grid[exitY][x].type = TileType.Floor;
+  }
+
+  const playerStart: Position = { x: entryX, y: entryY };
+  grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
+
+  grid[centerY][centerX].type = TileType.FortuneTeller;
+  grid[centerY][centerX].cleared = false;
+
+  const stairsPosition: Position = { x: exitX, y: exitY };
+  grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
+
+  return { grid, playerStart, stairsPosition };
+}
+
+function generateHealingFloorLayout(floorNumber: number): { grid: Tile[][]; playerStart: Position; stairsPosition: Position } {
+  const { width, height } = getDungeonSize(floorNumber);
+  const grid = createEmptyGrid(width, height);
+
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+
+  const roomSize = Math.min(11, Math.floor(Math.min(width, height) / 2));
+  const roomStartX = Math.floor((width - roomSize) / 2);
+  const roomStartY = Math.floor((height - roomSize) / 2);
+  const roomEndX = roomStartX + roomSize - 1;
+  const roomEndY = roomStartY + roomSize - 1;
+
+  for (let dy = 0; dy < roomSize; dy++) {
+    for (let dx = 0; dx < roomSize; dx++) {
+      const x = roomStartX + dx;
+      const y = roomStartY + dy;
+      if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
+        grid[y][x].type = TileType.Floor;
+      }
+    }
+  }
+
+  const cornerPillars: Position[] = [
+    { x: roomStartX + 1, y: roomStartY + 1 },
+    { x: roomEndX - 1, y: roomStartY + 1 },
+    { x: roomStartX + 1, y: roomEndY - 1 },
+    { x: roomEndX - 1, y: roomEndY - 1 },
+  ];
+  for (const pillar of cornerPillars) {
+    grid[pillar.y][pillar.x].type = TileType.Wall;
+  }
+
+  const pools: Position[] = [
+    { x: roomStartX + 2, y: centerY - 1 },
+    { x: roomStartX + 2, y: centerY },
+    { x: roomStartX + 2, y: centerY + 1 },
+    { x: roomEndX - 2, y: centerY - 1 },
+    { x: roomEndX - 2, y: centerY },
+    { x: roomEndX - 2, y: centerY + 1 },
+  ];
+  for (const pool of pools) {
+    grid[pool.y][pool.x].type = TileType.HealingPool;
+    grid[pool.y][pool.x].cleared = false;
+  }
+
+  const shrines: Position[] = [
+    { x: centerX, y: roomStartY + 2 },
+    { x: centerX, y: roomEndY - 2 },
+  ];
+  for (const shrine of shrines) {
+    grid[shrine.y][shrine.x].type = TileType.PotionShrine;
+    grid[shrine.y][shrine.x].cleared = false;
+  }
+
+  const entryX = 1;
+  const entryY = centerY;
+  for (let x = 1; x <= roomStartX; x++) {
+    grid[entryY][x].type = TileType.Floor;
+  }
+
+  const playerStart: Position = { x: entryX, y: entryY };
+  grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
+
+  const exitX = width - 2;
+  const exitY = centerY;
+  for (let x = roomEndX; x < width - 1; x++) {
+    grid[exitY][x].type = TileType.Floor;
+  }
+
+  const stairsPosition: Position = { x: exitX, y: exitY };
+  grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
+
+  return { grid, playerStart, stairsPosition };
+}
+
+function generateLootFloorLayout(floorNumber: number): { grid: Tile[][]; playerStart: Position; stairsPosition: Position; treasurePositions: Position[] } {
+  const { width, height } = getDungeonSize(floorNumber);
+  const grid = createEmptyGrid(width, height);
+
+  const centerY = Math.floor(height / 2);
+
+  const roomSize = Math.min(12, Math.floor(Math.min(width, height) / 2));
+  const roomStartX = Math.floor((width - roomSize) / 2);
+  const roomStartY = Math.floor((height - roomSize) / 2);
+  const roomEndX = roomStartX + roomSize - 1;
+  const roomEndY = roomStartY + roomSize - 1;
+  const centerX = roomStartX + Math.floor(roomSize / 2);
+
+  for (let dy = 0; dy < roomSize; dy++) {
+    for (let dx = 0; dx < roomSize; dx++) {
+      const x = roomStartX + dx;
+      const y = roomStartY + dy;
+      if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
+        grid[y][x].type = TileType.Floor;
+      }
+    }
+  }
+
+  const treasurePositions: Position[] = [];
+  const treasureCount = rand(15, 20);
+  const usedPositions = new Set<string>();
+
+  const prioritySpots: Position[] = [];
+  for (let dx = 1; dx < roomSize - 1; dx += 2) {
+    prioritySpots.push({ x: roomStartX + dx, y: roomStartY + 1 });
+    prioritySpots.push({ x: roomStartX + dx, y: roomEndY - 1 });
+  }
+  for (let dy = 2; dy < roomSize - 2; dy += 2) {
+    prioritySpots.push({ x: roomStartX + 1, y: roomStartY + dy });
+    prioritySpots.push({ x: roomEndX - 1, y: roomStartY + dy });
+  }
+  prioritySpots.push({ x: centerX, y: centerY });
+
+  for (const spot of prioritySpots) {
+    if (treasurePositions.length >= treasureCount) break;
+    const key = `${spot.x},${spot.y}`;
+    if (!usedPositions.has(key) && grid[spot.y][spot.x].type === TileType.Floor) {
+      grid[spot.y][spot.x].type = TileType.Treasure;
+      treasurePositions.push(spot);
+      usedPositions.add(key);
+    }
+  }
+
+  while (treasurePositions.length < treasureCount) {
+    const tx = roomStartX + rand(1, roomSize - 2);
+    const ty = roomStartY + rand(1, roomSize - 2);
+    const key = `${tx},${ty}`;
+    if (!usedPositions.has(key) && grid[ty][tx].type === TileType.Floor) {
+      grid[ty][tx].type = TileType.Treasure;
+      treasurePositions.push({ x: tx, y: ty });
+      usedPositions.add(key);
+    }
+  }
+
+  const entranceX = 1;
+  const entranceY = centerY;
+  for (let x = 1; x <= roomStartX; x++) {
+    grid[entranceY][x].type = TileType.Floor;
+  }
+
+  const playerStart: Position = { x: entranceX, y: entranceY };
+  grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
+
+  const exitX = width - 2;
+  const exitY = centerY;
+  for (let x = roomEndX; x < width - 1; x++) {
+    grid[exitY][x].type = TileType.Floor;
+  }
+
+  const stairsPosition: Position = { x: exitX, y: exitY };
+  grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
+
+  return { grid, playerStart, stairsPosition, treasurePositions };
+}
+
+function generateChallengeFloorLayout(floorNumber: number, hasCustomQuestions?: boolean): { 
+  grid: Tile[][]; 
+  playerStart: Position; 
+  stairsPosition: Position;
+  enemies: Array<{ pos: Position; subtype: EnemySubtype; level: number; challengeType: ChallengeType }>
+} {
+  const { width, height } = getDungeonSize(floorNumber);
+  const grid = createEmptyGrid(width, height);
+
+  const centerY = Math.floor(height / 2);
+  const arenaSize = Math.min(12, Math.floor(Math.min(width, height) / 2));
+  const offsetX = Math.floor((width - arenaSize) / 2);
+  const offsetY = Math.floor((height - arenaSize) / 2);
+
+  for (let dy = 0; dy < arenaSize; dy++) {
+    for (let dx = 0; dx < arenaSize; dx++) {
+      const x = offsetX + dx;
+      const y = offsetY + dy;
+      if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
+        grid[y][x].type = TileType.Floor;
+      }
+    }
+  }
+
+  const entranceX = 1;
+  const entranceY = centerY;
+  for (let x = 1; x <= offsetX; x++) {
+    grid[entranceY][x].type = TileType.Floor;
+  }
+
+  const playerStart: Position = { x: entranceX, y: entranceY };
+  grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
+
+  const enemies: Array<{ pos: Position; subtype: EnemySubtype; level: number; challengeType: ChallengeType }> = [];
+  const challengeTypes = getChallengeTypesForFloor(floorNumber);
+  if (hasCustomQuestions) {
+    challengeTypes.push('custom');
+  }
+  const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
+  if (hasCustomQuestions) {
+    availableSubtypes.push('wizard');
+  }
+
+  const enemyCount = rand(6, 8);
+  const usedPositions = new Set<string>();
+
+  while (enemies.length < enemyCount) {
+    const ex = offsetX + rand(2, arenaSize - 3);
+    const ey = offsetY + rand(2, arenaSize - 3);
+    const key = `${ex},${ey}`;
+    
+    if (!usedPositions.has(key) && grid[ey][ex].type === TileType.Floor) {
+      const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
+      const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
+      const level = getEnemyLevel(floorNumber);
+      const challengeType = subtypePool[rand(0, subtypePool.length - 1)];
+
+      grid[ey][ex].type = TileType.Enemy;
+      grid[ey][ex].enemySubtype = subtype;
+      grid[ey][ex].enemyLevel = level;
+      grid[ey][ex].challengeType = challengeType;
+      grid[ey][ex].cleared = false;
+      grid[ey][ex].enemyState = 'guarding';
+
+      if (subtype === 'ghost') {
+        grid[ey][ex].ghostVisible = true;
+        grid[ey][ex].ghostNearPlayerTurns = 0;
+        grid[ey][ex].ghostMaterialized = false;
+      }
+
+      enemies.push({ pos: { x: ex, y: ey }, subtype, level, challengeType });
+      usedPositions.add(key);
+    }
+  }
+
+  const exitX = width - 2;
+  const exitY = centerY;
+  for (let x = offsetX + arenaSize - 1; x < width - 1; x++) {
+    grid[exitY][x].type = TileType.Floor;
+  }
+
+  const stairsPosition: Position = { x: exitX, y: exitY };
+  grid[stairsPosition.y][stairsPosition.x].type = TileType.ArenaChest;
+  grid[stairsPosition.y][stairsPosition.x].cleared = false;
+
+  return { grid, playerStart, stairsPosition, enemies };
+}
+
 export interface GenerateDungeonOptions {
-  forceLootFloor?: boolean;
+  forceSpecialFloorType?: SpecialFloorType;
   hasCustomQuestions?: boolean;
 }
 
 export function generateDungeon(floorNumber: number, options?: GenerateDungeonOptions): DungeonFloor {
+  const bossType = getBossType(floorNumber);
+  const specialFloorType = options?.forceSpecialFloorType ?? (!bossType ? rollSpecialFloorType(floorNumber) : 'normal');
+
+  if (specialFloorType === 'fortune') {
+    const { grid, playerStart, stairsPosition } = generateFortuneFloorLayout(floorNumber);
+    const { width, height } = getDungeonSize(floorNumber);
+    return {
+      tiles: grid,
+      width,
+      height,
+      floorNumber,
+      themeIndex: getThemeIndexForFloor(floorNumber),
+      playerStart,
+      stairsPosition,
+      specialFloorType: 'fortune',
+    };
+  }
+
+  if (specialFloorType === 'healing') {
+    const { grid, playerStart, stairsPosition } = generateHealingFloorLayout(floorNumber);
+    const { width, height } = getDungeonSize(floorNumber);
+    return {
+      tiles: grid,
+      width,
+      height,
+      floorNumber,
+      themeIndex: getThemeIndexForFloor(floorNumber),
+      playerStart,
+      stairsPosition,
+      specialFloorType: 'healing',
+    };
+  }
+
+  if (specialFloorType === 'loot') {
+    const { grid, playerStart, stairsPosition } = generateLootFloorLayout(floorNumber);
+    const { width, height } = getDungeonSize(floorNumber);
+    return {
+      tiles: grid,
+      width,
+      height,
+      floorNumber,
+      themeIndex: getThemeIndexForFloor(floorNumber),
+      playerStart,
+      stairsPosition,
+      specialFloorType: 'loot',
+    };
+  }
+
+  if (specialFloorType === 'challenge') {
+    const { grid, playerStart, stairsPosition } = generateChallengeFloorLayout(floorNumber, options?.hasCustomQuestions);
+    const { width, height } = getDungeonSize(floorNumber);
+    return {
+      tiles: grid,
+      width,
+      height,
+      floorNumber,
+      themeIndex: getThemeIndexForFloor(floorNumber),
+      playerStart,
+      stairsPosition,
+      specialFloorType: 'challenge',
+    };
+  }
+
   const { width, height } = getDungeonSize(floorNumber);
   const grid = createEmptyGrid(width, height);
-  const bossType = getBossType(floorNumber);
 
   // Scale room count and max room size with dungeon size
   const growth = width - DUNGEON_BASE_SIZE;
-  const roomCount = rand(3, 5 + Math.floor(growth / 2));
-  const maxRoomDim = Math.min(5 + Math.floor(growth / 3), 7);
+  const roomCount = rand(4, 6 + Math.floor(growth / 2));
+  const maxRoomDim = Math.min(7 + Math.floor(growth / 2), 10);
   const rooms: Rect[] = [];
-  const maxAttempts = 100;
+  const maxAttempts = 150;
 
   for (let i = 0; i < roomCount; i++) {
     let placed = false;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const w = rand(3, maxRoomDim);
-      const h = rand(3, maxRoomDim);
+      const w = rand(4, maxRoomDim);
+      const h = rand(4, maxRoomDim);
       const x = rand(1, width - w - 1);
       const y = rand(1, height - h - 1);
       const room: Rect = { x, y, w, h };
@@ -403,8 +873,8 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
     }
     if (!placed && rooms.length < 2) {
       // Force at least 2 rooms
-      const w = 3;
-      const h = 3;
+      const w = 4;
+      const h = 4;
       const x = rand(1, width - w - 1);
       const y = rand(1, height - h - 1);
       rooms.push({ x, y, w, h });
@@ -415,7 +885,7 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
   // On boss floors, expand the last room to make space for the boss arena.
   if (bossType && rooms.length > 0) {
     const lastRoom = rooms[rooms.length - 1];
-    const targetSize = Math.min(7, Math.max(lastRoom.w, 5));
+    const targetSize = Math.min(10, Math.max(lastRoom.w, 6));
     if (lastRoom.w < targetSize || lastRoom.h < targetSize) {
       const newW = Math.min(targetSize, width - lastRoom.x - 1);
       const newH = Math.min(targetSize, height - lastRoom.y - 1);
@@ -480,169 +950,162 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
     }
   }
 
-  const isLootFloor = options?.forceLootFloor || (!bossType && rollLootFloor(floorNumber));
+  const challengeTypes = getChallengeTypesForFloor(floorNumber);
+  if (options?.hasCustomQuestions) {
+    challengeTypes.push('custom');
+  }
 
-  if (isLootFloor) {
-    // Loot floor: only treasure piles, no enemies/doors/merchants/chests
-    placeLootTreasure(grid, placedPositions, playerStart, floorNumber);
-  } else {
-    const challengeTypes = getChallengeTypesForFloor(floorNumber);
+  // Chests, dragons, and enemies do NOT spawn on boss floors.
+  if (!bossType) {
+    // Place locked chests first so dragons can spawn adjacent to them.
+    const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
+    const chestPositions: Position[] = [];
+    for (let i = 0; i < chestCount; i++) {
+      const pos = pickValidChestTile(grid, placedPositions, playerStart);
+      if (pos) {
+        placedPositions.push(pos);
+        chestPositions.push(pos);
+      }
+    }
+
+    // Place dragon adjacent to a chest (floor >= 3).
+    const hasDragon = floorNumber >= 3;
+    if (hasDragon && chestPositions.length > 0) {
+      const chest = chestPositions[rand(0, chestPositions.length - 1)];
+      // Search all tiles within Chebyshev-2 of the chest so the dragon always
+      // starts within tether range. Cardinal neighbors are preferred; the outer
+      // ring is a fallback. A random far-away tile must never be used, because
+      // that causes the dragon to immediately transition to 'chasing' and deal
+      // fire damage even when the chest is still unopened.
+      const dragonSpawnCandidates: Position[] = [];
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const p = { x: chest.x + dx, y: chest.y + dy };
+          if (p.y < 0 || p.y >= height || p.x < 0 || p.x >= width) continue;
+          if (grid[p.y][p.x].type !== TileType.Floor) continue;
+          if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) continue;
+          if (isOpenEnough(grid, p)) dragonSpawnCandidates.push(p);
+        }
+      }
+      const dragonPos =
+        dragonSpawnCandidates.length > 0
+          ? dragonSpawnCandidates[rand(0, dragonSpawnCandidates.length - 1)]
+          : null;
+      if (dragonPos) {
+        const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
+        grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
+        grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
+        grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1);
+        grid[dragonPos.y][dragonPos.x].challengeType =
+          dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
+        grid[dragonPos.y][dragonPos.x].cleared = false;
+        grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
+        placedPositions.push(dragonPos);
+      }
+    }
+
+    // Place regular enemies.
+    const totalEnemies = Math.min(2 + floorNumber, 6);
+    const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
+    const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
     if (options?.hasCustomQuestions) {
-      challengeTypes.push('custom');
+      availableSubtypes.push('wizard');
     }
-
-    // Chests, dragons, and enemies do NOT spawn on boss floors.
-    if (!bossType) {
-      // Place locked chests first so dragons can spawn adjacent to them.
-      const chestCount = rand(1, Math.min(2, 1 + Math.floor(floorNumber / 2)));
-      const chestPositions: Position[] = [];
-      for (let i = 0; i < chestCount; i++) {
-        const pos = pickValidChestTile(grid, placedPositions, playerStart);
-        if (pos) {
-          placedPositions.push(pos);
-          chestPositions.push(pos);
-        }
-      }
-
-      // Place dragon adjacent to a chest (floor >= 3).
-      const hasDragon = floorNumber >= 3;
-      if (hasDragon && chestPositions.length > 0) {
-        const chest = chestPositions[rand(0, chestPositions.length - 1)];
-        // Search all tiles within Chebyshev-2 of the chest so the dragon always
-        // starts within tether range. Cardinal neighbors are preferred; the outer
-        // ring is a fallback. A random far-away tile must never be used, because
-        // that causes the dragon to immediately transition to 'chasing' and deal
-        // fire damage even when the chest is still unopened.
-        const dragonSpawnCandidates: Position[] = [];
-        for (let dy = -2; dy <= 2; dy++) {
-          for (let dx = -2; dx <= 2; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const p = { x: chest.x + dx, y: chest.y + dy };
-            if (p.y < 0 || p.y >= height || p.x < 0 || p.x >= width) continue;
-            if (grid[p.y][p.x].type !== TileType.Floor) continue;
-            if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) continue;
-            if (isOpenEnough(grid, p)) dragonSpawnCandidates.push(p);
-          }
-        }
-        const dragonPos =
-          dragonSpawnCandidates.length > 0
-            ? dragonSpawnCandidates[rand(0, dragonSpawnCandidates.length - 1)]
-            : null;
-        if (dragonPos) {
-          const dragonChallengePool = getSubtypeChallengePool('dragon', challengeTypes);
-          grid[dragonPos.y][dragonPos.x].type = TileType.Enemy;
-          grid[dragonPos.y][dragonPos.x].enemySubtype = 'dragon';
-          grid[dragonPos.y][dragonPos.x].enemyLevel = Math.min(5, getEnemyLevel(floorNumber) + 1);
-          grid[dragonPos.y][dragonPos.x].challengeType =
-            dragonChallengePool[rand(0, dragonChallengePool.length - 1)];
-          grid[dragonPos.y][dragonPos.x].cleared = false;
-          grid[dragonPos.y][dragonPos.x].enemyState = 'guarding';
-          placedPositions.push(dragonPos);
-        }
-      }
-
-      // Place regular enemies.
-      const totalEnemies = Math.min(2 + floorNumber, 6);
-      const regularCount = hasDragon ? totalEnemies - 1 : totalEnemies;
-      const availableSubtypes = getEnemySubtypesForFloor(floorNumber);
-      if (options?.hasCustomQuestions) {
-        availableSubtypes.push('wizard');
-      }
-      for (let i = 0; i < regularCount; i++) {
-        const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
-        if (pos) {
-          const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
-          const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
-          grid[pos.y][pos.x].type = TileType.Enemy;
-          grid[pos.y][pos.x].enemySubtype = subtype;
-          grid[pos.y][pos.x].enemyLevel = getEnemyLevel(floorNumber);
-          grid[pos.y][pos.x].challengeType =
-            subtypePool[rand(0, subtypePool.length - 1)];
-          grid[pos.y][pos.x].cleared = false;
-          grid[pos.y][pos.x].enemyState = 'patrolling';
-          if (subtype === 'ghost') {
-            grid[pos.y][pos.x].ghostVisible = true;
-            grid[pos.y][pos.x].ghostNearPlayerTurns = 0;
-            grid[pos.y][pos.x].ghostMaterialized = false;
-          }
-          placedPositions.push(pos);
-        }
-      }
-    }
-
-    // Place doors only on straight hallway choke points.
-    const doorCount = Math.min(1 + Math.floor(floorNumber / 2), 3);
-    for (let i = 0; i < doorCount; i++) {
-      const pos = pickValidDoorTile(grid, placedPositions, playerStart, floorNumber);
+    for (let i = 0; i < regularCount; i++) {
+      const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 3);
       if (pos) {
-        placedPositions.push(pos);
-      }
-    }
-
-    // Place merchant pair (stall + merchant): always on floor 2, ~40% on later floors.
-    if (floorNumber === 2 || (floorNumber > 2 && Math.random() < 0.4)) {
-      // Place stall first: needs open room tile (not hallway).
-      const stallCandidates = getFloorTiles(grid).filter((p) => {
-        if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) return false;
-        if (distanceSq(p, playerStart) < 4) return false;
-        if (isStraightHallwayTile(grid, p)) return false;
-        return isOpenEnough(grid, p);
-      });
-
-      while (stallCandidates.length > 0) {
-        const idx = rand(0, stallCandidates.length - 1);
-        const stallPos = stallCandidates.splice(idx, 1)[0];
-
-        // Find adjacent floor tile for the merchant character.
-        const dirs = [
-          { x: 0, y: -1 },
-          { x: 0, y: 1 },
-          { x: -1, y: 0 },
-          { x: 1, y: 0 },
-        ];
-        const merchantCandidates = dirs
-          .map((d) => ({ x: stallPos.x + d.x, y: stallPos.y + d.y }))
-          .filter(
-            (p) =>
-              p.y >= 0 &&
-              p.y < height &&
-              p.x >= 0 &&
-              p.x < width &&
-              grid[p.y][p.x].type === TileType.Floor &&
-              !placedPositions.some((e) => e.x === p.x && e.y === p.y)
-          );
-
-        if (merchantCandidates.length > 0) {
-          const merchantPos = merchantCandidates[rand(0, merchantCandidates.length - 1)];
-
-          const previousStall = { ...grid[stallPos.y][stallPos.x] };
-          const previousMerchant = { ...grid[merchantPos.y][merchantPos.x] };
-
-          grid[stallPos.y][stallPos.x].type = TileType.MerchantStall;
-          grid[merchantPos.y][merchantPos.x].type = TileType.Merchant;
-
-          if (noKeyTraversalIsValid(grid, playerStart)) {
-            placedPositions.push(stallPos, merchantPos);
-            break;
-          }
-
-          // Revert placement if it breaks reachability
-          grid[stallPos.y][stallPos.x] = previousStall;
-          grid[merchantPos.y][merchantPos.x] = previousMerchant;
-        }
-      }
-    }
-
-    // Place treasure (free pickup)
-    const treasureCount = rand(0, 1);
-    for (let i = 0; i < treasureCount; i++) {
-      const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
-      if (pos) {
-        grid[pos.y][pos.x].type = TileType.Treasure;
-        grid[pos.y][pos.x].challengeType = rollChallengeType(floorNumber);
+        const subtype = availableSubtypes[rand(0, availableSubtypes.length - 1)];
+        const subtypePool = getSubtypeChallengePool(subtype, challengeTypes);
+        grid[pos.y][pos.x].type = TileType.Enemy;
+        grid[pos.y][pos.x].enemySubtype = subtype;
+        grid[pos.y][pos.x].enemyLevel = getEnemyLevel(floorNumber);
+        grid[pos.y][pos.x].challengeType =
+          subtypePool[rand(0, subtypePool.length - 1)];
         grid[pos.y][pos.x].cleared = false;
+        grid[pos.y][pos.x].enemyState = 'patrolling';
+        if (subtype === 'ghost') {
+          grid[pos.y][pos.x].ghostVisible = true;
+          grid[pos.y][pos.x].ghostNearPlayerTurns = 0;
+          grid[pos.y][pos.x].ghostMaterialized = false;
+        }
         placedPositions.push(pos);
       }
+    }
+  }
+
+  // Place doors only on straight hallway choke points.
+  const doorCount = Math.min(1 + Math.floor(floorNumber / 2), 3);
+  for (let i = 0; i < doorCount; i++) {
+    const pos = pickValidDoorTile(grid, placedPositions, playerStart, floorNumber);
+    if (pos) {
+      placedPositions.push(pos);
+    }
+  }
+
+  // Place merchant pair (stall + merchant): always on floor 2, ~40% on later floors.
+  if (floorNumber === 2 || (floorNumber > 2 && Math.random() < 0.4)) {
+    // Place stall first: needs open room tile (not hallway).
+    const stallCandidates = getFloorTiles(grid).filter((p) => {
+      if (placedPositions.some((e) => e.x === p.x && e.y === p.y)) return false;
+      if (distanceSq(p, playerStart) < 4) return false;
+      if (isStraightHallwayTile(grid, p)) return false;
+      return isOpenEnough(grid, p);
+    });
+
+    while (stallCandidates.length > 0) {
+      const idx = rand(0, stallCandidates.length - 1);
+      const stallPos = stallCandidates.splice(idx, 1)[0];
+
+      // Find adjacent floor tile for the merchant character.
+      const dirs = [
+        { x: 0, y: -1 },
+        { x: 0, y: 1 },
+        { x: -1, y: 0 },
+        { x: 1, y: 0 },
+      ];
+      const merchantCandidates = dirs
+        .map((d) => ({ x: stallPos.x + d.x, y: stallPos.y + d.y }))
+        .filter(
+          (p) =>
+            p.y >= 0 &&
+            p.y < height &&
+            p.x >= 0 &&
+            p.x < width &&
+            grid[p.y][p.x].type === TileType.Floor &&
+            !placedPositions.some((e) => e.x === p.x && e.y === p.y)
+        );
+
+      if (merchantCandidates.length > 0) {
+        const merchantPos = merchantCandidates[rand(0, merchantCandidates.length - 1)];
+
+        const previousStall = { ...grid[stallPos.y][stallPos.x] };
+        const previousMerchant = { ...grid[merchantPos.y][merchantPos.x] };
+
+        grid[stallPos.y][stallPos.x].type = TileType.MerchantStall;
+        grid[merchantPos.y][merchantPos.x].type = TileType.Merchant;
+
+        if (noKeyTraversalIsValid(grid, playerStart)) {
+          placedPositions.push(stallPos, merchantPos);
+          break;
+        }
+
+        // Revert placement if it breaks reachability
+        grid[stallPos.y][stallPos.x] = previousStall;
+        grid[merchantPos.y][merchantPos.x] = previousMerchant;
+      }
+    }
+  }
+
+  // Place treasure (free pickup)
+  const treasureCount = rand(0, 1);
+  for (let i = 0; i < treasureCount; i++) {
+    const pos = pickRandomFloorTile(grid, placedPositions, playerStart, 2);
+    if (pos) {
+      grid[pos.y][pos.x].type = TileType.Treasure;
+      grid[pos.y][pos.x].challengeType = rollChallengeType(floorNumber);
+      grid[pos.y][pos.x].cleared = false;
+      placedPositions.push(pos);
     }
   }
 
@@ -654,7 +1117,7 @@ export function generateDungeon(floorNumber: number, options?: GenerateDungeonOp
     themeIndex: getThemeIndexForFloor(floorNumber),
     playerStart,
     stairsPosition,
-    isLootFloor,
+    specialFloorType: 'normal',
   };
 }
 
@@ -738,8 +1201,8 @@ export function generateDevRoom(): DungeonFloor {
     floorNumber: 0,
     themeIndex: 0,
     playerStart,
-    stairsPosition: playerStart, // No stairs in dev room
-    isLootFloor: false,
+    stairsPosition: playerStart,
+    specialFloorType: 'normal',
   };
 }
 
@@ -894,7 +1357,6 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
         const target = tiles[ny][nx];
 
         if (target.type === TileType.Wall) {
-          // Phase through exactly one wall tile
           const beyondX = nx + d.x;
           const beyondY = ny + d.y;
           if (beyondX < 0 || beyondX >= floor.width || beyondY < 0 || beyondY >= floor.height) continue;
@@ -931,27 +1393,7 @@ export function moveEnemies(floor: DungeonFloor, playerPos: Position): DungeonFl
 
       const isPlayerTile = nx === playerPos.x && ny === playerPos.y;
       const target = tiles[ny][nx];
-      if (isPlayerTile && tile.enemySubtype === 'ghost') continue;
-
-      if (tile.enemySubtype === 'ghost' && target.type === TileType.Wall) {
-        // Phase through exactly one wall tile. Double walls are impassable
-        // (the beyond-tile would also be a wall, so the direction is skipped).
-        const beyondX = nx + d.x;
-        const beyondY = ny + d.y;
-        if (beyondX < 0 || beyondX >= floor.width || beyondY < 0 || beyondY >= floor.height) continue;
-        const beyondTile = tiles[beyondY][beyondX];
-        const isBeyondPlayer = beyondX === playerPos.x && beyondY === playerPos.y;
-        if (isBeyondPlayer) continue; // ghost can't land on player
-        if (beyondTile.type !== TileType.Floor && beyondTile.type !== TileType.PlayerStart) continue;
-        const beyondKey = `${beyondX},${beyondY}`;
-        if (occupied.has(beyondKey)) continue;
-
-        // Execute phase: move ghost to beyond-tile
-        transferEnemy(tiles, pos, { x: beyondX, y: beyondY }, tile, occupied);
-        moved = true;
-        break;
-      }
-      // Shared guard for both ghosts (non-wall neighbor) and all other enemies
+      // Skip player tile and non-floor tiles
       if (!isPlayerTile && target.type !== TileType.Floor && target.type !== TileType.PlayerStart) continue;
 
       const key = `${nx},${ny}`;

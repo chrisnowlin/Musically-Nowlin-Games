@@ -30,9 +30,34 @@ export function configurePassport() {
             .from(users)
             .where(eq(users.googleId, googleId));
 
+          console.log('Google OAuth - Profile:', { googleId, email, displayName });
+          console.log('Google OAuth - Existing user by googleId:', existing);
+
           if (existing) {
+            console.log('Google OAuth - Found existing user by googleId, logging in');
             done(null, existing);
             return;
+          }
+
+          // Fallback: check by email
+          if (email) {
+            const [existingByEmail] = await db
+              .select()
+              .from(users)
+              .where(eq(users.email, email));
+            console.log('Google OAuth - Existing user by email:', existingByEmail);
+
+            if (existingByEmail) {
+              // Update googleId to match
+              const [updated] = await db
+                .update(users)
+                .set({ googleId })
+                .where(eq(users.id, existingByEmail.id))
+                .returning();
+              console.log('Google OAuth - Updated googleId for existing user');
+              done(null, updated);
+              return;
+            }
           }
 
           // Create new user with teacher role
@@ -49,6 +74,7 @@ export function configurePassport() {
             })
             .returning();
 
+          console.log('Google OAuth - Created new user');
           done(null, newUser);
         } catch (err) {
           done(err as Error);

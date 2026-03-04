@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import { describe, it, expect } from 'vitest';
 import MelodyDungeonGame from '../MelodyDungeonGame';
 
-describe('Melody Dungeon', () => {
+describe('Da Capo Dungeon', () => {
   it('shows 100 floors to conquer in menu copy', () => {
     render(<MelodyDungeonGame />);
 

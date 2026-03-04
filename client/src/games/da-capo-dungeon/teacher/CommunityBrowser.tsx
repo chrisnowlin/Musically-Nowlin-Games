@@ -35,7 +35,7 @@ const CommunityBrowser: React.FC<Props> = ({ onLogout }) => {
           <h1 className="text-2xl font-bold text-white">Community Pools</h1>
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setLocation('/games/melody-dungeon/teacher')}
+              onClick={() => setLocation('/games/da-capo-dungeon/teacher')}
               className="text-purple-300 hover:text-purple-200 text-sm font-medium transition-colors"
             >
               Back to Dashboard
