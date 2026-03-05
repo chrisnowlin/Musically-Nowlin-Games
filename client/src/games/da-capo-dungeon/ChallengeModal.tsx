@@ -440,7 +440,10 @@ const BossBattle: React.FC<{
           poolVocabEntries={poolVocabEntries}
           poolUseDefaults={poolUseDefaults}
           onListeningChange={onListeningChange}
-          /* Boss battles are true assessments — no guided hints */
+          /* MiniBoss/BigBoss are true assessments — no guided hints.
+             Leveled enemies (multi-round regular enemies) still get guidance. */
+          learningState={tileType === TileType.MiniBoss || tileType === TileType.BigBoss ? undefined : learningState}
+          onLearningUpdate={tileType === TileType.MiniBoss || tileType === TileType.BigBoss ? undefined : onLearningUpdate}
         />
       ) : (
         <div className="py-8 text-center">
