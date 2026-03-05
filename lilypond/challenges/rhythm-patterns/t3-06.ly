@@ -2,7 +2,6 @@
 \include "../../includes/rhythm-style.ily"
 
 \new RhythmicStaff {
-  \cadenzaOn
-  \autoBeamOn
-  c4 c8[ c16 c] c4
+  \time 4/4
+  c4 c8[ c16 c] c2
 }
