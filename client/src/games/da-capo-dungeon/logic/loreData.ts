@@ -614,6 +614,14 @@ export function getMandatoryLoreLesson(floorNumber: number): LoreLesson | undefi
 }
 
 /**
+ * Get all lore lessons whose gate floors are below the given floor number.
+ * Used for quick-review when a player starts at a deeper floor.
+ */
+export function getLoreLessonsBelow(floorNumber: number): LoreLesson[] {
+  return LORE_LESSONS.filter(l => l.gateFloor < floorNumber);
+}
+
+/**
  * Pick a random optional lore lesson appropriate for the given tier.
  */
 export function getRandomOptionalLoreLesson(tier: Tier): LoreLesson {

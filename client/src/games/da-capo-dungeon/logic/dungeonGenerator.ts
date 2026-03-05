@@ -11,6 +11,7 @@ import {
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
 import { getChallengeTypesForFloor, getSubtypeChallengePool, getEnemySubtypesForFloor, getEnemyLevel, rollChallengeType } from '../challengeHelpers';
+import { LORE_GATE_FLOORS } from './loreData';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';
@@ -688,6 +689,91 @@ function generateLootFloorLayout(floorNumber: number): { grid: Tile[][]; playerS
   return { grid, playerStart, stairsPosition, treasurePositions };
 }
 
+/**
+ * Lore floor layout — a small, atmospheric library room.
+ *
+ * The player enters from the left corridor. A LoreBook sits in the center of
+ * the room — interacting with it opens the lore lesson modal. The stairs are
+ * on the far-right side so the player can skip the book and proceed directly.
+ *
+ * Layout (conceptual, scaled to dungeon size):
+ *   corridor → [pillar  book  pillar] → corridor → stairs
+ *
+ * No enemies. The room is safe and contemplative.
+ */
+function generateLoreFloorLayout(floorNumber: number): {
+  grid: Tile[][];
+  playerStart: Position;
+  stairsPosition: Position;
+  loreBookPosition: Position;
+} {
+  const { width, height } = getDungeonSize(floorNumber);
+  const grid = createEmptyGrid(width, height);
+
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
+
+  // A cozy room — smaller than other special rooms
+  const roomSize = Math.min(9, Math.max(7, Math.floor(Math.min(width, height) * 0.6)));
+  const roomStartX = Math.floor((width - roomSize) / 2);
+  const roomStartY = Math.floor((height - roomSize) / 2);
+  const roomEndX = roomStartX + roomSize - 1;
+  const roomEndY = roomStartY + roomSize - 1;
+
+  // Carve the room
+  for (let dy = 0; dy < roomSize; dy++) {
+    for (let dx = 0; dx < roomSize; dx++) {
+      const x = roomStartX + dx;
+      const y = roomStartY + dy;
+      if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
+        grid[y][x].type = TileType.Floor;
+      }
+    }
+  }
+
+  // Decorative corner pillars
+  const pillars: Position[] = [
+    { x: roomStartX + 1, y: roomStartY + 1 },
+    { x: roomEndX - 1, y: roomStartY + 1 },
+    { x: roomStartX + 1, y: roomEndY - 1 },
+    { x: roomEndX - 1, y: roomEndY - 1 },
+  ];
+  for (const pillar of pillars) {
+    if (pillar.x > 0 && pillar.x < width - 1 && pillar.y > 0 && pillar.y < height - 1) {
+      grid[pillar.y][pillar.x].type = TileType.Wall;
+    }
+  }
+
+  // Entry corridor from left
+  const entryX = 1;
+  const entryY = centerY;
+  for (let x = 1; x <= roomStartX; x++) {
+    grid[entryY][x].type = TileType.Floor;
+  }
+
+  // Exit corridor to right
+  const exitX = width - 2;
+  const exitY = centerY;
+  for (let x = roomEndX; x < width - 1; x++) {
+    grid[exitY][x].type = TileType.Floor;
+  }
+
+  // Player start
+  const playerStart: Position = { x: entryX, y: entryY };
+  grid[playerStart.y][playerStart.x].type = TileType.PlayerStart;
+
+  // Lore book in the center
+  const loreBookPosition: Position = { x: centerX, y: centerY };
+  grid[centerY][centerX].type = TileType.LoreBook;
+  grid[centerY][centerX].cleared = false;
+
+  // Stairs at the exit
+  const stairsPosition: Position = { x: exitX, y: exitY };
+  grid[stairsPosition.y][stairsPosition.x].type = TileType.Stairs;
+
+  return { grid, playerStart, stairsPosition, loreBookPosition };
+}
+
 function generateChallengeFloorLayout(floorNumber: number, hasCustomQuestions?: boolean): { 
   grid: Tile[][]; 
   playerStart: Position; 
@@ -783,7 +869,25 @@ export interface GenerateDungeonOptions {
 
 export function generateDungeon(floorNumber: number, options?: GenerateDungeonOptions): DungeonFloor {
   const bossType = getBossType(floorNumber);
-  const specialFloorType = options?.forceSpecialFloorType ?? (!bossType ? rollSpecialFloorType(floorNumber) : 'normal');
+  // Lore gate floors become lore rooms (unless a specific type is forced).
+  const isLoreGate = !options?.forceSpecialFloorType && !bossType && LORE_GATE_FLOORS.has(floorNumber);
+  const specialFloorType = options?.forceSpecialFloorType
+    ?? (isLoreGate ? 'lore' as SpecialFloorType : (!bossType ? rollSpecialFloorType(floorNumber) : 'normal'));
+
+  if (specialFloorType === 'lore') {
+    const { grid, playerStart, stairsPosition } = generateLoreFloorLayout(floorNumber);
+    const { width, height } = getDungeonSize(floorNumber);
+    return {
+      tiles: grid,
+      width,
+      height,
+      floorNumber,
+      themeIndex: getThemeIndexForFloor(floorNumber),
+      playerStart,
+      stairsPosition,
+      specialFloorType: 'lore',
+    };
+  }
 
   if (specialFloorType === 'fortune') {
     const { grid, playerStart, stairsPosition } = generateFortuneFloorLayout(floorNumber);

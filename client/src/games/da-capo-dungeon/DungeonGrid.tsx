@@ -55,6 +55,7 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.PotionShrine]: '/images/da-capo-dungeon/potion-shrine.png',
   [TileType.FortuneTeller]: '/images/da-capo-dungeon/fortune-teller.png',
   [TileType.ArenaChest]: '/images/da-capo-dungeon/arena-chest.png',
+  [TileType.LoreBook]: '/images/da-capo-dungeon/lore-book.svg',
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
@@ -100,6 +101,12 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
         floorCleared: '#3a1010',
         border: '#ef4444',
         gridLine: 'rgba(239,68,68,0.2)',
+      },
+      lore: {
+        floor: '#1a2a4a',
+        floorCleared: '#0f1a3a',
+        border: '#3b82f6',
+        gridLine: 'rgba(59,130,246,0.2)',
       },
     };
     
@@ -185,7 +192,7 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
             tile.type === TileType.Enemy ||
             tile.type === TileType.MiniBoss ||
             tile.type === TileType.BigBoss;
-          const isAnimated = isEnemy || tile.type === TileType.Merchant;
+          const isAnimated = isEnemy || tile.type === TileType.Merchant || tile.type === TileType.LoreBook;
 
           return (
             <div

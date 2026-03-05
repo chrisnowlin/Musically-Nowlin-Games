@@ -153,9 +153,10 @@ describe('Da Capo Dungeon generator placement rules', () => {
     }
   });
 
-  it('always places a merchant on floor 2', () => {
+  it('always places a merchant on floor 2 (normal layout)', () => {
     for (let i = 0; i < 50; i++) {
-      const floor = generateDungeon(2);
+      // Force normal layout since floor 2 is a lore gate floor by default
+      const floor = generateDungeon(2, { forceSpecialFloorType: 'normal' });
       const merchants = getAllPositionsByType(floor, TileType.Merchant);
       const stalls = getAllPositionsByType(floor, TileType.MerchantStall);
       expect(merchants).toHaveLength(1);

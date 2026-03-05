@@ -51,7 +51,8 @@ import { TeacherPoolProvider, useTeacherPool, poolVocabToEntries } from './Teach
 import { fetchDefaults } from './logic/useDefaultVocab';
 import { createLearningState, type LearningState } from './logic/learningState';
 import LoreModal from './LoreModal';
-import { getLoreLesson, type LoreLesson } from './logic/loreData';
+import LoreRecapModal from './LoreRecapModal';
+import { getLoreLesson, getLoreLessonsBelow, type LoreLesson } from './logic/loreData';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -170,6 +171,7 @@ const MelodyDungeonGameInner: React.FC = () => {
   const [learningState, setLearningState] = useState<LearningState>(() => createLearningState());
   const [activeLoreLesson, setActiveLoreLesson] = useState<LoreLesson | null>(null);
   const [completedLoreLessons, setCompletedLoreLessons] = useState<Set<string>>(new Set());
+  const [loreRecapLessons, setLoreRecapLessons] = useState<LoreLesson[]>([]);
   const wasGuidedRef = useRef(false);
 
   /** Wraps setLearningState to detect guided mode (System 2 gold reduction). */
@@ -585,6 +587,22 @@ const MelodyDungeonGameInner: React.FC = () => {
           setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
           moveLockedRef.current = true;
           setPhase('shopping');
+          return { ...prev, position: newPos };
+        }
+
+        // Lore Book: open the lore lesson modal (reusable, like merchant)
+        if (tile.type === TileType.LoreBook) {
+          setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
+          moveLockedRef.current = true;
+          const lesson = getLoreLesson(floorNumber);
+          if (lesson) {
+            setActiveLoreLesson(lesson);
+            pendingDescendRef.current = 0; // not descending, just reading
+            setPhase('lore');
+          } else {
+            // Fallback: no lesson for this floor — just move
+            moveLockedRef.current = false;
+          }
           return { ...prev, position: newPos };
         }
 
@@ -1134,6 +1152,16 @@ const MelodyDungeonGameInner: React.FC = () => {
     pendingDescendRef.current = 0;
     moveLockedRef.current = false;
     setPhase('playing');
+    // If starting deeper than floor 1, offer a quick lore recap
+    if (selectedStartFloor > 1) {
+      const prior = getLoreLessonsBelow(selectedStartFloor);
+      if (prior.length > 0) {
+        setLoreRecapLessons(prior);
+        moveLockedRef.current = true;
+      }
+    } else {
+      setLoreRecapLessons([]);
+    }
     playNote('C4', 0.2);
   }, [selectedStartFloor, pool]);
 
@@ -1312,18 +1340,10 @@ const MelodyDungeonGameInner: React.FC = () => {
       return;
     }
 
-    // System 3: Check for lore lesson before descending (all optional/skippable)
-    const loreLesson = getLoreLesson(floorNumber);
-    if (loreLesson && !completedLoreLessons.has(loreLesson.id)) {
-      setActiveLoreLesson(loreLesson);
-      setPhase('lore');
-      // Store the next floor number so we can descend after the lesson (or skip)
-      pendingDescendRef.current = nextFloorNum;
-      return;
-    }
-
+    // Lore lessons are now physical rooms with interactable books —
+    // no interstitial modal on descend.
     doDescend(nextFloorNum);
-  }, [floorNumber, deepestUnlocked, completedLoreLessons, doDescend]);
+  }, [floorNumber, deepestUnlocked, doDescend]);
 
   const handleLoreComplete = useCallback(() => {
     if (activeLoreLesson) {
@@ -1334,16 +1354,18 @@ const MelodyDungeonGameInner: React.FC = () => {
       });
     }
     setActiveLoreLesson(null);
-    // Descend to the floor that was pending
+    // If we were descending (quick-review on start), continue the descent
     if (pendingDescendRef.current > 0) {
       doDescend(pendingDescendRef.current);
       pendingDescendRef.current = 0;
     } else {
+      // In-room interaction — return to playing
+      moveLockedRef.current = false;
       setPhase('playing');
     }
   }, [activeLoreLesson, doDescend]);
 
-  /** Student chose to skip the lore room — mark as seen and descend immediately. */
+  /** Student chose to skip the lore lesson — mark as seen and return. */
   const handleLoreSkip = useCallback(() => {
     if (activeLoreLesson) {
       setCompletedLoreLessons(prev => {
@@ -1357,6 +1379,7 @@ const MelodyDungeonGameInner: React.FC = () => {
       doDescend(pendingDescendRef.current);
       pendingDescendRef.current = 0;
     } else {
+      moveLockedRef.current = false;
       setPhase('playing');
     }
   }, [activeLoreLesson, doDescend]);
@@ -1767,34 +1790,40 @@ const MelodyDungeonGameInner: React.FC = () => {
             showSpecialFloorBanner === 'loot' ? 'from-yellow-900/90 via-amber-800/90 to-yellow-900/90 border-yellow-400 shadow-yellow-500/30' :
             showSpecialFloorBanner === 'healing' ? 'from-emerald-900/90 via-green-800/90 to-emerald-900/90 border-emerald-400 shadow-emerald-500/30' :
             showSpecialFloorBanner === 'fortune' ? 'from-purple-900/90 via-violet-800/90 to-purple-900/90 border-purple-400 shadow-purple-500/30' :
+            showSpecialFloorBanner === 'lore' ? 'from-blue-900/90 via-indigo-800/90 to-blue-900/90 border-blue-400 shadow-blue-500/30' :
             'from-red-900/90 via-rose-800/90 to-red-900/90 border-red-400 shadow-red-500/30'
           }`}>
             <div className="text-4xl mb-1">{
               showSpecialFloorBanner === 'loot' ? '\uD83D\uDCB0' :
               showSpecialFloorBanner === 'healing' ? '\uD83E\uDDEA' :
               showSpecialFloorBanner === 'fortune' ? '\uD83D\uDD2E' :
+              showSpecialFloorBanner === 'lore' ? '\uD83D\uDCD6' :
               '\u2694\uFE0F'
             }</div>
             <h2 className={`text-2xl font-bold ${
               showSpecialFloorBanner === 'loot' ? 'text-yellow-300' :
               showSpecialFloorBanner === 'healing' ? 'text-emerald-300' :
               showSpecialFloorBanner === 'fortune' ? 'text-purple-300' :
+              showSpecialFloorBanner === 'lore' ? 'text-blue-300' :
               'text-red-300'
             }`}>{
               showSpecialFloorBanner === 'loot' ? 'Loot Floor!' :
               showSpecialFloorBanner === 'healing' ? 'Healing Sanctuary!' :
               showSpecialFloorBanner === 'fortune' ? 'Fortune Room!' :
+              showSpecialFloorBanner === 'lore' ? 'Lore Room!' :
               'Challenge Arena!'
             }</h2>
             <p className={`text-sm ${
               showSpecialFloorBanner === 'loot' ? 'text-yellow-100/80' :
               showSpecialFloorBanner === 'healing' ? 'text-emerald-100/80' :
               showSpecialFloorBanner === 'fortune' ? 'text-purple-100/80' :
+              showSpecialFloorBanner === 'lore' ? 'text-blue-100/80' :
               'text-red-100/80'
             }`}>{
               showSpecialFloorBanner === 'loot' ? 'Treasure awaits...' :
               showSpecialFloorBanner === 'healing' ? 'Rest and recover...' :
               showSpecialFloorBanner === 'fortune' ? 'Read your fortune...' :
+              showSpecialFloorBanner === 'lore' ? 'Knowledge awaits...' :
               'Defeat all enemies!'
             }</p>
           </div>
@@ -1890,6 +1919,17 @@ const MelodyDungeonGameInner: React.FC = () => {
 
       {phase === 'lore' && activeLoreLesson && (
         <LoreModal lesson={activeLoreLesson} onComplete={handleLoreComplete} onSkip={handleLoreSkip} />
+      )}
+
+      {loreRecapLessons.length > 0 && (
+        <LoreRecapModal
+          lessons={loreRecapLessons}
+          startFloor={floorNumber}
+          onClose={() => {
+            setLoreRecapLessons([]);
+            moveLockedRef.current = false;
+          }}
+        />
       )}
 
       <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />

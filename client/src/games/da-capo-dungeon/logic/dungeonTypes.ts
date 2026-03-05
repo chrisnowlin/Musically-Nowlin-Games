@@ -17,9 +17,10 @@ export enum TileType {
   PotionShrine = 'potionShrine',
   FortuneTeller = 'fortuneTeller',
   ArenaChest = 'arenaChest',
+  LoreBook = 'loreBook',
 }
 
-export type SpecialFloorType = 'normal' | 'loot' | 'healing' | 'fortune' | 'challenge';
+export type SpecialFloorType = 'normal' | 'loot' | 'healing' | 'fortune' | 'challenge' | 'lore';
 
 export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics' | 'tempo' | 'symbols' | 'terms' | 'timbre' | 'custom';
 
