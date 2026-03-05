@@ -1,11 +1,13 @@
 /**
  * LoreModal — System 3
  *
- * A multi-step teaching modal that walks the student through:
- *  1. Teach steps: concept explanation with optional details
- *  2. Practice steps: low-stakes MC questions (no HP loss, retry on wrong)
+ * A short interstitial teaching modal (2 steps: teach + practice) that
+ * appears every 4-5 floors between floor transitions. Fully optional —
+ * the student can skip at any time via the Skip button.
  *
- * Appears at tier boundary floors and optionally as random special rooms.
+ * Steps:
+ *  1. Teach step: concept explanation with optional details
+ *  2. Practice step: low-stakes MC question (no HP loss, retry on wrong)
  */
 
 import React, { useState, useCallback } from 'react';
@@ -14,9 +16,11 @@ import type { LoreLesson, LoreStep } from './logic/loreData';
 interface Props {
   lesson: LoreLesson;
   onComplete: () => void;
+  /** Called when the student skips the lore room entirely. */
+  onSkip: () => void;
 }
 
-const LoreModal: React.FC<Props> = ({ lesson, onComplete }) => {
+const LoreModal: React.FC<Props> = ({ lesson, onComplete, onSkip }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const step = lesson.steps[stepIndex];
   const isLastStep = stepIndex === lesson.steps.length - 1;
@@ -33,7 +37,15 @@ const LoreModal: React.FC<Props> = ({ lesson, onComplete }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border-2 border-blue-500 bg-gradient-to-b from-blue-950/90 to-gray-900/95 p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-4 relative">
+          {/* Skip button */}
+          <button
+            onClick={onSkip}
+            data-testid="lore-skip-btn"
+            className="absolute top-0 right-0 px-2 py-1 rounded text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-colors"
+          >
+            Skip
+          </button>
           <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50 mb-2 inline-block">
             LORE ROOM
           </span>

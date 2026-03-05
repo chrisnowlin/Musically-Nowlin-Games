@@ -51,7 +51,7 @@ import { TeacherPoolProvider, useTeacherPool, poolVocabToEntries } from './Teach
 import { fetchDefaults } from './logic/useDefaultVocab';
 import { createLearningState, type LearningState } from './logic/learningState';
 import LoreModal from './LoreModal';
-import { getMandatoryLoreLesson, type LoreLesson } from './logic/loreData';
+import { getLoreLesson, type LoreLesson } from './logic/loreData';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -1312,12 +1312,12 @@ const MelodyDungeonGameInner: React.FC = () => {
       return;
     }
 
-    // System 3: Check for mandatory lore lesson before descending
-    const loreLesson = getMandatoryLoreLesson(floorNumber);
+    // System 3: Check for lore lesson before descending (all optional/skippable)
+    const loreLesson = getLoreLesson(floorNumber);
     if (loreLesson && !completedLoreLessons.has(loreLesson.id)) {
       setActiveLoreLesson(loreLesson);
       setPhase('lore');
-      // Store the next floor number so we can descend after the lesson
+      // Store the next floor number so we can descend after the lesson (or skip)
       pendingDescendRef.current = nextFloorNum;
       return;
     }
@@ -1335,6 +1335,24 @@ const MelodyDungeonGameInner: React.FC = () => {
     }
     setActiveLoreLesson(null);
     // Descend to the floor that was pending
+    if (pendingDescendRef.current > 0) {
+      doDescend(pendingDescendRef.current);
+      pendingDescendRef.current = 0;
+    } else {
+      setPhase('playing');
+    }
+  }, [activeLoreLesson, doDescend]);
+
+  /** Student chose to skip the lore room — mark as seen and descend immediately. */
+  const handleLoreSkip = useCallback(() => {
+    if (activeLoreLesson) {
+      setCompletedLoreLessons(prev => {
+        const next = new Set(prev);
+        next.add(activeLoreLesson.id);
+        return next;
+      });
+    }
+    setActiveLoreLesson(null);
     if (pendingDescendRef.current > 0) {
       doDescend(pendingDescendRef.current);
       pendingDescendRef.current = 0;
@@ -1871,7 +1889,7 @@ const MelodyDungeonGameInner: React.FC = () => {
       )}
 
       {phase === 'lore' && activeLoreLesson && (
-        <LoreModal lesson={activeLoreLesson} onComplete={handleLoreComplete} />
+        <LoreModal lesson={activeLoreLesson} onComplete={handleLoreComplete} onSkip={handleLoreSkip} />
       )}
 
       <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
