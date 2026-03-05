@@ -55,7 +55,7 @@ const TILE_SPRITE: Partial<Record<TileType, string>> = {
   [TileType.PotionShrine]: '/images/da-capo-dungeon/potion-shrine.png',
   [TileType.FortuneTeller]: '/images/da-capo-dungeon/fortune-teller.png',
   [TileType.ArenaChest]: '/images/da-capo-dungeon/arena-chest.png',
-  [TileType.LoreBook]: '/images/da-capo-dungeon/lore-book.svg',
+  [TileType.LoreBook]: '/images/da-capo-dungeon/lore-book.png',
 };
 
 const ENEMY_SPRITE: Record<string, string> = {
