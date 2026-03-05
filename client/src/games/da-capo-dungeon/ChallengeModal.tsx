@@ -440,8 +440,7 @@ const BossBattle: React.FC<{
           poolVocabEntries={poolVocabEntries}
           poolUseDefaults={poolUseDefaults}
           onListeningChange={onListeningChange}
-          learningState={learningState}
-          onLearningUpdate={onLearningUpdate}
+          /* Boss battles are true assessments — no guided hints */
         />
       ) : (
         <div className="py-8 text-center">
