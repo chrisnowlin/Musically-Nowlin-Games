@@ -1,12 +1,16 @@
 /**
  * Lore Room Data — System 3
  *
- * Defines lesson content for Lore Rooms: short interstitial teaching moments
- * that appear between floors every 4-5 floors. All lore rooms are optional
- * (the student can skip them).
+ * Short interstitial teaching moments between floors. All are optional
+ * (skippable). Each lesson is 2 steps: 1 teach + 1 practice.
  *
- * Each lesson is short (1 teach step + 1 practice step) to keep flow moving.
- * Content leans toward previewing upcoming concepts with some review mixed in.
+ * Distribution is front-loaded for K-5 students:
+ *   T1 (floors 1-12):   5 lessons — foundational concepts
+ *   T2 (floors 13-35):  7 lessons — expanding vocabulary
+ *   T3 (floors 36-68):  6 lessons — intermediate concepts
+ *   T4-T5 (floors 69+): 3 lessons — lighter coverage for advanced students
+ *
+ * Content leans toward previewing upcoming concepts with review mixed in.
  */
 
 import type { Tier } from './dungeonTypes';
@@ -43,26 +47,51 @@ export interface LoreLesson {
   steps: LoreStep[];
 }
 
-// ── Lore Lessons ────────────────────────────────────────────
-// Placed every 4-5 floors. Each lesson is 2 steps: teach + practice.
-// Mix of preview (upcoming concepts) and review (recent concepts).
+// ═══════════════════════════════════════════════════════════════
+// T1  —  Floors 1-12  (K-1 foundations)
+// 5 lessons: every 2-3 floors
+// ═══════════════════════════════════════════════════════════════
 
 export const LORE_LESSONS: LoreLesson[] = [
-  // ── T1 zone (floors 1-12) ──────────────────────────────
 
-  // Floor 4: Review basics — voice types & beat
+  // Floor 2: Voice types — this is the very first concept students encounter
   {
-    id: 'lore-04',
-    title: 'Your Musical Voice',
-    gateFloor: 4,
+    id: 'lore-02',
+    title: 'Using Your Voice',
+    gateFloor: 2,
     targetTier: 1,
-    conceptIds: ['vocab:terms:Beat', 'vocab:terms:Melody'],
+    conceptIds: ['vocab:terms:Singer', 'vocab:terms:Song'],
     steps: [
       {
         type: 'teach',
-        heading: 'Beat and Melody',
-        body: 'Every piece of music has a beat — a steady pulse, like a heartbeat. A melody is the tune that rides on top of the beat — the part you hum or sing.',
-        detail: 'Tap your foot to the beat while you hum the melody!',
+        heading: 'Four Kinds of Voices',
+        body: 'You use different voices for different things! Your SINGING voice is for songs and music. Your SPEAKING voice is for talking normally. Your WHISPERING voice is soft and quiet. Your SHOUTING voice is loud and strong — like cheering at a game!',
+        detail: 'Think about which voice fits: a lullaby? Singing voice! A secret? Whispering voice!',
+      },
+      {
+        type: 'practice',
+        heading: 'Quick Check',
+        body: '',
+        question: 'Which voice would you use to sing "Happy Birthday"?',
+        correctAnswer: 'Singing Voice',
+        choices: ['Singing Voice', 'Speaking Voice', 'Whispering Voice', 'Shouting Voice'],
+      },
+    ],
+  },
+
+  // Floor 4: Beat and rhythm — the foundation of everything
+  {
+    id: 'lore-04',
+    title: 'The Heartbeat of Music',
+    gateFloor: 4,
+    targetTier: 1,
+    conceptIds: ['vocab:terms:Beat', 'vocab:terms:Rhythm'],
+    steps: [
+      {
+        type: 'teach',
+        heading: 'Beat and Rhythm',
+        body: 'Every piece of music has a BEAT — a steady pulse, like a heartbeat or a clock ticking. Clap along: clap-clap-clap-clap! RHYTHM is the pattern of long and short sounds that ride on top of the beat — it\'s what makes music interesting!',
+        detail: 'Try this: tap a steady beat with your foot, then clap a pattern on top!',
       },
       {
         type: 'practice',
@@ -70,24 +99,49 @@ export const LORE_LESSONS: LoreLesson[] = [
         body: '',
         question: 'What is the steady pulse in music called?',
         correctAnswer: 'The beat',
-        choices: ['The beat', 'The melody', 'The rhythm', 'The tempo'],
+        choices: ['The beat', 'The melody', 'The song', 'The singer'],
       },
     ],
   },
 
-  // Floor 8: Preview dynamics (f, p) before they show up more
+  // Floor 6: High/low + note values — both core to T1 challenges
   {
-    id: 'lore-08',
-    title: 'Loud and Soft',
-    gateFloor: 8,
+    id: 'lore-06',
+    title: 'High, Low, and Note Shapes',
+    gateFloor: 6,
     targetTier: 1,
-    conceptIds: ['vocab:dynamics:f', 'vocab:dynamics:p'],
+    conceptIds: ['vocab:terms:High', 'vocab:terms:Low', 'vocab:symbols:Quarter note'],
     steps: [
       {
         type: 'teach',
-        heading: 'Dynamics: f and p',
-        body: 'Musicians use letters to show how loud or soft to play. "f" stands for forte — play LOUD. "p" stands for piano — play SOFT. Think: "f" for "force" and "p" for "peaceful."',
-        detail: 'You\'ll see these letters under the notes on a music sheet.',
+        heading: 'High and Low Sounds',
+        body: 'Sounds can be HIGH (thin and bright, like a whistle or a bird) or LOW (deep and rumbly, like a tuba or thunder). In music, notes go higher as you move up the staff, and lower as you move down. A quarter note gets 1 beat, a half note gets 2 beats, and a whole note gets 4 beats!',
+        detail: 'The more filled-in a note looks, the shorter it lasts. A quarter note is filled in — a whole note is just an empty circle.',
+      },
+      {
+        type: 'practice',
+        heading: 'Quick Check',
+        body: '',
+        question: 'How many beats does a quarter note get?',
+        correctAnswer: '1 beat',
+        choices: ['1 beat', '2 beats', '4 beats', '3 beats'],
+      },
+    ],
+  },
+
+  // Floor 9: Loud/soft and fast/slow — dynamics and tempo basics
+  {
+    id: 'lore-09',
+    title: 'Loud, Soft, Fast, Slow',
+    gateFloor: 9,
+    targetTier: 1,
+    conceptIds: ['vocab:dynamics:f', 'vocab:dynamics:p', 'vocab:tempo:Allegro', 'vocab:tempo:Adagio'],
+    steps: [
+      {
+        type: 'teach',
+        heading: 'Dynamics and Tempo',
+        body: '"f" stands for FORTE — play LOUD! "p" stands for PIANO — play SOFT! Musicians also use words for speed: ALLEGRO means fast, and ADAGIO means slow. So music can be loud AND fast, or soft AND slow, or any mix!',
+        detail: 'Remember: "f" for "force" (loud) and "p" for "peaceful" (soft).',
       },
       {
         type: 'practice',
@@ -100,19 +154,49 @@ export const LORE_LESSONS: LoreLesson[] = [
     ],
   },
 
-  // Floor 12: Preview T2 concepts — tier boundary prep
+  // Floor 11: Treble clef + staff reading preview
   {
-    id: 'lore-12',
-    title: 'The Language of Music',
-    gateFloor: 12,
-    targetTier: 2,
-    conceptIds: ['vocab:dynamics:piano', 'vocab:dynamics:forte', 'vocab:tempo:Andante'],
+    id: 'lore-11',
+    title: 'Reading the Music Staff',
+    gateFloor: 11,
+    targetTier: 1,
+    conceptIds: ['vocab:symbols:Treble clef', 'vocab:symbols:Quarter rest'],
     steps: [
       {
         type: 'teach',
-        heading: 'Italian Words in Music',
-        body: 'Musicians use Italian words for dynamics and tempo. "Piano" means soft and "forte" means loud — together they made the word "pianoforte," the instrument that plays soft AND loud! "Andante" means walking pace.',
-        detail: 'Coming up: you\'ll learn crescendo (getting louder), decrescendo (getting softer), and more tempo markings.',
+        heading: 'The Staff and Treble Clef',
+        body: 'Music is written on 5 lines called a STAFF. The TREBLE CLEF at the beginning tells you which notes go where. The space notes spell F-A-C-E from bottom to top! A QUARTER REST means 1 beat of silence — shh!',
+        detail: 'The space notes spell a word you know: FACE! That makes them easy to remember.',
+      },
+      {
+        type: 'practice',
+        heading: 'Quick Check',
+        body: '',
+        question: 'What do the space notes on the treble clef spell?',
+        correctAnswer: 'FACE',
+        choices: ['FACE', 'BEAD', 'CAGE', 'DEAF'],
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // T2  —  Floors 13-35  (Grades 2-3)
+  // 7 lessons: every 3-4 floors
+  // ═══════════════════════════════════════════════════════════════
+
+  // Floor 14: Italian words for dynamics — preview the full words
+  {
+    id: 'lore-14',
+    title: 'Italian Words for Loud and Soft',
+    gateFloor: 14,
+    targetTier: 2,
+    conceptIds: ['vocab:dynamics:piano', 'vocab:dynamics:forte'],
+    steps: [
+      {
+        type: 'teach',
+        heading: 'Piano and Forte',
+        body: 'You know f and p — now meet the full Italian words! "Piano" means soft, and "forte" means loud. Together they made the word "pianoforte" — that\'s the full name of the piano, because it can play soft AND loud! You\'ll also see "mf" (moderately loud) and "mp" (moderately soft).',
+        detail: '"Mezzo" means "medium" — so mf and mp are the middle ground between loud and soft.',
       },
       {
         type: 'practice',
@@ -120,41 +204,37 @@ export const LORE_LESSONS: LoreLesson[] = [
         body: '',
         question: 'What does "piano" mean in music?',
         correctAnswer: 'Soft',
-        choices: ['Soft', 'Loud', 'Fast', 'The instrument only'],
+        choices: ['Soft', 'Loud', 'Medium', 'The instrument only'],
       },
     ],
   },
 
-  // ── T1→T2 transition (floors 13-18) ────────────────────
-
-  // Floor 16: Review note values + preview ties
+  // Floor 17: Note values and ties — expanding rhythmic knowledge
   {
-    id: 'lore-16',
-    title: 'Note Values',
-    gateFloor: 16,
+    id: 'lore-17',
+    title: 'Longer Notes and Ties',
+    gateFloor: 17,
     targetTier: 2,
-    conceptIds: ['vocab:symbols:Quarter note', 'vocab:symbols:Half note', 'vocab:symbols:Tied note'],
+    conceptIds: ['vocab:symbols:Half note', 'vocab:symbols:Whole note', 'vocab:symbols:Tied note'],
     steps: [
       {
         type: 'teach',
-        heading: 'How Long Notes Last',
-        body: 'A quarter note gets 1 beat, a half note gets 2 beats, and a whole note gets 4 beats. A tied note connects two notes with a curved line — you hold through both! A quarter note tied to a quarter note = 2 beats.',
-        detail: 'The more filled-in a note looks, the shorter it is.',
+        heading: 'Rests, Ties, and Eighth Notes',
+        body: 'A HALF REST is 2 beats of silence (it sits ON the line). A WHOLE REST is 4 beats of silence (it hangs UNDER the line). A TIE connects two notes of the same pitch so you hold through both. EIGHTH NOTES are fast — two of them fit in 1 beat!',
+        detail: 'Whole rest hangs down like a hole in the ground. Half rest sits up like a hat on a head!',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'How many beats does a half note get?',
-        correctAnswer: '2 beats',
-        choices: ['2 beats', '1 beat', '4 beats', '3 beats'],
+        question: 'What does a tie do?',
+        correctAnswer: 'Connects two notes to combine their durations',
+        choices: ['Connects two notes to combine their durations', 'Makes the note louder', 'Makes the note shorter', 'Adds a beat of silence'],
       },
     ],
   },
 
-  // ── T2 pure (floors 19-35) ─────────────────────────────
-
-  // Floor 20: Review crescendo/decrescendo
+  // Floor 20: Crescendo/decrescendo — getting louder and softer
   {
     id: 'lore-20',
     title: 'Getting Louder and Softer',
@@ -165,33 +245,33 @@ export const LORE_LESSONS: LoreLesson[] = [
       {
         type: 'teach',
         heading: 'Crescendo and Decrescendo',
-        body: 'A crescendo means gradually getting LOUDER — like a wave building. A decrescendo means gradually getting SOFTER — like a wave fading away. They look like long hairpin shapes in the music: < for louder, > for softer.',
-        detail: 'Think: the opening < grows bigger = crescendo (louder).',
+        body: 'A CRESCENDO means gradually getting LOUDER — like a wave building. A DECRESCENDO means gradually getting SOFTER — like a wave fading. They look like long hairpin shapes in the music: < for louder, > for softer.',
+        detail: 'The opening < gets bigger = crescendo (louder). The closing > gets smaller = decrescendo (softer).',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'What does a crescendo tell you to do?',
+        question: 'What does a crescendo mean?',
         correctAnswer: 'Gradually get louder',
         choices: ['Gradually get louder', 'Gradually get softer', 'Play very fast', 'Stop playing'],
       },
     ],
   },
 
-  // Floor 25: Preview time signatures
+  // Floor 23: Time signatures — how we count beats
   {
-    id: 'lore-25',
-    title: 'Counting Beats',
-    gateFloor: 25,
+    id: 'lore-23',
+    title: 'Counting Beats in a Measure',
+    gateFloor: 23,
     targetTier: 2,
     conceptIds: ['vocab:symbols:Time signature 4/4', 'vocab:symbols:Time signature 3/4'],
     steps: [
       {
         type: 'teach',
         heading: 'Time Signatures',
-        body: 'The two numbers at the start of music tell you how to count. 4/4 means 4 beats per measure — count: 1-2-3-4. 3/4 means 3 beats per measure — count: 1-2-3, like a waltz!',
-        detail: 'The top number = how many beats. The bottom number = which note gets 1 beat.',
+        body: 'Two numbers at the start of music tell you how to count. 4/4 means 4 beats per measure — count 1-2-3-4, 1-2-3-4. 3/4 means 3 beats per measure — count 1-2-3, 1-2-3. That\'s a waltz! The top number = how many beats. The bottom = which note gets 1 beat.',
+        detail: 'Most music you hear is in 4/4 time. "Happy Birthday" is in 3/4 time!',
       },
       {
         type: 'practice',
@@ -204,44 +284,99 @@ export const LORE_LESSONS: LoreLesson[] = [
     ],
   },
 
-  // Floor 30: Review tempo terms + preview more
+  // Floor 26: Tempo terms — speeding up and slowing down
   {
-    id: 'lore-30',
+    id: 'lore-26',
     title: 'The Speed of Music',
-    gateFloor: 30,
+    gateFloor: 26,
     targetTier: 2,
-    conceptIds: ['vocab:tempo:Ritardando', 'vocab:tempo:Accelerando'],
+    conceptIds: ['vocab:tempo:Andante', 'vocab:tempo:Moderato', 'vocab:tempo:Ritardando'],
     steps: [
       {
         type: 'teach',
-        heading: 'Speeding Up and Slowing Down',
-        body: 'Ritardando (rit.) means gradually slowing down — like gently pressing the brakes. Accelerando (accel.) means gradually speeding up — like pressing the gas pedal. Remember: "r" for ritardando and "reduce speed."',
-        detail: 'Allegro = fast, Adagio = slow, Andante = walking pace, Moderato = moderate.',
+        heading: 'More Tempo Words',
+        body: 'ANDANTE means walking pace — not too fast, not too slow. MODERATO means moderate speed. RITARDANDO (rit.) means gradually slow down — like gently pressing the brakes. ACCELERANDO (accel.) means gradually speed up — like pressing the gas!',
+        detail: 'Remember: "rit." for ritardando starts with "r" like "reduce speed."',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'What does "Ritardando" tell a musician to do?',
-        correctAnswer: 'Gradually slow down',
-        choices: ['Gradually slow down', 'Gradually speed up', 'Play very loud', 'Repeat the section'],
+        question: 'What does "Andante" mean?',
+        correctAnswer: 'Walking pace',
+        choices: ['Walking pace', 'Very fast', 'Very slow', 'Extremely loud'],
       },
     ],
   },
 
-  // Floor 35: Preview T3 concepts — accidentals
+  // Floor 29: Staccato, legato, and musical form
   {
-    id: 'lore-35',
-    title: 'Sharps, Flats, and Naturals',
-    gateFloor: 35,
+    id: 'lore-29',
+    title: 'Smooth, Bouncy, and Song Shapes',
+    gateFloor: 29,
+    targetTier: 2,
+    conceptIds: ['vocab:terms:Staccato', 'vocab:terms:Legato', 'vocab:terms:AB form'],
+    steps: [
+      {
+        type: 'teach',
+        heading: 'Staccato, Legato, and Form',
+        body: 'STACCATO means notes played short and bouncy — like popping popcorn. LEGATO means notes played smooth and connected — like pouring honey. Music also has FORM — a shape or pattern. AB form has two different sections. ABA form goes: first part, new part, first part again!',
+        detail: 'Think of a sandwich: ABA form is like bread-filling-bread!',
+      },
+      {
+        type: 'practice',
+        heading: 'Quick Check',
+        body: '',
+        question: 'What does "staccato" mean?',
+        correctAnswer: 'Short and detached',
+        choices: ['Short and detached', 'Smooth and connected', 'Very loud', 'Very fast'],
+      },
+    ],
+  },
+
+  // Floor 33: Steps and skips + staff review — preview intervals for T2
+  {
+    id: 'lore-33',
+    title: 'Steps and Skips',
+    gateFloor: 33,
+    targetTier: 2,
+    conceptIds: ['interval:stepSkip:Step', 'interval:stepSkip:Skip'],
+    steps: [
+      {
+        type: 'teach',
+        heading: 'How Notes Move',
+        body: 'Notes can move by STEP (to the very next note, like C to D) or by SKIP (jumping over a note, like C to E). Steps sound close together, skips sound further apart. You can also hear if a second note is HIGHER, LOWER, or the SAME as the first.',
+        detail: 'Think of stairs: a step is one stair, a skip is two stairs at once!',
+      },
+      {
+        type: 'practice',
+        heading: 'Quick Check',
+        body: '',
+        question: 'C to E (jumping over D) is what kind of movement?',
+        correctAnswer: 'A skip',
+        choices: ['A skip', 'A step', 'The same note', 'A rest'],
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // T3  —  Floors 36-68  (Grades 4-5)
+  // 6 lessons: every 5-6 floors
+  // ═══════════════════════════════════════════════════════════════
+
+  // Floor 37: Accidentals — sharps and flats preview
+  {
+    id: 'lore-37',
+    title: 'Sharps and Flats',
+    gateFloor: 37,
     targetTier: 3,
     conceptIds: ['vocab:symbols:Sharp', 'vocab:symbols:Flat', 'vocab:symbols:Natural'],
     steps: [
       {
         type: 'teach',
         heading: 'Accidentals',
-        body: 'A sharp (#) raises a note by a half step — one key to the right on a piano. A flat (b) lowers a note by a half step — one key to the left. A natural cancels any sharp or flat, returning to the plain note.',
-        detail: 'Think: sharp edge points UP, flat tire goes DOWN.',
+        body: 'A SHARP (#) raises a note by a half step — one key to the right on a piano. A FLAT (b) lowers a note by a half step — one key to the left. A NATURAL cancels any sharp or flat. Together, sharps, flats, and naturals are called ACCIDENTALS.',
+        detail: 'Think: sharp edge points UP (raises the note), flat tire goes DOWN (lowers the note).',
       },
       {
         type: 'practice',
@@ -254,48 +389,19 @@ export const LORE_LESSONS: LoreLesson[] = [
     ],
   },
 
-  // ── T2→T3 transition (floors 36-42) ────────────────────
-
-  // Floor 40: Review intervals + preview key signatures
+  // Floor 42: Dynamic levels — pp, ff, and ordering
   {
-    id: 'lore-40',
-    title: 'Steps and Skips',
-    gateFloor: 40,
+    id: 'lore-42',
+    title: 'The Full Dynamic Range',
+    gateFloor: 42,
     targetTier: 3,
-    conceptIds: ['interval:stepSkip:Step', 'interval:stepSkip:Skip', 'vocab:symbols:Key signature'],
+    conceptIds: ['vocab:dynamics:pp', 'vocab:dynamics:ff', 'vocab:dynamics:mp'],
     steps: [
       {
         type: 'teach',
-        heading: 'Steps, Skips, and Key Signatures',
-        body: 'A step moves to the very next note (C to D). A skip jumps over one (C to E). Coming up: key signatures — the sharps or flats at the start of a staff that apply to the whole piece, so you don\'t have to write them on every note.',
-        detail: 'Think of stairs: a step is one stair, a skip is two.',
-      },
-      {
-        type: 'practice',
-        heading: 'Quick Check',
-        body: '',
-        question: 'What is a key signature?',
-        correctAnswer: 'Sharps or flats at the start of a staff',
-        choices: ['Sharps or flats at the start of a staff', 'A clef at the start', 'The tempo marking', 'The title of the piece'],
-      },
-    ],
-  },
-
-  // ── T3 pure (floors 43-68) ─────────────────────────────
-
-  // Floor 45: Preview dynamics ordering
-  {
-    id: 'lore-45',
-    title: 'Dynamic Levels',
-    gateFloor: 45,
-    targetTier: 3,
-    conceptIds: ['vocab:dynamics:pp', 'vocab:dynamics:ff'],
-    steps: [
-      {
-        type: 'teach',
-        heading: 'The Full Dynamic Range',
-        body: 'Beyond f and p, there are more levels: pp (pianissimo) = very soft, ff (fortissimo) = very loud, mp (mezzo-piano) = moderately soft, mf (mezzo-forte) = moderately loud. From softest to loudest: pp, p, mp, mf, f, ff.',
-        detail: '"Mezzo" means "medium" in Italian — so mp and mf are the middle ground.',
+        heading: 'From Very Soft to Very Loud',
+        body: 'Beyond f and p, there are more levels! pp (pianissimo) = very soft. ff (fortissimo) = very loud. mp (mezzo-piano) = moderately soft. mf (mezzo-forte) = moderately loud. The full order from softest to loudest: pp, p, mp, mf, f, ff.',
+        detail: '"Pianissimo" = very very soft (double piano). "Fortissimo" = very very loud (double forte).',
       },
       {
         type: 'practice',
@@ -303,24 +409,24 @@ export const LORE_LESSONS: LoreLesson[] = [
         body: '',
         question: 'What does "pp" mean?',
         correctAnswer: 'Very soft',
-        choices: ['Very soft', 'Very loud', 'Moderately loud', 'Moderately soft'],
+        choices: ['Very soft', 'Very loud', 'Moderately soft', 'Moderately loud'],
       },
     ],
   },
 
-  // Floor 50: Review dotted rhythms + preview fermata
+  // Floor 48: Dotted notes, fermata, and repeat signs
   {
-    id: 'lore-50',
-    title: 'Dots and Holds',
-    gateFloor: 50,
+    id: 'lore-48',
+    title: 'Dots, Holds, and Repeats',
+    gateFloor: 48,
     targetTier: 3,
-    conceptIds: ['vocab:symbols:Dotted quarter note', 'vocab:symbols:Fermata'],
+    conceptIds: ['vocab:symbols:Dotted quarter note', 'vocab:symbols:Fermata', 'vocab:symbols:Repeat sign'],
     steps: [
       {
         type: 'teach',
-        heading: 'Dotted Notes and Fermatas',
-        body: 'A dot after a note adds half its value. A dotted quarter note = 1.5 beats (1 + 0.5). A fermata is a symbol that means "hold this note longer than written" — the performer decides how long. It looks like an eye or a bird above the note.',
-        detail: 'Dots make notes longer by 50%. A dotted half note = 3 beats (2 + 1).',
+        heading: 'Special Note Symbols',
+        body: 'A DOT after a note adds half its value. A dotted quarter note = 1.5 beats (1 + 0.5). A FERMATA means "hold this note longer than written" — the performer decides how long! A REPEAT SIGN means go back and play that section again.',
+        detail: 'The fermata looks like a little eye above the note. When you see it, hold and listen!',
       },
       {
         type: 'practice',
@@ -333,19 +439,19 @@ export const LORE_LESSONS: LoreLesson[] = [
     ],
   },
 
-  // Floor 56: Review tempo terms at T3
+  // Floor 53: More tempo + syncopation
   {
-    id: 'lore-56',
-    title: 'More Tempo Markings',
-    gateFloor: 56,
+    id: 'lore-53',
+    title: 'Fast, Slow, and Surprising Rhythms',
+    gateFloor: 53,
     targetTier: 3,
-    conceptIds: ['vocab:tempo:Presto', 'vocab:tempo:Largo'],
+    conceptIds: ['vocab:tempo:Presto', 'vocab:tempo:Largo', 'vocab:terms:Syncopation'],
     steps: [
       {
         type: 'teach',
-        heading: 'Fast and Slow Tempos',
-        body: 'Presto means very fast — think of a magician saying "presto!" Largo means very slow and broad. Vivace means lively and fast. From slowest to fastest: Largo, Adagio, Andante, Moderato, Allegretto, Allegro, Vivace, Presto.',
-        detail: 'A useful trick: "Largo" sounds like "large" — taking big, slow steps.',
+        heading: 'Extreme Tempos and Syncopation',
+        body: 'PRESTO means very fast — think of a magician saying "presto!" LARGO means very slow and broad. SYNCOPATION means putting emphasis on unexpected beats — it makes music feel jazzy and surprising, like clapping on beats 2 and 4 instead of 1 and 3!',
+        detail: '"Largo" sounds like "large" — taking big, slow, heavy steps.',
       },
       {
         type: 'practice',
@@ -358,148 +464,124 @@ export const LORE_LESSONS: LoreLesson[] = [
     ],
   },
 
-  // Floor 62: Preview repeats and form
+  // Floor 58: Timbre and call-and-response
   {
-    id: 'lore-62',
-    title: 'Repeat and Form',
-    gateFloor: 62,
+    id: 'lore-58',
+    title: 'The Color of Sound',
+    gateFloor: 58,
     targetTier: 3,
-    conceptIds: ['vocab:symbols:Repeat sign', 'vocab:symbols:Time signature 6/8'],
+    conceptIds: ['vocab:terms:Timbre', 'vocab:terms:Call and response'],
     steps: [
       {
         type: 'teach',
-        heading: 'Repeat Signs and 6/8 Time',
-        body: 'A repeat sign tells you to go back and play a section again — it looks like a double bar with two dots. 6/8 time has 6 eighth-note beats per measure, usually felt in 2 groups of 3: ONE-two-three-FOUR-five-six.',
-        detail: '6/8 time feels different from 3/4 even though both have the same total note value per measure.',
+        heading: 'Timbre and Call-and-Response',
+        body: 'TIMBRE (say "TAM-ber") is the unique color or quality of a sound — it\'s why a violin and a trumpet playing the same note sound different. CALL AND RESPONSE is when one group performs a phrase, then another group answers back — like a musical conversation!',
+        detail: 'Think: a flute sounds bright and airy, a cello sounds warm and deep. Same note, different timbre!',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'What does a repeat sign tell you to do?',
-        correctAnswer: 'Go back and play the section again',
-        choices: ['Go back and play the section again', 'Play louder', 'Speed up', 'Skip to the end'],
+        question: 'What is timbre?',
+        correctAnswer: 'The unique quality or color of a sound',
+        choices: ['The unique quality or color of a sound', 'How loud a sound is', 'How fast the music goes', 'The number of beats per measure'],
       },
     ],
   },
 
-  // Floor 68: Preview T4 concepts — instruments and triplets
+  // Floor 64: Key signatures and 6/8 time
   {
-    id: 'lore-68',
-    title: 'Instruments and Triplets',
-    gateFloor: 68,
-    targetTier: 4,
-    conceptIds: ['vocab:symbols:Triplet', 'vocab:symbols:Bass clef'],
+    id: 'lore-64',
+    title: 'Keys and Compound Time',
+    gateFloor: 64,
+    targetTier: 3,
+    conceptIds: ['vocab:symbols:Key signature', 'vocab:symbols:Time signature 6/8'],
     steps: [
       {
         type: 'teach',
-        heading: 'Triplets and the Bass Clef',
-        body: 'A triplet squeezes 3 notes into the space of 2 — say "trip-o-let" to feel the rhythm. The bass clef marks the lower-pitched staff. Its line notes spell "Good Boys Do Fine Always" (G, B, D, F, A).',
-        detail: 'Coming up: you\'ll learn to identify instruments by their sound family — strings, woodwinds, brass, and percussion.',
+        heading: 'Key Signatures and 6/8 Time',
+        body: 'A KEY SIGNATURE is the group of sharps or flats at the very beginning of a staff — they apply to the whole piece so you don\'t have to write them on every note! 6/8 TIME has 6 eighth-note beats per measure, usually felt in 2 groups of 3: ONE-two-three-FOUR-five-six.',
+        detail: '6/8 time often sounds like a rocking boat or a jig!',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'How many notes does a triplet squeeze into the space of 2?',
-        correctAnswer: '3',
-        choices: ['3', '2', '4', '6'],
+        question: 'What is a key signature?',
+        correctAnswer: 'Sharps or flats at the beginning of a staff',
+        choices: ['Sharps or flats at the beginning of a staff', 'The tempo marking', 'The title of the piece', 'The clef symbol'],
       },
     ],
   },
 
-  // ── T3→T4 transition (floors 69-75) ────────────────────
+  // ═══════════════════════════════════════════════════════════════
+  // T4-T5  —  Floors 69-100  (Grades 6-8 / HS)
+  // 3 lessons: lighter coverage
+  // ═══════════════════════════════════════════════════════════════
 
-  // Floor 73: Review accidentals + preview D.S. and Coda
+  // Floor 72: Instrument families and bass clef
   {
-    id: 'lore-73',
-    title: 'Navigation Symbols',
-    gateFloor: 73,
-    targetTier: 4,
-    conceptIds: ['vocab:symbols:D.S. (Dal Segno)', 'vocab:symbols:Coda'],
-    steps: [
-      {
-        type: 'teach',
-        heading: 'D.S. and Coda',
-        body: 'D.S. (Dal Segno) means "from the sign" — go back to a special marker in the music. Coda means "tail" — it\'s the ending section. When you see "D.S. al Coda," go back to the sign, play until you see "To Coda," then jump to the Coda to finish.',
-        detail: 'Think of it like a treasure map: the sign marks where to go back, and the coda is the X that marks the end.',
-      },
-      {
-        type: 'practice',
-        heading: 'Quick Check',
-        body: '',
-        question: 'What does "D.S." tell you to do?',
-        correctAnswer: 'Go back to the sign',
-        choices: ['Go back to the sign', 'Play louder', 'Play the coda', 'Repeat from the beginning'],
-      },
-    ],
-  },
-
-  // ── T4 pure (floors 76-88) ─────────────────────────────
-
-  // Floor 78: Review instrument families
-  {
-    id: 'lore-78',
+    id: 'lore-72',
     title: 'Instrument Families',
-    gateFloor: 78,
+    gateFloor: 72,
     targetTier: 4,
-    conceptIds: ['vocab:terms:Instrument'],
+    conceptIds: ['vocab:symbols:Bass clef', 'vocab:symbols:Triplet'],
     steps: [
       {
         type: 'teach',
-        heading: 'The Four Families',
-        body: 'Every orchestra instrument belongs to a family. Strings vibrate strings (violin, cello, guitar). Woodwinds use air and reeds (flute, clarinet, oboe). Brass instruments buzz lips into a mouthpiece (trumpet, trombone, horn). Percussion is struck or shaken (drums, xylophone, cymbals).',
-        detail: 'Listen for brightness (brass), warmth (strings), breathiness (woodwinds), or sharp attacks (percussion).',
+        heading: 'Four Families and the Bass Clef',
+        body: 'Every orchestra instrument belongs to a family. STRINGS vibrate strings (violin, cello). WOODWINDS use air (flute, clarinet). BRASS buzzes lips (trumpet, trombone). PERCUSSION is struck or shaken (drums, xylophone). The BASS CLEF marks the lower-pitched staff — its line notes spell "Good Boys Do Fine Always."',
+        detail: 'A TRIPLET squeezes 3 notes into the space of 2. Say "trip-o-let" to feel the rhythm!',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'Which instrument family uses reeds or air to make sound?',
+        question: 'Which family uses reeds or air to make sound?',
         correctAnswer: 'Woodwinds',
         choices: ['Woodwinds', 'Brass', 'Strings', 'Percussion'],
       },
     ],
   },
 
-  // Floor 83: Review ties vs slurs + preview accents
+  // Floor 82: Navigation symbols (D.S., Coda)
   {
-    id: 'lore-83',
-    title: 'Ties, Slurs, and Accents',
-    gateFloor: 83,
+    id: 'lore-82',
+    title: 'Musical Navigation',
+    gateFloor: 82,
     targetTier: 4,
-    conceptIds: ['vocab:symbols:Tie vs Slur', 'vocab:symbols:Accent'],
+    conceptIds: ['vocab:symbols:D.S. (Dal Segno)', 'vocab:symbols:Coda'],
     steps: [
       {
         type: 'teach',
-        heading: 'Ties vs Slurs and Accents',
-        body: 'A tie connects two notes of the SAME pitch — hold through both. A slur connects DIFFERENT pitches — play them smoothly connected. An accent (>) means emphasize that note — give it extra punch. A marcato (^) is even stronger.',
-        detail: 'Same pitch = tie (one long note). Different pitches = slur (smooth connection).',
+        heading: 'D.S. and Coda',
+        body: 'D.S. (Dal Segno) means "from the sign" — jump back to a special marker. CODA means "tail" — it\'s the ending section. When you see "D.S. al Coda," go back to the sign, play until you see "To Coda," then jump to the ending.',
+        detail: 'Think of it like a treasure map: the sign marks where to go back, and the coda is the X at the end.',
       },
       {
         type: 'practice',
         heading: 'Quick Check',
         body: '',
-        question: 'What is the difference between a tie and a slur?',
-        correctAnswer: 'A tie connects same pitches; a slur connects different pitches',
-        choices: ['A tie connects same pitches; a slur connects different pitches', 'A tie is louder than a slur', 'They are the same thing', 'A slur connects same pitches; a tie connects different pitches'],
+        question: 'What does "D.S." mean?',
+        correctAnswer: 'Go back to the sign',
+        choices: ['Go back to the sign', 'Play louder', 'Play the ending', 'Repeat from the beginning'],
       },
     ],
   },
 
-  // Floor 88: Preview T5 concepts — ornaments
+  // Floor 92: Ornaments preview for T5
   {
-    id: 'lore-88',
-    title: 'Advanced Notation',
-    gateFloor: 88,
+    id: 'lore-92',
+    title: 'Ornaments and Expression',
+    gateFloor: 92,
     targetTier: 5,
     conceptIds: ['vocab:symbols:Trill', 'vocab:tempo:Rubato'],
     steps: [
       {
         type: 'teach',
-        heading: 'Ornaments and Rubato',
-        body: 'A trill (tr) rapidly alternates between two adjacent notes — like a bird singing. A mordent is a quick "wiggle" to the note below and back. Rubato means "stolen time" — the performer speeds up and slows down expressively, bending the tempo.',
-        detail: 'Coming up: grace notes (quick decorative notes), 8va (play an octave higher), and more!',
+        heading: 'Trills and Rubato',
+        body: 'A TRILL (tr) rapidly alternates between two adjacent notes — like a bird singing. RUBATO means "stolen time" — the performer flexes the tempo, speeding up and slowing down expressively. A GRACE NOTE is a tiny quick ornamental note played just before the main note.',
+        detail: 'Advanced performers use rubato and ornaments to make music feel personal and alive.',
       },
       {
         type: 'practice',
@@ -508,60 +590,6 @@ export const LORE_LESSONS: LoreLesson[] = [
         question: 'What is a trill?',
         correctAnswer: 'Rapid alternation between two adjacent notes',
         choices: ['Rapid alternation between two adjacent notes', 'A very slow tempo', 'Playing very loudly', 'A type of rest'],
-      },
-    ],
-  },
-
-  // ── T4→T5 transition (floors 89-94) ────────────────────
-
-  // Floor 92: Review complex tempo terms
-  {
-    id: 'lore-92',
-    title: 'Tempo Mastery',
-    gateFloor: 92,
-    targetTier: 5,
-    conceptIds: ['vocab:tempo:Grave', 'vocab:tempo:Prestissimo'],
-    steps: [
-      {
-        type: 'teach',
-        heading: 'Extreme Tempos',
-        body: 'Grave means very slow and solemn — the slowest standard tempo. Prestissimo means extremely fast — as fast as it gets! "A tempo" means go back to the previous speed, and "Tempo primo" means return to the very first tempo of the piece.',
-        detail: 'Full tempo order: Grave, Largo, Lento, Adagio, Andante, Moderato, Allegretto, Allegro, Vivace, Presto, Prestissimo.',
-      },
-      {
-        type: 'practice',
-        heading: 'Quick Check',
-        body: '',
-        question: 'Which is the fastest standard tempo marking?',
-        correctAnswer: 'Prestissimo',
-        choices: ['Prestissimo', 'Presto', 'Vivace', 'Allegro'],
-      },
-    ],
-  },
-
-  // ── T5 pure (floors 95-100) ─────────────────────────────
-
-  // Floor 96: Review ornaments + preview advanced symbols
-  {
-    id: 'lore-96',
-    title: 'The Final Frontier',
-    gateFloor: 96,
-    targetTier: 5,
-    conceptIds: ['vocab:symbols:Grace note', 'vocab:symbols:8va'],
-    steps: [
-      {
-        type: 'teach',
-        heading: 'Grace Notes and Octave Signs',
-        body: 'A grace note is a tiny, quick ornamental note played just before the main note — like a musical springboard. 8va means "play one octave higher than written" and 8vb means "play one octave lower." These save space by avoiding lots of ledger lines.',
-        detail: 'You\'ve mastered nearly everything! These final concepts round out professional-level notation reading.',
-      },
-      {
-        type: 'practice',
-        heading: 'Quick Check',
-        body: '',
-        question: 'What does 8va mean?',
-        correctAnswer: 'Play one octave higher',
-        choices: ['Play one octave higher', 'Play one octave lower', 'Play 8 times', 'Play very fast'],
       },
     ],
   },
