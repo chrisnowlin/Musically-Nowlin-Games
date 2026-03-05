@@ -473,7 +473,7 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
     tileType === TileType.MiniBoss ||
     tileType === TileType.BigBoss;
 
-  const tier = overrideTier ?? rollTier(floorNumber);
+  const tier = useMemo(() => overrideTier ?? rollTier(floorNumber), [overrideTier, floorNumber]);
   const headerSprite = !isMultiRound ? getEncounterSprite(tileType, enemySubtype, floorNumber) : null;
 
   const [ghostSwapped, setGhostSwapped] = useState(false);

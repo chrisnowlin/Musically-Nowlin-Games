@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
 import { type VocabCategory, type VocabEntry } from '../logic/vocabData';
 import { useDefaultVocab, getAllDefaultVocabEntriesSync } from '../logic/useDefaultVocab';
@@ -170,7 +170,10 @@ type ChallengeData = StandardChallengeData | OppositesChallengeData | OrderingCh
 
 const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEntries, useDefaults, learningState, onLearningUpdate, floorNumber }) => {
   const apiDefaults = useDefaultVocab();
-  
+
+  // Snapshot learning state at mount — prevents challenge rebuild when state updates mid-challenge
+  const initialLearningStateRef = useRef(learningState);
+
   const entries = useMemo(() => {
     const builtIn = (useDefaults !== false)
       ? apiDefaults.filter((e: VocabEntry) => e.category === category && e.tier <= tier)
@@ -196,11 +199,15 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEn
 
     const chosen = formats[Math.floor(Math.random() * formats.length)];
 
-    if (chosen === 'opposites') return buildOppositesChallenge(oppEntries, learningState, category);
+    // Use the initial learning state snapshot so the challenge isn't rebuilt
+    // when learningState updates mid-challenge (e.g. guided mode marking seen)
+    const ls = initialLearningStateRef.current;
+    if (chosen === 'opposites') return buildOppositesChallenge(oppEntries, ls, category);
     if (chosen === 'ordering') return buildOrderingChallenge(ordEntries);
-    if (chosen === 'scenario') return buildScenarioChallenge(scenEntries, learningState);
-    return buildStandardChallenge(entries, stdEntries.length > 0 ? stdEntries : entries, learningState, floorNumber, category);
-  }, [entries, learningState, floorNumber, category]);
+    if (chosen === 'scenario') return buildScenarioChallenge(scenEntries, ls);
+    return buildStandardChallenge(entries, stdEntries.length > 0 ? stdEntries : entries, ls, floorNumber, category);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, floorNumber, category]);
 
   if (challenge.format === 'opposites') {
     return <OppositesView challenge={challenge} theme={theme} onResult={onResult} category={category} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;

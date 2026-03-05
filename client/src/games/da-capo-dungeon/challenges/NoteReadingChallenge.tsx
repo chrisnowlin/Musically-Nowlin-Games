@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
 import { getNoteReadingParams } from '../logic/difficultyAdapter';
 import { playNote, noteKeyToName } from '../dungeonAudio';
@@ -32,6 +32,9 @@ const NoteReadingChallenge: React.FC<Props> = ({ tier, onResult, learningState, 
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [isGuided, setIsGuided] = useState(false);
 
+  // Snapshot learning state at mount — prevents note re-pick when state updates mid-challenge
+  const initialLearningStateRef = useRef(learningState);
+
   useEffect(() => {
     let clef: 'treble' | 'bass' = 'treble';
     let notePool = params.notes;
@@ -47,13 +50,14 @@ const NoteReadingChallenge: React.FC<Props> = ({ tier, onResult, learningState, 
 
     setActiveClef(clef);
 
-    // System 5: weighted selection
+    // System 5: weighted selection (use initial snapshot to avoid rebuild)
+    const ls = initialLearningStateRef.current;
     let note: string;
-    if (learningState && floorNumber !== undefined) {
+    if (ls && floorNumber !== undefined) {
       note = weightedPick(
         notePool,
         (n) => noteReadingConceptId(clef, n),
-        learningState,
+        ls,
         floorNumber,
       );
     } else {
@@ -63,14 +67,15 @@ const NoteReadingChallenge: React.FC<Props> = ({ tier, onResult, learningState, 
     setTargetNote(note);
 
     // System 2: guided check
-    if (learningState) {
+    if (ls) {
       const conceptId = noteReadingConceptId(clef, note);
-      setIsGuided(shouldGuide(learningState, conceptId));
+      setIsGuided(shouldGuide(ls, conceptId));
     }
 
     const timer = setTimeout(() => playNote(note), 300);
     return () => clearTimeout(timer);
-  }, [params.notes, params.mode, learningState, floorNumber]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.notes, params.mode, floorNumber]);
 
   const conceptId = noteReadingConceptId(activeClef, targetNote);
   const noteName = noteKeyToName(targetNote);
