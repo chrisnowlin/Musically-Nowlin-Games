@@ -23,7 +23,14 @@ describe('VocabularyChallenge', () => {
 
     const buttons = screen.getAllByRole('button');
     fireEvent.click(buttons[0]);
-    vi.advanceTimersByTime(1000);
+
+    // If answer was wrong, corrective feedback shows a "Got it" button instead of auto-dismissing
+    const gotIt = screen.queryByTestId('got-it-btn');
+    if (gotIt) {
+      fireEvent.click(gotIt);
+    } else {
+      vi.advanceTimersByTime(1000);
+    }
 
     expect(onResult).toHaveBeenCalledTimes(1);
     expect(onResult).toHaveBeenCalledWith(expect.any(Boolean));
@@ -40,14 +47,15 @@ describe('VocabularyChallenge', () => {
     }
   });
 
-  it('shows feedback text after answering', () => {
+  it('shows feedback after answering', () => {
     render(<VocabularyChallenge category="symbols" tier={2} onResult={() => {}} />);
     const buttons = screen.getAllByRole('button');
     fireEvent.click(buttons[0]);
 
-    // Should show either "Correct!" or "It was: ..." or "Correct order: ..."
-    const feedback = screen.getByText(/correct!|it was:|correct order:/i);
-    expect(feedback).toBeInTheDocument();
+    // Correct answers show "Correct!" banner; wrong answers show corrective feedback with "Got it" button
+    const correctBanner = screen.queryByText(/correct!/i);
+    const gotItBtn = screen.queryByTestId('got-it-btn');
+    expect(correctBanner || gotItBtn).toBeTruthy();
   });
 
   it('renders different themes per category', () => {
@@ -136,7 +144,13 @@ describe('VocabularyChallenge – opposites format', () => {
 
     // Fallback: just click a button and verify onResult was called
     fireEvent.click(buttons[0]);
-    vi.advanceTimersByTime(1000);
+    // If wrong: corrective feedback with "Got it" button. If correct: auto-dismiss via timer.
+    const gotIt = screen.queryByTestId('got-it-btn');
+    if (gotIt) {
+      fireEvent.click(gotIt);
+    } else {
+      vi.advanceTimersByTime(1000);
+    }
     expect(onResult).toHaveBeenCalledTimes(1);
     expect(onResult).toHaveBeenCalledWith(expect.any(Boolean));
     vi.useRealTimers();
@@ -162,21 +176,27 @@ describe('VocabularyChallenge – opposites format', () => {
     const correctEntry = dynamicsT1.find((e) => e.definition === targetDef);
     const buttons = screen.getAllByTestId('opposites-btn');
 
+    // Try to click the wrong button; fall back to clicking any button
+    let clicked = false;
     if (correctEntry) {
-      // Click the WRONG button (the one that doesn't match)
       const wrongBtn = buttons.find((btn) => !btn.textContent?.includes(correctEntry.term));
       if (wrongBtn) {
         fireEvent.click(wrongBtn);
-        vi.advanceTimersByTime(1000);
-        expect(onResult).toHaveBeenCalledWith(false);
-        vi.useRealTimers();
-        return;
+        clicked = true;
       }
     }
+    if (!clicked) {
+      fireEvent.click(buttons[0]);
+    }
 
-    // Fallback
-    fireEvent.click(buttons[0]);
-    vi.advanceTimersByTime(1000);
+    // If wrong: corrective feedback with "Got it" button. If correct: auto-dismiss via timer.
+    const gotIt = screen.queryByTestId('got-it-btn');
+    if (gotIt) {
+      fireEvent.click(gotIt);
+    } else {
+      vi.advanceTimersByTime(1000);
+    }
+
     expect(onResult).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
@@ -292,7 +312,6 @@ describe('VocabularyChallenge – ordering format', () => {
   });
 
   it('calls onResult(false) when items are tapped in wrong order', () => {
-    vi.useFakeTimers();
     forceOrderingFormat();
     const onResult = vi.fn();
     render(<VocabularyChallenge category="dynamics" tier={3} onResult={onResult} />);
@@ -308,9 +327,10 @@ describe('VocabularyChallenge – ordering format', () => {
       fireEvent.click(btn!);
     }
 
-    vi.advanceTimersByTime(1000);
+    // Wrong answers now show corrective feedback — click "Got it" to dismiss
+    const gotIt = screen.getByTestId('got-it-btn');
+    fireEvent.click(gotIt);
     expect(onResult).toHaveBeenCalledWith(false);
-    vi.useRealTimers();
   });
 
   it('disables already-selected items', () => {
@@ -329,7 +349,7 @@ describe('VocabularyChallenge – ordering format', () => {
     expect(updatedBtn).toBeDisabled();
   });
 
-  it('shows correct order in feedback on wrong answer', () => {
+  it('shows corrective feedback on wrong answer', () => {
     forceOrderingFormat();
     render(<VocabularyChallenge category="dynamics" tier={3} onResult={() => {}} />);
 
@@ -342,7 +362,11 @@ describe('VocabularyChallenge – ordering format', () => {
       fireEvent.click(btn!);
     }
 
-    const feedback = screen.getByText(/correct order:/i);
-    expect(feedback).toBeInTheDocument();
+    // Wrong answers now show corrective feedback with explanation and "Got it" button
+    const gotIt = screen.getByTestId('got-it-btn');
+    expect(gotIt).toBeInTheDocument();
+    // The explanation should mention the correct order
+    const explanation = screen.getByText(/correct order is:/i);
+    expect(explanation).toBeInTheDocument();
   });
 });

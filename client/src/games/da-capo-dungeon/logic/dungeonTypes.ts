@@ -151,7 +151,7 @@ export interface DungeonFloor {
   specialFloorType: SpecialFloorType;
 }
 
-export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory' | 'devConfig';
+export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory' | 'devConfig' | 'lore';
 
 export interface ActiveChallenge {
   type: ChallengeType;

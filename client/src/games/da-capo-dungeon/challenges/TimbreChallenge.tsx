@@ -5,12 +5,19 @@ import { getTimbreParams } from '../logic/difficultyAdapter';
 import { usePhilharmoniaInstruments } from '@/common/hooks/usePhilharmoniaInstruments';
 import { instrumentLibrary, type InstrumentFamily } from '@/common/instruments/instrumentLibrary';
 import { playNoteAtFrequency } from '../dungeonAudio';
+import CorrectiveFeedback, { CorrectBanner } from './CorrectiveFeedback';
+import { TIMBRE_EXPLANATIONS } from '../logic/explanations';
+import type { LearningState } from '../logic/learningState';
+import { timbreConceptId, shouldGuide, markGuidedSeen, recordCorrect, recordWrong } from '../logic/learningState';
 
 interface Props {
   tier: Tier;
   onResult: (correct: boolean) => void;
   slowMode?: boolean;
   onListeningChange?: (isPlaying: boolean) => void;
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
 }
 
 /** Pick a random instrument name from the given family via instrumentLibrary. */
@@ -28,7 +35,7 @@ function noteToSortKey(note: string): number {
   return octave * 7 + letterIdx;
 }
 
-/** Pick 4–5 ascending scale notes for the instrument to form a melodic phrase. */
+/** Pick 4-5 ascending scale notes for the instrument to form a melodic phrase. */
 function pickMelodyNotes(instrumentName: string): string[] {
   const samples = instrumentLibrary.getSamples(instrumentName);
   if (samples.length === 0) return [];
@@ -40,7 +47,7 @@ function pickMelodyNotes(instrumentName: string): string[] {
   return sorted.slice(start, start + maxNotes).map(s => s.note);
 }
 
-const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListeningChange }) => {
+const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListeningChange, learningState, onLearningUpdate, floorNumber }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
   const playedRef = useRef(false);
@@ -52,16 +59,13 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
   const challengeData = useMemo(() => {
     const { correct, options } = getTimbreChoices(tier);
 
-    // For T2, resolve which actual instrument to play from the correct family
     let instrumentToPlay: string | undefined;
     let notesToPlay: string[] = [];
 
     if (tier >= 2 && correct.instrumentName) {
-      // T3-T5: play the specific instrument
       instrumentToPlay = correct.instrumentName;
       notesToPlay = pickMelodyNotes(correct.instrumentName);
     } else if (tier === 2 && correct.family) {
-      // T2: play a random instrument from the correct family
       instrumentToPlay = pickRandomInstrumentForFamily(correct.family);
       if (instrumentToPlay) {
         notesToPlay = pickMelodyNotes(instrumentToPlay);
@@ -70,6 +74,9 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
 
     return { correct, options, instrumentToPlay, notesToPlay };
   }, [tier]);
+
+  const conceptId = timbreConceptId(challengeData.correct.id);
+  const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
 
   // For T2+, preload the instrument to play
   const instrumentsToLoad = useMemo(() => {
@@ -91,7 +98,6 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
         playNoteAtFrequency(131, duration, 0.5);
         break;
       case 't1-fast': {
-        // 8 rapid notes at 440Hz
         const count = 8;
         const gapMs = (duration * 1000) / count;
         for (let i = 0; i < count; i++) {
@@ -100,7 +106,6 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
         break;
       }
       case 't1-slow': {
-        // 2 slow notes at 440Hz
         const count = 2;
         const gapMs = (duration * 1000) / count;
         for (let i = 0; i < count; i++) {
@@ -144,14 +149,38 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
     playSound();
   };
 
-  const handleAnswer = (entry: TimbreEntry) => {
+  const handleAnswer = useCallback((entry: TimbreEntry) => {
     if (feedback) return;
     const correct = entry.id === challengeData.correct.id;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) updated = markGuidedSeen(updated, conceptId);
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = timbreConceptId(entry.id);
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+  }, [feedback, challengeData.correct.id, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
 
   const title = tier === 1 ? 'Name That Sound!' : 'Name That Instrument!';
+
+  // Explanation for wrong answers
+  const timbreExpl = TIMBRE_EXPLANATIONS[challengeData.correct.id];
+  const wrongExplanation = timbreExpl?.explanation ?? `That was ${challengeData.correct.displayName}.`;
+  const wrongMnemonic = timbreExpl?.mnemonic;
 
   // Show loading state for T2+ while samples load
   if (tier >= 2 && isLoading) {
@@ -166,9 +195,21 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-purple-200">{title}</h3>
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
 
       {!hasPlayed && tier === 1 && (
         <p className="text-gray-400 text-sm">Listen...</p>
+      )}
+
+      {/* System 2: Guided hint */}
+      {isGuided && !feedback && hasPlayed && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          This is {challengeData.correct.displayName}. Tap the correct answer!
+        </p>
       )}
 
       {/* Replay button */}
@@ -185,6 +226,7 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
       <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
         {challengeData.options.map((opt) => {
           const isCorrect = opt.id === challengeData.correct.id;
+          const isGuidedHighlight = isGuided && isCorrect && !feedback;
 
           return (
             <button
@@ -197,7 +239,9 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
                   ? 'bg-green-600 text-white scale-[1.02]'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : 'bg-purple-700 hover:bg-purple-600 text-white active:scale-95'}
+                    : isGuidedHighlight
+                      ? 'bg-purple-700 ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse'
+                      : 'bg-purple-700 hover:bg-purple-600 text-white active:scale-95'}
                 disabled:cursor-default
               `}
             >
@@ -208,10 +252,13 @@ const TimbreChallenge: React.FC<Props> = ({ tier, onResult, slowMode, onListenin
       </div>
 
       {/* Feedback */}
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was: ${challengeData.correct.displayName}`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={wrongExplanation}
+          mnemonic={wrongMnemonic}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );

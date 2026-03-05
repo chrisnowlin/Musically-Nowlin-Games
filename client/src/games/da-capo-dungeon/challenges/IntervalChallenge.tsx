@@ -4,17 +4,23 @@ import { getIntervalParams } from '../logic/difficultyAdapter';
 import { playTwoNotes, getFrequency, ALL_NOTE_KEYS } from '../dungeonAudio';
 import { getIntervalSvgUrl } from '../logic/intervalAssets';
 import NotationImage from '@/common/notation/NotationImage';
+import CorrectiveFeedback, { CorrectBanner } from './CorrectiveFeedback';
+import { getIntervalExplanation } from '../logic/explanations';
+import type { LearningState } from '../logic/learningState';
+import { intervalConceptId, shouldGuide, markGuidedSeen, recordCorrect, recordWrong } from '../logic/learningState';
 
 interface Props {
   tier: Tier;
   onResult: (correct: boolean) => void;
   showHint?: boolean;
   onListeningChange?: (isPlaying: boolean) => void;
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
 }
 
 // ── Shared helpers ──────────────────────────────────────────
 
-/** Pick a random base note index, leaving room for the interval offset. */
 function pickBaseIndex(semitones: number): number {
   const absSemitones = Math.abs(semitones);
   const maxBase = Math.max(0, ALL_NOTE_KEYS.length - 1 - absSemitones);
@@ -23,7 +29,6 @@ function pickBaseIndex(semitones: number): number {
   return minBase + Math.floor(Math.random() * range);
 }
 
-/** Find the closest note key to a target frequency. */
 function closestNoteKey(targetFreq: number): string {
   let closestKey = ALL_NOTE_KEYS[0];
   let closestDiff = Infinity;
@@ -44,11 +49,9 @@ function useStandardChallenge(params: ReturnType<typeof getIntervalParams>) {
     const interval = params.intervals[Math.floor(Math.random() * params.intervals.length)];
     const baseIdx = Math.floor(Math.random() * Math.max(1, ALL_NOTE_KEYS.length - 7));
     const baseNote = ALL_NOTE_KEYS[baseIdx];
-
     const baseFreq = getFrequency(baseNote);
     const targetFreq = baseFreq * Math.pow(2, interval.semitones / 12);
     const topNote = closestNoteKey(targetFreq);
-
     return { interval, baseNote, topNote };
   }, [params]);
 }
@@ -60,17 +63,13 @@ function useHighLowChallenge(params: ReturnType<typeof getIntervalParams>) {
     const interval = params.intervals[Math.floor(Math.random() * params.intervals.length)];
     const baseIdx = pickBaseIndex(interval.semitones);
     const baseNote = ALL_NOTE_KEYS[baseIdx];
-
     const baseFreq = getFrequency(baseNote);
     const targetFreq = baseFreq * Math.pow(2, interval.semitones / 12);
     const topNote = interval.semitones === 0 ? baseNote : closestNoteKey(targetFreq);
-
-    // Determine correct answer based on direction
     let correctAnswer: string;
     if (interval.semitones > 0) correctAnswer = 'Higher';
     else if (interval.semitones < 0) correctAnswer = 'Lower';
     else correctAnswer = 'Same';
-
     return { interval, baseNote, topNote, correctAnswer };
   }, [params]);
 }
@@ -80,17 +79,13 @@ function useHighLowChallenge(params: ReturnType<typeof getIntervalParams>) {
 function useStepSkipChallenge(params: ReturnType<typeof getIntervalParams>) {
   return useMemo(() => {
     const interval = params.intervals[Math.floor(Math.random() * params.intervals.length)];
-    // For step/skip, randomly go up or down
     const direction = Math.random() < 0.5 ? 1 : -1;
     const actualSemitones = interval.semitones === 0 ? 0 : interval.semitones * direction;
     const baseIdx = pickBaseIndex(actualSemitones);
     const baseNote = ALL_NOTE_KEYS[baseIdx];
-
     const baseFreq = getFrequency(baseNote);
     const targetFreq = baseFreq * Math.pow(2, actualSemitones / 12);
     const topNote = actualSemitones === 0 ? baseNote : closestNoteKey(targetFreq);
-
-    // The correct answer is the interval name (Same, Step, or Skip)
     return { interval, baseNote, topNote, correctAnswer: interval.name };
   }, [params]);
 }
@@ -102,10 +97,16 @@ const HighLowMode: React.FC<{
   onResult: (correct: boolean) => void;
   showHint?: boolean;
   onListeningChange?: (isPlaying: boolean) => void;
-}> = ({ params, onResult, showHint, onListeningChange }) => {
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
+}> = ({ params, onResult, showHint, onListeningChange, learningState, onLearningUpdate, floorNumber }) => {
   const challenge = useHighLowChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
+
+  const conceptId = intervalConceptId('highLow', challenge.correctAnswer);
+  const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
 
   useEffect(() => {
     if (!showHint) return;
@@ -125,19 +126,49 @@ const HighLowMode: React.FC<{
     return () => clearTimeout(timer);
   }, [playInterval]);
 
-  const handleAnswer = (answer: string) => {
+  const handleAnswer = useCallback((answer: string) => {
     if (feedback) return;
     const correct = answer === challenge.correctAnswer;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) updated = markGuidedSeen(updated, conceptId);
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = intervalConceptId('highLow', answer);
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+  }, [feedback, challenge.correctAnswer, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
 
   const buttons = ['Higher', 'Lower', 'Same'];
+  const { explanation, mnemonic } = getIntervalExplanation(challenge.correctAnswer, 'highLow');
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-cyan-200">Higher or Lower?</h3>
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
       <p className="text-gray-400 text-sm">Is the second note higher or lower?</p>
+      {isGuided && !feedback && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          Listen carefully — the second note is {challenge.correctAnswer.toLowerCase()}. Tap {challenge.correctAnswer}!
+        </p>
+      )}
 
       <button
         onClick={playInterval}
@@ -149,6 +180,7 @@ const HighLowMode: React.FC<{
       <div className="flex flex-wrap justify-center gap-3">
         {buttons.map((label) => {
           const isHinted = hintShown && challenge.correctAnswer === label;
+          const isGuidedHighlight = isGuided && challenge.correctAnswer === label && !feedback;
           return (
             <button
               key={label}
@@ -160,7 +192,9 @@ const HighLowMode: React.FC<{
                   ? 'bg-green-600 text-white scale-110'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
+                    : isGuidedHighlight
+                      ? 'bg-cyan-700 ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse'
+                      : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
                 ${isHinted ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-transparent' : ''}
                 disabled:cursor-default
               `}
@@ -171,10 +205,13 @@ const HighLowMode: React.FC<{
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was ${challenge.correctAnswer}!`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={`It was ${challenge.correctAnswer}. ${explanation}`}
+          mnemonic={mnemonic}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );
@@ -185,10 +222,16 @@ const StepSkipMode: React.FC<{
   onResult: (correct: boolean) => void;
   showHint?: boolean;
   onListeningChange?: (isPlaying: boolean) => void;
-}> = ({ params, onResult, showHint, onListeningChange }) => {
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
+}> = ({ params, onResult, showHint, onListeningChange, learningState, onLearningUpdate, floorNumber }) => {
   const challenge = useStepSkipChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
+
+  const conceptId = intervalConceptId('stepSkip', challenge.correctAnswer);
+  const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
 
   useEffect(() => {
     if (!showHint) return;
@@ -208,19 +251,49 @@ const StepSkipMode: React.FC<{
     return () => clearTimeout(timer);
   }, [playInterval]);
 
-  const handleAnswer = (answer: string) => {
+  const handleAnswer = useCallback((answer: string) => {
     if (feedback) return;
     const correct = answer === challenge.correctAnswer;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) updated = markGuidedSeen(updated, conceptId);
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = intervalConceptId('stepSkip', answer);
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+  }, [feedback, challenge.correctAnswer, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
 
   const buttons = ['Step', 'Skip', 'Same'];
+  const { explanation, mnemonic } = getIntervalExplanation(challenge.correctAnswer, 'stepSkip');
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-cyan-200">Step, Skip, or Same?</h3>
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
       <p className="text-gray-400 text-sm">Did the melody move by step, skip, or stay the same?</p>
+      {isGuided && !feedback && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          This is a {challenge.correctAnswer.toLowerCase()}. Tap {challenge.correctAnswer}!
+        </p>
+      )}
 
       <button
         onClick={playInterval}
@@ -232,6 +305,7 @@ const StepSkipMode: React.FC<{
       <div className="flex flex-wrap justify-center gap-3">
         {buttons.map((label) => {
           const isHinted = hintShown && challenge.correctAnswer === label;
+          const isGuidedHighlight = isGuided && challenge.correctAnswer === label && !feedback;
           return (
             <button
               key={label}
@@ -243,7 +317,9 @@ const StepSkipMode: React.FC<{
                   ? 'bg-green-600 text-white scale-110'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
+                    : isGuidedHighlight
+                      ? 'bg-cyan-700 ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse'
+                      : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
                 ${isHinted ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-transparent' : ''}
                 disabled:cursor-default
               `}
@@ -254,10 +330,13 @@ const StepSkipMode: React.FC<{
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was ${challenge.correctAnswer}!`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={`It was ${challenge.correctAnswer}. ${explanation}`}
+          mnemonic={mnemonic}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );
@@ -268,10 +347,16 @@ const StandardMode: React.FC<{
   onResult: (correct: boolean) => void;
   showHint?: boolean;
   onListeningChange?: (isPlaying: boolean) => void;
-}> = ({ params, onResult, showHint, onListeningChange }) => {
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
+}> = ({ params, onResult, showHint, onListeningChange, learningState, onLearningUpdate, floorNumber }) => {
   const challenge = useStandardChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
+
+  const conceptId = intervalConceptId('standard', challenge.interval.name);
+  const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
 
   useEffect(() => {
     if (!showHint) return;
@@ -291,19 +376,43 @@ const StandardMode: React.FC<{
     return () => clearTimeout(timer);
   }, [playInterval]);
 
-  const handleAnswer = (name: string) => {
+  const handleAnswer = useCallback((name: string) => {
     if (feedback) return;
     const correct = name === challenge.interval.name;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) updated = markGuidedSeen(updated, conceptId);
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = intervalConceptId('standard', name);
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+  }, [feedback, challenge.interval.name, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
 
   const intervalUrl = getIntervalSvgUrl(challenge.interval.name);
+  const { explanation, mnemonic } = getIntervalExplanation(challenge.interval.name, 'standard');
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className="text-lg font-bold text-cyan-200">Name the Interval!</h3>
-      {/* Interval reference notation */}
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
       {intervalUrl && (
         <NotationImage
           src={intervalUrl}
@@ -312,6 +421,11 @@ const StandardMode: React.FC<{
         />
       )}
       <p className="text-gray-400 text-sm">Listen to the two notes and identify the interval.</p>
+      {isGuided && !feedback && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          This interval is a {challenge.interval.name}. Tap it below!
+        </p>
+      )}
 
       <button
         onClick={playInterval}
@@ -323,6 +437,7 @@ const StandardMode: React.FC<{
       <div className="flex flex-wrap justify-center gap-2">
         {params.intervals.map((iv) => {
           const isHinted = hintShown && challenge.interval.name === iv.name;
+          const isGuidedHighlight = isGuided && challenge.interval.name === iv.name && !feedback;
           return (
             <button
               key={iv.name}
@@ -334,7 +449,9 @@ const StandardMode: React.FC<{
                   ? 'bg-green-600 text-white scale-110'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
+                    : isGuidedHighlight
+                      ? 'bg-cyan-700 ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse'
+                      : 'bg-cyan-700 hover:bg-cyan-600 text-white active:scale-95'}
                 ${isHinted ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-transparent' : ''}
                 disabled:cursor-default
               `}
@@ -345,10 +462,13 @@ const StandardMode: React.FC<{
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was a ${challenge.interval.name}`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={`It was a ${challenge.interval.name}. ${explanation}`}
+          mnemonic={mnemonic}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );
@@ -356,16 +476,16 @@ const StandardMode: React.FC<{
 
 // ── Main component ──────────────────────────────────────────
 
-const IntervalChallenge: React.FC<Props> = ({ tier, onResult, showHint, onListeningChange }) => {
+const IntervalChallenge: React.FC<Props> = ({ tier, onResult, showHint, onListeningChange, learningState, onLearningUpdate, floorNumber }) => {
   const params = useMemo(() => getIntervalParams(tier), [tier]);
 
   switch (params.mode) {
     case 'highLow':
-      return <HighLowMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} />;
+      return <HighLowMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;
     case 'stepSkip':
-      return <StepSkipMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} />;
+      return <StepSkipMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;
     case 'standard':
-      return <StandardMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} />;
+      return <StandardMode params={params} onResult={onResult} showHint={showHint} onListeningChange={onListeningChange} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;
   }
 };
 

@@ -5,11 +5,18 @@ import { getRhythmParams } from '../logic/difficultyAdapter';
 import { playClick } from '../dungeonAudio';
 import { getRandomCuratedPattern, getAllSubdivisions } from '../logic/rhythmPatterns';
 import NotationImage from '@/common/notation/NotationImage';
+import CorrectiveFeedback, { CorrectBanner } from './CorrectiveFeedback';
+import { getRhythmExplanation } from '../logic/explanations';
+import type { LearningState } from '../logic/learningState';
+import { rhythmConceptId, recordCorrect, recordWrong } from '../logic/learningState';
 
 interface Props {
   tier: Tier;
   onResult: (correct: boolean) => void;
   slowMode?: boolean;
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
 }
 
 /** A single event in the rhythm pattern. */
@@ -71,7 +78,7 @@ function isInsideRest(tapTime: number, pattern: PatternEvent[], toleranceMs: num
   return false;
 }
 
-const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
+const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode, learningState, onLearningUpdate, floorNumber }) => {
   const params = useMemo(() => {
     const p = getRhythmParams(tier);
     return slowMode ? { ...p, bpm: Math.round(p.bpm / 2) } : p;
@@ -198,8 +205,21 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
     const correct = accuracy >= 0.5;
     setFeedback(correct ? 'correct' : 'wrong');
     setPhase('done');
-    setTimeout(() => onResult(correct), 1000);
-  }, [taps, tapCountTarget, pattern, expectedTaps, params.toleranceMs, phase, onResult]);
+
+    // Record mastery
+    const cId = rhythmConceptId(curatedPattern.id);
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      const updated = correct
+        ? recordCorrect(learningState, cId, floorNumber)
+        : recordWrong(learningState, cId, floorNumber);
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 1000);
+    }
+    // Wrong: wait for "Got it" (no auto-dismiss)
+  }, [taps, tapCountTarget, pattern, expectedTaps, params.toleranceMs, phase, onResult, curatedPattern.id, learningState, onLearningUpdate, floorNumber]);
 
   // ── Visual beat indicators ────────────────────────────────
   const beatVisuals = pattern.map((ev, i) => {
@@ -307,10 +327,15 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode }) => {
         </>
       )}
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Great rhythm!' : 'Not quite right'}
-        </p>
+      {feedback === 'correct' && (
+        <p className="font-bold text-lg text-green-400">Great rhythm!</p>
+      )}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={getRhythmExplanation().explanation}
+          mnemonic={getRhythmExplanation().mnemonic}
+          onDismiss={() => onResult(false)}
+        />
       )}
     </div>
   );

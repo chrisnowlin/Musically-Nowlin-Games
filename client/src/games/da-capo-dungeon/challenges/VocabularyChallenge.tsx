@@ -1,10 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
 import { type VocabCategory, type VocabEntry } from '../logic/vocabData';
 import { useDefaultVocab, getAllDefaultVocabEntriesSync } from '../logic/useDefaultVocab';
 import { shuffle } from '../challengeHelpers';
 import { getVocabNotationAsset } from '@/common/notation/notationAssets';
 import NotationImage from '@/common/notation/NotationImage';
+import CorrectiveFeedback, { CorrectBanner } from './CorrectiveFeedback';
+import { VOCAB_EXPLANATIONS, SCENARIO_EXPLANATIONS } from '../logic/explanations';
+import type { LearningState } from '../logic/learningState';
+import { vocabConceptId, weightedPick, shouldGuide, recordCorrect, recordWrong, markGuidedSeen, getTopConfusion } from '../logic/learningState';
 
 interface Props {
   category: VocabCategory;
@@ -12,6 +16,12 @@ interface Props {
   onResult: (correct: boolean) => void;
   poolEntries?: VocabEntry[];
   useDefaults?: boolean;
+  /** Learning state for Systems 2/4/5. Optional — falls back to pure assessment if omitted. */
+  learningState?: LearningState;
+  /** Callback to update learning state in the parent. */
+  onLearningUpdate?: (state: LearningState) => void;
+  /** Current floor number for mastery spacing. */
+  floorNumber?: number;
 }
 
 const CATEGORY_THEME: Record<VocabCategory, { title: string; color: string; hoverColor: string; activeColor: string }> = {
@@ -21,11 +31,22 @@ const CATEGORY_THEME: Record<VocabCategory, { title: string; color: string; hove
   terms: { title: 'Music Terms!', color: 'bg-amber-700', hoverColor: 'hover:bg-amber-600', activeColor: 'text-amber-200' },
 };
 
-function pickDistractors(correct: VocabEntry, pool: VocabEntry[], count: number): VocabEntry[] {
+function pickDistractors(correct: VocabEntry, pool: VocabEntry[], count: number, topConfusionTerm?: string): VocabEntry[] {
   // Filter out entries with the same term or definition as the correct answer
   const others = pool.filter(
     (e) => e.term !== correct.term && e.definition !== correct.definition
   );
+
+  // If we have a known confusion pair, ensure it's included as a distractor
+  if (topConfusionTerm) {
+    const confusionEntry = others.find(e => e.term === topConfusionTerm);
+    if (confusionEntry) {
+      const rest = others.filter(e => e.term !== topConfusionTerm);
+      const shuffledRest = shuffle(rest).slice(0, count - 1);
+      return shuffle([confusionEntry, ...shuffledRest]);
+    }
+  }
+
   return shuffle(others).slice(0, count);
 }
 
@@ -36,16 +57,42 @@ interface StandardChallengeData {
   target: VocabEntry;
   showTermAskDef: boolean;
   options: VocabEntry[];
+  guided: boolean;
 }
 
-function buildStandardChallenge(entries: VocabEntry[], standardEntries: VocabEntry[]): StandardChallengeData {
-  const target = standardEntries[Math.floor(Math.random() * standardEntries.length)];
+function buildStandardChallenge(
+  entries: VocabEntry[],
+  standardEntries: VocabEntry[],
+  learningState?: LearningState,
+  floorNumber?: number,
+  category?: string
+): StandardChallengeData {
+  let target: VocabEntry;
+  if (learningState && floorNumber !== undefined && category) {
+    target = weightedPick(
+      standardEntries,
+      (e) => vocabConceptId(category, e.term),
+      learningState,
+      floorNumber,
+    );
+  } else {
+    target = standardEntries[Math.floor(Math.random() * standardEntries.length)];
+  }
+
+  const conceptId = category ? vocabConceptId(category, target.term) : '';
+  const guided = !!(learningState && conceptId && shouldGuide(learningState, conceptId));
+
   const showTermAskDef = Math.random() < 0.5;
-  // Use full vocab pool for distractors if category pool is small
+  // Use top confusion pair for smarter distractors
+  const topConfusion = learningState && category
+    ? getTopConfusion(learningState, conceptId)
+    : undefined;
+  // Extract just the term from the concept ID for distractor matching
+  const topConfusionTerm = topConfusion ? topConfusion.split(':').pop() : undefined;
   const distractorPool = entries.length >= 7 ? entries : getAllDefaultVocabEntriesSync();
-  const distractors = pickDistractors(target, distractorPool, 3);
+  const distractors = pickDistractors(target, distractorPool, 3, topConfusionTerm);
   const options = shuffle([target, ...distractors]);
-  return { format: 'standard', target, showTermAskDef, options };
+  return { format: 'standard', target, showTermAskDef, options, guided };
 }
 
 // --- Opposites (binary choice) ---
@@ -56,17 +103,20 @@ interface OppositesChallengeData {
   correctEntry: VocabEntry;
   wrongEntry: VocabEntry;
   options: VocabEntry[];
+  guided: boolean;
 }
 
-function buildOppositesChallenge(oppEntries: VocabEntry[]): OppositesChallengeData {
-  // Pick two different opposites entries
+function buildOppositesChallenge(oppEntries: VocabEntry[], learningState?: LearningState, category?: string): OppositesChallengeData {
   const shuffled = shuffle([...oppEntries]);
   const correctEntry = shuffled[0];
   const wrongEntry = shuffled.find((e) => e.term !== correctEntry.term) ?? shuffled[1];
 
+  const conceptId = category ? vocabConceptId(category, correctEntry.term) : '';
+  const guided = !!(learningState && conceptId && shouldGuide(learningState, conceptId));
+
   const questionText = `Which means "${correctEntry.definition}"?`;
   const options = shuffle([correctEntry, wrongEntry]);
-  return { format: 'opposites', questionText, correctEntry, wrongEntry, options };
+  return { format: 'opposites', questionText, correctEntry, wrongEntry, options, guided };
 }
 
 // --- Ordering (rank sequence) ---
@@ -80,7 +130,6 @@ interface OrderingChallengeData {
 
 function buildOrderingChallenge(ordEntries: VocabEntry[]): OrderingChallengeData {
   const entry = ordEntries[Math.floor(Math.random() * ordEntries.length)];
-  // Parse "Softest to loudest: pp, p, mp, mf, f, ff"
   const colonIdx = entry.term.indexOf(':');
   const instruction = colonIdx !== -1 ? entry.term.slice(0, colonIdx).trim() : 'Put in order';
   const itemsPart = colonIdx !== -1 ? entry.term.slice(colonIdx + 1) : entry.term;
@@ -96,16 +145,22 @@ interface ScenarioChallengeData {
   questionText: string;
   correctAnswer: string;
   options: string[];
+  guided: boolean;
 }
 
-function buildScenarioChallenge(scenEntries: VocabEntry[]): ScenarioChallengeData {
+function buildScenarioChallenge(scenEntries: VocabEntry[], learningState?: LearningState): ScenarioChallengeData {
   const entry = scenEntries[Math.floor(Math.random() * scenEntries.length)];
   const options = shuffle([...(entry.scenarioChoices ?? [])]);
+
+  const conceptId = vocabConceptId('terms', entry.scenarioAnswer ?? entry.term);
+  const guided = !!(learningState && shouldGuide(learningState, conceptId));
+
   return {
     format: 'scenario',
     questionText: entry.definition,
     correctAnswer: entry.scenarioAnswer ?? entry.term,
     options,
+    guided,
   };
 }
 
@@ -113,7 +168,7 @@ type ChallengeData = StandardChallengeData | OppositesChallengeData | OrderingCh
 
 // --- Component ---
 
-const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEntries, useDefaults }) => {
+const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEntries, useDefaults, learningState, onLearningUpdate, floorNumber }) => {
   const apiDefaults = useDefaultVocab();
   
   const entries = useMemo(() => {
@@ -123,7 +178,6 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEn
     const poolFiltered = (poolEntries ?? []).filter((e: VocabEntry) => e.category === category && e.tier <= tier);
     const combined = [...builtIn, ...poolFiltered];
     if (combined.length > 0) return combined;
-    // Fallback to sync hardcoded entries if async data not loaded yet
     return getAllDefaultVocabEntriesSync().filter((e: VocabEntry) => e.category === category && e.tier <= tier);
   }, [category, tier, poolEntries, useDefaults, apiDefaults]);
   const theme = CATEGORY_THEME[category];
@@ -134,7 +188,6 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEn
     const scenEntries = entries.filter((e: VocabEntry) => e.format === 'scenario');
     const stdEntries = entries.filter((e: VocabEntry) => !e.format || e.format === 'standard');
 
-    // Uniform random selection among available formats
     const formats: Array<'standard' | 'opposites' | 'ordering' | 'scenario'> = [];
     if (stdEntries.length > 0) formats.push('standard');
     if (oppEntries.length >= 2) formats.push('opposites');
@@ -143,30 +196,34 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEn
 
     const chosen = formats[Math.floor(Math.random() * formats.length)];
 
-    if (chosen === 'opposites') return buildOppositesChallenge(oppEntries);
+    if (chosen === 'opposites') return buildOppositesChallenge(oppEntries, learningState, category);
     if (chosen === 'ordering') return buildOrderingChallenge(ordEntries);
-    if (chosen === 'scenario') return buildScenarioChallenge(scenEntries);
-    return buildStandardChallenge(entries, stdEntries.length > 0 ? stdEntries : entries);
-  }, [entries]);
+    if (chosen === 'scenario') return buildScenarioChallenge(scenEntries, learningState);
+    return buildStandardChallenge(entries, stdEntries.length > 0 ? stdEntries : entries, learningState, floorNumber, category);
+  }, [entries, learningState, floorNumber, category]);
 
   if (challenge.format === 'opposites') {
-    return <OppositesView challenge={challenge} theme={theme} onResult={onResult} />;
+    return <OppositesView challenge={challenge} theme={theme} onResult={onResult} category={category} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;
   }
   if (challenge.format === 'ordering') {
     return <OrderingView challenge={challenge} theme={theme} onResult={onResult} />;
   }
   if (challenge.format === 'scenario') {
-    return <ScenarioView challenge={challenge} theme={theme} onResult={onResult} />;
+    return <ScenarioView challenge={challenge} theme={theme} onResult={onResult} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;
   }
-  return <StandardView challenge={challenge} theme={theme} onResult={onResult} />;
+  return <StandardView challenge={challenge} theme={theme} onResult={onResult} category={category} learningState={learningState} onLearningUpdate={onLearningUpdate} floorNumber={floorNumber} />;
 };
 
-// --- Standard View (unchanged behavior) ---
+// --- Standard View ---
 
 interface ViewProps<T> {
   challenge: T;
   theme: { title: string; color: string; hoverColor: string; activeColor: string };
   onResult: (correct: boolean) => void;
+  category?: VocabCategory;
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
 }
 
 /** Displays LilyPond-engraved notation if an asset exists for this term. */
@@ -190,15 +247,44 @@ function ButtonNotation({ term }: { term: string }) {
   );
 }
 
-const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, theme, onResult }) => {
+const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, theme, onResult, category, learningState, onLearningUpdate, floorNumber }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [selectedTerm, setSelectedTerm] = useState<string | null>(null);
 
-  const handleAnswer = (entry: VocabEntry) => {
+  const conceptId = category ? vocabConceptId(category, challenge.target.term) : '';
+
+  // System 2: Guided mode — mark as seen, highlight correct answer
+  const isGuided = challenge.guided;
+
+  const handleAnswer = useCallback((entry: VocabEntry) => {
     if (feedback) return;
     const correct = entry.term === challenge.target.term;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+    setSelectedTerm(entry.term);
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) {
+        updated = markGuidedSeen(updated, conceptId);
+      }
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = category ? vocabConceptId(category, entry.term) : undefined;
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+    // Wrong: wait for "Got it" tap (no auto-dismiss)
+  }, [feedback, challenge.target.term, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, category, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
 
   const { target } = challenge;
   const defLooksLikeBeats = /beat/i.test(target.definition);
@@ -208,15 +294,33 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
         : `What does "${target.term}" mean?`)
     : `Which term means "${target.definition}"?`;
 
+  // Explanation for wrong answers
+  const explanation = VOCAB_EXPLANATIONS[target.term];
+  const wrongExplanation = explanation?.explanation ?? `${target.term} means "${target.definition}".`;
+  const wrongMnemonic = explanation?.mnemonic;
+
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
+      {/* System 2: Guided mode badge */}
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
       {challenge.showTermAskDef && <VocabNotation term={challenge.target.term} />}
       <p className="text-gray-200 text-center text-sm px-2">{questionText}</p>
+      {/* System 2: Guided hint */}
+      {isGuided && !feedback && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          New concept! {target.term} means "{target.definition}". Tap the correct answer below.
+        </p>
+      )}
 
       <div className={`grid gap-2 w-full ${challenge.showTermAskDef ? 'grid-cols-1 max-w-[280px]' : 'grid-cols-2 max-w-[340px]'}`}>
         {challenge.options.map((opt) => {
           const isCorrect = opt.term === challenge.target.term;
+          const isGuidedHighlight = isGuided && isCorrect && !feedback;
 
           return (
             <button
@@ -230,7 +334,9 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
                   ? 'bg-green-600 text-white scale-[1.02]'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
+                    : isGuidedHighlight
+                      ? `${theme.color} ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse`
+                      : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
                 disabled:cursor-default
               `}
             >
@@ -242,10 +348,13 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was: ${challenge.target.term} — ${challenge.target.definition}`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={wrongExplanation}
+          mnemonic={wrongMnemonic}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );
@@ -253,27 +362,62 @@ const StandardView: React.FC<ViewProps<StandardChallengeData>> = ({ challenge, t
 
 // --- Opposites View (binary choice, kid-friendly) ---
 
-const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge, theme, onResult }) => {
+const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge, theme, onResult, category, learningState, onLearningUpdate, floorNumber }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const conceptId = category ? vocabConceptId(category, challenge.correctEntry.term) : '';
+  const isGuided = challenge.guided;
 
-  const handleAnswer = (entry: VocabEntry) => {
+  const handleAnswer = useCallback((entry: VocabEntry) => {
     if (feedback) return;
     const correct = entry.term === challenge.correctEntry.term;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) updated = markGuidedSeen(updated, conceptId);
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = category ? vocabConceptId(category, entry.term) : undefined;
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+  }, [feedback, challenge.correctEntry.term, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, category, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
+
+  const explanation = VOCAB_EXPLANATIONS[challenge.correctEntry.term];
+  const wrongExplanation = explanation?.explanation ?? `${challenge.correctEntry.term} means "${challenge.correctEntry.definition}".`;
+  const wrongMnemonic = explanation?.mnemonic;
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
       <p className="text-gray-200 text-center text-base px-2 font-semibold">
         {challenge.questionText}
       </p>
+      {isGuided && !feedback && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          {challenge.correctEntry.term} means "{challenge.correctEntry.definition}". Tap the correct answer!
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-3 w-full max-w-[320px]">
         {challenge.options.map((opt) => {
           const isCorrect = opt.term === challenge.correctEntry.term;
-          const label = opt.term;
+          const isGuidedHighlight = isGuided && isCorrect && !feedback;
 
           return (
             <button
@@ -287,20 +431,25 @@ const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge,
                   ? 'bg-green-600 text-white scale-[1.02]'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
+                    : isGuidedHighlight
+                      ? `${theme.color} ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse`
+                      : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
                 disabled:cursor-default
               `}
             >
-              {label}
+              {opt.term}
             </button>
           );
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was: ${challenge.correctEntry.term} — ${challenge.correctEntry.definition}`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={wrongExplanation}
+          mnemonic={wrongMnemonic}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );
@@ -308,26 +457,60 @@ const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge,
 
 // --- Scenario View (situational "Which voice?" questions) ---
 
-const ScenarioView: React.FC<ViewProps<ScenarioChallengeData>> = ({ challenge, theme, onResult }) => {
+const ScenarioView: React.FC<ViewProps<ScenarioChallengeData>> = ({ challenge, theme, onResult, learningState, onLearningUpdate, floorNumber }) => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const conceptId = vocabConceptId('terms', challenge.correctAnswer);
+  const isGuided = challenge.guided;
 
-  const handleAnswer = (choice: string) => {
+  const handleAnswer = useCallback((choice: string) => {
     if (feedback) return;
     const correct = choice === challenge.correctAnswer;
     setFeedback(correct ? 'correct' : 'wrong');
-    setTimeout(() => onResult(correct), 800);
-  };
+
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      let updated = learningState;
+      if (isGuided) updated = markGuidedSeen(updated, conceptId);
+      if (correct) {
+        updated = recordCorrect(updated, conceptId, floorNumber);
+      } else {
+        const wrongConceptId = vocabConceptId('terms', choice);
+        updated = recordWrong(updated, conceptId, floorNumber, wrongConceptId);
+      }
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 800);
+    }
+  }, [feedback, challenge.correctAnswer, learningState, onLearningUpdate, floorNumber, isGuided, conceptId, onResult]);
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
+
+  const scenarioExplanation = SCENARIO_EXPLANATIONS[challenge.correctAnswer] ?? `The correct answer is ${challenge.correctAnswer}.`;
 
   return (
     <div className="flex flex-col items-center gap-4">
       <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
+      {isGuided && !feedback && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-800/70 text-blue-200 border border-blue-600/50">
+          LEARN
+        </span>
+      )}
       <p className="text-gray-200 text-center text-base px-2 font-semibold">
         {challenge.questionText}
       </p>
+      {isGuided && !feedback && (
+        <p className="text-blue-300/80 text-xs text-center italic px-4">
+          The answer is {challenge.correctAnswer}. Tap it below!
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
         {challenge.options.map((choice) => {
           const isCorrect = choice === challenge.correctAnswer;
+          const isGuidedHighlight = isGuided && isCorrect && !feedback;
 
           return (
             <button
@@ -341,7 +524,9 @@ const ScenarioView: React.FC<ViewProps<ScenarioChallengeData>> = ({ challenge, t
                   ? 'bg-green-600 text-white scale-[1.02]'
                   : feedback
                     ? 'bg-gray-700 text-gray-400'
-                    : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
+                    : isGuidedHighlight
+                      ? `${theme.color} ring-2 ring-blue-400 ring-offset-1 ring-offset-transparent text-white animate-pulse`
+                      : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
                 disabled:cursor-default
               `}
             >
@@ -351,10 +536,12 @@ const ScenarioView: React.FC<ViewProps<ScenarioChallengeData>> = ({ challenge, t
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `It was: ${challenge.correctAnswer}`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={scenarioExplanation}
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );
@@ -373,13 +560,19 @@ const OrderingView: React.FC<ViewProps<OrderingChallengeData>> = ({ challenge, t
     const next = [...selected, item];
     setSelected(next);
 
-    // Check when all items have been selected
     if (next.length === challenge.correctSequence.length) {
       const isCorrect = next.every((val, idx) => val === challenge.correctSequence[idx]);
       setFeedback(isCorrect ? 'correct' : 'wrong');
-      setTimeout(() => onResult(isCorrect), 800);
+      if (isCorrect) {
+        setTimeout(() => onResult(true), 800);
+      }
+      // Wrong: wait for "Got it"
     }
   };
+
+  const handleDismiss = useCallback(() => {
+    onResult(false);
+  }, [onResult]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -430,10 +623,13 @@ const OrderingView: React.FC<ViewProps<OrderingChallengeData>> = ({ challenge, t
         })}
       </div>
 
-      {feedback && (
-        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
-          {feedback === 'correct' ? 'Correct!' : `Correct order: ${challenge.correctSequence.join(', ')}`}
-        </p>
+      {feedback === 'correct' && <CorrectBanner />}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={`The correct order is: ${challenge.correctSequence.join(', ')}`}
+          mnemonic="Try to remember the sequence from softest/slowest to loudest/fastest."
+          onDismiss={handleDismiss}
+        />
       )}
     </div>
   );

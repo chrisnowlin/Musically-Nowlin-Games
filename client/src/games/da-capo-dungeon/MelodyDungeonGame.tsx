@@ -49,6 +49,9 @@ import MusicSelectModal from './MusicSelectModal';
 import type { MusicTrack } from './logic/musicTracks';
 import { TeacherPoolProvider, useTeacherPool, poolVocabToEntries } from './TeacherPoolContext';
 import { fetchDefaults } from './logic/useDefaultVocab';
+import { createLearningState, type LearningState } from './logic/learningState';
+import LoreModal from './LoreModal';
+import { getMandatoryLoreLesson, type LoreLesson } from './logic/loreData';
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -164,6 +167,23 @@ const MelodyDungeonGameInner: React.FC = () => {
   const [showSpecialFloorBanner, setShowSpecialFloorBanner] = useState<SpecialFloorType | null>(null);
   const [showFortuneModal, setShowFortuneModal] = useState(false);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  const [learningState, setLearningState] = useState<LearningState>(() => createLearningState());
+  const [activeLoreLesson, setActiveLoreLesson] = useState<LoreLesson | null>(null);
+  const [completedLoreLessons, setCompletedLoreLessons] = useState<Set<string>>(new Set());
+  const wasGuidedRef = useRef(false);
+
+  /** Wraps setLearningState to detect guided mode (System 2 gold reduction). */
+  const handleLearningUpdate = useCallback((next: LearningState) => {
+    setLearningState((prev) => {
+      // If seenConcepts grew, this challenge was in guided mode
+      if (next.seenConcepts.size > prev.seenConcepts.size) {
+        wasGuidedRef.current = true;
+      }
+      return next;
+    });
+  }, []);
+
+  const pendingDescendRef = useRef<number>(0);
   const [overrideTier, setOverrideTier] = useState<Tier | undefined>(undefined);
   const [pendingDevConfig, setPendingDevConfig] = useState<{
     challengeType: ChallengeType;
@@ -685,6 +705,11 @@ const MelodyDungeonGameInner: React.FC = () => {
     (correct: boolean, meta?: BossBattleMeta) => {
       if (!activeChallenge) return;
 
+      // Capture & reset guided flag (System 2: reduced gold for guided challenges)
+      // Reset is here so each challenge evaluation starts fresh.
+      const _guidedSnapshot = wasGuidedRef.current;
+      wasGuidedRef.current = false;
+
       // Second Chance: retry on wrong answer (not for doors or dragon battles)
       if (!correct && !meta && activeTileType !== TileType.Door) {
         const hasSecondChance = playerRef.current.buffs.armed.secondChance > 0;
@@ -791,7 +816,10 @@ const MelodyDungeonGameInner: React.FC = () => {
           }
         } else if (correct) {
           // Non-boss correct answer
-          const baseGold = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 100 : 50;
+          // Guided mode (System 2): student saw the answer, so award half gold
+          const guided = _guidedSnapshot;
+          const normalGold = (activeTileType === TileType.Enemy && prev.buffs.armed.luckyCoin > 0) ? 100 : 50;
+          const baseGold = guided ? Math.floor(normalGold / 2) : normalGold;
           const streakBonus = Math.floor(prev.streak / 3) * 15;
           updated.gold += baseGold + streakBonus;
           updated.streak += 1;
@@ -1100,6 +1128,10 @@ const MelodyDungeonGameInner: React.FC = () => {
     setDevMode({ ...DEFAULT_DEV_MODE });
     setActiveChallenge(null);
     setShowJukebox(false);
+    setLearningState(createLearningState());
+    setCompletedLoreLessons(new Set());
+    setActiveLoreLesson(null);
+    pendingDescendRef.current = 0;
     moveLockedRef.current = false;
     setPhase('playing');
     playNote('C4', 0.2);
@@ -1242,22 +1274,7 @@ const MelodyDungeonGameInner: React.FC = () => {
     }
   }, [activeTileType]);
 
-  const descendFloor = useCallback(() => {
-    const nextFloorNum = floorNumber + 1;
-    setFloorsCleared((c) => c + 1);
-
-    // Unlock the next floor for future runs
-    if (nextFloorNum > deepestUnlocked) {
-      const newDeepest = Math.min(nextFloorNum, MAX_FLOOR);
-      setDeepestUnlocked(newDeepest);
-      try { localStorage.setItem('melodyDungeonDeepest', String(newDeepest)); } catch {}
-    }
-
-    if (nextFloorNum > MAX_FLOOR) {
-      setPhase('victory');
-      return;
-    }
-
+  const doDescend = useCallback((nextFloorNum: number) => {
     const newFloor = generateDungeon(nextFloorNum, { hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
@@ -1277,7 +1294,54 @@ const MelodyDungeonGameInner: React.FC = () => {
     setPhase('playing');
     playNote('G4', 0.15);
     setTimeout(() => playNote('C5', 0.3), 150);
-  }, [floorNumber, deepestUnlocked, pool]);
+  }, [pool]);
+
+  const descendFloor = useCallback(() => {
+    const nextFloorNum = floorNumber + 1;
+    setFloorsCleared((c) => c + 1);
+
+    // Unlock the next floor for future runs
+    if (nextFloorNum > deepestUnlocked) {
+      const newDeepest = Math.min(nextFloorNum, MAX_FLOOR);
+      setDeepestUnlocked(newDeepest);
+      try { localStorage.setItem('melodyDungeonDeepest', String(newDeepest)); } catch {}
+    }
+
+    if (nextFloorNum > MAX_FLOOR) {
+      setPhase('victory');
+      return;
+    }
+
+    // System 3: Check for mandatory lore lesson before descending
+    const loreLesson = getMandatoryLoreLesson(floorNumber);
+    if (loreLesson && !completedLoreLessons.has(loreLesson.id)) {
+      setActiveLoreLesson(loreLesson);
+      setPhase('lore');
+      // Store the next floor number so we can descend after the lesson
+      pendingDescendRef.current = nextFloorNum;
+      return;
+    }
+
+    doDescend(nextFloorNum);
+  }, [floorNumber, deepestUnlocked, completedLoreLessons, doDescend]);
+
+  const handleLoreComplete = useCallback(() => {
+    if (activeLoreLesson) {
+      setCompletedLoreLessons(prev => {
+        const next = new Set(prev);
+        next.add(activeLoreLesson.id);
+        return next;
+      });
+    }
+    setActiveLoreLesson(null);
+    // Descend to the floor that was pending
+    if (pendingDescendRef.current > 0) {
+      doDescend(pendingDescendRef.current);
+      pendingDescendRef.current = 0;
+    } else {
+      setPhase('playing');
+    }
+  }, [activeLoreLesson, doDescend]);
 
   // Save high gold
   useEffect(() => {
@@ -1741,6 +1805,8 @@ const MelodyDungeonGameInner: React.FC = () => {
           poolVocabEntries={pool ? poolVocabToEntries(pool.vocabEntries) : undefined}
           poolUseDefaults={pool?.useDefaults}
           onListeningChange={handleListeningChange}
+          learningState={learningState}
+           onLearningUpdate={handleLearningUpdate}
         />
       )}
 
@@ -1802,6 +1868,10 @@ const MelodyDungeonGameInner: React.FC = () => {
             moveLockedRef.current = false;
           }}
         />
+      )}
+
+      {phase === 'lore' && activeLoreLesson && (
+        <LoreModal lesson={activeLoreLesson} onComplete={handleLoreComplete} />
       )}
 
       <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />

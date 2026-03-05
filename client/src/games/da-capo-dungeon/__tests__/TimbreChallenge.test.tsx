@@ -62,7 +62,14 @@ describe('TimbreChallenge', () => {
 
     const buttons = screen.getAllByRole('button').filter(b => b.textContent !== 'Replay');
     fireEvent.click(buttons[0]);
-    act(() => { vi.advanceTimersByTime(1000); });
+
+    // If answer was wrong, corrective feedback shows a "Got it" button instead of auto-dismissing
+    const gotIt = screen.queryByTestId('got-it-btn');
+    if (gotIt) {
+      fireEvent.click(gotIt);
+    } else {
+      act(() => { vi.advanceTimersByTime(1000); });
+    }
 
     expect(onResult).toHaveBeenCalledTimes(1);
     expect(onResult).toHaveBeenCalledWith(expect.any(Boolean));
@@ -89,9 +96,10 @@ describe('TimbreChallenge', () => {
     const buttons = screen.getAllByRole('button').filter(b => b.textContent !== 'Replay');
     fireEvent.click(buttons[0]);
 
-    // Should show either "Correct!" or "It was: ..."
-    const feedback = screen.getByText(/correct!|it was:/i);
-    expect(feedback).toBeInTheDocument();
+    // Correct answers show "Correct!" banner; wrong answers show corrective feedback with "Got it" button
+    const correctBanner = screen.queryByText(/correct!/i);
+    const gotItBtn = screen.queryByTestId('got-it-btn');
+    expect(correctBanner || gotItBtn).toBeTruthy();
   });
 
   it('shows replay button when allowReplay is true (T1-T4)', () => {
