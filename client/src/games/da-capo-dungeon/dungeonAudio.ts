@@ -130,7 +130,7 @@ export function playNote(noteKey: string, duration = 0.4, volume = 0.3): void {
       });
       return;
     }
-    const freq = NOTE_FREQUENCIES[noteKey];
+    const freq = NOTE_FREQUENCIES[noteKey] ?? noteKeyToFrequency(noteKey);
     if (!freq) return;
 
     const osc = ctx.createOscillator();

@@ -9,17 +9,15 @@ export interface TimbreEntry {
   family?: InstrumentFamily; // for T2 family-level challenges
 }
 
-// ── T1: Sound properties and vocal timbres (pitch & speed, no real instruments) ─────
+// ── T1: Sound properties (pitch & speed contrasts, synthesized audio) ────────
+// Voice entries (singing, speaking, whispering, shouting) were removed because
+// there are no voice audio samples to play — only the Web Audio synth is used.
 
 const T1_POOL: TimbreEntry[] = [
   { id: 't1-high', displayName: 'High Sound' },
   { id: 't1-low', displayName: 'Low Sound' },
   { id: 't1-fast', displayName: 'Fast Sound' },
   { id: 't1-slow', displayName: 'Slow Sound' },
-  { id: 't1-sing', displayName: 'Singing Voice' },
-  { id: 't1-speak', displayName: 'Speaking Voice' },
-  { id: 't1-whisper', displayName: 'Whispering Voice' },
-  { id: 't1-shout', displayName: 'Shouting Voice' },
 ];
 
 // ── T2: Instrument families ──────────────────────────────────────

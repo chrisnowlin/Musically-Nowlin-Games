@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { ResponsiveGameLayout } from '@/common/game-shell/ResponsiveGameLayout';
@@ -13,10 +13,61 @@ import MatchmakingScreen from './MatchmakingScreen';
 
 export default function CadenceQuestGame() {
   const [, setLocation] = useLocation();
-  const { state, createCharacter, startBattle, startPvpBattle, endBattle, navigate, persistAfterBattle } = useGameState();
+  const {
+    state,
+    createCharacter,
+    startBattle,
+    startPvpBattle,
+    endBattle,
+    navigate,
+    persistAfterBattle,
+    battleStats,
+    startBattleTracking,
+    recordChallengeResult,
+    getFinalStats,
+  } = useGameState();
 
-  const handleBattleEnd = (winner: 'player' | 'opponent') => {
+  const [victoryRewards, setVictoryRewards] = useState<{
+    xpEarned: number;
+    goldEarned: number;
+    itemsDropped: any[];
+    leveledUp: boolean;
+    newLevel?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (state.screen === 'battle') {
+      startBattleTracking();
+    }
+  }, [state.screen, startBattleTracking]);
+
+  const handleBattleEnd = (winner: 'player' | 'opponent', details?: any) => {
     endBattle(winner === 'player');
+
+    if (winner === 'player' && state.character) {
+      const isBoss = state.battleContext && 'regionId' in state.battleContext
+        && 'isBoss' in state.battleContext
+        ? (state.battleContext as any).isBoss
+        : false;
+
+      const finalStats = getFinalStats();
+
+      const xpEarned = details?.xpEarned ?? 100;
+      const goldEarned = details?.goldEarned ?? 50;
+      const itemsDropped = details?.itemsDropped ?? [];
+      const leveledUp = details?.leveledUp ?? false;
+      const newLevel = details?.newLevel;
+
+      setVictoryRewards({
+        xpEarned,
+        goldEarned,
+        itemsDropped,
+        leveledUp,
+        newLevel,
+      });
+    } else {
+      setVictoryRewards(null);
+    }
   };
 
   const persistedRef = React.useRef(false);
@@ -109,11 +160,30 @@ export default function CadenceQuestGame() {
   }
 
   if (state.screen === 'victory') {
+    const finalStats = getFinalStats();
     return (
       <ResponsiveGameLayout>
         <VictoryScreen
           victory={state.lastBattleVictory ?? true}
-          onContinue={() => navigate('world-map')}
+          onBack={() => {
+            setVictoryRewards(null);
+            navigate('world-map');
+          }}
+          onContinue={() => {
+            setVictoryRewards(null);
+            navigate('world-map');
+          }}
+          xpEarned={victoryRewards?.xpEarned}
+          goldEarned={victoryRewards?.goldEarned}
+          itemsDropped={victoryRewards?.itemsDropped}
+          leveledUp={victoryRewards?.leveledUp}
+          newLevel={victoryRewards?.newLevel}
+          stats={finalStats ? {
+            challengesCorrect: finalStats.challengesCorrect,
+            challengesTotal: finalStats.challengesTotal,
+            maxCombo: finalStats.maxCombo,
+            averageResponseTime: finalStats.averageResponseTime ?? 0,
+          } : undefined}
         />
       </ResponsiveGameLayout>
     );

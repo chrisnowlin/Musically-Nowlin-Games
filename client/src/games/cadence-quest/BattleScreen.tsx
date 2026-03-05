@@ -2,14 +2,18 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import type { BattleState, MusicChallenge, ChallengeAnswer } from '@shared/types/cadence-quest';
 import { processAnswer, toBattleCharacter } from '@shared/logic/battle-engine';
 import { validateAnswer } from '@shared/logic/challenge-pool';
-import { generateChallengeForRegion, generateChallenge } from '@shared/logic/challenge-pool';
 import type { Character } from '@shared/types/cadence-quest';
 import type { RegionEncounter } from '@shared/types/cadence-quest';
-import BattleHUD from './BattleHUD';
+import BattleMap from './BattleMap';
 import ChallengePanel from './ChallengePanel';
 import { getEncounter } from './logic/region-encounters';
 import { simulateAIAnswer } from './logic/ai-opponent';
 import { useWebSocket } from './logic/useWebSocket';
+import { BattleAudio } from './audio/battle-audio';
+import { CadenceChallengeAdapter, mergeSkillTreeEffects } from './logic/challenge-adapter';
+import { xpRewardForBattle, goldRewardForBattle, processXpGain } from './logic/experience-system';
+import { generateBossDrops } from './logic/boss-drops';
+import { BOSSES } from './logic/boss-data';
 
 interface BattleScreenProps {
   battleId: string;
@@ -22,7 +26,13 @@ interface BattleScreenProps {
   battleRoomId?: string;
   initialChallenge?: MusicChallenge;
   challengeShownAt?: number;
-  onVictory: (winner: 'player' | 'opponent') => void;
+  onVictory: (winner: 'player' | 'opponent', details?: {
+    xpEarned: number;
+    goldEarned: number;
+    itemsDropped?: any[];
+    leveledUp?: boolean;
+    newLevel?: number;
+  }) => void;
 }
 
 const BattleScreen: React.FC<BattleScreenProps> = ({
@@ -43,6 +53,22 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
     type === 'pve' ? getEncounter(regionId!, encounterIndex!) : null;
   const disciplineFocus = encounter?.disciplineFocus ?? 'theory';
   const opponentName = encounter?.enemyName ?? opponent.name;
+  const battleAudio = useRef(new BattleAudio());
+
+  const skillTreeEffects = useRef(
+    mergeSkillTreeEffects(playerCharacter.stats.skillTree)
+  );
+  const challengeAdapter = useRef(
+    new CadenceChallengeAdapter(
+      playerCharacter.class,
+      playerCharacter.stats.level,
+      skillTreeEffects.current
+    )
+  );
+
+  useEffect(() => {
+    void battleAudio.current['core'].resumeAudioContext();
+  }, []);
 
   const [state, setState] = useState<BattleState>(() => {
     const player = toBattleCharacter(
@@ -75,14 +101,25 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
     return initial;
   });
 
+  const [sessionStats, setSessionStats] = useState<{
+    correct: number;
+    total: number;
+    maxCombo: number;
+    totalResponseTime: number;
+  }>({
+    correct: 0,
+    total: 0,
+    maxCombo: 0,
+    totalResponseTime: 0,
+  });
+
   const [resolving, setResolving] = useState(false);
   const roomIdRef = useRef(battleRoomId);
 
   const spawnChallenge = useCallback(() => {
-    const difficulty = isBoss ? 'hard' : 'medium';
     const challenge = type === 'pve'
-      ? generateChallengeForRegion(disciplineFocus, difficulty)
-      : generateChallenge('theory', difficulty);
+      ? challengeAdapter.current.generateChallengeForRegion(disciplineFocus, isBoss)
+      : challengeAdapter.current.generateChallenge(disciplineFocus, isBoss);
     setState((s) => ({
       ...s,
       phase: 'challenge',
@@ -132,9 +169,45 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
   }, [type, state.phase, state.currentChallenge, spawnChallenge]);
 
   useEffect(() => {
-    if (state.phase === 'victory') onVictory('player');
-    if (state.phase === 'defeat') onVictory('opponent');
-  }, [state.phase, onVictory]);
+    if (state.phase === 'victory') {
+      battleAudio.current.playVictoryFanfare();
+
+      const xpEarned = xpRewardForBattle(isBoss, playerCharacter.stats.level);
+      const goldEarned = goldRewardForBattle(isBoss, playerCharacter.stats.level);
+
+      let itemsDropped: any[] = [];
+      let leveledUp = false;
+      let newLevel: number | undefined;
+
+      if (isBoss && regionId) {
+        const boss = BOSSES.find(b => b.regionId === regionId);
+        if (boss) {
+          itemsDropped = generateBossDrops(boss);
+        }
+      }
+
+      const xpResult = processXpGain(playerCharacter, xpEarned);
+      if (xpResult.leveledUp) {
+        leveledUp = true;
+        newLevel = xpResult.newLevel;
+      }
+
+      onVictory('player', {
+        xpEarned,
+        goldEarned,
+        itemsDropped,
+        leveledUp,
+        newLevel,
+      });
+    }
+    if (state.phase === 'defeat') {
+      battleAudio.current.playDefeatSound();
+      onVictory('opponent', {
+        xpEarned: Math.floor(xpRewardForBattle(isBoss, playerCharacter.stats.level) * 0.5),
+        goldEarned: Math.floor(goldRewardForBattle(isBoss, playerCharacter.stats.level) * 0.25),
+      });
+    }
+  }, [state.phase, isBoss, regionId, playerCharacter, onVictory]);
 
   const handleAnswer = useCallback(
     (answer: ChallengeAnswer) => {
@@ -147,16 +220,29 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
       }
 
       setResolving(true);
+
+      const responseTime = state.challengeShownAt ? Date.now() - state.challengeShownAt : 0;
+      const isCorrect = validateAnswer(state.currentChallenge, answer);
+
+      setSessionStats(prev => ({
+        total: prev.total + 1,
+        correct: isCorrect ? prev.correct + 1 : prev.correct,
+        maxCombo: isCorrect ? Math.max(prev.maxCombo, state.player.streak + 1) : prev.maxCombo,
+        totalResponseTime: prev.totalResponseTime + responseTime,
+      }));
+
       const { result, nextState } = processAnswer(state, answer, validateAnswer);
+
+      battleAudio.current.playAttackSound(playerCharacter.class, isCorrect);
+
       setState(nextState);
       setResolving(false);
       if (nextState.phase === 'victory' || nextState.phase === 'defeat') return;
       if (nextState.activeTurn === 'opponent') {
         setState((s) => ({ ...s, phase: 'waiting' }));
-        const difficulty = isBoss ? 'hard' : 'medium';
         const aiChallenge = type === 'pve'
-          ? generateChallengeForRegion(disciplineFocus, difficulty)
-          : generateChallenge('theory', difficulty);
+          ? challengeAdapter.current.generateChallengeForRegion(disciplineFocus, isBoss)
+          : challengeAdapter.current.generateChallenge(disciplineFocus, isBoss);
         const shownAt = Date.now();
         setState((s) => ({
           ...s,
@@ -165,7 +251,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
           challengeShownAt: shownAt,
           activeTurn: 'opponent',
         }));
-        simulateAIAnswer(aiChallenge, difficulty, shownAt).then((aiAnswer) => {
+        simulateAIAnswer(aiChallenge, aiChallenge.difficulty, shownAt).then((aiAnswer) => {
           const aiState = { ...nextState, phase: 'challenge' as const, currentChallenge: aiChallenge, challengeShownAt: shownAt };
           const { nextState: aiNextState } = processAnswer(aiState, aiAnswer, validateAnswer);
           setState(aiNextState);
@@ -205,13 +291,26 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 max-w-lg mx-auto">
-      <BattleHUD
+    <div className="flex flex-col items-center gap-6 p-4">
+      <BattleMap
         player={state.player}
         opponent={state.opponent}
         activeTurn={state.activeTurn}
-        streak={state.player.streak}
+        playerClass={playerCharacter.class}
+        opponentClass={opponent.class}
+        isBoss={isBoss}
+        regionId={regionId}
       />
+      
+      <div className="flex justify-between items-center text-sm">
+        <div className="bg-black/30 px-3 py-1 rounded text-purple-300">
+          Streak: <span className="font-bold text-yellow-300">{state.player.streak}</span>
+        </div>
+        <div className="bg-black/30 px-3 py-1 rounded text-purple-300">
+          Turn: <span className="font-bold">{state.turnCount}</span>
+        </div>
+      </div>
+      
       {state.phase === 'waiting' && (
         <p className="text-center text-purple-800 animate-pulse">
           Opponent&apos;s turn...
@@ -223,7 +322,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
         </p>
       )}
       {state.phase === 'challenge' && state.activeTurn === 'player' && state.currentChallenge && (
-        <div className="bg-gray-800/80 rounded-xl p-6 border border-purple-500/30">
+        <div className="w-[900px] bg-gray-800/80 rounded-xl p-6 border border-purple-500/30">
           <ChallengePanel
             challenge={state.currentChallenge as MusicChallenge}
             shownAt={state.challengeShownAt ?? Date.now()}

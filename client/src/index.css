@@ -618,6 +618,24 @@
     animation: float-note-2 1.8s ease-out infinite;
     animation-delay: 0.5s;
   }
+
+  /* Cadence Quest Battle Map Animations */
+  @keyframes character-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+  .animate-charactershake {
+    animation: character-shake 0.3s ease-in-out infinite;
+  }
+
+  /* Perspective utilities for 3D battle map */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .rotate-x-60 {
+    transform: rotateX(60deg);
+  }
 }
 
 /* ============================================

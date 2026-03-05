@@ -1,6 +1,15 @@
-import { useReducer, useCallback, useEffect } from 'react';
+import { useReducer, useCallback, useEffect, useState } from 'react';
 import type { Character, CharacterClass } from '@shared/types/cadence-quest';
 import { authGuest, characterCreate, characterUpdate, battleRecord } from './api';
+
+export interface BattleStats {
+  challengesCorrect: number;
+  challengesTotal: number;
+  maxCombo: number;
+  totalResponseTime: number;
+  startTime: number;
+  averageResponseTime?: number;
+}
 
 export type GameScreen = 'menu' | 'character-creation' | 'world-map' | 'battle' | 'victory' | 'skill-tree' | 'collection' | 'pvp';
 
@@ -57,8 +66,14 @@ const createDefaultCharacter = (id: string, name: string, charClass: CharacterCl
       dynamics: [],
       theory: [],
     },
+    equipment: {
+      weapon: null,
+      armor: null,
+      accessory: null,
+    },
   },
   regionProgress: {},
+  inventory: [],
   equippedInstrument: null,
   equippedSpells: [],
   ownedInstruments: [],
@@ -77,8 +92,14 @@ function apiCharToCharacter(api: { id: string; name: string; class: string; stat
       maxHp: api.stats.maxHp,
       skillPoints: api.stats.skillPoints,
       skillTree: api.stats.skillTree as Record<import('@shared/types/cadence-quest').MusicDiscipline, number[]>,
+      equipment: {
+        weapon: null,
+        armor: null,
+        accessory: null,
+      },
     },
     regionProgress: api.regionProgress,
+    inventory: [],
     equippedInstrument: api.equippedInstrument,
     equippedSpells: api.equippedSpells,
     ownedInstruments: api.ownedInstruments,
@@ -179,10 +200,52 @@ function isServerCharacter(id: string): boolean {
 
 export function useGameState() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [battleStats, setBattleStats] = useState<BattleStats | null>(null);
 
   useEffect(() => {
     authGuest().catch(() => {});
   }, []);
+
+  const startBattleTracking = useCallback(() => {
+    setBattleStats({
+      challengesCorrect: 0,
+      challengesTotal: 0,
+      maxCombo: 0,
+      totalResponseTime: 0,
+      startTime: Date.now(),
+    });
+  }, []);
+
+  const recordChallengeResult = useCallback((
+    correct: boolean,
+    responseTime: number,
+    currentCombo: number
+  ) => {
+    setBattleStats(prev => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        challengesTotal: prev.challengesTotal + 1,
+        challengesCorrect: correct
+          ? prev.challengesCorrect + 1
+          : prev.challengesCorrect,
+        maxCombo: Math.max(prev.maxCombo, currentCombo),
+        totalResponseTime: prev.totalResponseTime + responseTime,
+      };
+    });
+  }, []);
+
+  const getFinalStats = useCallback((): BattleStats | null => {
+    if (!battleStats) return null;
+
+    return {
+      ...battleStats,
+      averageResponseTime: battleStats.challengesTotal > 0
+        ? battleStats.totalResponseTime / battleStats.challengesTotal
+        : 0,
+    };
+  }, [battleStats]);
 
   const createCharacter = useCallback(async (name: string, charClass: CharacterClass) => {
     try {
@@ -255,5 +318,17 @@ export function useGameState() {
     dispatch({ type: 'NAVIGATE', screen });
   }, []);
 
-  return { state, createCharacter, startBattle, startPvpBattle, endBattle, navigate, persistAfterBattle };
+  return {
+    state,
+    createCharacter,
+    startBattle,
+    startPvpBattle,
+    endBattle,
+    navigate,
+    persistAfterBattle,
+    battleStats,
+    startBattleTracking,
+    recordChallengeResult,
+    getFinalStats,
+  };
 }

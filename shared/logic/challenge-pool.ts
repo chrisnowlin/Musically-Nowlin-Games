@@ -40,6 +40,8 @@ const INTERVALS = [
   { name: 'Octave', semitones: 12 },
 ];
 
+const NOTES_MEDIUM = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'];
+
 const SEMITONE_TO_NOTE: Record<number, string> = {
   0: 'C', 1: 'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F',
   6: 'F#', 7: 'G', 8: 'G#', 9: 'A', 10: 'A#', 11: 'B',
@@ -90,7 +92,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 function pickOptions<T>(correct: T, pool: T[], count: number): T[] {
   const others = pool.filter((x) => x !== correct);
-  const selected = shuffle(others).slice(0, count - 1);
+  const selected = shuffle([...others]).slice(0, count - 1);
   return shuffle([...selected, correct]);
 }
 
@@ -118,7 +120,7 @@ function generateId(): string {
 /** Note-reading mode by difficulty: space -> line -> both -> ledger */
 export function generateNoteReadingChallenge(
   difficulty: Difficulty,
-  discipline: MusicDiscipline = 'pitch'
+  _discipline: MusicDiscipline = 'pitch'
 ): NoteReadingChallenge {
   const notes =
     difficulty === 'easy' ? NOTES_SPACE
@@ -129,7 +131,7 @@ export function generateNoteReadingChallenge(
   return {
     id: generateId(),
     type: 'noteReading',
-    discipline,
+    discipline: 'pitch',
     difficulty,
     targetNote,
     options: options.map((n) => n.replace(/\d+/, '')),
@@ -145,20 +147,22 @@ export function generateRhythmTapChallenge(
 ): RhythmTapChallenge {
   const bpm = difficulty === 'easy' ? 80 : difficulty === 'medium' ? 100 : 120;
   const toleranceMs = difficulty === 'easy' ? 300 : difficulty === 'medium' ? 200 : 150;
-  const subdivisions =
+  const subdivisions = ['quarter', 'half', 'eighth', 'sixteenth'];
+  const allSubdivisions = [...subdivisions];
+  const selectedSubdivisions =
     difficulty === 'easy'
-      ? (['quarter', 'half'] as const)
+      ? allSubdivisions.slice(0, 2)
       : difficulty === 'medium'
-        ? (['quarter', 'half', 'eighth'] as const)
-        : (['quarter', 'eighth', 'sixteenth'] as const);
+        ? allSubdivisions.slice(0, 3)
+        : allSubdivisions.slice(2, 4);
   const patternLength = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 4 : 6;
   const beatDuration = 60000 / bpm;
 
   const pattern: { time: number; duration: number }[] = [];
   let currentTime = 0;
   for (let i = 0; i < patternLength; i++) {
-    const sub = pick(subdivisions);
-    const dur = DURATION_MAP[sub] * beatDuration;
+    const sub = pick(selectedSubdivisions);
+    const dur = (DURATION_MAP as Record<string, number>)[sub] * beatDuration;
     pattern.push({ time: currentTime, duration: dur });
     currentTime += dur;
   }
@@ -166,7 +170,7 @@ export function generateRhythmTapChallenge(
   return {
     id: generateId(),
     type: 'rhythmTap',
-    discipline,
+    discipline: 'rhythm',
     difficulty,
     pattern,
     bpm,
@@ -178,7 +182,7 @@ export function generateRhythmTapChallenge(
 
 export function generateIntervalChallenge(
   difficulty: Difficulty,
-  discipline: MusicDiscipline = 'pitch'
+  _discipline: MusicDiscipline = 'pitch'
 ): IntervalChallenge {
   const intervalPool =
     difficulty === 'easy'
@@ -194,7 +198,7 @@ export function generateIntervalChallenge(
   return {
     id: generateId(),
     type: 'interval',
-    discipline,
+    discipline: 'pitch',
     difficulty,
     note1: baseNote,
     note2,
@@ -207,7 +211,7 @@ export function generateIntervalChallenge(
 
 export function generateChordIdentifyChallenge(
   difficulty: Difficulty,
-  discipline: MusicDiscipline = 'harmony'
+  _discipline: MusicDiscipline = 'harmony'
 ): ChordIdentifyChallenge {
   const pool = difficulty === 'easy' ? CHORDS.slice(0, 3) : CHORDS;
   const chord = pick(pool);
@@ -216,7 +220,7 @@ export function generateChordIdentifyChallenge(
   return {
     id: generateId(),
     type: 'chordIdentify',
-    discipline,
+    discipline: 'harmony',
     difficulty,
     chordNotes,
     chordName: chord.name,
@@ -235,7 +239,7 @@ const SCALES = [
 
 export function generateScaleIdentifyChallenge(
   difficulty: Difficulty,
-  discipline: MusicDiscipline = 'harmony'
+  _discipline: MusicDiscipline = 'harmony'
 ): ScaleIdentifyChallenge {
   const scale = pick(SCALES);
   const scaleNotes = scale.intervals.map((i) => semitonesToNote(60 + (i % 12)));
@@ -243,7 +247,7 @@ export function generateScaleIdentifyChallenge(
   return {
     id: generateId(),
     type: 'scaleIdentify',
-    discipline,
+    discipline: 'harmony',
     difficulty,
     scaleNotes,
     scaleName: scale.name,
@@ -255,7 +259,7 @@ export function generateScaleIdentifyChallenge(
 
 export function generateTempoIdentifyChallenge(
   difficulty: Difficulty,
-  discipline: MusicDiscipline = 'rhythm'
+  _discipline: MusicDiscipline = 'rhythm'
 ): TempoIdentifyChallenge {
   const pool = difficulty === 'easy' ? TEMPO_OPTIONS.slice(1, 4) : TEMPO_OPTIONS;
   const target = pick(pool);
@@ -263,7 +267,7 @@ export function generateTempoIdentifyChallenge(
   return {
     id: generateId(),
     type: 'tempoIdentify',
-    discipline,
+    discipline: 'rhythm',
     difficulty,
     bpm: target.bpm,
     options,
@@ -280,13 +284,13 @@ const LISTENING_PROMPTS: { prompt: string; options: string[]; correctAnswer: str
 
 export function generateListeningChallenge(
   difficulty: Difficulty,
-  discipline: MusicDiscipline = 'theory'
+  _discipline: MusicDiscipline = 'theory'
 ): ListeningChallenge {
   const item = pick(LISTENING_PROMPTS);
   return {
     id: generateId(),
     type: 'listening',
-    discipline,
+    discipline: 'theory',
     difficulty,
     prompt: item.prompt,
     options: item.options,

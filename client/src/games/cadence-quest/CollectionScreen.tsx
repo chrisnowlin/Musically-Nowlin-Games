@@ -8,6 +8,9 @@ interface CollectionScreenProps {
 }
 
 const CollectionScreen: React.FC<CollectionScreenProps> = ({ character, onBack }) => {
+  const instruments = character.ownedInstruments ?? [];
+  const spells = character.ownedSpells ?? [];
+
   return (
     <div className="flex flex-col gap-4 p-4 max-w-2xl mx-auto">
       <div className="flex items-center gap-4">
@@ -19,11 +22,11 @@ const CollectionScreen: React.FC<CollectionScreenProps> = ({ character, onBack }
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 rounded-xl bg-gray-800/80 border border-gray-600">
           <h3 className="font-bold text-amber-200">Instruments</h3>
-          {character.ownedInstruments.length === 0 ? (
+          {instruments.length === 0 ? (
             <p className="text-sm text-gray-200 mt-2">None yet. Defeat enemies to earn instruments!</p>
           ) : (
             <ul className="mt-2 space-y-1">
-              {character.ownedInstruments.map((id) => (
+              {instruments.map((id) => (
                 <li key={id} className="text-sm text-gray-200">
                   {id}
                 </li>
@@ -33,11 +36,11 @@ const CollectionScreen: React.FC<CollectionScreenProps> = ({ character, onBack }
         </div>
         <div className="p-4 rounded-xl bg-gray-800/80 border border-gray-600">
           <h3 className="font-bold text-violet-200">Spells</h3>
-          {character.ownedSpells.length === 0 ? (
+          {spells.length === 0 ? (
             <p className="text-sm text-gray-200 mt-2">None yet. Unlock from skill tree or boss drops!</p>
           ) : (
             <ul className="mt-2 space-y-1">
-              {character.ownedSpells.map((id) => (
+              {spells.map((id) => (
                 <li key={id} className="text-sm text-gray-200">
                   {id}
                 </li>

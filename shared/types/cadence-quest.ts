@@ -32,6 +32,8 @@ export interface CharacterStats {
   skillPoints: number;
   /** Branch -> tier (0-4), tracks unlocked skill nodes */
   skillTree: Record<MusicDiscipline, number[]>;
+  /** Equipped items */
+  equipment: CharacterEquipment;
 }
 
 export interface Character {
@@ -42,12 +44,13 @@ export interface Character {
   stats: CharacterStats;
   /** Region id -> encounter index completed (0 = not started) */
   regionProgress: Record<string, number>;
-  equippedInstrument: string | null;
-  equippedSpells: string[];
-  /** Owned instrument ids */
-  ownedInstruments: string[];
-  /** Owned spell ids */
-  ownedSpells: string[];
+  /** Legacy fields - deprecated, use equipment.stats instead */
+  equippedInstrument?: string | null;
+  equippedSpells?: string[];
+  ownedInstruments?: string[];
+  ownedSpells?: string[];
+  /** Inventory of owned equipment */
+  inventory: Equipment[];
 }
 
 export interface BattleCharacter {
@@ -78,6 +81,10 @@ export interface BaseChallenge {
   discipline: MusicDiscipline;
   /** Difficulty affects params (notes range, tempo, etc.) */
   difficulty: 'easy' | 'medium' | 'hard';
+  /** Optional UI hints enabled by skills/classes */
+  showHints?: boolean;
+  showRangeIndicators?: boolean;
+  showStaffHelpers?: boolean;
 }
 
 export interface NoteReadingChallenge extends BaseChallenge {
@@ -169,6 +176,7 @@ export interface ChallengeResult {
 
 export type BattleType = 'pve' | 'pvp';
 export type BattlePhase = 'waiting' | 'challenge' | 'resolving' | 'victory' | 'defeat';
+export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface BattleState {
   id: string;
@@ -289,6 +297,99 @@ export interface SkillTreeData {
   branches: Record<MusicDiscipline, SkillNode[]>;
 }
 
+// ============ BOSSES ============
+
+export interface BossStage {
+  order: number;
+  discipline: MusicDiscipline;
+  difficulty: Difficulty;
+  correctAnswerDamage: number;
+  wrongAnswerDamage: number;
+  timeLimit?: number;
+  comboRequired?: number;
+  abilityTrigger?: string;
+}
+
+export interface BossAbility {
+  id: string;
+  name: string;
+  description: string;
+  trigger: 'on_stage_start' | 'on_correct' | 'on_wrong' | 'on_hp_threshold';
+  triggerValue?: number;
+  effect: {
+    type: 'buff_self' | 'debuff_player' | 'environment_change' | 'heal';
+    duration?: number;
+    value?: number;
+  };
+  soundEffect?: string;
+}
+
+export interface BossEncounter {
+  id: string;
+  name: string;
+  title: string;
+  regionId: string;
+  description: string;
+  spritePath: string;
+  emoji: string;
+  maxHp: number;
+  level: number;
+  stages: BossStage[];
+  abilities: BossAbility[];
+  guaranteedDrops: string[];
+  possibleDrops: string[];
+  xpReward: number;
+  goldReward: number;
+  flavorText?: string;
+  defeatQuote?: string;
+}
+
+// ============ EQUIPMENT ============
+
+export type EquipmentSlot = 'weapon' | 'armor' | 'accessory';
+
+export type EquipmentRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export interface Equipment {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  slot: EquipmentSlot;
+  rarity: EquipmentRarity;
+
+  /** Passive effects (always active while equipped) */
+  passiveEffects: {
+    damageModifier?: number;
+    classBonus?: {
+      class: CharacterClass;
+      bonus: number;
+    };
+    disciplineBonus?: {
+      discipline: MusicDiscipline;
+      bonus: number;
+    };
+    maxHpBonus?: number;
+    accuracyBonus?: number;
+    criticalChance?: number;
+    healOnCorrect?: number;
+    streakProtection?: number;
+  };
+
+  /** Visual representation */
+  spritePath: string;
+
+  /** Lore/flavor */
+  flavorText?: string;
+  source: 'drop' | 'quest' | 'shop' | 'boss';
+}
+
+export interface CharacterEquipment {
+  weapon: Equipment | null;
+  armor: Equipment | null;
+  accessory: Equipment | null;
+}
+
 // ============ PROGRESSION ============
 
 export interface XpReward {
@@ -302,6 +403,38 @@ export interface BattleReward {
   items: string[];
   /** Skill points for leveling up */
   skillPoints?: number;
+}
+
+// ============ ORACLES ============
+
+export interface OracleBlessing {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+
+  effect: {
+    type: 'damage_boost' | 'accuracy_boost' | 'heal' | 'insight' | 'luck';
+    discipline?: MusicDiscipline;
+    value: number;
+    duration: 'next_battle' | 'permanent' | 'next_3_battles';
+  };
+
+  flavorText: string;
+}
+
+export interface OracleEncounter {
+  id: string;
+  name: string;
+  description: string;
+  spritePath: string;
+  emoji: string;
+
+  /** Oracle offers 3 blessings, player picks 1 */
+  blessings: OracleBlessing[];
+
+  /** Lore */
+  flavorText: string;
 }
 
 // ============ MATCHMAKING ============

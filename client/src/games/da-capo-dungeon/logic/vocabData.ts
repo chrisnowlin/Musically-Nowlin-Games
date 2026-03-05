@@ -9,7 +9,11 @@ export interface VocabEntry {
   tier: Tier;
   category: VocabCategory;
   /** Question format override. Defaults to 'standard' (4-choice MC). */
-  format?: 'standard' | 'opposites' | 'ordering';
+  format?: 'standard' | 'opposites' | 'ordering' | 'scenario';
+  /** For scenario format: the correct answer choice */
+  scenarioAnswer?: string;
+  /** For scenario format: all available answer choices */
+  scenarioChoices?: string[];
 }
 
 const DYNAMICS_ENTRIES: VocabEntry[] = [
@@ -116,6 +120,9 @@ const SYMBOLS_ENTRIES: VocabEntry[] = [
   { term: 'Marcato', definition: 'Strongly accented note', symbol: '^', tier: 4, category: 'symbols' },
 ];
 
+// Voice types used as answer choices in scenario-format questions
+const VOICE_TYPES = ['Singing Voice', 'Speaking Voice', 'Whispering Voice', 'Shouting Voice'];
+
 const TERMS_ENTRIES: VocabEntry[] = [
   // Tier 1 (K-1): simple English
   { term: 'Melody', definition: 'A sequence of notes that make a tune', tier: 1, category: 'terms' },
@@ -127,6 +134,15 @@ const TERMS_ENTRIES: VocabEntry[] = [
   { term: 'Song', definition: 'A piece of music with words', tier: 1, category: 'terms' },
   { term: 'Singer', definition: 'A person who uses their voice to make music', tier: 1, category: 'terms' },
   { term: 'Instrument', definition: 'An object used to make music', tier: 1, category: 'terms' },
+  // Tier 1 (K-1): voice type scenarios — "Which voice would you use?"
+  { term: 'Perform a lullaby', definition: 'Which voice would you use to perform a lullaby?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Singing Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Sing "Happy Birthday"', definition: 'Which voice would you use to sing "Happy Birthday"?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Singing Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Read a story to class', definition: 'Which voice would you use to read a story to the class?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Speaking Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Answer a question in class', definition: 'Which voice would you use to answer a question in class?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Speaking Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Quiet reading time', definition: 'Which voice would you use during quiet reading time?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Whispering Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Tell a secret', definition: 'Which voice would you use to tell a secret to a friend?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Whispering Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Cheer at a game', definition: 'Which voice would you use to cheer at a football game?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Shouting Voice', scenarioChoices: VOICE_TYPES },
+  { term: 'Warn someone far away', definition: 'Which voice would you use to warn someone far away about danger?', tier: 1, category: 'terms', format: 'scenario', scenarioAnswer: 'Shouting Voice', scenarioChoices: VOICE_TYPES },
   // Tier 2 (2-3)
   { term: 'Unison', definition: 'Everyone singing or playing the same notes', tier: 2, category: 'terms' },
   { term: 'Round', definition: 'A song where groups start at different times singing the same melody', tier: 2, category: 'terms' },

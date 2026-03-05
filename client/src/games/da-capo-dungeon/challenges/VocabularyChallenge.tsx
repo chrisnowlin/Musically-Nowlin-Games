@@ -89,7 +89,27 @@ function buildOrderingChallenge(ordEntries: VocabEntry[]): OrderingChallengeData
   return { format: 'ordering', instruction, correctSequence, shuffledItems };
 }
 
-type ChallengeData = StandardChallengeData | OppositesChallengeData | OrderingChallengeData;
+// --- Scenario (situational 4-choice: "Which voice would you use to...?") ---
+
+interface ScenarioChallengeData {
+  format: 'scenario';
+  questionText: string;
+  correctAnswer: string;
+  options: string[];
+}
+
+function buildScenarioChallenge(scenEntries: VocabEntry[]): ScenarioChallengeData {
+  const entry = scenEntries[Math.floor(Math.random() * scenEntries.length)];
+  const options = shuffle([...(entry.scenarioChoices ?? [])]);
+  return {
+    format: 'scenario',
+    questionText: entry.definition,
+    correctAnswer: entry.scenarioAnswer ?? entry.term,
+    options,
+  };
+}
+
+type ChallengeData = StandardChallengeData | OppositesChallengeData | OrderingChallengeData | ScenarioChallengeData;
 
 // --- Component ---
 
@@ -111,18 +131,21 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEn
   const challenge: ChallengeData = useMemo(() => {
     const oppEntries = entries.filter((e: VocabEntry) => e.format === 'opposites');
     const ordEntries = entries.filter((e: VocabEntry) => e.format === 'ordering');
+    const scenEntries = entries.filter((e: VocabEntry) => e.format === 'scenario');
     const stdEntries = entries.filter((e: VocabEntry) => !e.format || e.format === 'standard');
 
     // Uniform random selection among available formats
-    const formats: Array<'standard' | 'opposites' | 'ordering'> = [];
+    const formats: Array<'standard' | 'opposites' | 'ordering' | 'scenario'> = [];
     if (stdEntries.length > 0) formats.push('standard');
     if (oppEntries.length >= 2) formats.push('opposites');
     if (ordEntries.length > 0) formats.push('ordering');
+    if (scenEntries.length > 0) formats.push('scenario');
 
     const chosen = formats[Math.floor(Math.random() * formats.length)];
 
     if (chosen === 'opposites') return buildOppositesChallenge(oppEntries);
     if (chosen === 'ordering') return buildOrderingChallenge(ordEntries);
+    if (chosen === 'scenario') return buildScenarioChallenge(scenEntries);
     return buildStandardChallenge(entries, stdEntries.length > 0 ? stdEntries : entries);
   }, [entries]);
 
@@ -131,6 +154,9 @@ const VocabularyChallenge: React.FC<Props> = ({ category, tier, onResult, poolEn
   }
   if (challenge.format === 'ordering') {
     return <OrderingView challenge={challenge} theme={theme} onResult={onResult} />;
+  }
+  if (challenge.format === 'scenario') {
+    return <ScenarioView challenge={challenge} theme={theme} onResult={onResult} />;
   }
   return <StandardView challenge={challenge} theme={theme} onResult={onResult} />;
 };
@@ -274,6 +300,60 @@ const OppositesView: React.FC<ViewProps<OppositesChallengeData>> = ({ challenge,
       {feedback && (
         <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
           {feedback === 'correct' ? 'Correct!' : `It was: ${challenge.correctEntry.term} — ${challenge.correctEntry.definition}`}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// --- Scenario View (situational "Which voice?" questions) ---
+
+const ScenarioView: React.FC<ViewProps<ScenarioChallengeData>> = ({ challenge, theme, onResult }) => {
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+
+  const handleAnswer = (choice: string) => {
+    if (feedback) return;
+    const correct = choice === challenge.correctAnswer;
+    setFeedback(correct ? 'correct' : 'wrong');
+    setTimeout(() => onResult(correct), 800);
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <h3 className={`text-lg font-bold ${theme.activeColor}`}>{theme.title}</h3>
+      <p className="text-gray-200 text-center text-base px-2 font-semibold">
+        {challenge.questionText}
+      </p>
+
+      <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
+        {challenge.options.map((choice) => {
+          const isCorrect = choice === challenge.correctAnswer;
+
+          return (
+            <button
+              key={choice}
+              onClick={() => handleAnswer(choice)}
+              disabled={!!feedback}
+              data-testid="scenario-btn"
+              className={`
+                px-4 py-3 rounded-lg font-bold text-base text-center transition-all
+                ${feedback && isCorrect
+                  ? 'bg-green-600 text-white scale-[1.02]'
+                  : feedback
+                    ? 'bg-gray-700 text-gray-400'
+                    : `${theme.color} ${theme.hoverColor} text-white active:scale-95`}
+                disabled:cursor-default
+              `}
+            >
+              {choice}
+            </button>
+          );
+        })}
+      </div>
+
+      {feedback && (
+        <p className={`font-bold text-lg ${feedback === 'correct' ? 'text-green-400' : 'text-red-400'}`}>
+          {feedback === 'correct' ? 'Correct!' : `It was: ${challenge.correctAnswer}`}
         </p>
       )}
     </div>
