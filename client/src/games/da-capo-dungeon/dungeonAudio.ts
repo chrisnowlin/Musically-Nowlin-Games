@@ -17,6 +17,7 @@ const SEMITONE_OFFSET: Record<string, number> = {
 let audioCtx: AudioContext | null = null;
 let scratchBuffer: AudioBuffer | null = null;
 let isUnlocked = false;
+let resumeInFlight: Promise<boolean> | null = null;
 
 function getAudioCtx(): AudioContext {
   // If iOS force-closed the context (memory pressure, extended background),
@@ -66,12 +67,35 @@ function playScratch(ctx: AudioContext): void {
 }
 
 /**
+ * Return the shared AudioContext for use by other audio services.
+ * This ensures a single context is used app-wide, with full iOS recovery.
+ */
+export function getSharedAudioCtx(): AudioContext {
+  return getAudioCtx();
+}
+
+/**
  * Resume AudioContext if suspended (required after user interaction).
  * On iOS Safari, also plays a scratch buffer to truly unlock audio output.
  * If resume fails (context permanently stuck), recreates the AudioContext
  * as a last resort so users don't need to refresh the page.
+ *
+ * Uses a concurrency guard so multiple simultaneous callers (visibility
+ * change, pointerdown, queued playNote calls) share a single resume attempt
+ * instead of racing through the recreate path.
  */
 export async function resumeAudioContext(): Promise<boolean> {
+  // Concurrency guard: if a resume is already in-flight, piggyback on it
+  if (resumeInFlight) return resumeInFlight;
+  resumeInFlight = _doResume();
+  try {
+    return await resumeInFlight;
+  } finally {
+    resumeInFlight = null;
+  }
+}
+
+async function _doResume(): Promise<boolean> {
   try {
     let ctx = getAudioCtx();
     if (ctx.state === 'running') {
@@ -145,6 +169,7 @@ export function playNote(noteKey: string, duration = 0.4, volume = 0.3): void {
 
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + duration);
+    osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch {} };
   } catch {
     // Audio not available
   }
@@ -171,9 +196,30 @@ export function playNoteAtFrequency(freq: number, duration = 0.4, volume = 0.3):
 
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + duration);
+    osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch {} };
   } catch {
     // Audio not available
   }
+}
+
+// ── Scheduled-timeout tracking for module-level playback functions ────
+// Functions like playTwoNotes, playScale, and playListeningPhrase schedule
+// future audio via setTimeout. These IDs are tracked here so callers (or
+// component unmount handlers) can cancel them via cancelPendingAudio().
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+
+function scheduleAudio(fn: () => void, ms: number): void {
+  const id = setTimeout(() => {
+    pendingTimers.delete(id);
+    fn();
+  }, ms);
+  pendingTimers.add(id);
+}
+
+/** Cancel all pending scheduled audio (playTwoNotes, playScale, etc.). */
+export function cancelPendingAudio(): void {
+  pendingTimers.forEach(clearTimeout);
+  pendingTimers.clear();
 }
 
 export function playTwoNotes(
@@ -184,7 +230,7 @@ export function playTwoNotes(
   volume = 0.3
 ): void {
   playNote(note1, duration, volume);
-  setTimeout(() => playNote(note2, duration, volume), gap * 1000);
+  scheduleAudio(() => playNote(note2, duration, volume), gap * 1000);
 }
 
 export function playClick(volume = 0.2): void {
@@ -208,6 +254,7 @@ export function playClick(volume = 0.2): void {
 
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.05);
+    osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch {} };
   } catch {
     // Audio not available
   }
@@ -236,6 +283,7 @@ export function playChord(noteKeys: string[], duration = 0.8, volume = 0.25): vo
       gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
       osc.start(now);
       osc.stop(now + duration);
+      osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch {} };
     }
   } catch {
     // Audio not available
@@ -245,7 +293,7 @@ export function playChord(noteKeys: string[], duration = 0.8, volume = 0.25): vo
 /** Play a scale (notes in sequence) */
 export function playScale(noteKeys: string[], gap = 0.35, duration = 0.35, volume = 0.3): void {
   noteKeys.forEach((key, i) => {
-    setTimeout(() => {
+    scheduleAudio(() => {
       const freq = NOTE_FREQUENCIES[key] ?? noteKeyToFrequency(key);
       playNoteAtFrequency(freq, duration, volume);
     }, i * gap * 1000);
@@ -256,13 +304,13 @@ export function playScale(noteKeys: string[], gap = 0.35, duration = 0.35, volum
 export function playListeningPhrase(correctAnswer: string): void {
   if (correctAnswer === 'Ascending') {
     const notes = ['C4', 'E4', 'G4', 'C5'];
-    notes.forEach((n, i) => setTimeout(() => playNote(n, 0.4), i * 400));
+    notes.forEach((n, i) => scheduleAudio(() => playNote(n, 0.4), i * 400));
   } else if (correctAnswer === 'Descending') {
     const notes = ['C5', 'G4', 'E4', 'C4'];
-    notes.forEach((n, i) => setTimeout(() => playNote(n, 0.4), i * 400));
+    notes.forEach((n, i) => scheduleAudio(() => playNote(n, 0.4), i * 400));
   } else if (correctAnswer === 'Same') {
     playNote('C4', 0.5);
-    setTimeout(() => playNote('C4', 0.5), 600);
+    scheduleAudio(() => playNote('C4', 0.5), 600);
   } else if (correctAnswer === '3rd') {
     playTwoNotes('C4', 'E4', 0.5);
   } else if (correctAnswer === '2nd') {
@@ -274,7 +322,7 @@ export function playListeningPhrase(correctAnswer: string): void {
     const interval = 450;
     for (let m = 0; m < 2; m++) {
       for (let i = 0; i < beats; i++) {
-        setTimeout(() => playClick(0.3), (m * beats + i) * interval);
+        scheduleAudio(() => playClick(0.3), (m * beats + i) * interval);
       }
     }
   }

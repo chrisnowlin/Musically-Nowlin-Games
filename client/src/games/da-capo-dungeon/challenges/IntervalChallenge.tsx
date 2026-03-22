@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { Tier } from '../logic/dungeonTypes';
 import { getIntervalParams } from '../logic/difficultyAdapter';
 import { playTwoNotes, getFrequency, ALL_NOTE_KEYS } from '../dungeonAudio';
@@ -104,6 +104,14 @@ const HighLowMode: React.FC<{
   const challenge = useHighLowChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
+  const audioTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  useEffect(() => () => { audioTimersRef.current.forEach(clearTimeout); audioTimersRef.current.clear(); }, []);
+
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => { audioTimersRef.current.delete(id); fn(); }, ms);
+    audioTimersRef.current.add(id);
+  }, []);
 
   const conceptId = intervalConceptId('highLow', challenge.correctAnswer);
   const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
@@ -118,8 +126,8 @@ const HighLowMode: React.FC<{
   const playInterval = useCallback(() => {
     onListeningChange?.(true);
     playTwoNotes(challenge.baseNote, challenge.topNote, 0.5, 0.5, 0.5);
-    setTimeout(() => onListeningChange?.(false), 1200);
-  }, [challenge, onListeningChange]);
+    schedule(() => onListeningChange?.(false), 1200);
+  }, [challenge, onListeningChange, schedule]);
 
   useEffect(() => {
     const timer = setTimeout(playInterval, 400);
@@ -229,6 +237,14 @@ const StepSkipMode: React.FC<{
   const challenge = useStepSkipChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
+  const audioTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  useEffect(() => () => { audioTimersRef.current.forEach(clearTimeout); audioTimersRef.current.clear(); }, []);
+
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => { audioTimersRef.current.delete(id); fn(); }, ms);
+    audioTimersRef.current.add(id);
+  }, []);
 
   const conceptId = intervalConceptId('stepSkip', challenge.correctAnswer);
   const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
@@ -243,8 +259,8 @@ const StepSkipMode: React.FC<{
   const playInterval = useCallback(() => {
     onListeningChange?.(true);
     playTwoNotes(challenge.baseNote, challenge.topNote, 0.5, 0.5, 0.5);
-    setTimeout(() => onListeningChange?.(false), 1200);
-  }, [challenge, onListeningChange]);
+    schedule(() => onListeningChange?.(false), 1200);
+  }, [challenge, onListeningChange, schedule]);
 
   useEffect(() => {
     const timer = setTimeout(playInterval, 400);
@@ -354,6 +370,14 @@ const StandardMode: React.FC<{
   const challenge = useStandardChallenge(params);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [hintShown, setHintShown] = useState(false);
+  const audioTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  useEffect(() => () => { audioTimersRef.current.forEach(clearTimeout); audioTimersRef.current.clear(); }, []);
+
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => { audioTimersRef.current.delete(id); fn(); }, ms);
+    audioTimersRef.current.add(id);
+  }, []);
 
   const conceptId = intervalConceptId('standard', challenge.interval.name);
   const isGuided = !!(learningState && shouldGuide(learningState, conceptId));
@@ -368,8 +392,8 @@ const StandardMode: React.FC<{
   const playInterval = useCallback(() => {
     onListeningChange?.(true);
     playTwoNotes(challenge.baseNote, challenge.topNote, 0.5, 0.5, 0.5);
-    setTimeout(() => onListeningChange?.(false), 1200);
-  }, [challenge, onListeningChange]);
+    schedule(() => onListeningChange?.(false), 1200);
+  }, [challenge, onListeningChange, schedule]);
 
   useEffect(() => {
     const timer = setTimeout(playInterval, 400);

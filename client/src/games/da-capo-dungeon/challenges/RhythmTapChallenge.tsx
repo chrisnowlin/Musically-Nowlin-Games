@@ -102,6 +102,16 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode, learnin
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [playbackIndex, setPlaybackIndex] = useState(-1);
   const tapStartRef = useRef<number>(0);
+  // Track scheduled audio timeouts so they can be cancelled on unmount
+  const audioTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  // Cancel all pending audio timers on unmount
+  useEffect(() => {
+    return () => {
+      audioTimersRef.current.forEach(clearTimeout);
+      audioTimersRef.current.clear();
+    };
+  }, []);
 
   const expectedTaps = useMemo(() => getExpectedTapTimes(pattern), [pattern]);
   const tapCountTarget = expectedTaps.length;
@@ -109,25 +119,34 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode, learnin
   // ── Playback ──────────────────────────────────────────────
   const [replaying, setReplaying] = useState(false);
 
+  /** Helper: schedule a timeout and track its ID for cleanup. */
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      audioTimersRef.current.delete(id);
+      fn();
+    }, ms);
+    audioTimersRef.current.add(id);
+  }, []);
+
   const playPattern = useCallback(() => {
     setPlaybackIndex(0);
     // Schedule clicks for tap events (not rests)
     const tapTimes = getExpectedTapTimes(pattern);
     tapTimes.forEach((t) => {
-      setTimeout(() => playClick(), t);
+      schedule(() => playClick(), t);
     });
     // Highlight each pattern event during playback
     pattern.forEach((ev, i) => {
-      setTimeout(() => setPlaybackIndex(i), ev.time);
+      schedule(() => setPlaybackIndex(i), ev.time);
     });
     const last = pattern[pattern.length - 1];
     const totalDuration = last.time + last.duration;
-    setTimeout(() => {
+    schedule(() => {
       setPlaybackIndex(-1);
       setPhase('tap');
       tapStartRef.current = 0;
     }, totalDuration + 300);
-  }, [pattern]);
+  }, [pattern, schedule]);
 
   /** Replay the pattern audio during the tap phase without changing phase. */
   const replayPattern = useCallback(() => {
@@ -137,19 +156,19 @@ const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode, learnin
     setPlaybackIndex(0);
     const tapTimes = getExpectedTapTimes(pattern);
     tapTimes.forEach((t) => {
-      setTimeout(() => playClick(), t);
+      schedule(() => playClick(), t);
     });
     pattern.forEach((ev, i) => {
-      setTimeout(() => setPlaybackIndex(i), ev.time);
+      schedule(() => setPlaybackIndex(i), ev.time);
     });
     const last = pattern[pattern.length - 1];
     const totalDuration = last.time + last.duration;
-    setTimeout(() => {
+    schedule(() => {
       setPlaybackIndex(-1);
       setReplaying(false);
       tapStartRef.current = 0;
     }, totalDuration + 300);
-  }, [pattern, replaying]);
+  }, [pattern, replaying, schedule]);
 
   useEffect(() => {
     const timer = setTimeout(playPattern, 500);

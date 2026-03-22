@@ -1,5 +1,13 @@
 // Enhanced Audio Service with Sample Loading Support
 // Supports both synthesized audio (fallback) and real instrument samples
+//
+// IMPORTANT: This service does NOT create its own AudioContext. It uses the
+// shared context from dungeonAudio.ts which has full iOS recovery (scratch
+// buffer unlock, visibility listeners, force-recreation). This prevents the
+// dual-context bug where one context recovers from interruptions and the
+// other stays permanently suspended.
+
+import { getSharedAudioCtx, resumeAudioContext } from '@/games/da-capo-dungeon/dungeonAudio';
 
 export interface InstrumentSample {
   name: string;
@@ -15,42 +23,47 @@ export interface InstrumentBank {
 }
 
 export class SampleAudioService {
-  private audioContext: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private lastCtxId: number = 0; // track context identity for reconnection
   private currentVolume: number = 0.3;
   private sampleBuffers: Map<string, AudioBuffer> = new Map();
   private loadingPromises: Map<string, Promise<AudioBuffer>> = new Map();
   private activeSources: Set<AudioBufferSourceNode> = new Set();
 
-  constructor() {
-    if (typeof window !== 'undefined') {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        this.audioContext = new AudioCtx();
-        this.masterGain = this.audioContext!.createGain();
+  /**
+   * Get the shared AudioContext (lazily from dungeonAudio).
+   * If the context was force-recreated (e.g. after iOS interruption),
+   * reconnect the master gain node to the new context's destination.
+   */
+  private getCtx(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const ctx = getSharedAudioCtx();
+      const ctxId = (ctx as any).__id ?? ((ctx as any).__id = ++this.lastCtxId);
+      if (ctxId !== this.lastCtxId) {
+        // Context was recreated — rebuild the master gain node
+        this.lastCtxId = ctxId;
+        this.masterGain = ctx.createGain();
         this.masterGain.gain.value = this.currentVolume;
-        this.masterGain!.connect(this.audioContext!.destination);
+        this.masterGain.connect(ctx.destination);
       }
+      if (!this.masterGain) {
+        this.masterGain = ctx.createGain();
+        this.masterGain.gain.value = this.currentVolume;
+        this.masterGain.connect(ctx.destination);
+      }
+      return ctx;
+    } catch {
+      return null;
     }
   }
 
   async initialize(): Promise<void> {
-    if (!this.audioContext && typeof window !== 'undefined') {
-      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        this.audioContext = new AudioCtx();
-        this.masterGain = this.audioContext!.createGain();
-        this.masterGain.gain.value = this.currentVolume;
-        this.masterGain!.connect(this.audioContext!.destination);
-      }
-    }
     await this.ensureAudioContext();
   }
 
   async ensureAudioContext() {
-    if (this.audioContext && this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
-    }
+    await resumeAudioContext();
   }
 
   /**
@@ -84,7 +97,8 @@ export class SampleAudioService {
   }
 
   private async _fetchAndDecodeAudio(url: string, name: string): Promise<AudioBuffer> {
-    if (!this.audioContext) {
+    const ctx = this.getCtx();
+    if (!ctx) {
       throw new Error('Audio context not available');
     }
 
@@ -94,7 +108,7 @@ export class SampleAudioService {
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
     return audioBuffer;
   }
@@ -125,7 +139,8 @@ export class SampleAudioService {
   ): Promise<AudioBufferSourceNode | null> {
     await this.ensureAudioContext();
 
-    if (!this.audioContext || !this.masterGain) {
+    const ctx = this.getCtx();
+    if (!ctx || !this.masterGain) {
       return null;
     }
 
@@ -134,8 +149,8 @@ export class SampleAudioService {
       return null;
     }
 
-    const source = this.audioContext.createBufferSource();
-    const gainNode = this.audioContext.createGain();
+    const source = ctx.createBufferSource();
+    const gainNode = ctx.createGain();
 
     source.buffer = buffer;
     source.playbackRate.value = options.playbackRate ?? 1.0;
@@ -164,9 +179,9 @@ export class SampleAudioService {
     // Start playback
     const startTime = options.startTime ?? 0;
     if (options.duration) {
-      source.start(this.audioContext.currentTime, 0, options.duration);
+      source.start(ctx.currentTime, 0, options.duration);
     } else {
-      source.start(this.audioContext.currentTime, startTime);
+      source.start(ctx.currentTime, startTime);
     }
 
     return source;
@@ -194,13 +209,7 @@ export class SampleAudioService {
     if (!source) return;
 
     try {
-      // Fade out for smooth stop
-      if (this.audioContext) {
-        const now = this.audioContext.currentTime;
-        // Note: We need to get the gain node from the source's connections
-        // For now, just stop immediately
-        source.stop();
-      }
+      source.stop();
     } catch (e) {
       // Already stopped
     }
@@ -226,22 +235,23 @@ export class SampleAudioService {
   async playNote(frequency: number, duration: number = 1.5): Promise<void> {
     await this.ensureAudioContext();
 
-    if (!this.audioContext || !this.masterGain) {
+    const ctx = this.getCtx();
+    if (!ctx || !this.masterGain) {
       return;
     }
 
-    const oscillator = this.audioContext.createOscillator();
-    const gainNode = this.audioContext.createGain();
-    const lowShelf = this.audioContext.createBiquadFilter();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const lowShelf = ctx.createBiquadFilter();
 
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
     lowShelf.type = 'lowshelf';
     lowShelf.frequency.value = 250;
     lowShelf.gain.value = this.getLowBoostDb(frequency);
 
-    const now = this.audioContext.currentTime;
+    const now = ctx.currentTime;
     gainNode.gain.setValueAtTime(0, now);
     gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
     gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.1);
@@ -294,8 +304,9 @@ export class SampleAudioService {
   setVolume(volume: number) {
     const v = Math.min(1, Math.max(0, volume));
     this.currentVolume = v;
-    if (this.audioContext && this.masterGain) {
-      const now = this.audioContext.currentTime;
+    const ctx = this.getCtx();
+    if (ctx && this.masterGain) {
+      const now = ctx.currentTime;
       this.masterGain.gain.cancelScheduledValues(now);
       this.masterGain.gain.linearRampToValueAtTime(v, now + 0.05);
     }

@@ -39,7 +39,7 @@ import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
 import ChestRewardModal from './ChestRewardModal';
-import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic, muteBattleMusic, unmuteBattleMusic, loadAndPlayBgMusic } from './dungeonAudio';
+import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic, muteBattleMusic, unmuteBattleMusic, loadAndPlayBgMusic, cancelPendingAudio } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 import { ALL_ITEMS } from './logic/merchantItems';
 import DevRoomPasswordModal from './DevRoomPasswordModal';
@@ -310,11 +310,14 @@ const MelodyDungeonGameInner: React.FC = () => {
     return () => {
       stopBgMusic();
       stopBattleMusic();
+      cancelPendingAudio();
     };
   }, []);
 
   // Start/stop background music, duck during challenges, and play battle music for bosses.
+  // Also cancel any in-flight scheduled audio (notes, clicks) from the previous phase.
   useEffect(() => {
+    cancelPendingAudio();
     if (phase === 'playing') {
       stopBattleMusic();
       startBgMusic();

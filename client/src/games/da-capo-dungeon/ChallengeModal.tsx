@@ -497,10 +497,11 @@ const ChallengeModal: React.FC<Props> = ({ challengeType, tileType, floorNumber,
   }, [enemySubtype, ghostSwapped, effectiveChallengeType, floorNumber, onResult]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
       <div
         className={`
-          w-full max-w-md rounded-2xl border-2 ${theme.borderColor}
+          my-auto w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain
+          rounded-2xl border-2 ${theme.borderColor}
           bg-gradient-to-b ${theme.bgColor} p-5 shadow-2xl
           animate-in fade-in zoom-in-95 duration-200
         `}
