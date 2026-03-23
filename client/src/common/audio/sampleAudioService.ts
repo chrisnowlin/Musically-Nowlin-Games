@@ -108,9 +108,20 @@ export class SampleAudioService {
     }
 
     const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
-    return audioBuffer;
+    // Safari: decodeAudioData can fail if the context is in a transitional
+    // state. Try the main context first, then fall back to OfflineAudioContext.
+    try {
+      return await ctx.decodeAudioData(arrayBuffer);
+    } catch {
+      // ArrayBuffer is now detached — we can't retry with it.
+      // Re-fetch and try with an OfflineAudioContext (Safari fallback).
+      const retryRes = await fetch(url);
+      if (!retryRes.ok) throw new Error(`HTTP retry error: ${retryRes.status}`);
+      const retryBuf = await retryRes.arrayBuffer();
+      const offlineCtx = new OfflineAudioContext(2, 1, ctx.sampleRate || 44100);
+      return await offlineCtx.decodeAudioData(retryBuf);
+    }
   }
 
   /**

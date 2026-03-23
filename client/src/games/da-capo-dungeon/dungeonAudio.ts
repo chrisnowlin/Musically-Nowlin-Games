@@ -67,6 +67,58 @@ function playScratch(ctx: AudioContext): void {
 }
 
 /**
+ * Wait for AudioContext state to become 'running', with a timeout.
+ *
+ * Safari's ctx.resume() promise resolves before ctx.state actually
+ * transitions. Without this wait the code would see 'suspended' and
+ * unnecessarily force-recreate the context — which fails because the
+ * new context is created outside a user-gesture callstack.
+ */
+function waitForRunning(ctx: AudioContext, timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (ctx.state === 'running') { resolve(); return; }
+    let settled = false;
+    const onStateChange = () => {
+      if (!settled && ctx.state === 'running') {
+        settled = true;
+        ctx.removeEventListener('statechange', onStateChange);
+        clearTimeout(timer);
+        resolve();
+      }
+    };
+    ctx.addEventListener('statechange', onStateChange);
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        ctx.removeEventListener('statechange', onStateChange);
+        resolve();
+      }
+    }, timeoutMs);
+  });
+}
+
+/**
+ * Decode audio data with Safari resilience.
+ *
+ * Safari's decodeAudioData can fail when the AudioContext is in a
+ * transitional state (e.g. just created, mid-resume). The ArrayBuffer is
+ * detached on failure (per spec), so we re-fetch and try again with an
+ * OfflineAudioContext as a fallback.
+ */
+async function safeDecode(ctx: AudioContext, data: ArrayBuffer, url: string): Promise<AudioBuffer> {
+  try {
+    return await ctx.decodeAudioData(data);
+  } catch {
+    // data is now detached — re-fetch and try with OfflineAudioContext
+    const retryRes = await fetch(url);
+    if (!retryRes.ok) throw new Error(`Audio re-fetch failed: ${retryRes.status}`);
+    const retryBuf = await retryRes.arrayBuffer();
+    const offlineCtx = new OfflineAudioContext(2, 1, ctx.sampleRate || 44100);
+    return await offlineCtx.decodeAudioData(retryBuf);
+  }
+}
+
+/**
  * Return the shared AudioContext for use by other audio services.
  * This ensures a single context is used app-wide, with full iOS recovery.
  */
@@ -105,7 +157,16 @@ async function _doResume(): Promise<boolean> {
     if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
       playScratch(ctx);
       try { await ctx.resume(); } catch {}
-      // After resume(), the state may have transitioned to 'running'
+
+      // Safari: resume() promise resolves before ctx.state transitions.
+      // Wait briefly for the state to actually change before deciding
+      // whether to force-recreate (which would fail outside a gesture).
+      // Cast needed: TS narrows state after the if-check above, but
+      // ctx.state is a live getter that changes after await.
+      if ((ctx.state as string) !== 'running') {
+        await waitForRunning(ctx, 250);
+      }
+
       if ((ctx.state as string) === 'running') {
         isUnlocked = true;
         return true;
@@ -122,6 +183,12 @@ async function _doResume(): Promise<boolean> {
       ctx = getAudioCtx();
       playScratch(ctx);
       try { await ctx.resume(); } catch {}
+
+      // Wait for the new context too
+      if (ctx.state !== 'running') {
+        await waitForRunning(ctx, 250);
+      }
+
       const running = ctx.state === 'running';
       if (running) isUnlocked = true;
       return running;
@@ -359,7 +426,7 @@ export async function loadBgMusic(url: string): Promise<void> {
     const res = await fetch(url);
     if (!res.ok) return;
     const arr = await res.arrayBuffer();
-    bgBuffer = await ctx.decodeAudioData(arr);
+    bgBuffer = await safeDecode(ctx, arr, url);
   } catch {
     // Audio load failed — game continues without music
   }
@@ -502,7 +569,7 @@ export async function loadBattleMusic(key: string, url: string): Promise<void> {
     const res = await fetch(url);
     if (!res.ok) return;
     const arr = await res.arrayBuffer();
-    battleBuffers.set(key, await ctx.decodeAudioData(arr));
+    battleBuffers.set(key, await safeDecode(ctx, arr, url));
   } catch {
     // Load failed — boss fights continue without music
   }
@@ -615,12 +682,27 @@ if (typeof document !== 'undefined') {
     void resumeAudioContext();
   });
 
-  // Resume audio context on ANY user gesture — covers interruptions that
-  // happen while the page is visible (notifications, Siri, alarms, etc.)
-  // where visibilitychange never fires.
-  window.addEventListener('pointerdown', () => {
-    if (audioCtx && audioCtx.state !== 'running') {
+  // Unlock audio on user gestures. This covers:
+  // 1. First interaction: creates the context and unlocks it (critical for Safari)
+  // 2. Interruption recovery: re-resumes after calls, Siri, notifications, etc.
+  //
+  // Safari/iOS specifics addressed here:
+  // - Eagerly create the context on first gesture (previous code skipped if null)
+  // - Call ctx.resume() synchronously — older iOS Safari may not track user
+  //   activation across async/microtask boundaries
+  // - Use both pointerdown and touchend for maximum iOS compatibility
+  const unlockOnGesture = () => {
+    const ctx = getAudioCtx(); // ensure context exists even on first gesture
+    if (ctx.state !== 'running') {
+      playScratch(ctx);
+      // Synchronous resume — critical for older Safari/iOS where user activation
+      // may not propagate through async functions
+      try { ctx.resume(); } catch {}
+      // Full async recovery handles edge cases (force-recreate, etc.)
       void resumeAudioContext();
     }
-  }, { passive: true });
+  };
+
+  window.addEventListener('pointerdown', unlockOnGesture, { passive: true });
+  window.addEventListener('touchend', unlockOnGesture, { passive: true });
 }
