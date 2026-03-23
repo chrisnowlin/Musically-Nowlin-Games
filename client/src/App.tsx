@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/common/ui/tooltip";
 import ErrorBoundary from "@/common/game-shell/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 
 // Get base path from Vite config for deployment flexibility
 const base = import.meta.env.BASE_URL;
@@ -224,6 +225,7 @@ function App() {
           <WouterRouter base={base}>
             <Router />
           </WouterRouter>
+          <Analytics />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
