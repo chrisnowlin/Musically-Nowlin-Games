@@ -32,6 +32,7 @@ export default defineConfig(({ command }) => ({
             "@radix-ui/react-dropdown-menu",
             "@radix-ui/react-select",
           ],
+          "vexflow-vendor": ["vexflow"],
         },
       },
     },
@@ -48,7 +49,7 @@ export default defineConfig(({ command }) => ({
   },
   // Optimize dependency pre-bundling with Bun
   optimizeDeps: {
-    include: ["react", "react-dom", "wouter", "vexflow"],
+    include: ["react", "react-dom", "wouter"],
     exclude: [],
   },
 }));

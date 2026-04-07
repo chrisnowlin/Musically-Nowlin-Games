@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type { Tier } from '../logic/dungeonTypes';
 import { getNoteReadingParams } from '../logic/difficultyAdapter';
 import { playNote, noteKeyToName } from '../dungeonAudio';
-import StaffNote from '@/common/notation/StaffNote';
+import StaffNote from '@/common/notation/LazyStaffNote';
 import CorrectiveFeedback, { CorrectBanner } from './CorrectiveFeedback';
 import { getNoteExplanation } from '../logic/explanations';
 import type { LearningState } from '../logic/learningState';
