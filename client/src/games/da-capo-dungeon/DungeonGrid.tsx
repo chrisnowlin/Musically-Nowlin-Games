@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { OptimizedImage } from '@/common/ui/OptimizedImage';
 import { TileType, VISIBILITY_RADIUS } from './logic/dungeonTypes';
 import type { DungeonFloor, Position } from './logic/dungeonTypes';
 import { getTheme } from './dungeonThemes';
@@ -39,6 +40,18 @@ function getBigBossSprite(floorNumber: number): string {
   return floorNumber % 20 >= 10
     ? '/images/da-capo-dungeon/bigboss.png'
     : '/images/da-capo-dungeon/bigboss_2.png';
+}
+
+function getOptimizedBackgroundImage(assetPath: string): string {
+  const extensionMatch = assetPath.match(/\.(png|jpe?g)$/i);
+  if (!extensionMatch) {
+    return `url("${assetPath}")`;
+  }
+
+  const fallbackMime = extensionMatch[1].toLowerCase() === 'png' ? 'png' : 'jpeg';
+  const webpPath = assetPath.replace(/\.(png|jpe?g)$/i, '.webp');
+
+  return `image-set(url("${webpPath}") type("image/webp"), url("${assetPath}") type("image/${fallbackMime}"))`;
 }
 
 const TILE_SPRITE: Partial<Record<TileType, string>> = {
@@ -201,15 +214,17 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               style={{
                 aspectRatio: '1 / 1',
                 backgroundColor: bgColor,
-                backgroundImage: bgImage && vis !== 'dark' ? `url(${bgImage})` : undefined,
+                backgroundImage: bgImage && vis !== 'dark' ? getOptimizedBackgroundImage(bgImage) : undefined,
                 backgroundSize: 'cover',
               }}
             >
               {isPlayer && showContent && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[4%]">
-                  <img
+                  <OptimizedImage
                     src={characterSprite || '/images/da-capo-dungeon/character.png'}
                     alt="Player"
+                    loading="eager"
+                    pictureClassName="block w-full h-full"
                     className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(168,85,247,0.8)] transition-transform duration-150"
                     style={facingLeft ? { transform: 'scaleX(-1)' } : undefined}
                     draggable={false}
@@ -222,9 +237,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
                     fullTileSprite ? 'p-0' : tile.enemySubtype === 'skeleton' ? 'p-0' : 'p-[8%]'
                   }`}
                 >
-                  <img
+                  <OptimizedImage
                     src={spriteSrc}
                     alt={tile.type}
+                    loading="eager"
+                    pictureClassName="block w-full h-full"
                     className={`w-full h-full object-contain ${isAnimated ? 'animate-sprite-float' : ''}`}
                     style={isAnimated ? { animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` } : undefined}
                     draggable={false}
@@ -233,9 +250,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
               )}
               {showContent && isInvisibleGhost && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden p-[8%]">
-                  <img
+                  <OptimizedImage
                     src={ENEMY_SPRITE['ghost']}
                     alt="shimmer"
+                    loading="eager"
+                    pictureClassName="block w-full h-full"
                     className="w-full h-full object-contain animate-pulse"
                     style={{ opacity: 0.12, filter: 'brightness(2) blur(1px)' }}
                     draggable={false}
@@ -297,9 +316,11 @@ const DungeonGrid: React.FC<DungeonGridProps> = ({ floor, playerPosition, facing
                 zIndex: 15,
               }}
             >
-              <img
+              <OptimizedImage
                 src={spriteSrc}
                 alt={tile.type}
+                loading="eager"
+                pictureClassName="block w-full h-full"
                 className="w-full h-full object-contain animate-sprite-float"
                 style={{ animationDelay: `${((x * 7 + y * 13) % 10) * 0.24}s` }}
                 draggable={false}

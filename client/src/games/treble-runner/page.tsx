@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { OptimizedImage } from '@/common/ui/OptimizedImage';
 
 // Note definitions with staff positions (0 = middle line B, positive = up, negative = down)
 const NOTE_DEFINITIONS: Record<string, { name: string; position: number; ledger: boolean }> = {
@@ -56,37 +57,6 @@ const LEVELS: Record<number, { name: string; subtitle: string; notes: string[]; 
     speed: 1.2,
     spawnRate: 2500,
   },
-};
-
-// Audio context for sound effects
-const playSound = (frequency: number, duration = 0.15, type: OscillatorType = 'sine') => {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    const audioContext = new AudioContextClass();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = frequency;
-    oscillator.type = type;
-    
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration);
-  } catch (e) {
-    // Audio not available
-  }
-};
-
-const playCorrectSound = () => playSound(880, 0.1);
-const playWrongSound = () => playSound(220, 0.2, 'sawtooth');
-const playGameOverSound = () => {
-  playSound(330, 0.15);
-  setTimeout(() => playSound(220, 0.3), 150);
 };
 
 interface StaffNoteProps {
@@ -312,22 +282,30 @@ const GameWrapper = ({ children, correctCount = 0 }: { children: React.ReactNode
         }}
       >
         {/* Background Layer - Day */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
-          style={{ 
-            backgroundImage: "url('/images/treble-runner-bg-16x9.png')",
+        <OptimizedImage
+          src="/images/treble-runner-bg-16x9.png"
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          pictureClassName="absolute inset-0 block transition-opacity duration-1000 ease-in-out"
+          className="w-full h-full object-cover"
+          style={{
             opacity: isNight ? 0 : 1,
-            zIndex: 0
+            zIndex: 0,
           }}
         />
         
         {/* Background Layer - Night */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
-          style={{ 
-            backgroundImage: "url('/images/treble-runner-bg-night-16x9.png')",
+        <OptimizedImage
+          src="/images/treble-runner-bg-night-16x9.png"
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          pictureClassName="absolute inset-0 block transition-opacity duration-1000 ease-in-out"
+          className="w-full h-full object-cover"
+          style={{
             opacity: isNight ? 1 : 0,
-            zIndex: 0
+            zIndex: 0,
           }}
         />
 
@@ -369,6 +347,9 @@ export default function TrebleRunner() {
   const bgmRef = useRef<HTMLAudioElement | null>(null);
   const bgmStartedRef = useRef(false);
   const processedNoteIdsRef = useRef<Set<number>>(new Set());
+  const sfxContextRef = useRef<AudioContext | null>(null);
+  const sfxMasterGainRef = useRef<GainNode | null>(null);
+  const gameOverTimeoutRef = useRef<number | null>(null);
   
   const MAX_HEALTH = 100;
   const DAMAGE = 20;
@@ -387,21 +368,106 @@ export default function TrebleRunner() {
   useEffect(() => {
     const audio = new Audio('/audio/gentle-steps-through-the-green.mp3');
     audio.loop = true;
-    audio.preload = 'auto';
+    audio.preload = 'none';
     audio.volume = 0.25;
     bgmRef.current = audio;
 
     return () => {
+      if (gameOverTimeoutRef.current !== null) {
+        window.clearTimeout(gameOverTimeoutRef.current);
+      }
       try {
         audio.pause();
         audio.currentTime = 0;
       } catch {
         // ignore
       }
+      if (sfxContextRef.current) {
+        void sfxContextRef.current.close().catch(() => {
+          // ignore close errors
+        });
+      }
       bgmRef.current = null;
       bgmStartedRef.current = false;
+      sfxContextRef.current = null;
+      sfxMasterGainRef.current = null;
     };
   }, []);
+
+  const ensureSfxReady = useCallback(async () => {
+    if (!sfxContextRef.current || !sfxMasterGainRef.current) {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+      if (!AudioContextClass) return null;
+
+      const audioContext = new AudioContextClass();
+      const masterGain = audioContext.createGain();
+      masterGain.gain.value = 0.3;
+      masterGain.connect(audioContext.destination);
+
+      sfxContextRef.current = audioContext;
+      sfxMasterGainRef.current = masterGain;
+    }
+
+    if (sfxContextRef.current.state === 'suspended') {
+      await sfxContextRef.current.resume();
+    }
+
+    return {
+      audioContext: sfxContextRef.current,
+      masterGain: sfxMasterGainRef.current,
+    };
+  }, []);
+
+  const playSound = useCallback(async (frequency: number, duration = 0.15, type: OscillatorType = 'sine') => {
+    try {
+      const audioNodes = await ensureSfxReady();
+      if (!audioNodes) return;
+
+      const { audioContext, masterGain } = audioNodes;
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(masterGain);
+
+      oscillator.frequency.value = frequency;
+      oscillator.type = type;
+
+      gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + duration);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        gainNode.disconnect();
+      };
+    } catch {
+      // Audio not available
+    }
+  }, [ensureSfxReady]);
+
+  const playCorrectSound = useCallback(() => {
+    void playSound(880, 0.1);
+  }, [playSound]);
+
+  const playWrongSound = useCallback(() => {
+    void playSound(220, 0.2, 'sawtooth');
+  }, [playSound]);
+
+  const playGameOverSound = useCallback(() => {
+    void playSound(330, 0.15);
+    if (gameOverTimeoutRef.current !== null) {
+      window.clearTimeout(gameOverTimeoutRef.current);
+    }
+    gameOverTimeoutRef.current = window.setTimeout(() => {
+      void playSound(220, 0.3);
+      gameOverTimeoutRef.current = null;
+    }, 150);
+  }, [playSound]);
 
   // Keep background music playing when game is active (and sound is enabled)
   useEffect(() => {
@@ -525,7 +591,7 @@ export default function TrebleRunner() {
       if (spawnTimerRef.current) clearInterval(spawnTimerRef.current);
       clearInterval(animInterval);
     };
-  }, [gameState, currentLevel, spawnNote, soundEnabled]);
+  }, [currentLevel, gameState, playGameOverSound, playWrongSound, soundEnabled, spawnNote]);
 
   // Handle note button press
   const handleNotePress = useCallback((noteName: string) => {
@@ -604,10 +670,10 @@ export default function TrebleRunner() {
           : note
       );
     });
-  }, [gameState, streak, soundEnabled]);
+  }, [gameState, playCorrectSound, playGameOverSound, playWrongSound, soundEnabled, streak]);
 
   // Start game
-  const startGame = (level: number) => {
+  const startGame = useCallback((level: number) => {
     setCurrentLevel(level);
     setScore(0);
     setHealth(MAX_HEALTH);
@@ -622,13 +688,14 @@ export default function TrebleRunner() {
     
     // Unlock background music on user gesture (game start)
     const audio = bgmRef.current;
+    void ensureSfxReady();
     if (audio && !bgmStartedRef.current) {
       bgmStartedRef.current = true;
       void audio.play().catch(() => {
         // If blocked, the effect above will retry when possible.
       });
     }
-  };
+  }, [ensureSfxReady]);
 
   // End game and save score
   const endGame = () => {
@@ -680,7 +747,7 @@ export default function TrebleRunner() {
               {Object.entries(LEVELS).map(([level, config]) => (
                 <button
                   key={level}
-                  onClick={() => startGame(Number(level))}
+                  onClick={() => void startGame(Number(level))}
                   className="w-full p-3 sm:p-4 bg-[#D2B48C] text-amber-900 rounded-xl text-left transition-all hover:bg-[#DEB887] active:translate-y-1 active:shadow-[inset_0_3px_6px_rgba(0,0,0,0.5)] shadow-[0_4px_0_rgb(139,90,43),0_6px_6px_rgba(0,0,0,0.4)] relative overflow-hidden font-serif"
                 >
                   {/* Wood texture effect */}

@@ -86,6 +86,45 @@ QUICK_START.md
 client/public/audio/philharmonia-backup/
 scripts/trim-sample-*.py
 
+# Unreferenced Philharmonia instrument samples (keep locally, not in repo)
+client/public/audio/philharmonia/woodwinds/bass clarinet/
+client/public/audio/philharmonia/woodwinds/contrabassoon/
+client/public/audio/philharmonia/woodwinds/cor anglais/
+client/public/audio/philharmonia/strings/mandolin/
+client/public/audio/philharmonia/percussion/agogo bells/
+client/public/audio/philharmonia/percussion/banana shaker/
+client/public/audio/philharmonia/percussion/bell tree/
+client/public/audio/philharmonia/percussion/cabasa/
+client/public/audio/philharmonia/percussion/Chinese cymbal/
+client/public/audio/philharmonia/percussion/Chinese hand cymbals/
+client/public/audio/philharmonia/percussion/clash cymbals/
+client/public/audio/philharmonia/percussion/djembe/
+client/public/audio/philharmonia/percussion/djundjun/
+client/public/audio/philharmonia/percussion/flexatone/
+client/public/audio/philharmonia/percussion/guiro/
+client/public/audio/philharmonia/percussion/lemon shaker/
+client/public/audio/philharmonia/percussion/motor horn/
+client/public/audio/philharmonia/percussion/ratchet/
+client/public/audio/philharmonia/percussion/sheeps toenails/
+client/public/audio/philharmonia/percussion/sizzle cymbal/
+client/public/audio/philharmonia/percussion/sleigh bells/
+client/public/audio/philharmonia/percussion/spring coil/
+client/public/audio/philharmonia/percussion/squeaker/
+client/public/audio/philharmonia/percussion/strawberry shaker/
+client/public/audio/philharmonia/percussion/surdo/
+client/public/audio/philharmonia/percussion/suspended cymbal/
+client/public/audio/philharmonia/percussion/swanee whistle/
+client/public/audio/philharmonia/percussion/tam-tam/
+client/public/audio/philharmonia/percussion/tenor drum/
+client/public/audio/philharmonia/percussion/Thai gong/
+client/public/audio/philharmonia/percussion/tom-toms/
+client/public/audio/philharmonia/percussion/train whistle/
+client/public/audio/philharmonia/percussion/vibraslap/
+client/public/audio/philharmonia/percussion/washboard/
+client/public/audio/philharmonia/percussion/whip/
+client/public/audio/philharmonia/percussion/wind chimes/
+client/public/audio/galactic-groove.mp3
+
 # IDE/AI tool configs
 .cursor/
 .kilocode/
