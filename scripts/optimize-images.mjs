@@ -4,7 +4,7 @@
  * Converts PNG/JPEG in dist/images to WebP and compresses originals in-place.
  * Run automatically via the "postbuild" npm script.
  */
-import { readdir, stat, unlink } from 'node:fs/promises';
+import { readdir, stat, unlink, rename } from 'node:fs/promises';
 import { join, extname, basename } from 'node:path';
 import sharp from 'sharp';
 
@@ -48,9 +48,13 @@ async function optimizeImage(filePath) {
   const needsResize = metadata.width && metadata.width > MAX_WIDTH;
   const pipeline = needsResize ? image.resize({ width: MAX_WIDTH, withoutEnlargement: true }) : image;
 
-  // Generate WebP version
+  // Generate WebP version (only keep if smaller than original)
   const webpPath = filePath.replace(/\.(png|jpe?g)$/i, '.webp');
   await pipeline.clone().webp({ quality: WEBP_QUALITY }).toFile(webpPath);
+  const webpStat = await stat(webpPath);
+  if (webpStat.size >= originalSize) {
+    await unlink(webpPath);
+  }
 
   // Compress original in-place
   const tempPath = filePath + '.tmp';
@@ -63,7 +67,6 @@ async function optimizeImage(filePath) {
   // Only replace if we actually saved space
   const newStat = await stat(tempPath);
   if (newStat.size < originalSize) {
-    const { rename } = await import('node:fs/promises');
     await rename(tempPath, filePath);
     const saved = ((1 - newStat.size / originalSize) * 100).toFixed(0);
     console.log(`  ${basename(filePath)}: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(newStat.size / 1024 / 1024).toFixed(1)}MB (-${saved}%)`);

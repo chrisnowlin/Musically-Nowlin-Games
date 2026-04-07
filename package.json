@@ -10,7 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun run server/db/seed.ts",
-    "build": "bun --bun vite build",
+    "build": "bun --bun vite build && node scripts/optimize-images.mjs",
     "preview": "bun --bun vite preview",
     "check": "bun tsc",
     "test": "vitest run",
@@ -18,8 +18,7 @@
     "test:e2e": "bun playwright test",
     "test:e2e:ui": "bun playwright test --ui",
     "install:bun": "bun install",
-    "build:notation": "bash lilypond/scripts/build-notation.sh",
-    "postbuild": "node scripts/optimize-images.mjs"
+    "build:notation": "bash lilypond/scripts/build-notation.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
