@@ -28,11 +28,11 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, sp
           {'\uD83E\uDE99'} {player.gold}
         </span>
         <span className="flex items-center gap-0.5 text-yellow-300" title="Keys">
-          <img src="/images/da-capo-dungeon/key.png" alt="Key" className="w-5 h-5 object-contain" /> {player.keys}
+          <img src="/images/da-capo-dungeon/key.png" alt="Key" className="w-5 h-5 object-contain" loading="lazy" decoding="async" /> {player.keys}
         </span>
         {player.potions > 0 && (
           <span className="flex items-center gap-0.5 text-pink-400" title="Potions">
-            <img src="/images/da-capo-dungeon/potion.png" alt="Potion" className="w-5 h-5 object-contain" /> {player.potions}
+            <img src="/images/da-capo-dungeon/potion.png" alt="Potion" className="w-5 h-5 object-contain" loading="lazy" decoding="async" /> {player.potions}
           </span>
         )}
         {(() => {

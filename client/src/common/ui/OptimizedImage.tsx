@@ -44,6 +44,7 @@ export function OptimizedImage({
         src={src}
         alt={alt}
         loading={loading}
+        decoding="async"
         {...imgProps}
       />
     );
@@ -58,6 +59,7 @@ export function OptimizedImage({
         src={src}
         alt={alt}
         loading={loading}
+        decoding="async"
         {...imgProps}
       />
     </picture>

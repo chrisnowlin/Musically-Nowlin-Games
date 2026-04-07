@@ -1441,7 +1441,7 @@ const MelodyDungeonGameInner: React.FC = () => {
                 className={`flex flex-col items-center gap-1 transition-all duration-200 ${selected ? 'scale-125' : 'opacity-40 hover:opacity-70'}`}
               >
                 <div className={`w-20 h-20 rounded-xl p-1 transition-all duration-200 ${selected ? 'ring-2 ring-purple-400 bg-purple-900/40 shadow-lg shadow-purple-500/30' : 'bg-gray-800/50'}`}>
-                  <img src={src} alt={label} className="w-full h-full object-contain" draggable={false} />
+                  <img src={src} alt={label} className="w-full h-full object-contain" draggable={false} loading="lazy" decoding="async" />
                 </div>
                 <span className={`text-xs font-medium ${selected ? 'text-purple-300' : 'text-gray-500'}`}>{label}</span>
               </button>
