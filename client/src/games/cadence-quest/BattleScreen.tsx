@@ -48,7 +48,7 @@ const BattleScreen: React.FC<BattleScreenProps> = ({
   challengeShownAt,
   onVictory,
 }) => {
-  const { emit, on } = useWebSocket();
+  const { emit, on } = useWebSocket(type);
   const encounter: RegionEncounter | null =
     type === 'pve' ? getEncounter(regionId!, encounterIndex!) : null;
   const disciplineFocus = encounter?.disciplineFocus ?? 'theory';

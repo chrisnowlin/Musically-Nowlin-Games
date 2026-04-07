@@ -1,31 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-export function useWebSocket() {
+/**
+ * Conditionally creates a WebSocket connection.
+ * Only connects when type is 'pvp' — PVE battles create no socket.
+ */
+export function useWebSocket(type: 'pve' | 'pvp' = 'pve') {
   const [connected, setConnected] = useState(false);
-  const socketRef = useRef<ReturnType<typeof io> | null>(null);
+  const socketRef = useRef<any>(null);
 
   useEffect(() => {
-    const socket = io(API_URL, { autoConnect: true, withCredentials: true });
-    socketRef.current = socket;
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
+    if (type !== 'pvp') return;
+
+    let socket: any;
+    import('socket.io-client').then(({ io }) => {
+      socket = io(API_URL, { autoConnect: true, withCredentials: true });
+      socketRef.current = socket;
+      socket.on('connect', () => setConnected(true));
+      socket.on('disconnect', () => setConnected(false));
+    });
+
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      if (socket) {
+        socket.disconnect();
+        socketRef.current = null;
+      }
     };
+  }, [type]);
+
+  const emit = useCallback((event: string, payload: unknown) => {
+    socketRef.current?.emit(event, payload);
   }, []);
 
-  const emit = (event: string, payload: unknown) => {
-    socketRef.current?.emit(event, payload);
-  };
-
-  const on = (event: string, handler: (payload: unknown) => void) => {
+  const on = useCallback((event: string, handler: (payload: unknown) => void) => {
     socketRef.current?.on(event, handler);
     return () => socketRef.current?.off(event);
-  };
+  }, []);
 
   return { connected, emit, on };
 }
