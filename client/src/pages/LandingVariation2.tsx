@@ -44,9 +44,9 @@ export default function LandingVariation2() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-yellow-100 via-pink-100 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-pink-900 relative overflow-hidden">
       {/* Decorative Background Elements */}
-      <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-300/30 rounded-full blur-xl animate-pulse" />
-      <div className="absolute top-40 right-20 w-32 h-32 bg-pink-300/30 rounded-full blur-xl animate-pulse delay-75" />
-      <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-purple-300/30 rounded-full blur-xl animate-pulse delay-150" />
+      <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-300/20 rounded-full" />
+      <div className="absolute top-40 right-20 w-32 h-32 bg-pink-300/20 rounded-full" />
+      <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-purple-300/20 rounded-full" />
       
       {/* Hero Section with Mascot */}
       <header className="py-8 px-4 text-center relative z-10">
@@ -63,11 +63,11 @@ export default function LandingVariation2() {
           </h1>
           
           <div className="flex items-center justify-center gap-3 mb-6">
-            <Music className="w-12 h-12 text-purple-600 animate-pulse" />
+            <Music className="w-12 h-12 text-purple-600" />
             <p className="font-fredoka text-2xl md:text-3xl text-purple-800 dark:text-purple-200">
               Pick Your Adventure
             </p>
-            <Music className="w-12 h-12 text-pink-600 animate-pulse" />
+            <Music className="w-12 h-12 text-pink-600" />
           </div>
           
           <p className="font-nunito text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
