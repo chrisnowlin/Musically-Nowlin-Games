@@ -5,7 +5,8 @@
 
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { RhythmPattern, CountingSystem, StaffLineMode, StemDirection } from '../logic/types';
-import { renderPatternToDiv, expandBeamedGroups, NotePosition } from '../logic/rhythmNotation';
+import { renderPatternToDiv, NotePosition } from '../logic/rhythmNotation';
+import { expandBeamedGroups } from '../logic/beamedGroups';
 import { getSyllableForEvent } from '../logic/countingSyllables';
 
 interface StaffNotationProps {

@@ -177,12 +177,10 @@ function getPhilharmoniaDuration(durationBeats: number): string {
  * Different instruments have different available dynamics in Philharmonia samples
  */
 function getInstrumentDynamic(instrument: SoundOption, isAccented?: boolean): string {
-  // Trumpet and clarinet don't have mezzo-forte, use forte/fortissimo
-  // Trombone and tuba have mezzo-forte available
-  if (instrument === 'trumpet' || instrument === 'clarinet') {
+  // Clarinet samples do not provide mezzo-forte, so use forte/fortissimo.
+  if (instrument === 'clarinet') {
     return isAccented ? 'fortissimo' : 'forte';
   }
-  // Trombone and tuba have mezzo-forte
   return isAccented ? 'forte' : 'mezzo-forte';
 }
 
@@ -210,7 +208,7 @@ function buildInstrumentSampleUrl(
 }
 
 import { generateRhythmPattern } from '../logic/rhythmGenerator';
-import { expandBeamedGroups } from '../logic/rhythmNotation';
+import { expandBeamedGroups } from '../logic/beamedGroups';
 import {
   generateEnsemblePattern,
   regeneratePart,
@@ -373,7 +371,7 @@ export function useRhythmRandomizer(): UseRhythmRandomizerReturn {
               eventIndex,
               partIndex,
             };
-          } else if (soundConfig?.isSample && event.pitch && ['trumpet', 'clarinet', 'trombone', 'tuba'].includes(soundToUse)) {
+          } else if (soundConfig?.isSample && event.pitch && soundToUse === 'clarinet') {
             // Pitched instrument samples
             const sampleUrl = buildInstrumentSampleUrl(
               soundToUse,

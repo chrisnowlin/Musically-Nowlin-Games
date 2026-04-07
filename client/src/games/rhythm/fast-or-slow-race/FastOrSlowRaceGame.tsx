@@ -448,7 +448,6 @@ export default function FastOrSlowRaceGame() {
             onReset={handleReset}
             volume={volume}
             onVolumeChange={setVolume}
-            className="bg-black/80 text-white border-white/20"
             />
         </div>
 

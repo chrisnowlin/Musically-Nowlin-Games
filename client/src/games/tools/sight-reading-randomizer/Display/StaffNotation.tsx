@@ -5,7 +5,8 @@
 
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import { RhythmPattern, CountingSystem, StaffLineMode, StemDirection, ClefType } from '../../rhythm-randomizer/logic/types';
-import { renderPatternToDiv, expandBeamedGroups, NotePosition } from '../../rhythm-randomizer/logic/rhythmNotation';
+import { renderPatternToDiv, NotePosition } from '../../rhythm-randomizer/logic/rhythmNotation';
+import { expandBeamedGroups } from '../../rhythm-randomizer/logic/beamedGroups';
 import { getSyllableForEvent } from '../../rhythm-randomizer/logic/countingSyllables';
 import type { KeySignature, PitchSyllableSystem } from '../logic/types';
 import { isPitchSyllableSystem, isRhythmSyllableSystem } from '../logic/types';

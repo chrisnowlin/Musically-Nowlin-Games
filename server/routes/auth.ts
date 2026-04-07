@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import passport from 'passport';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { users } from '../db/schema';
 
@@ -44,7 +45,7 @@ router.post('/login', async (req: Request, res: Response) => {
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password required' });
   }
-  const [user] = await db.select().from(users).where(users.username.eq(username));
+  const [user] = await db.select().from(users).where(eq(users.username, username));
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }

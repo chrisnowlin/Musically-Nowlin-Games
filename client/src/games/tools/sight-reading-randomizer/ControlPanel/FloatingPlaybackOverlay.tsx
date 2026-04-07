@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Play, Square, Pause, Volume2, VolumeX, Repeat, Timer, ChevronUp, ChevronDown, RefreshCw, Settings2, Sparkles, Metronome } from 'lucide-react';
+import { Play, Square, Pause, Volume2, VolumeX, Repeat, Timer, ChevronUp, ChevronDown, RefreshCw, Settings2, Sparkles } from 'lucide-react';
 import { Button } from '@/common/ui/button';
 import { Slider } from '@/common/ui/slider';
 import { Switch } from '@/common/ui/switch';

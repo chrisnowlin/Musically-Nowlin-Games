@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAudioService } from "@/common/hooks/useAudioService";
 import { useGameCleanup } from "@/common/hooks/useGameCleanup";

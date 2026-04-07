@@ -18,6 +18,8 @@ const SOUND_FREQUENCIES: Record<SoundOption, { note: number; accent: number }> =
   claps: { note: 1200, accent: 1500 },
   piano: { note: 440, accent: 440 }, // A4
   metronome: { note: 1000, accent: 1200 },
+  snare: { note: 180, accent: 220 },
+  clarinet: { note: 392, accent: 523 },
 };
 
 // Sound durations (in seconds)
@@ -27,6 +29,8 @@ const SOUND_DURATIONS: Record<SoundOption, number> = {
   claps: 0.05,
   piano: 0.3,
   metronome: 0.05,
+  snare: 0.12,
+  clarinet: 0.28,
 };
 
 export interface PlaybackOptions {

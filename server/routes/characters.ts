@@ -177,18 +177,21 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response) => {
 
   if (Array.isArray(body.equippedSpells)) {
     const owned = (existing.ownedSpells as string[]) ?? [];
-    const valid = body.equippedSpells
-      .filter((s): s is string => typeof s === 'string')
-      .filter((s) => owned.includes(s))
+    const equippedSpells = body.equippedSpells as unknown[];
+    const valid = equippedSpells
+      .filter((s: unknown): s is string => typeof s === 'string')
+      .filter((s: string) => owned.includes(s))
       .slice(0, 2);
     updates.equippedSpells = valid;
   }
 
   if (Array.isArray(body.ownedInstruments)) {
-    updates.ownedInstruments = body.ownedInstruments.filter((s): s is string => typeof s === 'string').slice(0, 50);
+    const ownedInstruments = body.ownedInstruments as unknown[];
+    updates.ownedInstruments = ownedInstruments.filter((s: unknown): s is string => typeof s === 'string').slice(0, 50);
   }
   if (Array.isArray(body.ownedSpells)) {
-    updates.ownedSpells = body.ownedSpells.filter((s): s is string => typeof s === 'string').slice(0, 50);
+    const ownedSpells = body.ownedSpells as unknown[];
+    updates.ownedSpells = ownedSpells.filter((s: unknown): s is string => typeof s === 'string').slice(0, 50);
   }
 
   if (body.skillTree && typeof body.skillTree === 'object' && validateSkillTree(body.skillTree)) {

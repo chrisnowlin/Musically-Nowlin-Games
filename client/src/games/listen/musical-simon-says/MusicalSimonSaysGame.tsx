@@ -226,7 +226,7 @@ export default function MusicalSimonSaysGame() {
         startNewRound();
       }, 2000);
     }
-  }, [gameState, playNote, startNewRound, setGameTimeout]);
+  }, [audio, gameState, startNewRound, setGameTimeout]);
 
   const handleStartGame = async () => {
     await initialize();

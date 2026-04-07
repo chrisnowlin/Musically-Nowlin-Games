@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import {
@@ -25,34 +25,54 @@ import type {
   SpecialFloorType,
 } from './logic/dungeonTypes';
 import { generateDungeon, moveEnemies, generateDevRoom } from './logic/dungeonGenerator';
-import DungeonGrid from './DungeonGrid';
-import HUD from './HUD';
-import MobileDPad from './MobileDPad';
-import MiniMap from './MiniMap';
-import ChallengeModal from './ChallengeModal';
 import type { BossBattleMeta } from './ChallengeModal';
-import MerchantModal from './MerchantModal';
-import DirectionsModal from './DirectionsModal';
-import UseItemsModal from './UseItemsModal';
-import FortuneModal from './FortuneModal';
 import type { MerchantItem } from './logic/merchantItems';
 import { rollChestReward } from './logic/merchantItems';
 import type { ChestReward } from './logic/merchantItems';
-import ChestRewardModal from './ChestRewardModal';
 import { playNote, resumeAudioContext, loadBgMusic, startBgMusic, stopBgMusic, duckBgMusic, muteBgMusic, unduckBgMusic, loadBattleMusic, startBattleMusic, stopBattleMusic, muteBattleMusic, unmuteBattleMusic, loadAndPlayBgMusic, cancelPendingAudio } from './dungeonAudio';
 import { getTheme } from './dungeonThemes';
 import { ALL_ITEMS } from './logic/merchantItems';
-import DevRoomPasswordModal from './DevRoomPasswordModal';
-import DevChallengeConfigModal from './DevChallengeConfigModal';
-import DevToolbar from './DevToolbar';
-import MusicSelectModal from './MusicSelectModal';
 import type { MusicTrack } from './logic/musicTracks';
 import { TeacherPoolProvider, useTeacherPool, poolVocabToEntries } from './TeacherPoolContext';
-import { fetchDefaults } from './logic/useDefaultVocab';
 import { createLearningState, type LearningState } from './logic/learningState';
-import LoreModal from './LoreModal';
-import LoreRecapModal from './LoreRecapModal';
-import { getLoreLesson, getLoreLessonsBelow, type LoreLesson } from './logic/loreData';
+import type { LoreLesson } from './logic/loreData';
+
+const LazyChallengeModal = lazy(() => import('./ChallengeModal'));
+const LazyMerchantModal = lazy(() => import('./MerchantModal'));
+const LazyDirectionsModal = lazy(() => import('./DirectionsModal'));
+const LazyDevChallengeConfigModal = lazy(() => import('./DevChallengeConfigModal'));
+const LazyMusicSelectModal = lazy(() => import('./MusicSelectModal'));
+const LazyLoreModal = lazy(() => import('./LoreModal'));
+const LazyLoreRecapModal = lazy(() => import('./LoreRecapModal'));
+const LazyDungeonGrid = lazy(() => import('./DungeonGrid'));
+const LazyHUD = lazy(() => import('./HUD'));
+const LazyMiniMap = lazy(() => import('./MiniMap'));
+const LazyMobileDPad = lazy(() => import('./MobileDPad'));
+const LazyUseItemsModal = lazy(() => import('./UseItemsModal'));
+const LazyFortuneModal = lazy(() => import('./FortuneModal'));
+const LazyChestRewardModal = lazy(() => import('./ChestRewardModal'));
+const LazyDevRoomPasswordModal = lazy(() => import('./DevRoomPasswordModal'));
+const LazyDevToolbar = lazy(() => import('./DevToolbar'));
+
+type DefaultVocabModule = typeof import('./logic/useDefaultVocab');
+type LoreDataModule = typeof import('./logic/loreData');
+
+let defaultVocabModulePromise: Promise<DefaultVocabModule> | null = null;
+let loreDataModulePromise: Promise<LoreDataModule> | null = null;
+
+async function loadDefaultVocabModule() {
+  if (!defaultVocabModulePromise) {
+    defaultVocabModulePromise = import('./logic/useDefaultVocab');
+  }
+  return defaultVocabModulePromise;
+}
+
+async function loadLoreDataModule() {
+  if (!loreDataModulePromise) {
+    loreDataModulePromise = import('./logic/loreData');
+  }
+  return loreDataModulePromise;
+}
 
 function updateVisibility(floor: DungeonFloor, pos: Position, radius: number = VISIBILITY_RADIUS): DungeonFloor {
   const tiles = floor.tiles.map((row, y) =>
@@ -108,6 +128,19 @@ function createPlayer(start: Position): PlayerState {
   };
 }
 
+function createMenuFloor(): DungeonFloor {
+  return {
+    tiles: [[{ type: TileType.PlayerStart, visible: true, visited: true }]],
+    width: 1,
+    height: 1,
+    floorNumber: 1,
+    themeIndex: 0,
+    playerStart: { x: 0, y: 0 },
+    stairsPosition: { x: 0, y: 0 },
+    specialFloorType: 'normal',
+  };
+}
+
 const MAX_FLOOR = 100;
 
 const MelodyDungeonGameInner: React.FC = () => {
@@ -115,13 +148,8 @@ const MelodyDungeonGameInner: React.FC = () => {
   const [gameCodeInput, setGameCodeInput] = useState('');
   const [, setLocation] = useLocation();
   const [phase, setPhase] = useState<GamePhase>('menu');
-  const [floor, setFloor] = useState<DungeonFloor>(() => {
-    const f = generateDungeon(1);
-    return updateVisibility(f, f.playerStart);
-  });
-  const [player, setPlayer] = useState<PlayerState>(() =>
-    createPlayer(floor.playerStart)
-  );
+  const [floor, setFloor] = useState<DungeonFloor>(createMenuFloor);
+  const [player, setPlayer] = useState<PlayerState>(() => createPlayer({ x: 0, y: 0 }));
   const [activeChallenge, setActiveChallenge] = useState<ActiveChallenge | null>(null);
   const [activeTileType, setActiveTileType] = useState<TileType>(TileType.Enemy);
   const [activeTileSubtype, setActiveTileSubtype] = useState<EnemySubtype | undefined>(undefined);
@@ -173,6 +201,75 @@ const MelodyDungeonGameInner: React.FC = () => {
   const [completedLoreLessons, setCompletedLoreLessons] = useState<Set<string>>(new Set());
   const [loreRecapLessons, setLoreRecapLessons] = useState<LoreLesson[]>([]);
   const wasGuidedRef = useRef(false);
+  const defaultVocabWarmRef = useRef(false);
+  const phaseRef = useRef<GamePhase>(phase);
+  phaseRef.current = phase;
+  const activeTileTypeRef = useRef<TileType>(activeTileType);
+  activeTileTypeRef.current = activeTileType;
+
+  const basePath = import.meta.env.BASE_URL || '/';
+  const bgMusicUrl = `${basePath}audio/Cathedral in the Cavern.mp3`;
+  const battleMusicUrls = useMemo(
+    () => ({
+      miniboss: `${basePath}audio/Dungeon Run.mp3`,
+      bigboss: `${basePath}audio/Dungeon Run_ Bloodsteel.mp3`,
+    }),
+    [basePath]
+  );
+
+  const openLoreLesson = useCallback((targetFloorNumber: number) => {
+    void loadLoreDataModule().then(({ getLoreLesson }) => {
+      const lesson = getLoreLesson(targetFloorNumber);
+      if (lesson) {
+        setActiveLoreLesson(lesson);
+        pendingDescendRef.current = 0;
+        setPhase('lore');
+        return;
+      }
+      moveLockedRef.current = false;
+    });
+  }, []);
+
+  const loadLoreRecap = useCallback((startFloor: number) => {
+    if (startFloor <= 1) {
+      setLoreRecapLessons([]);
+      return;
+    }
+
+    void loadLoreDataModule().then(({ getLoreLessonsBelow }) => {
+      const prior = getLoreLessonsBelow(startFloor);
+      if (prior.length > 0) {
+        setLoreRecapLessons(prior);
+        moveLockedRef.current = true;
+        return;
+      }
+      setLoreRecapLessons([]);
+    });
+  }, []);
+
+  const warmDefaultVocab = useCallback(() => {
+    if (defaultVocabWarmRef.current) return;
+    defaultVocabWarmRef.current = true;
+    void loadDefaultVocabModule().then(({ fetchDefaults }) => fetchDefaults());
+  }, []);
+
+  const ensureBgMusicReady = useCallback(async () => {
+    await loadBgMusic(bgMusicUrl);
+    if (phaseRef.current === 'playing') {
+      startBgMusic();
+    }
+  }, [bgMusicUrl]);
+
+  const ensureBattleMusicReady = useCallback(async (key: 'miniboss' | 'bigboss') => {
+    await loadBattleMusic(key, battleMusicUrls[key]);
+    const stillInBossFight =
+      phaseRef.current === 'challenge' &&
+      (activeTileTypeRef.current === TileType.MiniBoss || activeTileTypeRef.current === TileType.BigBoss);
+
+    if (stillInBossFight) {
+      startBattleMusic(key);
+    }
+  }, [battleMusicUrls]);
 
   /** Wraps setLearningState to detect guided mode (System 2 gold reduction). */
   const handleLearningUpdate = useCallback((next: LearningState) => {
@@ -300,13 +397,31 @@ const MelodyDungeonGameInner: React.FC = () => {
     };
   }, []);
 
-  // Pre-load background and battle music on mount. Stop all music on unmount.
+  // Defer default vocab loading until the player actually starts interacting with the dungeon.
   useEffect(() => {
-    const basePath = import.meta.env.BASE_URL || '/';
-    void loadBgMusic(`${basePath}audio/Cathedral in the Cavern.mp3`);
-    void loadBattleMusic('miniboss', `${basePath}audio/Dungeon Run.mp3`);
-    void loadBattleMusic('bigboss', `${basePath}audio/Dungeon Run_ Bloodsteel.mp3`);
-    void fetchDefaults();
+    if (phase === 'menu' || phase === 'gameOver' || phase === 'victory') return;
+    if (defaultVocabWarmRef.current) return;
+
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+    if ('requestIdleCallback' in globalThis) {
+      idleId = globalThis.requestIdleCallback(warmDefaultVocab, { timeout: 1500 });
+    } else {
+      timeoutId = globalThis.setTimeout(warmDefaultVocab, 250);
+    }
+
+    return () => {
+      if (idleId !== null) {
+        globalThis.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId);
+      }
+    };
+  }, [phase, warmDefaultVocab]);
+
+  useEffect(() => {
     return () => {
       stopBgMusic();
       stopBattleMusic();
@@ -320,7 +435,7 @@ const MelodyDungeonGameInner: React.FC = () => {
     cancelPendingAudio();
     if (phase === 'playing') {
       stopBattleMusic();
-      startBgMusic();
+      void ensureBgMusicReady();
       unduckBgMusic();
     } else if (phase === 'challenge') {
       const isBoss = activeTileType === TileType.MiniBoss || activeTileType === TileType.BigBoss;
@@ -328,7 +443,7 @@ const MelodyDungeonGameInner: React.FC = () => {
         // Boss fight: mute background music entirely, play battle track
         muteBgMusic();
         const key = activeTileType === TileType.BigBoss ? 'bigboss' : 'miniboss';
-        startBattleMusic(key);
+        void ensureBattleMusicReady(key);
       } else {
         duckBgMusic();
       }
@@ -340,7 +455,7 @@ const MelodyDungeonGameInner: React.FC = () => {
       stopBattleMusic();
       unduckBgMusic();
     }
-  }, [phase, activeTileType]);
+  }, [phase, activeTileType, ensureBgMusicReady, ensureBattleMusicReady]);
 
   // Detect enemy catch after state settles
   useEffect(() => {
@@ -597,15 +712,8 @@ const MelodyDungeonGameInner: React.FC = () => {
         if (tile.type === TileType.LoreBook) {
           setFloor((f) => moveEnemiesAndDetectCatch(updateVisibility(f, newPos, getVisRadius()), newPos));
           moveLockedRef.current = true;
-          const lesson = getLoreLesson(floorNumber);
-          if (lesson) {
-            setActiveLoreLesson(lesson);
-            pendingDescendRef.current = 0; // not descending, just reading
-            setPhase('lore');
-          } else {
-            // Fallback: no lesson for this floor — just move
-            moveLockedRef.current = false;
-          }
+          pendingDescendRef.current = 0; // not descending, just reading
+          openLoreLesson(floorNumber);
           return { ...prev, position: newPos };
         }
 
@@ -1152,6 +1260,7 @@ const MelodyDungeonGameInner: React.FC = () => {
   }, []);
 
   const startNewGame = useCallback(() => {
+    warmDefaultVocab();
     const newFloor = generateDungeon(selectedStartFloor, { hasCustomQuestions: !!(pool?.customQuestions?.length) });
     const visibleFloor = updateVisibility(newFloor, newFloor.playerStart);
     setFloor(visibleFloor);
@@ -1171,19 +1280,12 @@ const MelodyDungeonGameInner: React.FC = () => {
     moveLockedRef.current = false;
     setPhase('playing');
     // If starting deeper than floor 1, offer a quick lore recap
-    if (selectedStartFloor > 1) {
-      const prior = getLoreLessonsBelow(selectedStartFloor);
-      if (prior.length > 0) {
-        setLoreRecapLessons(prior);
-        moveLockedRef.current = true;
-      }
-    } else {
-      setLoreRecapLessons([]);
-    }
+    loadLoreRecap(selectedStartFloor);
     playNote('C4', 0.2);
-  }, [selectedStartFloor, pool]);
+  }, [selectedStartFloor, pool, loadLoreRecap, warmDefaultVocab]);
 
   const enterDevRoom = useCallback(() => {
+    warmDefaultVocab();
     const devFloor = generateDevRoom();
     setFloor(devFloor);
     setPlayer({
@@ -1197,7 +1299,7 @@ const MelodyDungeonGameInner: React.FC = () => {
     moveLockedRef.current = false;
     setPhase('playing');
     setShowPasswordModal(false);
-  }, []);
+  }, [warmDefaultVocab]);
 
   const resetDevRoom = useCallback(() => {
     const devFloor = generateDevRoom();
@@ -1567,12 +1669,18 @@ const MelodyDungeonGameInner: React.FC = () => {
           <p>Press P to use a potion. {MAX_FLOOR} floors to conquer!</p>
         </div>
       </div>
-      <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+      {showDirections && (
+        <Suspense fallback={null}>
+          <LazyDirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+        </Suspense>
+      )}
       {showPasswordModal && (
-        <DevRoomPasswordModal
-          onSuccess={enterDevRoom}
-          onCancel={() => setShowPasswordModal(false)}
-        />
+        <Suspense fallback={null}>
+          <LazyDevRoomPasswordModal
+            onSuccess={enterDevRoom}
+            onCancel={() => setShowPasswordModal(false)}
+          />
+        </Suspense>
       )}
     </>
     );
@@ -1625,7 +1733,11 @@ const MelodyDungeonGameInner: React.FC = () => {
           </div>
         </div>
       </div>
-      <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+      {showDirections && (
+        <Suspense fallback={null}>
+          <LazyDirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+        </Suspense>
+      )}
     </>
     );
   }
@@ -1716,39 +1828,45 @@ const MelodyDungeonGameInner: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} specialFloorType={floor.specialFloorType} onBackToMenu={handleBackToMenu} />
+          <Suspense fallback={null}>
+            <LazyHUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} specialFloorType={floor.specialFloorType} onBackToMenu={handleBackToMenu} />
+          </Suspense>
         </div>
       </div>
       {devMode.active && (
         <div className="px-2 shrink-0">
-          <DevToolbar
-            devMode={devMode}
-            onToggleInfiniteGold={() => setDevMode((prev) => ({ ...prev, infiniteGold: !prev.infiniteGold }))}
-            onToggleInfiniteHealth={() => setDevMode((prev) => ({ ...prev, infiniteHealth: !prev.infiniteHealth }))}
-            onReset={resetDevRoom}
-            onLootFloor={enterLootFloor}
-            onHealingFloor={enterHealingFloor}
-            onFortuneFloor={enterFortuneFloor}
-            onChallengeFloor={enterChallengeFloor}
-            onRespawn={respawnToStart}
-            onBackToMenu={handleDevBackToMenu}
-          />
+          <Suspense fallback={null}>
+            <LazyDevToolbar
+              devMode={devMode}
+              onToggleInfiniteGold={() => setDevMode((prev) => ({ ...prev, infiniteGold: !prev.infiniteGold }))}
+              onToggleInfiniteHealth={() => setDevMode((prev) => ({ ...prev, infiniteHealth: !prev.infiniteHealth }))}
+              onReset={resetDevRoom}
+              onLootFloor={enterLootFloor}
+              onHealingFloor={enterHealingFloor}
+              onFortuneFloor={enterFortuneFloor}
+              onChallengeFloor={enterChallengeFloor}
+              onRespawn={respawnToStart}
+              onBackToMenu={handleDevBackToMenu}
+            />
+          </Suspense>
         </div>
       )}
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center justify-center gap-2 px-1 py-1">
-        <DungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} characterSprite={characterSprite} />
-        <div className="shrink-0 flex flex-col items-center gap-2">
-          <MiniMap floor={floor} playerPosition={player.position} showStairs={player.buffs.floor.compass} />
-          <MobileDPad
-            onMove={handleMove}
-            onPotion={usePotion}
-            onOpenBag={openBag}
-            disabled={phase !== 'playing'}
-            hasPotions={player.potions > 0}
-            hasBagItems={hasBagItems}
-          />
-        </div>
+        <Suspense fallback={<div className="flex-1" />}>
+          <LazyDungeonGrid floor={floor} playerPosition={player.position} facingLeft={facingLeft} characterSprite={characterSprite} />
+          <div className="shrink-0 flex flex-col items-center gap-2">
+            <LazyMiniMap floor={floor} playerPosition={player.position} showStairs={player.buffs.floor.compass} />
+            <LazyMobileDPad
+              onMove={handleMove}
+              onPotion={usePotion}
+              onOpenBag={openBag}
+              disabled={phase !== 'playing'}
+              hasPotions={player.potions > 0}
+              hasBagItems={hasBagItems}
+            />
+          </div>
+        </Suspense>
       </div>
 
       {dragonFireActive && (
@@ -1840,108 +1958,130 @@ const MelodyDungeonGameInner: React.FC = () => {
       )}
 
       {phase === 'challenge' && activeChallenge && (
-        <ChallengeModal
-          key={challengeKey}
-          challengeType={activeChallenge.type}
-          tileType={activeTileType}
-          floorNumber={floorNumber}
-          onResult={handleChallengeResult}
-          playerHealth={player.health}
-          maxHealth={player.maxHealth}
-          shieldCharm={player.shieldCharm}
-          potions={player.potions}
-          dragonBane={player.buffs.armed.dragonBane > 0}
-          slowRhythm={player.buffs.armed.metronome > 0}
-          showIntervalHint={player.buffs.armed.tuningFork > 0}
-          enemySubtype={activeTileSubtype}
-          enemyLevel={activeTileLevel}
-          overrideTier={overrideTier}
-          onExit={floorNumber === 0 ? handleExitEncounter : undefined}
-          customQuestions={pool?.customQuestions}
-          poolVocabEntries={pool ? poolVocabToEntries(pool.vocabEntries) : undefined}
-          poolUseDefaults={pool?.useDefaults}
-          onListeningChange={handleListeningChange}
-          learningState={learningState}
-           onLearningUpdate={handleLearningUpdate}
-        />
+        <Suspense fallback={null}>
+          <LazyChallengeModal
+            key={challengeKey}
+            challengeType={activeChallenge.type}
+            tileType={activeTileType}
+            floorNumber={floorNumber}
+            onResult={handleChallengeResult}
+            playerHealth={player.health}
+            maxHealth={player.maxHealth}
+            shieldCharm={player.shieldCharm}
+            potions={player.potions}
+            dragonBane={player.buffs.armed.dragonBane > 0}
+            slowRhythm={player.buffs.armed.metronome > 0}
+            showIntervalHint={player.buffs.armed.tuningFork > 0}
+            enemySubtype={activeTileSubtype}
+            enemyLevel={activeTileLevel}
+            overrideTier={overrideTier}
+            onExit={floorNumber === 0 ? handleExitEncounter : undefined}
+            customQuestions={pool?.customQuestions}
+            poolVocabEntries={pool ? poolVocabToEntries(pool.vocabEntries) : undefined}
+            poolUseDefaults={pool?.useDefaults}
+            onListeningChange={handleListeningChange}
+            learningState={learningState}
+            onLearningUpdate={handleLearningUpdate}
+          />
+        </Suspense>
       )}
 
       {phase === 'devConfig' && pendingDevConfig && (
-        <DevChallengeConfigModal
-          defaultType={pendingDevConfig.challengeType}
-          defaultTier={pendingDevConfig.tier as Tier}
-          enemyName={pendingDevConfig.subtype ? pendingDevConfig.subtype.charAt(0).toUpperCase() + pendingDevConfig.subtype.slice(1) : 'Enemy'}
-          onStart={handleDevConfigStart}
-          onCancel={handleDevConfigCancel}
-        />
+        <Suspense fallback={null}>
+          <LazyDevChallengeConfigModal
+            defaultType={pendingDevConfig.challengeType}
+            defaultTier={pendingDevConfig.tier as Tier}
+            enemyName={pendingDevConfig.subtype ? pendingDevConfig.subtype.charAt(0).toUpperCase() + pendingDevConfig.subtype.slice(1) : 'Enemy'}
+            onStart={handleDevConfigStart}
+            onCancel={handleDevConfigCancel}
+          />
+        </Suspense>
       )}
 
       {phase === 'shopping' && (
-        <MerchantModal
-          player={player}
-          floorNumber={floorNumber}
-          onBuy={handleMerchantBuy}
-          onClose={handleMerchantClose}
-          overrideItems={devMode.active ? ALL_ITEMS : undefined}
-        />
+        <Suspense fallback={null}>
+          <LazyMerchantModal
+            player={player}
+            floorNumber={floorNumber}
+            onBuy={handleMerchantBuy}
+            onClose={handleMerchantClose}
+            overrideItems={devMode.active ? ALL_ITEMS : undefined}
+          />
+        </Suspense>
       )}
 
       {showJukebox && (
-        <MusicSelectModal
-          currentTrackId={currentTrackId}
-          onPlay={handleJukeboxPlay}
-          onStop={handleJukeboxStop}
-          onClose={handleJukeboxClose}
-        />
+        <Suspense fallback={null}>
+          <LazyMusicSelectModal
+            currentTrackId={currentTrackId}
+            onPlay={handleJukeboxPlay}
+            onStop={handleJukeboxStop}
+            onClose={handleJukeboxClose}
+          />
+        </Suspense>
       )}
 
       {phase === 'inventory' && (
-        <UseItemsModal
-          player={player}
-          onUse={handleUseItem}
-          onClose={handleBagClose}
-        />
+        <Suspense fallback={null}>
+          <LazyUseItemsModal
+            player={player}
+            onUse={handleUseItem}
+            onClose={handleBagClose}
+          />
+        </Suspense>
       )}
 
       {pendingChestReward && (
-        <ChestRewardModal
-          reward={pendingChestReward}
-          onClose={() => {
-            setPendingChestReward(null);
-            moveLockedRef.current = false;
-          }}
-        />
+        <Suspense fallback={null}>
+          <LazyChestRewardModal
+            reward={pendingChestReward}
+            onClose={() => {
+              setPendingChestReward(null);
+              moveLockedRef.current = false;
+            }}
+          />
+        </Suspense>
       )}
 
       {showFortuneModal && (
-        <FortuneModal
-          playerGold={player.gold}
-          onResult={(goldChange) => {
-            setPlayer((prev) => ({ ...prev, gold: Math.max(0, prev.gold + goldChange) }));
-          }}
-          onClose={() => {
-            setShowFortuneModal(false);
-            moveLockedRef.current = false;
-          }}
-        />
+        <Suspense fallback={null}>
+          <LazyFortuneModal
+            playerGold={player.gold}
+            onResult={(goldChange) => {
+              setPlayer((prev) => ({ ...prev, gold: Math.max(0, prev.gold + goldChange) }));
+            }}
+            onClose={() => {
+              setShowFortuneModal(false);
+              moveLockedRef.current = false;
+            }}
+          />
+        </Suspense>
       )}
 
       {phase === 'lore' && activeLoreLesson && (
-        <LoreModal lesson={activeLoreLesson} onComplete={handleLoreComplete} onSkip={handleLoreSkip} />
+        <Suspense fallback={null}>
+          <LazyLoreModal lesson={activeLoreLesson} onComplete={handleLoreComplete} onSkip={handleLoreSkip} />
+        </Suspense>
       )}
 
       {loreRecapLessons.length > 0 && (
-        <LoreRecapModal
-          lessons={loreRecapLessons}
-          startFloor={floorNumber}
-          onClose={() => {
-            setLoreRecapLessons([]);
-            moveLockedRef.current = false;
-          }}
-        />
+        <Suspense fallback={null}>
+          <LazyLoreRecapModal
+            lessons={loreRecapLessons}
+            startFloor={floorNumber}
+            onClose={() => {
+              setLoreRecapLessons([]);
+              moveLockedRef.current = false;
+            }}
+          />
+        </Suspense>
       )}
 
-      <DirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+      {showDirections && (
+        <Suspense fallback={null}>
+          <LazyDirectionsModal isOpen={showDirections} onClose={() => setShowDirections(false)} />
+        </Suspense>
+      )}
     </div>
   );
 };

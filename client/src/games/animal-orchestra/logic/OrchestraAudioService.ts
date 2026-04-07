@@ -34,6 +34,7 @@ export interface Rest {
 }
 
 export type SoundEvent = Note | DrumHit | Rest;
+type PlayableSoundEvent = Note | DrumHit;
 
 // Type guard for rest
 export function isRest(event: SoundEvent): event is Rest {
@@ -62,6 +63,7 @@ const INSTRUMENT_SUFFIXES: Record<InstrumentType, string> = {
 class OrchestraAudioService {
   private audioContext: AudioContext | null = null;
   private sampleCache: Map<string, AudioBuffer> = new Map();
+  private pendingSampleLoads: Map<string, Promise<AudioBuffer>> = new Map();
   private isInitialized = false;
   private gainNode: GainNode | null = null;
   private activeSources: AudioBufferSourceNode[] = [];
@@ -83,7 +85,7 @@ class OrchestraAudioService {
     }
   }
 
-  private buildFilename(instrument: InstrumentType, event: SoundEvent): string {
+  private buildFilename(instrument: InstrumentType, event: PlayableSoundEvent): string {
     // Default dynamics vary by instrument (clarinet/trumpet don't have mezzo-forte for regular durations)
     const instrumentsWithForteDefault = ['clarinet', 'trumpet'];
     const defaultDynamic = instrumentsWithForteDefault.includes(instrument) ? 'forte' : 'mezzo-forte';
@@ -100,12 +102,16 @@ class OrchestraAudioService {
     return `${instrument}_${note.name}${note.octave}_${event.duration}_${dynamic}_${suffix}.mp3`;
   }
 
-  private async loadSample(instrument: InstrumentType, event: SoundEvent): Promise<AudioBuffer> {
+  private async loadSample(instrument: InstrumentType, event: PlayableSoundEvent): Promise<AudioBuffer> {
     const filename = this.buildFilename(instrument, event);
     const cacheKey = `${instrument}/${filename}`;
     
     if (this.sampleCache.has(cacheKey)) {
       return this.sampleCache.get(cacheKey)!;
+    }
+
+    if (this.pendingSampleLoads.has(cacheKey)) {
+      return this.pendingSampleLoads.get(cacheKey)!;
     }
 
     if (!this.audioContext) {
@@ -115,25 +121,36 @@ class OrchestraAudioService {
     const url = `${INSTRUMENT_PATHS[instrument]}/${filename}`;
     console.log(`[OrchestraAudioService] Loading: ${url}`);
     
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to load sample: ${url}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    try {
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      this.sampleCache.set(cacheKey, audioBuffer);
-      return audioBuffer;
-    } catch (e) {
-      console.error(`[OrchestraAudioService] Failed to decode: ${url}`, e);
-      throw e;
-    }
+    const pendingLoad = (async () => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to load sample: ${url}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      try {
+        const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+        this.sampleCache.set(cacheKey, audioBuffer);
+        return audioBuffer;
+      } catch (e) {
+        console.error(`[OrchestraAudioService] Failed to decode: ${url}`, e);
+        throw e;
+      } finally {
+        this.pendingSampleLoads.delete(cacheKey);
+      }
+    })();
+
+    this.pendingSampleLoads.set(cacheKey, pendingLoad);
+    return pendingLoad;
   }
 
   async playSound(instrument: InstrumentType, event: SoundEvent): Promise<void> {
     if (!this.audioContext || !this.gainNode) {
       await this.initialize();
+    }
+
+    if (isRest(event)) {
+      return;
     }
 
     const buffer = await this.loadSample(instrument, event);
@@ -235,4 +252,3 @@ class OrchestraAudioService {
 }
 
 export const orchestraAudioService = new OrchestraAudioService();
-

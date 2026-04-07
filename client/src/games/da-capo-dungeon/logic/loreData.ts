@@ -14,6 +14,7 @@
  */
 
 import type { Tier } from './dungeonTypes';
+import { LORE_GATE_FLOORS } from './loreGates';
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -594,9 +595,6 @@ export const LORE_LESSONS: LoreLesson[] = [
     ],
   },
 ];
-
-/** Set of all floors that have lore lessons. */
-export const LORE_GATE_FLOORS = new Set(LORE_LESSONS.map(l => l.gateFloor));
 
 /**
  * Get the lore lesson for a given floor, if one exists.

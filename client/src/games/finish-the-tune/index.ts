@@ -15,7 +15,18 @@ export { AchievementBadge, AchievementToast } from './AchievementBadge';
 export { PianoKeyboard } from './PianoKeyboard';
 
 // Type exports
-export * from './types';
+export type {
+  NoteEvent,
+  FeedbackState,
+  Question,
+  MelodyPattern,
+  Difficulty,
+  FinishTheTuneState,
+  GameAction,
+  PersistedState,
+  Achievement,
+} from './types';
+export { PITCH_COLORS } from './types';
 
 // Logic exports
 export * from './finish-the-tune-Logic';

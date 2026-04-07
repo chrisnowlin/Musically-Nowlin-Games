@@ -40,15 +40,24 @@ import {
   DEFAULT_WORKSHEET_SETTINGS,
 } from '../../rhythm-randomizer/logic/types';
 import {
-  downloadWorksheetPdf,
-  generatePreviewUrl,
   getWorksheetFormatName,
   getWorksheetFormatDescription,
-  PageSettings,
-  PageSize,
-  PageOrientation,
   DEFAULT_PAGE_SETTINGS,
-} from '../../rhythm-randomizer/logic/worksheetGenerator';
+  type PageSettings,
+  type PageSize,
+  type PageOrientation,
+} from '../../rhythm-randomizer/logic/worksheetMeta';
+
+type WorksheetGeneratorModule = typeof import('../../rhythm-randomizer/logic/worksheetGenerator');
+
+let worksheetGeneratorPromise: Promise<WorksheetGeneratorModule> | null = null;
+
+async function loadWorksheetGenerator() {
+  if (!worksheetGeneratorPromise) {
+    worksheetGeneratorPromise = import('../../rhythm-randomizer/logic/worksheetGenerator');
+  }
+  return worksheetGeneratorPromise;
+}
 
 interface WorksheetBuilderProps {
   rhythmSettings: RhythmSettings;
@@ -117,6 +126,7 @@ export function WorksheetBuilder({ rhythmSettings }: WorksheetBuilderProps) {
     setPreviewError(null);
 
     try {
+      const { generatePreviewUrl } = await loadWorksheetGenerator();
       const url = await generatePreviewUrl(
         rhythmSettings,
         worksheetSettings,
@@ -158,6 +168,7 @@ export function WorksheetBuilder({ rhythmSettings }: WorksheetBuilderProps) {
   const handleExport = async () => {
     setIsExporting(true);
     try {
+      const { downloadWorksheetPdf } = await loadWorksheetGenerator();
       await downloadWorksheetPdf(rhythmSettings, worksheetSettings, pageSettings);
       setIsOpen(false);
     } catch (error) {

@@ -3,8 +3,7 @@
  * Creates printable PDF worksheets for rhythm exercises using vector SVG rendering
  */
 
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import type { jsPDF } from 'jspdf';
 import {
   RhythmPattern,
   RhythmSettings,
@@ -13,9 +12,11 @@ import {
   DEFAULT_WORKSHEET_SETTINGS,
   RestValue,
 } from './types';
+import { DEFAULT_PAGE_SETTINGS, type PageSettings, type PageSize, type PageOrientation } from './worksheetMeta';
 import { generateRhythmPattern } from './rhythmGenerator';
 import { addSyllablesToPattern } from './countingSyllables';
-import { renderPatternToDiv, expandBeamedGroups } from './rhythmNotation';
+import { expandBeamedGroups } from './beamedGroups';
+import { renderPatternToDiv } from './rhythmNotation';
 
 // Note: Using html2canvas instead of svg2pdf.js for proper music font rendering
 
@@ -43,30 +44,10 @@ interface WorksheetContent {
 // PDF STYLING CONSTANTS
 // ============================================
 
-export type PageSize = 'letter' | 'a4' | 'legal';
-export type PageOrientation = 'portrait' | 'landscape';
-
-export interface PageSettings {
-  size: PageSize;
-  orientation: PageOrientation;
-  margins: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-}
-
 const PAGE_DIMENSIONS: Record<PageSize, { width: number; height: number }> = {
   letter: { width: 215.9, height: 279.4 },
   a4: { width: 210, height: 297 },
   legal: { width: 215.9, height: 355.6 },
-};
-
-export const DEFAULT_PAGE_SETTINGS: PageSettings = {
-  size: 'letter',
-  orientation: 'portrait',
-  margins: { top: 20, right: 15, bottom: 20, left: 15 },
 };
 
 const PDF_STYLES = {
@@ -80,6 +61,25 @@ const PDF_STYLES = {
   notationHeight: 35, // Height reserved for notation in mm
   syllableRowHeight: 6, // Height for syllables below notation
 };
+
+let pdfModulePromise: Promise<typeof import('jspdf')> | null = null;
+let html2canvasModulePromise: Promise<typeof import('html2canvas')> | null = null;
+
+async function getJsPdfCtor() {
+  if (!pdfModulePromise) {
+    pdfModulePromise = import('jspdf');
+  }
+  const module = await pdfModulePromise;
+  return module.jsPDF;
+}
+
+async function getHtml2Canvas() {
+  if (!html2canvasModulePromise) {
+    html2canvasModulePromise = import('html2canvas');
+  }
+  const module = await html2canvasModulePromise;
+  return module.default;
+}
 
 // ============================================
 // IMAGE-BASED NOTATION RENDERING
@@ -165,6 +165,7 @@ export async function renderPatternToImage(
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Use html2canvas to capture the rendered notation
+    const html2canvas = await getHtml2Canvas();
     const canvas = await html2canvas(container, {
       backgroundColor: '#ffffff',
       scale: 2, // Higher resolution for crisp output
@@ -596,7 +597,8 @@ export async function generateWorksheetPdf(
   const pageDims = getPageDimensions(pageSettings);
   const { margins } = pageSettings;
 
-  const doc = new jsPDF({
+  const JsPdf = await getJsPdfCtor();
+  const doc = new JsPdf({
     orientation: pageSettings.orientation === 'landscape' ? 'l' : 'p',
     unit: 'mm',
     format: pageSettings.size,
@@ -725,7 +727,8 @@ export async function exportPatternToPdf(
   const pageDims = getPageDimensions(pageSettings);
   const { margins } = pageSettings;
 
-  const doc = new jsPDF({
+  const JsPdf = await getJsPdfCtor();
+  const doc = new JsPdf({
     orientation: pageSettings.orientation === 'landscape' ? 'l' : 'p',
     unit: 'mm',
     format: pageSettings.size,
@@ -775,36 +778,4 @@ export async function exportPatternToPdf(
   );
 
   doc.save(filename);
-}
-
-/**
- * Get worksheet format display name
- */
-export function getWorksheetFormatName(format: WorksheetFormat): string {
-  switch (format) {
-    case 'standard':
-      return 'Standard Practice';
-    case 'blankCompletion':
-      return 'Fill in the Blank';
-    case 'quiz':
-      return 'Quiz Format';
-    default:
-      return format;
-  }
-}
-
-/**
- * Get worksheet format description
- */
-export function getWorksheetFormatDescription(format: WorksheetFormat): string {
-  switch (format) {
-    case 'standard':
-      return 'Complete rhythm patterns for practice';
-    case 'blankCompletion':
-      return 'Patterns with blank measures to fill in';
-    case 'quiz':
-      return 'Numbered exercises in quiz format';
-    default:
-      return '';
-  }
 }

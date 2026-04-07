@@ -27,6 +27,7 @@ import {
   ClefType,
   TIME_SIGNATURES,
 } from './types';
+import { expandBeamedGroups } from './beamedGroups';
 import { getAccidentalCountFromVexFlow } from '../../sight-reading-randomizer/logic/keySignatureUtils';
 
 // ============================================
@@ -51,98 +52,6 @@ const NOTE_VALUE_TO_VEXFLOW: Record<NoteValue, string> = {
   twoSixteenthsEighth: '16',        // First note type (sixteenth)
   sixteenthEighthSixteenth: '16',   // First note type (sixteenth)
 };
-
-// Beamed group definitions
-// For uniform groups: count + noteType + duration
-// For mixed groups: notes array with individual note specifications
-type BeamedGroupDef =
-  | { count: number; noteType: NoteValue; duration: number }
-  | { notes: Array<{ noteType: NoteValue; duration: number }> };
-
-export const BEAMED_GROUP_INFO: Partial<Record<NoteValue, BeamedGroupDef>> = {
-  // Uniform groups
-  twoEighths: { count: 2, noteType: 'eighth', duration: 0.5 },
-  fourSixteenths: { count: 4, noteType: 'sixteenth', duration: 0.25 },
-  twoSixteenths: { count: 2, noteType: 'sixteenth', duration: 0.25 },
-  // Mixed eighth + sixteenth groups
-  eighthTwoSixteenths: {
-    notes: [
-      { noteType: 'eighth', duration: 0.5 },
-      { noteType: 'sixteenth', duration: 0.25 },
-      { noteType: 'sixteenth', duration: 0.25 },
-    ]
-  },
-  twoSixteenthsEighth: {
-    notes: [
-      { noteType: 'sixteenth', duration: 0.25 },
-      { noteType: 'sixteenth', duration: 0.25 },
-      { noteType: 'eighth', duration: 0.5 },
-    ]
-  },
-  sixteenthEighthSixteenth: {
-    notes: [
-      { noteType: 'sixteenth', duration: 0.25 },
-      { noteType: 'eighth', duration: 0.5 },
-      { noteType: 'sixteenth', duration: 0.25 },
-    ]
-  },
-};
-
-/**
- * Check if a note value is a beamed group
- */
-export function isBeamedGroup(noteValue: NoteValue): boolean {
-  return noteValue in BEAMED_GROUP_INFO;
-}
-
-/**
- * Expand beamed group events into individual note events
- * Preserves pitch and vexflowKey from the parent event for sight reading
- */
-export function expandBeamedGroups(events: RhythmEvent[]): RhythmEvent[] {
-  const expanded: RhythmEvent[] = [];
-
-  for (const event of events) {
-    if (event.type === 'note' && isBeamedGroup(event.value as NoteValue)) {
-      const groupInfo = BEAMED_GROUP_INFO[event.value as NoteValue]!;
-
-      // Check if it's a mixed group (has 'notes' array) or uniform group (has 'count')
-      if ('notes' in groupInfo) {
-        // Mixed group - expand each note in the sequence
-        // Copy pitch/vexflowKey from parent event to all expanded notes
-        groupInfo.notes.forEach((note, i) => {
-          expanded.push({
-            type: 'note',
-            value: note.noteType,
-            duration: note.duration,
-            isAccented: i === 0 ? event.isAccented : false,
-            isTriplet: false,
-            pitch: event.pitch,
-            vexflowKey: event.vexflowKey,
-          });
-        });
-      } else {
-        // Uniform group - create identical notes
-        // Copy pitch/vexflowKey from parent event to all expanded notes
-        for (let i = 0; i < groupInfo.count; i++) {
-          expanded.push({
-            type: 'note',
-            value: groupInfo.noteType,
-            duration: groupInfo.duration,
-            isAccented: i === 0 ? event.isAccented : false,
-            isTriplet: false,
-            pitch: event.pitch,
-            vexflowKey: event.vexflowKey,
-          });
-        }
-      }
-    } else {
-      expanded.push(event);
-    }
-  }
-
-  return expanded;
-}
 
 // Map rest values to VexFlow duration strings
 const REST_VALUE_TO_VEXFLOW: Record<RestValue, string> = {
@@ -534,19 +443,20 @@ function renderMeasure(
   const noteStemDirs: number[] = [];
 
   for (let i = 0; i < expandedEvents.length; i++) {
+    const expandedEvent = expandedEvents[i];
     const globalIndex = globalEventOffset + i;
     const isHighlighted = globalIndex === highlightEventIndex;
     // Get note key from event if present, otherwise use clef default
-    const eventNoteKey = expandedEvents[i].vexflowKey || noteKey;
+    const eventNoteKey = expandedEvent.vexflowKey || noteKey;
 
     // Determine stem direction for this note
     let noteStemDir = fallbackStemDir;
-    if (useAutoStem && expandedEvents[i].vexflowKey) {
-      noteStemDir = getStemDirectionForPitch(expandedEvents[i].vexflowKey, clef);
+    if (useAutoStem && expandedEvent.vexflowKey) {
+      noteStemDir = getStemDirectionForPitch(expandedEvent.vexflowKey, clef);
     }
     noteStemDirs.push(noteStemDir);
 
-    const staveNote = createStaveNote(expandedEvents[i], isHighlighted, noteStemDir, eventNoteKey);
+    const staveNote = createStaveNote(expandedEvent, isHighlighted, noteStemDir, eventNoteKey);
     staveNotes.push(staveNote);
   }
 
@@ -560,8 +470,8 @@ function renderMeasure(
 
   // Create voice with actual measure duration (not fixed)
   const voice = new Voice({
-    num_beats: actualBeats * beatValue,
-    beat_value: 4,
+    numBeats: actualBeats * beatValue,
+    beatValue: 4,
   });
   voice.setStrict(false); // Allow slight timing variations
   voice.addTickables(staveNotes);
@@ -612,7 +522,7 @@ function renderMeasure(
   // Format and draw voice - use the actual available width for proper distribution
   const formatter = new Formatter();
   formatter.joinVoices([voice]).format([voice], availableWidth - 10, {
-    align_rests: true,
+    alignRests: true,
   });
 
   // Set the starting X position for the voice to align with stave
@@ -627,7 +537,7 @@ function renderMeasure(
   const tripletGroups = getTripletGroups(staveNotes, expandedEvents);
   tripletGroups.forEach((group) => {
     try {
-      const tuplet = new Tuplet(group, { num_notes: 3, notes_occupied: 2 });
+      const tuplet = new Tuplet(group, { numNotes: 3, notesOccupied: 2 });
       tuplet.setContext(context).draw();
     } catch {
       // Tuplet creation can fail for certain note combinations

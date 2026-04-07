@@ -3,7 +3,8 @@
  * Dropdown menu for Share, Print, and Worksheet Export
  */
 
-import { Printer, FileText } from 'lucide-react';
+import { Suspense, lazy } from 'react';
+import { Printer } from 'lucide-react';
 import { Button } from '@/common/ui/button';
 import {
   DropdownMenu,
@@ -12,7 +13,12 @@ import {
   DropdownMenuTrigger,
 } from '@/common/ui/dropdown-menu';
 import { RhythmSettings } from '../../rhythm-randomizer/logic/types';
-import { WorksheetBuilder } from '../Worksheet/WorksheetBuilder';
+
+const LazyWorksheetBuilder = lazy(() =>
+  import('../Worksheet/WorksheetBuilder').then((module) => ({
+    default: module.WorksheetBuilder,
+  }))
+);
 
 interface ActionsMenuProps {
   settings: RhythmSettings;
@@ -44,7 +50,15 @@ export function ActionsMenu({ settings }: ActionsMenuProps) {
 
         <DropdownMenuItem asChild>
           <div className="w-full">
-            <WorksheetBuilder rhythmSettings={settings} />
+            <Suspense
+              fallback={
+                <Button variant="ghost" className="w-full justify-start gap-2" disabled>
+                  Loading export...
+                </Button>
+              }
+            >
+              <LazyWorksheetBuilder rhythmSettings={settings} />
+            </Suspense>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

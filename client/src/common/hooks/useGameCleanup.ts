@@ -104,6 +104,11 @@ export function useGameCleanup() {
     audioService.stopAll();
   };
 
+  const clearAllTimeouts = (): void => {
+    timeoutsRef.current.forEach(id => globalThis.clearTimeout(id));
+    timeoutsRef.current.clear();
+  };
+
   /**
    * Set mounted state and cleanup on unmount
    */
@@ -145,6 +150,12 @@ export function useGameCleanup() {
      * Clear all timeouts, intervals, and stop audio
      */
     clearAll,
+
+    /**
+     * Clear all registered timeouts without touching intervals or audio.
+     * Kept as a compatibility alias for older game code.
+     */
+    clearAllTimeouts,
 
     /**
      * Ref that tracks if component is mounted.

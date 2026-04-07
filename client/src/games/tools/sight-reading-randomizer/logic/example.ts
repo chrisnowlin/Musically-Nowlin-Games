@@ -122,15 +122,15 @@ export function example6_selectNextPitch() {
   const currentPitch = 'C4';
 
   // Easy: Mostly steps
-  const easyPitch = selectNextPitch(currentPitch, availablePitches, 'easy');
+  const easyPitch = selectNextPitch(currentPitch, availablePitches, 'beginner');
   console.log('Easy difficulty from C4:', easyPitch);
 
   // Medium: Mix of steps and leaps
-  const mediumPitch = selectNextPitch(currentPitch, availablePitches, 'medium');
+  const mediumPitch = selectNextPitch(currentPitch, availablePitches, 'intermediate');
   console.log('Medium difficulty from C4:', mediumPitch);
 
   // Hard: More varied intervals
-  const hardPitch = selectNextPitch(currentPitch, availablePitches, 'hard');
+  const hardPitch = selectNextPitch(currentPitch, availablePitches, 'advanced');
   console.log('Hard difficulty from C4:', hardPitch);
 
   return { easyPitch, mediumPitch, hardPitch };
@@ -166,7 +166,7 @@ export function example7_assignPitches() {
   const settings: SightReadingSettings = {
     ...DEFAULT_SIGHT_READING_SETTINGS,
     keySignature: 'G',
-    melodicDifficulty: 'easy',
+    melodicDifficulty: 'beginner',
     pitchRange: TREBLE_CLEF_RANGE,
     useDiatonicOnly: true,
     maxInterval: 4

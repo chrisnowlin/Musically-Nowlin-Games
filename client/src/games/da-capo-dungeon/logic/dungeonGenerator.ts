@@ -11,7 +11,7 @@ import {
   DUNGEON_BASE_SIZE,
 } from './dungeonTypes';
 import { getChallengeTypesForFloor, getSubtypeChallengePool, getEnemySubtypesForFloor, getEnemyLevel, rollChallengeType } from '../challengeHelpers';
-import { LORE_GATE_FLOORS } from './loreData';
+import { LORE_GATE_FLOORS } from './loreGates';
 
 export function getBossType(floorNumber: number): 'big' | 'mini' | null {
   if (floorNumber % 10 === 0) return 'big';

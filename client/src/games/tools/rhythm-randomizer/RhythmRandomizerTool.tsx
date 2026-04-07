@@ -3,7 +3,7 @@
  * Main container component with redesigned UI - hero layout
  */
 
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/common/ui/button';
@@ -18,11 +18,15 @@ import { FloatingPlaybackOverlay } from './ControlPanel/FloatingPlaybackOverlay'
 import { ActionsMenu } from './Actions/ActionsMenu';
 
 // Display Components
-import { StaffNotation } from './Display/StaffNotation';
-
 // Load settings from URL
 import { loadSettingsFromUrl, updateUrlWithSettings } from './logic/shareUtils';
 import { RHYTHM_PRESETS } from './ControlPanel/presets';
+
+const LazyStaffNotation = lazy(() =>
+  import('./Display/StaffNotation').then((module) => ({
+    default: module.StaffNotation,
+  }))
+);
 
 export function RhythmRandomizerTool() {
   const [advancedPanelOpen, setAdvancedPanelOpen] = useState(false);
@@ -57,8 +61,25 @@ export function RhythmRandomizerTool() {
     if (Object.keys(urlSettings).length > 0) {
       updateSettings(urlSettings);
     }
-    generate();
-    initialLoadComplete.current = true;
+    const scheduleInitialGenerate = () => {
+      generate();
+      initialLoadComplete.current = true;
+    };
+
+    if ('requestIdleCallback' in globalThis) {
+      const idleId = globalThis.requestIdleCallback(scheduleInitialGenerate, {
+        timeout: 250,
+      });
+
+      return () => {
+        globalThis.cancelIdleCallback(idleId);
+      };
+    }
+
+    const timeoutId = globalThis.setTimeout(scheduleInitialGenerate, 16);
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+    };
   }, []);
 
   // Regenerate when measure count changes (after initial load)
@@ -133,16 +154,24 @@ export function RhythmRandomizerTool() {
           <CardContent className="px-3 pb-2 pt-0 flex-1 min-h-0 overflow-hidden">
             <div ref={notationContainerRef} className="w-full h-full">
               {patternWithSyllables ? (
-                <StaffNotation
-                  pattern={patternWithSyllables}
-                  currentEventIndex={playbackState.currentEventIndex}
-                  isPlaying={playbackState.isPlaying}
-                  showSyllables={settings.countingSystem !== 'none'}
-                  countingSystem={settings.countingSystem}
-                  staffLineMode={settings.staffLineMode}
-                  stemDirection={settings.stemDirection}
-                  onMeasureClick={handleMeasureClick}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      Loading notation...
+                    </div>
+                  }
+                >
+                  <LazyStaffNotation
+                    pattern={patternWithSyllables}
+                    currentEventIndex={playbackState.currentEventIndex}
+                    isPlaying={playbackState.isPlaying}
+                    showSyllables={settings.countingSystem !== 'none'}
+                    countingSystem={settings.countingSystem}
+                    staffLineMode={settings.staffLineMode}
+                    stemDirection={settings.stemDirection}
+                    onMeasureClick={handleMeasureClick}
+                  />
+                </Suspense>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
                   Click "New" to create a rhythm pattern

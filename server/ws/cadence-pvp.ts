@@ -93,6 +93,10 @@ export function registerCadencePvP(io: Server, getSessionUserId: (req: unknown) 
         const [p1, p2] = queue.splice(0, 2);
         matchmakingQueues.set(bracket, queue);
 
+        if (!p1 || !p2) {
+          return;
+        }
+
         const char1 = await getCharacter(p1.characterId);
         const char2 = await getCharacter(p2.characterId);
         if (!char1 || !char2) {
@@ -252,7 +256,7 @@ export function registerCadencePvP(io: Server, getSessionUserId: (req: unknown) 
         };
         io.to(room.player1.socketId).emit('battle:ended', { state: nextState });
         io.to(room.player2.socketId).emit('battle:ended', { state: endedForP2 });
-          battleRooms.delete(roomId);
+          battleRooms.delete(room.id);
           socketToRoom.delete(room.player1.socketId);
           socketToRoom.delete(room.player2.socketId);
           return;

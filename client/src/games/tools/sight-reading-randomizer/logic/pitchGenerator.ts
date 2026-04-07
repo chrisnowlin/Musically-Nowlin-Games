@@ -7,7 +7,7 @@ import type { RhythmPattern } from '../../rhythm-randomizer/logic/types';
 import type { MelodicDifficulty, SightReadingSettings } from './types';
 import { getInterval, pitchToVexFlow, pitchFromIndex } from './pitchUtils';
 import { getDiatonicPitchesInRange, getScaleDegreeFromTonic } from './keySignatureUtils';
-import { expandBeamedGroups } from '../../rhythm-randomizer/logic/rhythmNotation';
+import { expandBeamedGroups } from '../../rhythm-randomizer/logic/beamedGroups';
 
 // ============================================
 // INTERVAL WEIGHTING BY DIFFICULTY
