@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { ChevronLeft, HelpCircle } from 'lucide-react';
 import {
@@ -1092,6 +1092,21 @@ const MelodyDungeonGameInner: React.FC = () => {
     setPhase('playing');
   }, []);
 
+  const handleBackToMenu = useCallback(() => setPhase('menu'), []);
+
+  const handleDevBackToMenu = useCallback(() => {
+    setDevMode({ ...DEFAULT_DEV_MODE });
+    setPhase('menu');
+  }, []);
+
+  const hasBagItems = useMemo(() => {
+    const p = player.buffs.persistent;
+    return p.shieldCharm > 0 ||
+      p.torch > 0 || p.mapScroll > 0 || p.compass > 0 ||
+      p.streakSaver > 0 || p.secondChance > 0 || p.dragonBane > 0 ||
+      p.luckyCoin > 0 || p.treasureMagnet > 0 || p.metronome > 0 || p.tuningFork > 0;
+  }, [player.buffs.persistent]);
+
   const handleUseItem = useCallback((itemId: string) => {
     setPlayer((prev) => {
       const p = prev.buffs.persistent;
@@ -1701,7 +1716,7 @@ const MelodyDungeonGameInner: React.FC = () => {
           <ChevronLeft size={18} /> Back
         </button>
         <div className="flex-1">
-          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} specialFloorType={floor.specialFloorType} onBackToMenu={() => setPhase('menu')} />
+          <HUD player={player} floorNumber={floorNumber} themeName={themeName} onOpenBag={openBag} specialFloorType={floor.specialFloorType} onBackToMenu={handleBackToMenu} />
         </div>
       </div>
       {devMode.active && (
@@ -1716,10 +1731,7 @@ const MelodyDungeonGameInner: React.FC = () => {
             onFortuneFloor={enterFortuneFloor}
             onChallengeFloor={enterChallengeFloor}
             onRespawn={respawnToStart}
-            onBackToMenu={() => {
-              setDevMode({ ...DEFAULT_DEV_MODE });
-              setPhase('menu');
-            }}
+            onBackToMenu={handleDevBackToMenu}
           />
         </div>
       )}
@@ -1734,13 +1746,7 @@ const MelodyDungeonGameInner: React.FC = () => {
             onOpenBag={openBag}
             disabled={phase !== 'playing'}
             hasPotions={player.potions > 0}
-            hasBagItems={(() => {
-              const p = player.buffs.persistent;
-              return p.shieldCharm > 0 ||
-                p.torch > 0 || p.mapScroll > 0 || p.compass > 0 ||
-                p.streakSaver > 0 || p.secondChance > 0 || p.dragonBane > 0 ||
-                p.luckyCoin > 0 || p.treasureMagnet > 0 || p.metronome > 0 || p.tuningFork > 0;
-            })()}
+            hasBagItems={hasBagItems}
           />
         </div>
       </div>

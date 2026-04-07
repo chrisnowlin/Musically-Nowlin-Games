@@ -87,4 +87,4 @@ const MobileDPad: React.FC<MobileDPadProps> = ({ onMove, onPotion, onOpenBag, di
   );
 };
 
-export default MobileDPad;
+export default React.memo(MobileDPad);

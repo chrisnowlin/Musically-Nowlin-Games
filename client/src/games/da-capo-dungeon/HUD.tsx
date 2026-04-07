@@ -116,4 +116,4 @@ const HUD: React.FC<HUDProps> = ({ player, floorNumber, themeName, onOpenBag, sp
   );
 };
 
-export default HUD;
+export default React.memo(HUD);
