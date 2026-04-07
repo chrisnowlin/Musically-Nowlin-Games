@@ -5,6 +5,8 @@ interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 
   src: string;
   /** Alt text for accessibility */
   alt: string;
+  /** Optional class name for the wrapping picture element */
+  pictureClassName?: string;
   /** Optional WebP source path - defaults to same path with .webp extension */
   webpSrc?: string;
   /** Loading strategy - defaults to lazy */
@@ -27,6 +29,7 @@ interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 
 export function OptimizedImage({
   src,
   alt,
+  pictureClassName,
   webpSrc,
   loading = 'lazy',
   ...imgProps
@@ -51,7 +54,7 @@ export function OptimizedImage({
   }
 
   return (
-    <picture>
+    <picture className={pictureClassName}>
       {/* WebP source for modern browsers */}
       <source srcSet={webpPath} type="image/webp" />
       {/* Fallback to original format */}

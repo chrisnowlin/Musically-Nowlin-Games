@@ -2,7 +2,7 @@
  * AnimalOrchestraConductorV2 - Full orchestra with depth staging
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { InstrumentStation } from './components/InstrumentStation';
 import { ConductorPanel } from './components/ConductorPanel';
@@ -17,6 +17,7 @@ import {
   type Pattern,
 } from './logic/InstrumentPatterns';
 import { Button } from '@/common/ui/button';
+import { OptimizedImage } from '@/common/ui/OptimizedImage';
 import { Play, HelpCircle, Music2, ChevronLeft, Sparkles, Headphones } from 'lucide-react';
 import { playfulColors, playfulTypography, playfulShapes, playfulComponents, playfulAnimations, generateDecorativeOrbs } from '@/theme/playful';
 
@@ -62,8 +63,8 @@ interface InstrumentState {
 export function AnimalOrchestraConductorV2() {
   const [, setLocation] = useLocation();
   const [gameStarted, setGameStarted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPreparingPlayback, setIsPreparingPlayback] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
   const [tempo, setTempo] = useState(90);
   const [dynamics, setDynamics] = useState(0.8); // 0-1 volume
@@ -73,25 +74,17 @@ export function AnimalOrchestraConductorV2() {
     () => Object.fromEntries(INSTRUMENTS.map(i => [i.id, { pattern: null, enabled: true }]))
   );
 
-  // Preload all samples on mount
-  useEffect(() => {
-    const preloadSamples = async () => {
-      try {
-        await orchestraAudioService.initialize();
-        // Preload samples for each instrument's patterns
-        for (const inst of INSTRUMENTS) {
-          const allEvents = inst.patterns.flatMap(p => p.events);
-          await orchestraAudioService.preloadInstrument(inst.instrument, allEvents);
-        }
-        console.log('[AOCv2] All samples preloaded');
-      } catch (error) {
-        console.error('[AOCv2] Failed to preload samples:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const preloadPattern = useCallback(async (instrumentId: string, pattern: Pattern | null) => {
+    if (!pattern) return;
 
-    preloadSamples();
+    const instrumentConfig = INSTRUMENTS.find((instrument) => instrument.id === instrumentId);
+    if (!instrumentConfig) return;
+
+    try {
+      await orchestraAudioService.preloadInstrument(instrumentConfig.instrument, pattern.events);
+    } catch (error) {
+      console.error(`[AOCv2] Failed to preload pattern for ${instrumentId}:`, error);
+    }
   }, []);
 
   const handleSelectPattern = (instrumentId: string, pattern: Pattern | null) => {
@@ -99,6 +92,10 @@ export function AnimalOrchestraConductorV2() {
       ...prev,
       [instrumentId]: { ...prev[instrumentId], pattern },
     }));
+
+    if (gameStarted && pattern) {
+      void preloadPattern(instrumentId, pattern);
+    }
   };
 
   const handleToggleEnabled = (instrumentId: string) => {
@@ -132,6 +129,30 @@ export function AnimalOrchestraConductorV2() {
     orchestraAudioService.setVolume(dynamics);
   }, [dynamics]);
 
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      orchestraAudioService.stop();
+    };
+  }, []);
+
+  const preloadSelectedPatterns = useCallback(async () => {
+    const selectedPatterns = INSTRUMENTS
+      .map((instrument) => ({
+        instrument,
+        pattern: instrumentStatesRef.current[instrument.id].pattern,
+      }))
+      .filter((entry): entry is { instrument: InstrumentConfig; pattern: Pattern } => Boolean(entry.pattern));
+
+    await Promise.all(
+      selectedPatterns.map(({ instrument, pattern }) =>
+        orchestraAudioService.preloadInstrument(instrument.instrument, pattern.events)
+      )
+    );
+  }, []);
+
   const handlePlay = async () => {
     // Check initial state - need at least one enabled instrument with a pattern
     const hasPlayableInstrument = INSTRUMENTS.some(
@@ -140,16 +161,19 @@ export function AnimalOrchestraConductorV2() {
 
     if (!hasPlayableInstrument) return;
 
-    setIsPlaying(true);
-
-    // Set volume based on dynamics
-    orchestraAudioService.setVolume(dynamics);
-
-    // Create abort controller for this playback session
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
+    setIsPreparingPlayback(true);
 
     try {
+      await orchestraAudioService.initialize();
+      orchestraAudioService.setVolume(dynamics);
+      await preloadSelectedPatterns();
+
+      setIsPlaying(true);
+
+      // Create abort controller for this playback session
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
       do {
         // Get current enabled instruments on each loop iteration (allows live toggling)
         const currentEnabledInstruments = INSTRUMENTS.filter(
@@ -178,10 +202,11 @@ export function AnimalOrchestraConductorV2() {
         );
       } while (isLoopingRef.current && !signal.aborted);
     } finally {
-      if (!signal.aborted) {
+      if (!abortControllerRef.current?.signal.aborted) {
         setIsPlaying(false);
       }
       abortControllerRef.current = null;
+      setIsPreparingPlayback(false);
     }
   };
 
@@ -192,10 +217,16 @@ export function AnimalOrchestraConductorV2() {
     }
     orchestraAudioService.stop();
     setIsPlaying(false);
+    setIsPreparingPlayback(false);
   };
 
   const handleStartGame = () => {
     setGameStarted(true);
+    void orchestraAudioService.initialize().then(() => {
+      orchestraAudioService.setVolume(dynamics);
+    }).catch((error) => {
+      console.error('[AOCv2] Failed to initialize audio:', error);
+    });
   };
 
   const decorativeOrbs = generateDecorativeOrbs();
@@ -205,10 +236,13 @@ export function AnimalOrchestraConductorV2() {
     return (
       <div className="h-screen relative overflow-hidden">
         {/* Stage background */}
-        <img
+        <OptimizedImage
           src="/images/aoc-stage-background.jpeg"
-          alt="Theater stage with curtains"
-          className="absolute inset-0 w-full h-full object-cover"
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          pictureClassName="absolute inset-0 block"
+          className="w-full h-full object-cover"
         />
 
         {/* Content overlay */}
@@ -285,10 +319,13 @@ export function AnimalOrchestraConductorV2() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Stage background */}
-      <img
+      <OptimizedImage
         src="/images/aoc-stage-background.jpeg"
-        alt="Theater stage with curtains"
-        className="absolute inset-0 w-full h-full object-cover"
+        alt=""
+        aria-hidden="true"
+        loading="eager"
+        pictureClassName="absolute inset-0 block"
+        className="w-full h-full object-cover"
       />
 
       {/* Content overlay */}
@@ -312,69 +349,65 @@ export function AnimalOrchestraConductorV2() {
           </p>
         </header>
 
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin text-6xl mb-4">🎵</div>
-              <p className="text-amber-200">Loading orchestra samples...</p>
-            </div>
-          </div>
-        )}
-
         {/* Main content - Stage with fixed aspect ratio */}
-        {!isLoading && (
-          <>
-            {/* Stage area - flex-1 pushes conductor panel to bottom */}
-            <div className="flex-1 flex items-center justify-center">
-              {/* Fixed 16:9 aspect ratio stage container */}
-              <div className="w-full max-w-5xl mx-auto" style={{ aspectRatio: '16 / 9' }}>
-                <div className="relative w-full h-full">
-                  {INSTRUMENTS.map(instrument => (
-                    <div
-                      key={instrument.id}
-                      className="absolute"
-                      style={{
-                        left: `${instrument.position.xPct}%`,
-                        top: `${instrument.position.yPct}%`,
-                        transform: `translate(-50%, -50%) scale(${instrument.position.scale})`,
-                        zIndex: instrument.position.zIndex,
-                      }}
-                    >
-                      <InstrumentStation
-                        patterns={instrument.patterns}
-                        image={instrument.image}
-                        alt={instrument.alt}
-                        selectedPattern={instrumentStates[instrument.id].pattern}
-                        enabled={instrumentStates[instrument.id].enabled}
-                        isPlaying={isPlaying}
-                        onSelectPattern={(pattern) => handleSelectPattern(instrument.id, pattern)}
-                        onToggleEnabled={() => handleToggleEnabled(instrument.id)}
-                      />
+        <>
+          {/* Stage area - flex-1 pushes conductor panel to bottom */}
+          <div className="flex-1 flex items-center justify-center">
+            {/* Fixed 16:9 aspect ratio stage container */}
+            <div className="w-full max-w-5xl mx-auto" style={{ aspectRatio: '16 / 9' }}>
+              <div className="relative w-full h-full">
+                {INSTRUMENTS.map(instrument => (
+                  <div
+                    key={instrument.id}
+                    className="absolute"
+                    style={{
+                      left: `${instrument.position.xPct}%`,
+                      top: `${instrument.position.yPct}%`,
+                      transform: `translate(-50%, -50%) scale(${instrument.position.scale})`,
+                      zIndex: instrument.position.zIndex,
+                    }}
+                  >
+                    <InstrumentStation
+                      patterns={instrument.patterns}
+                      image={instrument.image}
+                      alt={instrument.alt}
+                      selectedPattern={instrumentStates[instrument.id].pattern}
+                      enabled={instrumentStates[instrument.id].enabled}
+                      isPlaying={isPlaying}
+                      onSelectPattern={(pattern) => handleSelectPattern(instrument.id, pattern)}
+                      onToggleEnabled={() => handleToggleEnabled(instrument.id)}
+                    />
+                  </div>
+                ))}
+
+                {isPreparingPlayback && (
+                  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 backdrop-blur-sm">
+                    <div className="text-center text-amber-100">
+                      <div className="animate-spin text-6xl mb-4">🎵</div>
+                      <p>Loading selected orchestra samples...</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Conductor Panel - stays at bottom */}
-            <ConductorPanel
-              isPlaying={isPlaying}
-              isLooping={isLooping}
-              tempo={tempo}
-              dynamics={dynamics}
-              onPlay={handlePlay}
-              onStop={handleStop}
-              onTempoChange={setTempo}
-              onDynamicsChange={setDynamics}
-              onLoopToggle={() => setIsLooping(!isLooping)}
-            />
-          </>
-        )}
+          {/* Conductor Panel - stays at bottom */}
+          <ConductorPanel
+            isPlaying={isPlaying}
+            isLooping={isLooping}
+            tempo={tempo}
+            dynamics={dynamics}
+            onPlay={handlePlay}
+            onStop={handleStop}
+            onTempoChange={setTempo}
+            onDynamicsChange={setDynamics}
+            onLoopToggle={() => setIsLooping(!isLooping)}
+          />
+        </>
       </div>
     </div>
   );
 }
 
 export default AnimalOrchestraConductorV2;
-

@@ -50,19 +50,21 @@ export const BREAKPOINTS = {
   '2xl': 1536,
 } as const;
 
+const getDeviceFlags = (width: number) => ({
+  isMobile: width < BREAKPOINTS.md,
+  isTablet: width >= BREAKPOINTS.md && width < BREAKPOINTS.lg,
+  isDesktop: width >= BREAKPOINTS.lg,
+  isSmallMobile: width < BREAKPOINTS.sm,
+  isLargeDesktop: width >= BREAKPOINTS.xl,
+});
+
 /**
  * Device type detection based on viewport width
  */
 export const useDeviceType = () => {
   const { width } = useViewport();
 
-  return {
-    isMobile: width < BREAKPOINTS.md,
-    isTablet: width >= BREAKPOINTS.md && width < BREAKPOINTS.lg,
-    isDesktop: width >= BREAKPOINTS.lg,
-    isSmallMobile: width < BREAKPOINTS.sm,
-    isLargeDesktop: width >= BREAKPOINTS.xl,
-  };
+  return getDeviceFlags(width);
 };
 
 /**
@@ -71,7 +73,7 @@ export const useDeviceType = () => {
  */
 export const useResponsiveLayout = () => {
   const { width, height } = useViewport();
-  const device = useDeviceType();
+  const device = getDeviceFlags(width);
 
   // Calculate safe padding that scales with viewport
   const getSafePadding = () => {
