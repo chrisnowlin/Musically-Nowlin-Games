@@ -1,0 +1,199 @@
+export enum TileType {
+  Wall = 'wall',
+  Floor = 'floor',
+  Door = 'door',
+  Enemy = 'enemy',
+  Treasure = 'treasure',
+  Chest = 'chest',
+  Stairs = 'stairs',
+  PlayerStart = 'playerStart',
+  Merchant = 'merchant',
+  MerchantStall = 'merchantStall',
+  Jukebox = 'jukebox',
+  MiniBoss = 'miniBoss',
+  BigBoss = 'bigBoss',
+  BossBody = 'bossBody',
+  HealingPool = 'healingPool',
+  PotionShrine = 'potionShrine',
+  FortuneTeller = 'fortuneTeller',
+  ArenaChest = 'arenaChest',
+  LoreBook = 'loreBook',
+}
+
+export type SpecialFloorType = 'normal' | 'loot' | 'healing' | 'fortune' | 'challenge' | 'lore';
+
+export type ChallengeType = 'noteReading' | 'rhythmTap' | 'interval' | 'dynamics' | 'tempo' | 'symbols' | 'terms' | 'timbre' | 'custom';
+
+export type EnemyState = 'guarding' | 'chasing' | 'patrolling';
+
+export type EnemySubtype = 'ghost' | 'skeleton' | 'dragon' | 'goblin' | 'slime' | 'bat' | 'wraith' | 'spider' | 'shade' | 'siren' | 'wizard';
+
+export interface Tile {
+  type: TileType;
+  visible: boolean;
+  visited: boolean;
+  challengeType?: ChallengeType;
+  cleared?: boolean;
+  enemyState?: EnemyState;
+  enemySubtype?: EnemySubtype;
+  enemyLevel?: number;
+  ghostVisible?: boolean;
+  ghostNearPlayerTurns?: number;
+  ghostMaterialized?: boolean;
+}
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export type Tier = 1 | 2 | 3 | 4 | 5;
+
+export interface FloorBuffs {
+  torch: boolean;
+  mapRevealed: boolean;
+  compass: boolean;
+}
+
+export interface PersistentBuffs {
+  streakSaver: number;
+  secondChance: number;
+  dragonBane: number;
+  luckyCoin: number;
+  treasureMagnet: number;
+  metronome: number;
+  tuningFork: number;
+  torch: number;
+  mapScroll: number;
+  compass: number;
+  shieldCharm: number;
+}
+
+/** Passive buffs manually armed by the player from the bag — will auto-trigger on the relevant event. */
+export interface ArmedBuffs {
+  streakSaver: number;
+  secondChance: number;
+  dragonBane: number;
+  luckyCoin: number;
+  treasureMagnet: number;
+  metronome: number;
+  tuningFork: number;
+}
+
+export interface PlayerBuffs {
+  floor: FloorBuffs;
+  persistent: PersistentBuffs;
+  armed: ArmedBuffs;
+}
+
+export interface PlayerState {
+  position: Position;
+  health: number;
+  maxHealth: number;
+  gold: number;
+  keys: number;
+  potions: number;
+  streak: number;
+  shieldCharm: number;
+  buffs: PlayerBuffs;
+}
+
+export const DEFAULT_FLOOR_BUFFS: FloorBuffs = {
+  torch: false,
+  mapRevealed: false,
+  compass: false,
+};
+
+export const DEFAULT_PERSISTENT_BUFFS: PersistentBuffs = {
+  streakSaver: 0,
+  secondChance: 0,
+  dragonBane: 0,
+  luckyCoin: 0,
+  treasureMagnet: 0,
+  metronome: 0,
+  tuningFork: 0,
+  torch: 0,
+  mapScroll: 0,
+  compass: 0,
+  shieldCharm: 0,
+};
+
+export const DEFAULT_ARMED_BUFFS: ArmedBuffs = {
+  streakSaver: 0,
+  secondChance: 0,
+  dragonBane: 0,
+  luckyCoin: 0,
+  treasureMagnet: 0,
+  metronome: 0,
+  tuningFork: 0,
+};
+
+export const DEFAULT_BUFFS: PlayerBuffs = {
+  floor: { ...DEFAULT_FLOOR_BUFFS },
+  persistent: { ...DEFAULT_PERSISTENT_BUFFS },
+  armed: { ...DEFAULT_ARMED_BUFFS },
+};
+
+export interface DungeonFloor {
+  tiles: Tile[][];
+  width: number;
+  height: number;
+  floorNumber: number;
+  themeIndex: number;
+  playerStart: Position;
+  stairsPosition: Position;
+  specialFloorType: SpecialFloorType;
+}
+
+export type GamePhase = 'menu' | 'playing' | 'challenge' | 'shopping' | 'inventory' | 'gameOver' | 'floorComplete' | 'victory' | 'devConfig' | 'lore';
+
+export interface ActiveChallenge {
+  type: ChallengeType;
+  tilePosition: Position;
+}
+
+export interface GameState {
+  phase: GamePhase;
+  floor: DungeonFloor;
+  player: PlayerState;
+  activeChallenge: ActiveChallenge | null;
+  floorsCleared: number;
+  soundEnabled: boolean;
+}
+
+export const DUNGEON_BASE_SIZE = 12;
+export const DUNGEON_MAX_SIZE = 20;
+
+/** Dungeon dimensions grow with floor depth, starting at 12×12 and capping at 20×20. */
+export function getDungeonSize(floorNumber: number): { width: number; height: number } {
+  const size = Math.min(DUNGEON_BASE_SIZE + floorNumber - 1, DUNGEON_MAX_SIZE);
+  return { width: size, height: size };
+}
+
+/** @deprecated Use getDungeonSize(floorNumber) instead */
+export const DUNGEON_WIDTH = DUNGEON_BASE_SIZE;
+/** @deprecated Use getDungeonSize(floorNumber) instead */
+export const DUNGEON_HEIGHT = DUNGEON_BASE_SIZE;
+export const VISIBILITY_RADIUS = 3;
+export const MAX_HEALTH = 5;
+
+export const DEV_ROOM_PASSWORD = 'musicgames123';
+
+export interface DevModeState {
+  active: boolean;
+  infiniteGold: boolean;
+  infiniteHealth: boolean;
+}
+
+export const DEFAULT_DEV_MODE: DevModeState = {
+  active: false,
+  infiniteGold: false,
+  infiniteHealth: false,
+};

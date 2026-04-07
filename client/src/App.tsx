@@ -1,10 +1,10 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient } from '@/common/query/queryClient';
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import { Toaster } from "@/common/ui/toaster";
+import { TooltipProvider } from "@/common/ui/tooltip";
+import ErrorBoundary from "@/common/game-shell/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -36,81 +36,86 @@ function GameLoadingFallback() {
 import LandingPage from "@/pages/LandingPage";
 
 // Lazy load all game pages to reduce initial bundle size
-const PitchMatchGame = lazy(() => import("@/pages/games/PitchMatchGame"));
-const SameOrDifferentGamePage = lazy(() => import("@/pages/games/SameOrDifferentGamePage"));
-const RhythmEchoChallengeGamePage = lazy(() => import("@/pages/games/RhythmEchoChallengeGamePage"));
-const MelodyMemoryMatchGamePage = lazy(() => import("@/pages/games/MelodyMemoryMatchGamePage"));
-const FastOrSlowRaceGamePage = lazy(() => import("@/pages/games/FastOrSlowRaceGamePage"));
-const LoudOrQuietSafariGamePage = lazy(() => import("@/pages/games/LoudOrQuietSafariGamePage"));
-const HowManyNotesGamePage = lazy(() => import("@/pages/games/HowManyNotesGamePage"));
-const LongOrShortNotesGamePage = lazy(() => import("@/pages/games/LongOrShortNotesGamePage"));
-const HappyOrSadMelodiesGamePage = lazy(() => import("@/pages/games/HappyOrSadMelodiesGamePage"));
-const PitchLadderJumpGamePage = lazy(() => import("@/pages/games/PitchLadderJumpGamePage"));
-const ScaleClimberGamePage = lazy(() => import("@/pages/games/ScaleClimberGamePage"));
-const MusicalOppositesGamePage = lazy(() => import("@/pages/games/MusicalOppositesGamePage"));
-const FinishTheTuneGamePage = lazy(() => import("@/pages/games/FinishTheTuneGamePage"));
-const InstrumentCraneGamePage = lazy(() => import("@/pages/games/InstrumentCraneGamePage"));
-const InstrumentDetectiveGamePage = lazy(() => import("@/pages/games/InstrumentDetectiveGamePage"));
-const MusicalSimonSaysGamePage = lazy(() => import("@/pages/games/MusicalSimonSaysGamePage"));
-const BeatKeeperChallengeGamePage = lazy(() => import("@/pages/games/BeatKeeperChallengeGamePage"));
-const SteadyOrBouncyBeatGamePage = lazy(() => import("@/pages/games/SteadyOrBouncyBeatGamePage"));
-const MusicalPatternDetectiveGamePage = lazy(() => import("@/pages/games/MusicalPatternDetectiveGamePage"));
-const NameThatAnimalTuneGamePage = lazy(() => import("@/pages/games/NameThatAnimalTuneGamePage"));
-const RhythmPuzzleBuilderGamePage = lazy(() => import("@/pages/games/RhythmPuzzleBuilderGamePage"));
-const HarmonyHelperGamePage = lazy(() => import("@/pages/games/HarmonyHelperGamePage"));
-const MusicalFreezeDanceGamePage = lazy(() => import("@/pages/games/MusicalFreezeDanceGamePage"));
-const ComposeYourSongGamePage = lazy(() => import("@/pages/games/ComposeYourSongGamePage"));
-const EchoLocationChallengeGamePage = lazy(() => import("@/pages/games/EchoLocationChallengeGamePage"));
-const MusicalStoryTimeGamePage = lazy(() => import("@/pages/games/MusicalStoryTimeGamePage"));
-const ToneColorMatchGamePage = lazy(() => import("@/pages/games/ToneColorMatchGamePage"));
-const MusicalMathGamePage = lazy(() => import("@/pages/games/MusicalMathGamePage"));
-const RestFinderGamePage = lazy(() => import("@/pages/games/RestFinderGamePage"));
-const AnimalOrchestraConductorGamePage = lazy(() => import("@/pages/games/AnimalOrchestraConductorGamePage"));
-const PitchPerfectPathGamePage = lazy(() => import("@/pages/games/PitchPerfectPathGamePage"));
-const WorldMusicExplorerGamePage = lazy(() => import("@/pages/games/WorldMusicExplorerGamePage"));
-const StaffInvadersGamePage = lazy(() => import("@/pages/games/StaffInvadersGamePage"));
-const Rhythm006Page = lazy(() => import("@/pages/games/Rhythm006Page"));
-const Rhythm007Page = lazy(() => import("@/pages/games/Rhythm007Page"));
-const Rhythm002Page = lazy(() => import("@/pages/games/Rhythm002Page"));
-const Pitch001Page = lazy(() => import("@/pages/games/Pitch001Page"));
-const Pitch003Page = lazy(() => import("@/pages/games/Pitch003Page"));
-const Pitch004Page = lazy(() => import("@/pages/games/Pitch004Page"));
-const Pitch005Page = lazy(() => import("@/pages/games/Pitch005Page"));
-const Pitch006Page = lazy(() => import("@/pages/games/Pitch006Page"));
-const Rhythm001Page = lazy(() => import("@/pages/games/Rhythm001Page"));
-const Rhythm003Page = lazy(() => import("@/pages/games/Rhythm003Page"));
-const Rhythm004Page = lazy(() => import("@/pages/games/Rhythm004Page"));
-const Rhythm005Page = lazy(() => import("@/pages/games/Rhythm005Page"));
-const Harmony002Page = lazy(() => import("@/pages/games/Harmony002Page"));
-const Harmony003Page = lazy(() => import("@/pages/games/Harmony003Page"));
-const Harmony004Page = lazy(() => import("@/pages/games/Harmony004Page"));
-const Timbre001Page = lazy(() => import("@/pages/games/Timbre001Page"));
-const Timbre002Page = lazy(() => import("@/pages/games/Timbre002Page"));
-const Timbre003Page = lazy(() => import("@/pages/games/Timbre003Page"));
-const Dynamics001Page = lazy(() => import("@/pages/games/Dynamics001Page"));
-const Dynamics002Page = lazy(() => import("@/pages/games/Dynamics002Page"));
-const Dynamics003Page = lazy(() => import("@/pages/games/Dynamics003Page"));
-const Theory001Page = lazy(() => import("@/pages/games/Theory001Page"));
-const Theory002Page = lazy(() => import("@/pages/games/Theory002Page"));
-const Theory003Page = lazy(() => import("@/pages/games/Theory003Page"));
-const Theory004Page = lazy(() => import("@/pages/games/Theory004Page"));
-const Compose001Page = lazy(() => import("@/pages/games/Compose001Page"));
-const Compose002Page = lazy(() => import("@/pages/games/Compose002Page"));
-const Listen001Page = lazy(() => import("@/pages/games/Listen001Page"));
-const Listen002Page = lazy(() => import("@/pages/games/Listen002Page"));
-const Listen003Page = lazy(() => import("@/pages/games/Listen003Page"));
-const Listen004Page = lazy(() => import("@/pages/games/Listen004Page"));
-const Cross001Page = lazy(() => import("@/pages/games/Cross001Page"));
-const Cross002Page = lazy(() => import("@/pages/games/Cross002Page"));
-const Cross003Page = lazy(() => import("@/pages/games/Cross003Page"));
-const Advanced001Page = lazy(() => import("@/pages/games/Advanced001Page"));
-const Challenge001Page = lazy(() => import("@/pages/games/Challenge001Page"));
-const TrebleRunnerGamePage = lazy(() => import("@/pages/games/TrebleRunnerGamePage"));
-const PlaceholderGame = lazy(() => import("@/pages/games/PlaceholderGame"));
+const PitchMatchGame = lazy(() => import("@/games/pitch/pitch-match/page"));
+const SameOrDifferentGamePage = lazy(() => import("@/games/listen/same-or-different/page"));
+const RhythmEchoChallengeGamePage = lazy(() => import("@/games/rhythm/rhythm-echo-challenge/page"));
+const MelodyMemoryMatchGamePage = lazy(() => import("@/games/listen/melody-memory-match/page"));
+const FastOrSlowRaceGamePage = lazy(() => import("@/games/rhythm/fast-or-slow-race/page"));
+const LoudOrQuietSafariGamePage = lazy(() => import("@/games/dynamics/loud-or-quiet-safari/page"));
+const HowManyNotesGamePage = lazy(() => import("@/games/listen/how-many-notes/page"));
+const LongOrShortNotesGamePage = lazy(() => import("@/games/dynamics/long-or-short-notes/page"));
+const HappyOrSadMelodiesGamePage = lazy(() => import("@/games/harmony/happy-or-sad-melodies/page"));
+const PitchLadderJumpGamePage = lazy(() => import("@/games/pitch/pitch-ladder-jump/page"));
+const ScaleClimberGamePage = lazy(() => import("@/games/pitch/scale-climber/page"));
+const MusicalOppositesGamePage = lazy(() => import("@/games/listen/musical-opposites/page"));
+const FinishTheTuneGamePage = lazy(() => import("@/games/finish-the-tune/page"));
+const InstrumentCraneGamePage = lazy(() => import("@/games/instruments/crane-game/page"));
+const InstrumentFamilySorterGamePage = lazy(() => import("@/games/instruments/family-sorter/page"));
+const InstrumentDetectiveGamePage = lazy(() => import("@/games/instruments/detective/page"));
+const MusicalSimonSaysGamePage = lazy(() => import("@/games/listen/musical-simon-says/page"));
+const BeatKeeperChallengeGamePage = lazy(() => import("@/games/rhythm/beat-keeper-challenge/page"));
+const SteadyOrBouncyBeatGamePage = lazy(() => import("@/games/rhythm/steady-or-bouncy-beat/page"));
+const MusicalPatternDetectiveGamePage = lazy(() => import("@/games/listen/musical-pattern-detective/page"));
+const NameThatAnimalTuneGamePage = lazy(() => import("@/games/listen/name-that-animal-tune/page"));
+const RhythmPuzzleBuilderGamePage = lazy(() => import("@/games/rhythm/rhythm-puzzle-builder/page"));
+const HarmonyHelperGamePage = lazy(() => import("@/games/harmony/harmony-helper/page"));
+const MusicalFreezeDanceGamePage = lazy(() => import("@/games/rhythm/musical-freeze-dance/page"));
+const ComposeYourSongGamePage = lazy(() => import("@/games/compose/compose-your-song/page"));
+const EchoLocationChallengeGamePage = lazy(() => import("@/games/listen/echo-location-challenge/page"));
+const MusicalStoryTimeGamePage = lazy(() => import("@/games/cross-curricular/musical-story-time/page"));
+const ToneColorMatchGamePage = lazy(() => import("@/games/timbre/tone-color-match/page"));
+const MusicalMathGamePage = lazy(() => import("@/games/cross-curricular/musical-math/page"));
+const RestFinderGamePage = lazy(() => import("@/games/rhythm/rest-finder/page"));
+const AnimalOrchestraConductorGamePage = lazy(() => import("@/games/animal-orchestra/page"));
+const PitchPerfectPathGamePage = lazy(() => import("@/games/pitch/pitch-perfect-path/page"));
+const WorldMusicExplorerGamePage = lazy(() => import("@/games/cross-curricular/world-music-explorer/page"));
+const StaffInvadersGamePage = lazy(() => import("@/games/staff-invaders/page"));
+const Rhythm006Page = lazy(() => import("@/games/rhythm/rhythm-006/page"));
+const Rhythm007Page = lazy(() => import("@/games/rhythm/rhythm-007/page"));
+const Rhythm002Page = lazy(() => import("@/games/rhythm/rhythm-002/page"));
+const Pitch001Page = lazy(() => import("@/games/pitch/pitch-001/page"));
+const Pitch003Page = lazy(() => import("@/games/pitch/pitch-003/page"));
+const Pitch004Page = lazy(() => import("@/games/pitch/pitch-004/page"));
+const Pitch005Page = lazy(() => import("@/games/pitch/pitch-005/page"));
+const Pitch006Page = lazy(() => import("@/games/pitch/pitch-006/page"));
+const Rhythm001Page = lazy(() => import("@/games/rhythm/rhythm-001/page"));
+const Rhythm003Page = lazy(() => import("@/games/rhythm/rhythm-003/page"));
+const Rhythm004Page = lazy(() => import("@/games/rhythm/rhythm-004/page"));
+const Rhythm005Page = lazy(() => import("@/games/rhythm/rhythm-005/page"));
+const Harmony002Page = lazy(() => import("@/games/harmony/harmony-002/page"));
+const Harmony003Page = lazy(() => import("@/games/harmony/harmony-003/page"));
+const Harmony004Page = lazy(() => import("@/games/harmony/harmony-004/page"));
+const Timbre001Page = lazy(() => import("@/games/timbre/timbre-001/page"));
+const Timbre002Page = lazy(() => import("@/games/timbre/timbre-002/page"));
+const Timbre003Page = lazy(() => import("@/games/timbre/timbre-003/page"));
+const Dynamics001Page = lazy(() => import("@/games/dynamics/dynamics-001/page"));
+const Dynamics002Page = lazy(() => import("@/games/dynamics/dynamics-002/page"));
+const Dynamics003Page = lazy(() => import("@/games/dynamics/dynamics-003/page"));
+const Theory001Page = lazy(() => import("@/games/theory/theory-001/page"));
+const Theory002Page = lazy(() => import("@/games/theory/theory-002/page"));
+const Theory003Page = lazy(() => import("@/games/theory/theory-003/page"));
+const Theory004Page = lazy(() => import("@/games/theory/theory-004/page"));
+const Compose001Page = lazy(() => import("@/games/compose/compose-001/page"));
+const Compose002Page = lazy(() => import("@/games/compose/compose-002/page"));
+const Listen001Page = lazy(() => import("@/games/listen/listen-001/page"));
+const Listen002Page = lazy(() => import("@/games/listen/listen-002/page"));
+const Listen003Page = lazy(() => import("@/games/listen/listen-003/page"));
+const Listen004Page = lazy(() => import("@/games/listen/listen-004/page"));
+const Cross001Page = lazy(() => import("@/games/cross-curricular/cross-001/page"));
+const Cross002Page = lazy(() => import("@/games/cross-curricular/cross-002/page"));
+const Cross003Page = lazy(() => import("@/games/cross-curricular/cross-003/page"));
+const Advanced001Page = lazy(() => import("@/games/advanced/advanced-001/page"));
+const Challenge001Page = lazy(() => import("@/games/advanced/challenge-001/page"));
+const TrebleRunnerGamePage = lazy(() => import("@/games/treble-runner/page"));
+const DaCapoDungeonPage = lazy(() => import("@/games/da-capo-dungeon/page"));
+const TeacherDashboardPage = lazy(() => import("@/games/da-capo-dungeon/teacher/page"));
+const CadenceQuestPage = lazy(() => import("@/games/cadence-quest/page"));
+const PlaceholderGame = lazy(() => import("@/games/PlaceholderGame"));
+const UnderDevelopmentPage = lazy(() => import("@/pages/UnderDevelopmentPage"));
 
 // Tools
-const RhythmRandomizerPage = lazy(() => import("@/pages/tools/RhythmRandomizerPage"));
-const SightReadingRandomizerPage = lazy(() => import("@/pages/tools/SightReadingRandomizerPage"));
+const RhythmRandomizerPage = lazy(() => import("@/games/tools/rhythm-randomizer/page"));
+const SightReadingRandomizerPage = lazy(() => import("@/games/tools/sight-reading-randomizer/page"));
 
 function Router() {
   return (
@@ -136,6 +141,7 @@ function Router() {
       <Route path="/games/musical-opposites" component={MusicalOppositesGamePage} />
       <Route path="/games/finish-the-tune" component={FinishTheTuneGamePage} />
       <Route path="/games/instrument-crane" component={InstrumentCraneGamePage} />
+      <Route path="/games/instrument-family-sorter" component={InstrumentFamilySorterGamePage} />
       <Route path="/games/instrument-detective" component={InstrumentDetectiveGamePage} />
       <Route path="/games/musical-simon-says" component={MusicalSimonSaysGamePage} />
       <Route path="/games/beat-keeper-challenge" component={BeatKeeperChallengeGamePage} />
@@ -191,11 +197,14 @@ function Router() {
       <Route path="/games/advanced-001" component={Advanced001Page} />
       <Route path="/games/challenge-001" component={Challenge001Page} />
       <Route path="/games/treble-runner" component={TrebleRunnerGamePage} />
-
-
+      <Route path="/games/under-development" component={UnderDevelopmentPage} />
 
       <Route path="/games/world-music-explorer" component={WorldMusicExplorerGamePage} />
       <Route path="/games/staff-invaders" component={StaffInvadersGamePage} />
+      <Route path="/games/da-capo-dungeon/teacher/*" component={TeacherDashboardPage} />
+      <Route path="/games/da-capo-dungeon/teacher" component={TeacherDashboardPage} />
+      <Route path="/games/da-capo-dungeon" component={DaCapoDungeonPage} />
+      <Route path="/games/cadence-quest" component={CadenceQuestPage} />
       <Route path="/games/:slug" component={PlaceholderGame} />
       {/* Tools */}
       <Route path="/tools/rhythm-randomizer" component={RhythmRandomizerPage} />

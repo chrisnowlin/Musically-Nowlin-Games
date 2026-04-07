@@ -456,12 +456,96 @@
     animation: float-up 1.5s ease-out forwards;
   }
 
-  @keyframes bounce-subtle {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5%); }
-  }
   .animate-bounce-subtle {
-    animation: bounce-subtle 1s infinite;
+    animation: sprite-float 1s ease-in-out infinite;
+  }
+
+  /* Gentle floating hover for dungeon enemy sprites */
+  @keyframes sprite-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6%); }
+  }
+  .animate-sprite-float {
+    animation: sprite-float 2.4s ease-in-out infinite;
+  }
+
+  /* Enemy sprite shakes when taking damage in challenge modal */
+  @keyframes sprite-hit {
+    0%, 100% { transform: translateX(0); opacity: 1; }
+    15%, 45%, 75% { transform: translateX(-4px); opacity: 0.4; }
+    30%, 60%, 90% { transform: translateX(4px); opacity: 0.7; }
+  }
+  .animate-sprite-hit {
+    animation: sprite-hit 0.6s ease-out;
+  }
+
+  /* Enemy sprite lunges forward when attacking player */
+  @keyframes sprite-attack {
+    0%, 100% { transform: scale(1) translateY(0); }
+    40% { transform: scale(1.2) translateY(8%); }
+  }
+  .animate-sprite-attack {
+    animation: sprite-attack 0.5s ease-out;
+  }
+
+  /* Dragon fire catch effect */
+  @keyframes dragon-fire {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes fire-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(-60vh) scale(1.4); opacity: 0; }
+  }
+  .animate-dragon-fire {
+    animation: dragon-fire 800ms ease-out forwards;
+  }
+  .animate-fire-rise {
+    animation: fire-rise 800ms ease-out forwards;
+  }
+
+  /* Shield block effect — shield-flash reuses dragon-fire keyframe */
+  @keyframes shield-pop {
+    0% { transform: scale(0.3); opacity: 0; }
+    25% { transform: scale(1.3); opacity: 1; }
+    50% { transform: scale(1); }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: scale(0.9); }
+  }
+  .animate-shield-flash {
+    animation: dragon-fire 600ms ease-out forwards;
+  }
+  .animate-shield-pop {
+    animation: shield-pop 600ms ease-out forwards;
+  }
+  .shield-radial-bg {
+    background: radial-gradient(circle at center, rgba(96, 165, 250, 0.45), rgba(34, 211, 238, 0.15) 50%, transparent 75%);
+  }
+
+  /* Healing pool effect — healing-fade reuses dragon-fire keyframe */
+  .animate-healing-fade {
+    animation: dragon-fire 800ms ease-out forwards;
+  }
+  @keyframes heal-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    25% { transform: scale(1.4); opacity: 1; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-heal-pop {
+    animation: heal-pop 800ms ease-out forwards;
+  }
+  @keyframes heal-particle {
+    0% { transform: scale(0.3) translate(0, 0); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: scale(0.8) translate(0, -80px); opacity: 0; }
+  }
+  .animate-heal-particle {
+    animation: heal-particle 800ms ease-out forwards;
+    font-size: 1.5rem;
   }
 
   /* Subtle side-to-side tilt for "playing" characters (used by AOC) */
@@ -518,98 +602,35 @@
     animation: float-note-2 1.8s ease-out infinite;
     animation-delay: 0.5s;
   }
-}
 
-/* ============================================
-   PRINT STYLES - Rhythm Randomizer
-   ============================================ */
-@media print {
-  /* Hide header */
-  header {
-    display: none !important;
+  /* Cadence Quest Battle Map Animations */
+  @keyframes character-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+  .animate-charactershake {
+    animation: character-shake 0.3s ease-in-out infinite;
   }
 
-  /* Hide buttons */
-  button {
-    display: none !important;
+  /* Perspective utilities for 3D battle map */
+  .perspective-1000 {
+    perspective: 1000px;
   }
-
-  /* Hide control panel */
-  .lg\:col-span-1 {
-    display: none !important;
-  }
-
-  /* Hide sticky elements */
-  .sticky {
-    display: none !important;
-  }
-
-  /* Hide radix popovers */
-  [data-radix-popper-content-wrapper] {
-    display: none !important;
-  }
-
-  /* Reset page background */
-  body {
-    background: white !important;
-  }
-
-  .min-h-screen {
-    background: white !important;
-    min-height: auto !important;
-  }
-
-  /* Remove padding and margins */
-  main {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .grid {
-    display: block !important;
-  }
-
-  /* Pattern card - only show the notation content */
-  .print-pattern {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .print-pattern > div:first-child {
-    display: none !important;
-  }
-
-  .print-pattern > div:last-child {
-    padding: 0 !important;
-  }
-
-  /* Notation display */
-  svg {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-
-  /* Ensure text is black */
-  * {
-    color: black !important;
-  }
-
-  /* Page margins */
-  @page {
-    margin: 1cm;
-    size: A4;
-  }
-
-  /* Full width for notation */
-  .lg\:col-span-2 {
-    grid-column: span 3 !important;
-  }
-
-  /* Hide non-pattern cards */
-  .space-y-2 > *:not(.print-pattern) {
-    display: none !important;
+  .rotate-x-60 {
+    transform: rotateX(60deg);
   }
 }
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles extracted to /public/print.css (loaded with media="print") */

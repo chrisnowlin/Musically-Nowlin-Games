@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import type { GameRound } from '../lib/schema';
-import { ANIMAL_CHARACTERS, MUSICAL_NOTES } from '../lib/schema';
-import { generateNewRound, validateAnswer, calculateScore } from '../lib/gameUtils';
+import type { GameRound } from '@/common/utils/schema';
+import { ANIMAL_CHARACTERS, MUSICAL_NOTES } from '@/common/utils/schema';
+import { generateNewRound, validateAnswer, calculateScore } from '@/common/utils/gameUtils';
 
 describe('Game Logic - generateNewRound', () => {
   it('should generate two different pitches', () => {

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="12" y="8" width="40" height="48" rx="4" fill="#00CED1" stroke="#008B8B" stroke-width="2"/>
+  <rect x="16" y="12" width="32" height="40" rx="2" fill="#40E0D0" stroke="#00CED1" stroke-width="1"/>
+  <rect x="20" y="16" width="24" height="8" rx="1" fill="#008B8B"/>
+  <rect x="20" y="28" width="8" height="6" rx="1" fill="#008B8B"/>
+  <rect x="36" y="28" width="8" height="6" rx="1" fill="#008B8B"/>
+  <rect x="28" y="28" width="8" height="6" rx="1" fill="#7FFFD4"/>
+  <rect x="20" y="38" width="24" height="6" rx="1" fill="#008B8B"/>
+  <path d="M24 34 L40 34" stroke="#FFD700" stroke-width="2"/>
+  <path d="M20 46 L44 46" stroke="#FFD700" stroke-width="2"/>
+  <text x="36" cy="32" font-family="serif" font-size="8" fill="#FFF" text-anchor="middle">♫</text>
+</svg>

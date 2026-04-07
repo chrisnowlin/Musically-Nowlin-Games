@@ -1,0 +1,363 @@
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import type { Tier } from '../logic/dungeonTypes';
+import type { RhythmSubdivision } from '../logic/difficultyAdapter';
+import { getRhythmParams } from '../logic/difficultyAdapter';
+import { playClick } from '../dungeonAudio';
+import { getRandomCuratedPattern, getAllSubdivisions } from '../logic/rhythmPatterns';
+import NotationImage from '@/common/notation/NotationImage';
+import CorrectiveFeedback, { CorrectBanner } from './CorrectiveFeedback';
+import { getRhythmExplanation } from '../logic/explanations';
+import type { LearningState } from '../logic/learningState';
+import { rhythmConceptId, recordCorrect, recordWrong } from '../logic/learningState';
+
+interface Props {
+  tier: Tier;
+  onResult: (correct: boolean) => void;
+  slowMode?: boolean;
+  learningState?: LearningState;
+  onLearningUpdate?: (state: LearningState) => void;
+  floorNumber?: number;
+}
+
+/** A single event in the rhythm pattern. */
+interface PatternEvent {
+  /** Absolute time offset from the start of the pattern (ms). */
+  time: number;
+  /** Duration this event occupies (ms). */
+  duration: number;
+  /** Number of taps the player should produce for this event (0 = rest). */
+  taps: number;
+  /** The subdivision type that generated this event. */
+  subdivision: RhythmSubdivision;
+}
+
+/** Maps a subdivision to its beat-duration and expected tap count. */
+const SUBDIVISION_INFO: Record<RhythmSubdivision, { beats: number; taps: number }> = {
+  quarter:         { beats: 1,    taps: 1 },
+  half:            { beats: 2,    taps: 1 },
+  eighth:          { beats: 0.5,  taps: 1 },
+  sixteenth:       { beats: 0.25, taps: 1 },
+  'quarter-rest':  { beats: 1,    taps: 0 },
+  'dotted-quarter':{ beats: 1.5,  taps: 1 },
+  triplet:         { beats: 1,    taps: 3 },
+  'tied-quarter-quarter': { beats: 2, taps: 1 },
+  'tied-half-half':       { beats: 4, taps: 1 },
+};
+
+/**
+ * Expands a pattern into the expected tap timestamps the player must reproduce.
+ * Rests produce no timestamps; triplets produce 3 evenly spaced within the beat.
+ */
+function getExpectedTapTimes(pattern: PatternEvent[]): number[] {
+  const times: number[] = [];
+  for (const ev of pattern) {
+    if (ev.taps === 0) continue; // rest — no tap
+    if (ev.taps === 1) {
+      times.push(ev.time);
+    } else {
+      // triplet: 3 evenly-spaced taps within the event duration
+      for (let t = 0; t < ev.taps; t++) {
+        times.push(ev.time + (t * ev.duration) / ev.taps);
+      }
+    }
+  }
+  return times;
+}
+
+/**
+ * Determines whether a tap timestamp falls inside any rest window.
+ * Used to penalize tapping during rests.
+ */
+function isInsideRest(tapTime: number, pattern: PatternEvent[], toleranceMs: number): boolean {
+  for (const ev of pattern) {
+    if (ev.taps !== 0) continue;
+    const restStart = ev.time - toleranceMs;
+    const restEnd = ev.time + ev.duration + toleranceMs;
+    if (tapTime >= restStart && tapTime <= restEnd) return true;
+  }
+  return false;
+}
+
+const RhythmTapChallenge: React.FC<Props> = ({ tier, onResult, slowMode, learningState, onLearningUpdate, floorNumber }) => {
+  const params = useMemo(() => {
+    const p = getRhythmParams(tier);
+    return slowMode ? { ...p, bpm: Math.round(p.bpm / 2) } : p;
+  }, [tier, slowMode]);
+  const curatedPattern = useMemo(() => getRandomCuratedPattern(tier), [tier]);
+  const pattern = useMemo(() => {
+    const beatDuration = 60000 / params.bpm;
+    const events: PatternEvent[] = [];
+    let currentTime = 0;
+    const subdivisions = getAllSubdivisions(curatedPattern);
+    for (const sub of subdivisions) {
+      const info = SUBDIVISION_INFO[sub];
+      const dur = info.beats * beatDuration;
+      events.push({ time: currentTime, duration: dur, taps: info.taps, subdivision: sub });
+      currentTime += dur;
+    }
+    return events;
+  }, [curatedPattern, params.bpm]);
+  const [phase, setPhase] = useState<'listen' | 'tap' | 'done'>('listen');
+  const [taps, setTaps] = useState<number[]>([]);
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [playbackIndex, setPlaybackIndex] = useState(-1);
+  const tapStartRef = useRef<number>(0);
+  // Track scheduled audio timeouts so they can be cancelled on unmount
+  const audioTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  // Cancel all pending audio timers on unmount
+  useEffect(() => {
+    return () => {
+      audioTimersRef.current.forEach(clearTimeout);
+      audioTimersRef.current.clear();
+    };
+  }, []);
+
+  const expectedTaps = useMemo(() => getExpectedTapTimes(pattern), [pattern]);
+  const tapCountTarget = expectedTaps.length;
+
+  // ── Playback ──────────────────────────────────────────────
+  const [replaying, setReplaying] = useState(false);
+
+  /** Helper: schedule a timeout and track its ID for cleanup. */
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      audioTimersRef.current.delete(id);
+      fn();
+    }, ms);
+    audioTimersRef.current.add(id);
+  }, []);
+
+  const playPattern = useCallback(() => {
+    setPlaybackIndex(0);
+    // Schedule clicks for tap events (not rests)
+    const tapTimes = getExpectedTapTimes(pattern);
+    tapTimes.forEach((t) => {
+      schedule(() => playClick(), t);
+    });
+    // Highlight each pattern event during playback
+    pattern.forEach((ev, i) => {
+      schedule(() => setPlaybackIndex(i), ev.time);
+    });
+    const last = pattern[pattern.length - 1];
+    const totalDuration = last.time + last.duration;
+    schedule(() => {
+      setPlaybackIndex(-1);
+      setPhase('tap');
+      tapStartRef.current = 0;
+    }, totalDuration + 300);
+  }, [pattern, schedule]);
+
+  /** Replay the pattern audio during the tap phase without changing phase. */
+  const replayPattern = useCallback(() => {
+    if (replaying) return;
+    setReplaying(true);
+    setTaps([]);
+    setPlaybackIndex(0);
+    const tapTimes = getExpectedTapTimes(pattern);
+    tapTimes.forEach((t) => {
+      schedule(() => playClick(), t);
+    });
+    pattern.forEach((ev, i) => {
+      schedule(() => setPlaybackIndex(i), ev.time);
+    });
+    const last = pattern[pattern.length - 1];
+    const totalDuration = last.time + last.duration;
+    schedule(() => {
+      setPlaybackIndex(-1);
+      setReplaying(false);
+      tapStartRef.current = 0;
+    }, totalDuration + 300);
+  }, [pattern, replaying, schedule]);
+
+  useEffect(() => {
+    const timer = setTimeout(playPattern, 500);
+    return () => clearTimeout(timer);
+  }, [playPattern]);
+
+  // ── Handle tap ────────────────────────────────────────────
+  const handleTap = () => {
+    if (phase !== 'tap' || feedback) return;
+    playClick();
+
+    const now = performance.now();
+    if (taps.length === 0) {
+      tapStartRef.current = now;
+      setTaps([0]);
+    } else {
+      const elapsed = now - tapStartRef.current;
+      setTaps((prev) => [...prev, elapsed]);
+    }
+  };
+
+  // ── Evaluate ──────────────────────────────────────────────
+  useEffect(() => {
+    if (phase !== 'tap' || taps.length < tapCountTarget) return;
+
+    // Build expected intervals between consecutive taps
+    const expectedIntervals = expectedTaps.slice(1).map((t, i) => t - expectedTaps[i]);
+    const tapIntervals = taps.slice(1).map((t, i) => t - taps[i]);
+
+    let matchCount = 0;
+    for (let i = 0; i < expectedIntervals.length; i++) {
+      if (tapIntervals[i] !== undefined) {
+        const diff = Math.abs(tapIntervals[i] - expectedIntervals[i]);
+        if (diff <= params.toleranceMs) matchCount++;
+      }
+    }
+
+    // Check for rest violations: did the player tap during a rest?
+    const hasRests = pattern.some((ev) => ev.taps === 0);
+    let restPenalty = 0;
+    if (hasRests && expectedTaps.length > 0) {
+      // Re-anchor taps to pattern time before checking rest violations
+      const offset = expectedTaps[0];
+      for (const tapTime of taps) {
+        if (isInsideRest(tapTime + offset, pattern, params.toleranceMs)) {
+          restPenalty++;
+        }
+      }
+    }
+
+    const totalIntervals = expectedIntervals.length;
+    const accuracy = totalIntervals > 0 ? Math.max(0, matchCount - restPenalty) / totalIntervals : 1;
+    const correct = accuracy >= 0.5;
+    setFeedback(correct ? 'correct' : 'wrong');
+    setPhase('done');
+
+    // Record mastery
+    const cId = rhythmConceptId(curatedPattern.id);
+    if (learningState && onLearningUpdate && floorNumber !== undefined) {
+      const updated = correct
+        ? recordCorrect(learningState, cId, floorNumber)
+        : recordWrong(learningState, cId, floorNumber);
+      onLearningUpdate(updated);
+    }
+
+    if (correct) {
+      setTimeout(() => onResult(true), 1000);
+    }
+    // Wrong: wait for "Got it" (no auto-dismiss)
+  }, [taps, tapCountTarget, pattern, expectedTaps, params.toleranceMs, phase, onResult, curatedPattern.id, learningState, onLearningUpdate, floorNumber]);
+
+  // ── Visual beat indicators ────────────────────────────────
+  const beatVisuals = pattern.map((ev, i) => {
+    const isRest = ev.taps === 0;
+    const isTriplet = ev.subdivision === 'triplet';
+    const isDotted = ev.subdivision === 'dotted-quarter';
+    const playing = i === playbackIndex;
+
+    // Count how many taps have been registered for events up to and including this one
+    const tapsBeforeThis = pattern.slice(0, i).reduce((sum, e) => sum + e.taps, 0);
+    const tapsForThis = ev.taps;
+    const tappedCount = Math.max(0, Math.min(tapsForThis, taps.length - tapsBeforeThis));
+    const fullyTapped = tappedCount >= tapsForThis && tapsForThis > 0;
+
+    if (isRest) {
+      return (
+        <div
+          key={i}
+          className={`
+            w-8 h-8 rounded flex items-center justify-center border-2 transition-all duration-100
+            ${playing ? 'bg-gray-500 border-gray-400 scale-110' : 'bg-gray-800 border-gray-600'}
+          `}
+          title="Rest"
+        >
+          <span className="text-gray-400 text-xs font-mono">𝄽</span>
+        </div>
+      );
+    }
+
+    if (isTriplet) {
+      return (
+        <div key={i} className="flex flex-col items-center gap-0.5">
+          <span className="text-amber-300 text-[10px] font-bold">3</span>
+          <div className="flex gap-0.5">
+            {[0, 1, 2].map((t) => {
+              const thisTapped = tappedCount > t;
+              return (
+                <div
+                  key={t}
+                  className={`
+                    w-2.5 h-2.5 rounded-full border transition-all duration-100
+                    ${playing ? 'bg-amber-400 border-amber-300 scale-125' :
+                      thisTapped ? 'bg-purple-500 border-purple-400' :
+                      'bg-gray-700 border-gray-600'}
+                  `}
+                />
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        key={i}
+        className={`
+          w-8 h-8 rounded-full border-2 transition-all duration-100 flex items-center justify-center
+          ${playing ? 'bg-amber-400 border-amber-300 scale-125' :
+            fullyTapped ? 'bg-purple-500 border-purple-400' :
+            'bg-gray-700 border-gray-600'}
+        `}
+      >
+        {isDotted && <span className="text-white text-[8px] font-bold">.</span>}
+      </div>
+    );
+  });
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      <h3 className="text-lg font-bold text-amber-200">Tap the Rhythm!</h3>
+
+      <NotationImage
+        src={`/images/notation/challenges/rhythm-patterns/${curatedPattern.id}.svg`}
+        alt="Rhythm pattern notation"
+        size="lg"
+        className="mb-2"
+      />
+
+      <div className="flex gap-2 justify-center items-end">{beatVisuals}</div>
+
+      {phase === 'listen' && (
+        <p className="text-gray-400 text-sm animate-pulse">Listen carefully...</p>
+      )}
+
+      {phase === 'tap' && (
+        <>
+          <p className="text-gray-300 text-sm">
+            Tap {tapCountTarget} beat{tapCountTarget !== 1 ? 's' : ''} ({taps.length}/{tapCountTarget})
+          </p>
+          <button
+            onPointerDown={handleTap}
+            disabled={replaying}
+            className="w-24 h-24 rounded-full bg-amber-700 hover:bg-amber-600 active:bg-amber-500 active:scale-95 border-4 border-amber-500 text-white font-bold text-xl transition-all touch-manipulation select-none disabled:opacity-40"
+          >
+            TAP
+          </button>
+          <button
+            onClick={replayPattern}
+            disabled={replaying}
+            className="text-xs text-amber-300 underline disabled:opacity-40"
+          >
+            {replaying ? 'Listening...' : 'Replay'}
+          </button>
+        </>
+      )}
+
+      {feedback === 'correct' && (
+        <p className="font-bold text-lg text-green-400">Great rhythm!</p>
+      )}
+      {feedback === 'wrong' && (
+        <CorrectiveFeedback
+          explanation={getRhythmExplanation().explanation}
+          mnemonic={getRhythmExplanation().mnemonic}
+          onDismiss={() => onResult(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default RhythmTapChallenge;

@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/common/ui/card";
+import { Button } from "@/common/ui/button";
 import { AlertCircle, Home, Music } from "lucide-react";
 import { Link } from "wouter";
 

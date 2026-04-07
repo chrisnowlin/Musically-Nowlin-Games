@@ -1,4 +1,4 @@
-import { Music2, Drum, Piano, Mic, Gamepad2, Brain, Calculator } from "lucide-react";
+import { Music2, Drum, Piano, Mic, Gamepad2, Brain, Calculator, Swords } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export type GameStatus = "available" | "coming-soon" | "locked";
@@ -25,6 +25,17 @@ export const games: GameConfig[] = [
     status: "available",
     icon: Gamepad2,
     color: "bg-blue-500",
+    difficulty: "easy",
+    ageRange: "5-9 years",
+  },
+  {
+    id: "instrument-family-sorter",
+    title: "Instrument Family Sorter",
+    description: "Listen to the sound and sort the instrument into the correct family!",
+    route: "/games/instrument-family-sorter",
+    status: "available",
+    icon: Gamepad2,
+    color: "bg-teal-500",
     difficulty: "easy",
     ageRange: "5-9 years",
   },
@@ -822,6 +833,28 @@ export const games: GameConfig[] = [
     difficulty: "medium",
     ageRange: "7-12 years",
   },
+  {
+    id: "da-capo-dungeon",
+    title: "Da Capo Dungeon",
+    description: "Explore a music-themed dungeon! Defeat enemies with note reading, rhythm, intervals, and dynamics.",
+    route: "/games/da-capo-dungeon",
+    status: "available",
+    icon: Swords,
+    color: "bg-purple-700",
+    difficulty: "medium",
+    ageRange: "6-12 years",
+  },
+  {
+    id: "cadence-quest",
+    title: "Cadence Quest",
+    description: "A music RPG! Master rhythm, pitch, harmony, dynamics, and theory through turn-based battles. PvE and PvP.",
+    route: "/games/cadence-quest",
+    status: "available",
+    icon: Swords,
+    color: "bg-purple-600",
+    difficulty: "medium",
+    ageRange: "8-14 years",
+  },
 ];
 
 export const getGameById = (id: string): GameConfig | undefined => {
@@ -836,3 +869,28 @@ export const getComingSoonGames = (): GameConfig[] => {
   return games.filter((game) => game.status === "coming-soon");
 };
 
+/** Game IDs shown in the "Available Now" section on the main landing page. */
+export const AVAILABLE_NOW_IDS = [
+  "staff-invaders",
+  "pitch-match",
+  "fast-or-slow-race",
+  "dynamics-001",
+  "finish-the-tune",
+  "instrument-crane",
+  "instrument-detective",
+  "instrument-family-sorter",
+  "treble-runner",
+  "animal-orchestra-conductor",
+  "da-capo-dungeon",
+] as const;/** Games in "Under Development" (not in Available Now). Used for Under Development page and landing filter. */
+export const getUnderDevelopmentGames = (): GameConfig[] => {
+  return games
+    .filter((game) => !AVAILABLE_NOW_IDS.includes(game.id as (typeof AVAILABLE_NOW_IDS)[number]))
+    .sort((a, b) => a.title.localeCompare(b.title));
+};
+
+/** Single passcode for Under Development page and landing button. Protects access to work-in-progress games. */
+export const UNDER_DEVELOPMENT_PASSCODE = "games";
+
+/** SessionStorage key; when set, user has unlocked Under Development for this session. */
+export const UNDER_DEVELOPMENT_SESSION_KEY = "under-development-unlocked";

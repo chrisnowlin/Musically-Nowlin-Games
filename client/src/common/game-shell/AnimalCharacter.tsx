@@ -1,0 +1,113 @@
+import { memo } from "react";
+import { AnimalCharacter as CharacterType } from "@/common/utils/schema";
+import { Volume2, Check, X, Sparkles, Music } from "lucide-react";
+import { cn } from "@/common/utils/utils";
+import { playfulShapes } from "@/theme/playful";
+import { OptimizedImage } from "@/common/ui/OptimizedImage";
+
+// Image paths for animal characters (JPEG with WebP fallback)
+const characterImages: Record<string, string> = {
+  elephant: "/images/ellie-elephant.jpeg",
+  giraffe: "/images/gary-giraffe.jpeg",
+  monkey: "/images/milo-monkey.jpeg",
+  bird: "/images/bella-bird.jpeg",
+  lion: "/images/leo-lion.jpeg",
+};
+
+interface AnimalCharacterProps {
+  character: CharacterType;
+  position: number; // 1-based position (1-5)
+  isPlaying: boolean;
+  isSelected: boolean;
+  isCorrect: boolean | null;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+/**
+ * AnimalCharacter component - displays an interactive animal character
+ * Memoized to prevent unnecessary re-renders when props haven't changed
+ */
+function AnimalCharacter({
+  character,
+  position,
+  isPlaying,
+  isSelected,
+  isCorrect,
+  disabled,
+  onClick,
+}: AnimalCharacterProps) {
+  // Get image path based on character ID
+  const imageSrc = characterImages[character.id] || characterImages.monkey;
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={`${character.name}${isPlaying ? " (playing)" : ""}${isSelected ? " (selected)" : ""}`}
+      className={cn(
+        "relative overflow-hidden rounded-2xl transition-all duration-300 transform",
+        "w-[140px] h-[140px] sm:w-[160px] sm:h-[160px]",
+        playfulShapes.shadows.card,
+        // Base state
+        !disabled && "hover:scale-105 cursor-pointer",
+        disabled && "opacity-50 cursor-not-allowed",
+        // Playing state
+        isPlaying && "ring-4 ring-yellow-400 animate-pulse",
+        // Selected state
+        isSelected && !isCorrect && isCorrect !== false && "ring-4 ring-blue-400",
+        // Correct/incorrect feedback
+        isCorrect === true && "ring-4 ring-green-400",
+        isCorrect === false && "ring-4 ring-red-400",
+        // Default background
+        !isPlaying && !isSelected && isCorrect === null && "border-4 border-purple-300 dark:border-purple-600"
+      )}
+    >
+      {/* Character image with WebP optimization */}
+      <div className="relative w-full h-full">
+        <OptimizedImage
+          src={imageSrc}
+          alt={character.name}
+          className="w-full h-full object-cover"
+          loading="eager"
+        />
+      </div>
+
+      {/* Playing indicator */}
+      {isPlaying && (
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <Volume2 className="w-5 h-5 text-yellow-500 animate-bounce" />
+        </div>
+      )}
+      {/* Sparkle decoration when selected */}
+      {isSelected && !isPlaying && (
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <Sparkles className="w-5 h-5 text-blue-400 animate-spin" style={{ animationDuration: '2s' }} />
+        </div>
+      )}
+
+      {/* Feedback icons */}
+      {isCorrect === true && (
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <Check className="w-5 h-5 text-green-500" />
+        </div>
+      )}
+      {isCorrect === false && (
+        <div className="absolute top-1 right-1 bg-white/80 rounded-full p-1">
+          <X className="w-5 h-5 text-red-500" />
+        </div>
+      )}
+
+      {/* Music note decoration */}
+      <Music className={cn(
+        "absolute bottom-2 left-2 w-5 h-5 text-white/60 drop-shadow-md",
+        isPlaying && "text-yellow-300 animate-bounce"
+      )} />
+    </button>
+  );
+}
+
+/**
+ * Export memoized version to prevent re-renders when props haven't changed
+ */
+export default memo(AnimalCharacter);

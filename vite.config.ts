@@ -12,7 +12,8 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
-      "@assets": path.resolve(__dirname, "attached_assets"),
+      "@shared": path.resolve(__dirname, "shared"),
+      "@assets": path.resolve(__dirname, "client", "src", "assets"),
     },
   },
   root: path.resolve(__dirname, "client"),
@@ -31,6 +32,10 @@ export default defineConfig(({ command }) => ({
             "@radix-ui/react-dropdown-menu",
             "@radix-ui/react-select",
           ],
+          "vexflow-vendor": ["vexflow"],
+          "recharts-vendor": ["recharts"],
+          "motion-vendor": ["framer-motion"],
+          "export-vendor": ["html2canvas", "jspdf"],
         },
       },
     },
@@ -47,7 +52,7 @@ export default defineConfig(({ command }) => ({
   },
   // Optimize dependency pre-bundling with Bun
   optimizeDeps: {
-    include: ["react", "react-dom", "wouter", "vexflow"],
+    include: ["react", "react-dom", "wouter"],
     exclude: [],
   },
 }));
