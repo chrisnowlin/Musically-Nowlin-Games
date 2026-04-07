@@ -456,12 +456,8 @@
     animation: float-up 1.5s ease-out forwards;
   }
 
-  @keyframes bounce-subtle {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5%); }
-  }
   .animate-bounce-subtle {
-    animation: bounce-subtle 1s infinite;
+    animation: sprite-float 1s ease-in-out infinite;
   }
 
   /* Gentle floating hover for dungeon enemy sprites */
@@ -511,13 +507,7 @@
     animation: fire-rise 800ms ease-out forwards;
   }
 
-  /* Shield block effect */
-  @keyframes shield-flash {
-    0% { opacity: 0; }
-    20% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; }
-  }
+  /* Shield block effect — shield-flash reuses dragon-fire keyframe */
   @keyframes shield-pop {
     0% { transform: scale(0.3); opacity: 0; }
     25% { transform: scale(1.3); opacity: 1; }
@@ -526,7 +516,7 @@
     100% { opacity: 0; transform: scale(0.9); }
   }
   .animate-shield-flash {
-    animation: shield-flash 600ms ease-out forwards;
+    animation: dragon-fire 600ms ease-out forwards;
   }
   .animate-shield-pop {
     animation: shield-pop 600ms ease-out forwards;
@@ -535,15 +525,9 @@
     background: radial-gradient(circle at center, rgba(96, 165, 250, 0.45), rgba(34, 211, 238, 0.15) 50%, transparent 75%);
   }
 
-  /* Healing pool effect */
-  @keyframes healing-fade {
-    0% { opacity: 0; }
-    15% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; }
-  }
+  /* Healing pool effect — healing-fade reuses dragon-fire keyframe */
   .animate-healing-fade {
-    animation: healing-fade 800ms ease-out forwards;
+    animation: dragon-fire 800ms ease-out forwards;
   }
   @keyframes heal-pop {
     0% { transform: scale(0.5); opacity: 0; }
