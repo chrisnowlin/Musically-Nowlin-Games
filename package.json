@@ -18,7 +18,8 @@
     "test:e2e": "bun playwright test",
     "test:e2e:ui": "bun playwright test --ui",
     "install:bun": "bun install",
-    "build:notation": "bash lilypond/scripts/build-notation.sh"
+    "build:notation": "bash lilypond/scripts/build-notation.sh",
+    "postbuild": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -118,6 +119,7 @@
     "drizzle-kit": "^0.28.0",
     "jest-axe": "^10.0.0",
     "postcss": "^8.4.47",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
     "typescript": "5.6.3",
     "vite": "^5.4.20"
