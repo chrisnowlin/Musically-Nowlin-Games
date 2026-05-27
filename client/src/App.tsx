@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/common/ui/tooltip";
 import ErrorBoundary from "@/common/game-shell/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
+import { SiteMigrationNotice } from "@/common/site/SiteMigrationNotice";
+import { SiteMigrationBanner } from "@/common/site/SiteMigrationBanner";
 
 // Get base path from Vite config for deployment flexibility
 const base = import.meta.env.BASE_URL;
@@ -220,7 +222,9 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <SiteMigrationNotice />
           <Toaster />
+          <SiteMigrationBanner />
           <WouterRouter base={base}>
             <Router />
           </WouterRouter>
